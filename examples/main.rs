@@ -1,4 +1,5 @@
 use staticvec::StaticVec;
+use std::iter::FromIterator;
 
 pub fn main() {
   let mut v = StaticVec::<&f32, 24>::new();
@@ -112,5 +113,14 @@ pub fn main() {
   for s in vb.reversed() {
     println!("{}", s);
   }
+  v.reverse();
+  for s in &vb {
+    println!("{}", s);
+  }
   vb.clear();
+  let mut vu = Vec::<usize>::new();
+  vu.extend_from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]);
+  for i in &StaticVec::<&usize, 4>::from_iter(vu.iter()) {
+    println!("{}", i);
+  }
 }
