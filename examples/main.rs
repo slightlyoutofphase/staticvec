@@ -52,8 +52,6 @@ pub fn main() {
   while va.is_not_empty() {
     println!("{}", va.pop());
   }
-  println!("{}", "Clearing!");
-  va.clear();
   let mut vb = StaticVec::<&'static str, 24>::new();
   vb.push("a");
   vb.push("b");
