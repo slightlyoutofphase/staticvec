@@ -30,7 +30,7 @@ pub struct StaticVecIteratorMut<'a, T: 'a> {
 }
 
 impl<T, const N: usize> StaticVec<T, {N}> {
-  ///Returns a new StaticVec instance, after asserting that N > 0.
+  ///Returns a new StaticVec instance, after asserting that "N" is greater than 0.
   pub fn new() -> Self {
     //I'd use const_assert! from the static_assertions crate here if I could,
     //but it doesn't work with const generics yet.
@@ -65,7 +65,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     self.length == 0
   }
 
-  ///Returns true if the current length of the StaticVec is not 0.
+  ///Returns true if the current length of the StaticVec is greater than 0.
   pub fn is_not_empty(&self) -> bool {
     self.length > 0
   }
@@ -158,12 +158,15 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     self.length += 1;
   }
 
-  ///Asserts that the current length of the StaticVec is greater than 0,
-  ///and if so pops a value from the end of it.
-  pub fn pop(&mut self) -> T {
-    assert!(self.length > 0, "Nothing to pop!");
-    self.length -= 1;
-    unsafe { self.data.get_unchecked(self.length).read() }
+  ///Removes the value at the last position of the StaticVec and returns it in "Some" if
+  ///the StaticVec has a current length greater than 0, and "None" otherwise.
+  pub fn pop(&mut self) -> Option<T> {
+    if self.length == 0 {
+      None
+    } else {
+      self.length -= 1;
+      unsafe { Some(self.data.get_unchecked(self.length).read()) }
+    }
   }
 
   ///Pushes a value to the back of the StaticVec without asserting that
@@ -200,7 +203,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   pub fn insert(&mut self, index: usize, value: T) {
     assert!(
       self.length < N && index <= self.length,
-      "Either you're of range or there's no space left!"
+      "Either you're out of range or there's no space left!"
     );
     unsafe {
       let p = self.as_mut_ptr_unchecked().add(index);
@@ -210,7 +213,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Asserts that the current length of the StaticVec is *greater* than 0,
+  ///Asserts that the current length of the StaticVec is greater than 0,
   ///and if so removes all of its contents and sets it length back *down* to 0.
   pub fn clear(&mut self) {
     assert!(self.length > 0, "Can't clear an empty StaticVec!");
@@ -322,7 +325,7 @@ impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
 
 impl<'a, T: 'a> Iterator for StaticVecIteratorConst<'a, T> {
   type Item = &'a T;
-  ///Returns "Some(self.current.as_ref().unwrap())" if current is less than or equal to end,
+  ///Returns "Some(self.current.as_ref().unwrap())" if "current" is less than or equal to "end",
   ///and None if it's not.
   fn next(&mut self) -> Option<Self::Item> {
     if self.current <= self.end {
@@ -339,7 +342,7 @@ impl<'a, T: 'a> Iterator for StaticVecIteratorConst<'a, T> {
 
 impl<'a, T: 'a> Iterator for StaticVecIteratorMut<'a, T> {
   type Item = &'a mut T;
-  ///Returns "Some(self.current.as_mut().unwrap())" if current is less than or equal to end,
+  ///Returns "Some(self.current.as_mut().unwrap())" if "current" is less than or equal to "end",
   ///and None if it's not.
   fn next(&mut self) -> Option<Self::Item> {
     if self.current <= self.end {

@@ -1,7 +1,28 @@
 use staticvec::StaticVec;
 use std::iter::FromIterator;
 
-pub fn main() {
+fn bloop() {
+  let mut x = Vec::<&i32>::with_capacity(4);
+  x.push(&1);
+  x.push(&2);
+  x.push(&3);
+  x.push(&4);
+  let mut y = Vec::<&i32>::with_capacity(4);;
+  y.push(&4);
+  y.push(&3);
+  y.push(&2);
+  y.push(&1);
+  let mut z = StaticVec::<&Vec<&i32>, 2>::new();
+  z.push(&x);
+  z.push(&y);
+  for v in &z {
+    for i in *v {
+      println!("{}", i);
+    }
+  }
+}
+
+fn main() {
   let mut v = StaticVec::<&f32, 24>::new();
   for _i in 0..v.capacity() {
     v.push(&24.5);
@@ -9,7 +30,6 @@ pub fn main() {
   for f in &v {
     println!("{}", f);
   }
-  println!("{}", "Clearing!");
   v.clear();
   v.insert(0, &47.6);
   v.insert(1, &48.6);
@@ -51,7 +71,7 @@ pub fn main() {
     println!("{}", i)
   }
   while va.is_not_empty() {
-    println!("{}", va.pop());
+    println!("{}", va.pop().unwrap());
   }
   let mut vb = StaticVec::<&'static str, 24>::new();
   vb.push("a");
@@ -89,7 +109,6 @@ pub fn main() {
   while vb.is_not_empty() {
     println!("{}", vb.remove(0));
   }
-  println!("{}", "slice");
   vb.push("g");
   vb.push("f");
   vb.push("e");
@@ -113,7 +132,8 @@ pub fn main() {
   for s in vb.reversed() {
     println!("{}", s);
   }
-  v.reverse();
+  vb.reverse();
+  vb.reverse();
   for s in &vb {
     println!("{}", s);
   }
@@ -123,4 +143,8 @@ pub fn main() {
   for i in &StaticVec::<&usize, 4>::from_iter(vu.iter()) {
     println!("{}", i);
   }
+  bloop();
+  bloop();
+  bloop();
+  bloop();
 }
