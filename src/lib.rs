@@ -271,7 +271,7 @@ impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
 
 impl<'a, T: 'a> Iterator for StaticVecIteratorConst<'a, T> {
   type Item = &'a T;
-  ///Returns "Some(self.current.as_ref().unwrap())" if "current" is less than or equal to "end",
+  ///Returns "Some(self.current.as_ref().unwrap())" if "current" is less than "end",
   ///and None if it's not.
   fn next(&mut self) -> Option<Self::Item> {
     if self.current < self.end {
@@ -288,7 +288,7 @@ impl<'a, T: 'a> Iterator for StaticVecIteratorConst<'a, T> {
 
 impl<'a, T: 'a> Iterator for StaticVecIteratorMut<'a, T> {
   type Item = &'a mut T;
-  ///Returns "Some(self.current.as_mut().unwrap())" if "current" is less than or equal to "end",
+  ///Returns "Some(self.current.as_mut().unwrap())" if "current" is less than "end",
   ///and None if it's not.
   fn next(&mut self) -> Option<Self::Item> {
     if self.current < self.end {
