@@ -30,7 +30,7 @@ pub struct StaticVecIteratorMut<'a, T: 'a> {
 }
 
 impl<T, const N: usize> StaticVec<T, {N}> {
-  ///Returns a new StaticVec instance, after asserting that "N" is greater than 0.
+  ///Returns a new StaticVec instance.
   pub fn new() -> Self {
     unsafe {
       Self {
