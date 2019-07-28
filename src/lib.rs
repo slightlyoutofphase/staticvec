@@ -165,7 +165,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Removes all contents from the StaticVec and sets it length back to 0.
+  ///Removes all contents from the StaticVec and sets its length back to 0.
   pub fn clear(&mut self) {
     unsafe {
       for i in 0..self.length {
