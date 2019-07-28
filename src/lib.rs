@@ -29,7 +29,7 @@ pub struct StaticVecIteratorMut<'a, T: 'a> {
   marker: PhantomData<&'a mut T>,
 }
 
-impl<T, const N: usize> StaticVec<T, { N }> {
+impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a new StaticVec instance, after asserting that "N" is greater than 0.
   pub fn new() -> Self {
     unsafe {
@@ -250,7 +250,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> Index<usize> for StaticVec<T, { N }> {
+impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
   type Output = T;
   ///Asserts that "index" is less than the current length of the StaticVec,
   ///as if so returns the value at that position as a constant reference.
@@ -260,7 +260,7 @@ impl<T, const N: usize> Index<usize> for StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> IndexMut<usize> for StaticVec<T, { N }> {
+impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
   ///Asserts that "index" is less than the current length of the StaticVec,
   ///as if so returns the value at that position as a mutable reference.
   fn index_mut(&mut self, index: usize) -> &mut Self::Output {
@@ -303,7 +303,7 @@ impl<'a, T: 'a> Iterator for StaticVecIteratorMut<'a, T> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, {N}> {
   type IntoIter = StaticVecIteratorConst<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
   ///Returns a StaticVecIteratorConst over the StaticVec's "inhabited" area.
@@ -326,7 +326,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
   type IntoIter = StaticVecIteratorMut<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
   ///Returns a StaticVecIteratorMut over the StaticVec's "inhabited" area.
@@ -349,11 +349,11 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> FromIterator<T> for StaticVec<T, { N }> {
+impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
   ///Attempts to create a new StaticVec instance of the specified capacity from "iter".
   ///If it has a size greater than the capacity, any contents after that point are ignored.
   fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-    let mut res = StaticVec::<T, { N }>::new();
+    let mut res = StaticVec::<T, {N}>::new();
     for value in iter {
       if res.is_full() {
         break;
