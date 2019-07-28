@@ -1,12 +1,15 @@
 #![feature(const_fn)]
 #![feature(const_generics)]
+#![feature(core_intrinsics)]
 #![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
 
+use std::cmp::Ord;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::ops::{Index, IndexMut};
+use std::ptr;
 
 ///A Vec-like struct (directly API-compatible where it can be) implemented with
 ///const generics around a static array of fixed "N" capacity.
@@ -167,9 +170,9 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Removes all contents from the StaticVec and sets its length back to 0.
   pub fn clear(&mut self) {
-    unsafe {
-      for i in 0..self.length {
-        *self.data.get_unchecked_mut(i) = MaybeUninit::uninit();
+    for i in 0..self.length {
+      unsafe {
+        ptr::drop_in_place(self.data.get_unchecked_mut(i).as_mut_ptr());
       }
     }
     self.length = 0;
@@ -177,7 +180,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Performs an in-place sort of the StaticVec's "inhabited" area.
   pub fn sort(&mut self)
-  where T: std::cmp::Ord {
+  where T: Ord {
     self.as_mut_slice().sort();
   }
 
@@ -189,7 +192,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a separate, sorted StaticVec of the contents of the StaticVec's "inhabited" area without modifying
   ///the original data.
   pub fn sorted(&mut self) -> Self
-  where T: std::cmp::Ord {
+  where T: Copy + Ord {
     unsafe {
       let mut res = Self::new();
       res.length = self.length;
@@ -201,7 +204,8 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Returns a separate, reversed StaticVec of the contents of the StaticVec's "inhabited" area without modifying
   ///the original data.
-  pub fn reversed(&mut self) -> Self {
+  pub fn reversed(&mut self) -> Self
+  where T: Copy {
     unsafe {
       let mut res = Self::new();
       res.length = self.length;
@@ -247,6 +251,13 @@ impl<T, const N: usize> StaticVec<T, {N}> {
         }
       }
     }
+  }
+}
+
+impl<T, const N: usize> Drop for StaticVec<T, {N}> {
+  ///Calls clear() on the StaticVec before dropping it.
+  fn drop(&mut self) {
+    self.clear();
   }
 }
 

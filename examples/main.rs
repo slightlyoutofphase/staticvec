@@ -22,6 +22,16 @@ fn bloop() {
   }
 }
 
+struct MyStruct {
+  s: &'static str,
+}
+
+impl Drop for MyStruct {
+  fn drop(&mut self) {
+    println!("{}", "dropping");
+  }
+}
+
 fn main() {
   let mut v = StaticVec::<&f32, 24>::new();
   for _i in 0..v.capacity() {
@@ -167,5 +177,18 @@ fn main() {
   }
   for s in &empty.sorted() {
     println!("{}", s);
+  }
+  let mut msv = StaticVec::<MyStruct, 4>::new();
+  msv.push(MyStruct { s: "a" });
+  msv.push(MyStruct { s: "b" });
+  msv.push(MyStruct { s: "c" });
+  msv.push(MyStruct { s: "d" });
+  msv.clear();
+  msv.push(MyStruct { s: "a" });
+  msv.push(MyStruct { s: "b" });
+  msv.push(MyStruct { s: "c" });
+  msv.push(MyStruct { s: "d" });
+  for ms in &msv {
+    println!("{}", ms.s);
   }
 }
