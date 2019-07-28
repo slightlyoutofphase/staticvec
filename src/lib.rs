@@ -169,10 +169,8 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Removes all contents from the StaticVec and sets its length back to 0.
   pub fn clear(&mut self) {
-    for i in 0..self.length {
-      unsafe {
-        ptr::drop_in_place(self.data.get_unchecked_mut(i).as_mut_ptr());
-      }
+    unsafe {
+      ptr::drop_in_place(self.as_mut_slice());
     }
     self.length = 0;
   }

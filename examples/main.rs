@@ -115,7 +115,6 @@ fn main() {
   for _i in 0..vb.capacity() {
     vb.push("hello");
   }
-  println!("{}", "pop");
   while vb.is_not_empty() {
     println!("{}", vb.remove(0));
   }
