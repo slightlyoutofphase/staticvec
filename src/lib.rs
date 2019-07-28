@@ -1,6 +1,5 @@
 #![feature(const_fn)]
 #![feature(const_generics)]
-#![feature(core_intrinsics)]
 #![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
 
@@ -255,7 +254,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 }
 
 impl<T, const N: usize> Drop for StaticVec<T, {N}> {
-  ///Calls clear() on the StaticVec before dropping it.
+  ///Calls clear() through the StaticVec before dropping it.
   fn drop(&mut self) {
     self.clear();
   }
