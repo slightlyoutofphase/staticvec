@@ -126,10 +126,10 @@ fn main() {
   for s in vbmb {
     println!("{}", s);
   }
-  for s in vb.sorted() {
+  for s in &vb.sorted() {
     println!("{}", s);
   }
-  for s in vb.reversed() {
+  for s in &vb.reversed() {
     println!("{}", s);
   }
   vb.reverse();
@@ -147,4 +147,25 @@ fn main() {
   bloop();
   bloop();
   bloop();
+  let mut empty = StaticVec::<&'static str, 0>::new();
+  empty.sort();
+  empty.reverse();
+  for s in empty.as_slice() {
+    println!("{}", s);
+  }
+  for s in empty.as_mut_slice() {
+    println!("{}", s);
+  }
+  for s in &empty {
+    println!("{}", s);
+  }
+  for s in &mut empty {
+    println!("{}", s);
+  }
+  for s in &empty.reversed() {
+    println!("{}", s);
+  }
+  for s in &empty.sorted() {
+    println!("{}", s);
+  }
 }
