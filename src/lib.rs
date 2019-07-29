@@ -7,10 +7,10 @@ use std::cmp::Ord;
 use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
-use std::ops::{Index, IndexMut};
+use std::ops::{Bound::*, Index, IndexMut, RangeBounds};
 use std::ptr;
 
-///A Vec-like struct (directly API-compatible where it can be) implemented with
+///A Vec-like struct (directly API-compatible where it can be at least as far as function signatures go) implemented with
 ///const generics around a static array of fixed "N" capacity.
 pub struct StaticVec<T, const N: usize> {
   data: [MaybeUninit<T>; N],
@@ -89,7 +89,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a constant reference to a slice of the StaticVec's "inhabited" area.
   pub fn as_slice(&self) -> &[T] {
     unsafe {
-      (&self.data[0..self.length] as *const [MaybeUninit<T>] as *const [T])
+      (self.data.get_unchecked(0..self.length) as *const [MaybeUninit<T>] as *const [T])
         .as_ref()
         .unwrap()
     }
@@ -98,7 +98,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a mutable reference to a slice of the StaticVec's "inhabited" area.
   pub fn as_mut_slice(&mut self) -> &mut [T] {
     unsafe {
-      (&mut self.data[0..self.length] as *mut [MaybeUninit<T>] as *mut [T])
+      (self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T])
         .as_mut()
         .unwrap()
     }
@@ -193,7 +193,9 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     unsafe {
       let mut res = Self::new();
       res.length = self.length;
-      self.as_ptr().copy_to(res.as_mut_ptr(), self.length);
+      self
+        .as_ptr()
+        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
       res.sort();
       res
     }
@@ -206,14 +208,65 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     unsafe {
       let mut res = Self::new();
       res.length = self.length;
-      self.as_ptr().copy_to(res.as_mut_ptr(), self.length);
+      self
+        .as_ptr()
+        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
       res.reverse();
       res
     }
   }
 
+  ///Copies and appends all elements in a slice to the StaticVec.
+  ///Unlike the implementation of this function for Vec, no iterator is used,
+  ///just a single call to copy_non_overlapping().
+  pub fn extend_from_slice(&mut self, other: &[T])
+  where T: Copy {
+    let mut added_length = other.len();
+    while self.length + added_length > N {
+      added_length -= 1;
+    }
+    unsafe {
+      other
+        .as_ptr()
+        .copy_to_nonoverlapping(self.as_mut_ptr().add(self.length), added_length);
+    }
+    self.length += added_length;
+  }
+
+  ///Removes the specified range of elements from the StaticVec and returns them in a new one.
+  pub fn drain<R>(&mut self, range: R) -> Self
+  //No Copy bounds here because the original StaticVec gives up all access to the values in question.
+  where R: RangeBounds<usize> {
+    //Borrowed this part from normal Vec's implementation.
+    let start = match range.start_bound() {
+      Included(&idx) => idx,
+      Excluded(&idx) => idx + 1,
+      Unbounded => 0,
+    };
+    let end = match range.end_bound() {
+      Included(&idx) => idx + 1,
+      Excluded(&idx) => idx,
+      Unbounded => self.length,
+    };
+    assert!(start <= end && end <= self.length, "Out of range!");
+    let mut res = Self::new();
+    res.length = end - start;
+    unsafe {
+      self
+        .as_ptr()
+        .add(start)
+        .copy_to_nonoverlapping(res.as_mut_ptr(), res.length);
+      self
+        .as_ptr()
+        .add(end)
+        .copy_to(self.as_mut_ptr().add(start), self.length - end);
+    }
+    self.length -= res.length;
+    res
+  }
+
   ///Returns a StaticVecIteratorConst over the StaticVec's "inhabited" area.
-  pub fn iter<'a>(&'a self) -> impl Iterator<Item = &'a T> {
+  pub fn iter<'a>(&'a self) -> StaticVecIteratorConst<'a, T> {
     unsafe {
       if self.length > 0 {
         StaticVecIteratorConst::<'a, T> {
@@ -232,7 +285,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Returns a StaticVecIteratorMut over the StaticVec's "inhabited" area.
-  pub fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &'a mut T> {
+  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIteratorMut<'a, T> {
     unsafe {
       if self.length > 0 {
         StaticVecIteratorMut::<'a, T> {
@@ -316,21 +369,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, {N}> {
   type Item = <Self::IntoIter as Iterator>::Item;
   ///Returns a StaticVecIteratorConst over the StaticVec's "inhabited" area.
   fn into_iter(self) -> Self::IntoIter {
-    unsafe {
-      if self.length > 0 {
-        Self::IntoIter {
-          current: self.as_ptr(),
-          end: self.as_ptr().add(self.length),
-          marker: PhantomData,
-        }
-      } else {
-        Self::IntoIter {
-          current: self.as_ptr(),
-          end: self.as_ptr(),
-          marker: PhantomData,
-        }
-      }
-    }
+    self.iter()
   }
 }
 
@@ -339,21 +378,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
   type Item = <Self::IntoIter as Iterator>::Item;
   ///Returns a StaticVecIteratorMut over the StaticVec's "inhabited" area.
   fn into_iter(self) -> Self::IntoIter {
-    unsafe {
-      if self.length > 0 {
-        Self::IntoIter {
-          current: self.as_mut_ptr(),
-          end: self.as_mut_ptr().add(self.length),
-          marker: PhantomData,
-        }
-      } else {
-        Self::IntoIter {
-          current: self.as_mut_ptr(),
-          end: self.as_mut_ptr(),
-          marker: PhantomData,
-        }
-      }
-    }
+    self.iter_mut()
   }
 }
 
@@ -363,10 +388,12 @@ impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
   fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
     let mut res = StaticVec::<T, {N}>::new();
     for value in iter {
-      if res.is_full() {
-        break;
+      if res.is_not_full() {
+        unsafe {
+          res.push_unchecked(value);
+        }
       } else {
-        res.push(value);
+        break;
       }
     }
     res
