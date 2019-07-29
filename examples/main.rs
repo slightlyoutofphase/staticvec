@@ -147,9 +147,13 @@ fn main() {
     println!("{}", s);
   }
   vb.clear();
-  let mut vu = Vec::<usize>::new();
+  let mut vu = StaticVec::<usize, 8>::new();
   vu.extend_from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]);
-  for i in &StaticVec::<&usize, 4>::from_iter(vu.iter()) {
+  let vvu = StaticVec::<usize, 4> = vu.iter.collect();
+  for i in vvu {
+    println!("{}", i);
+  }
+  for i in vu.drain(2..5).iter().find(|&&i| i == 4) {
     println!("{}", i);
   }
   bloop();
