@@ -1,5 +1,4 @@
 use staticvec::StaticVec;
-use std::iter::FromIterator;
 
 struct MyStruct {
   s: &'static str,
@@ -128,11 +127,9 @@ fn main() {
   vb.clear();
   let mut vu = StaticVec::<usize, 8>::new();
   vu.extend_from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]);
-  let vvu = StaticVec::<usize, 4> = vu.iter.collect();
-  for i in vvu {
-    println!("{}", i);
-  }
-  for i in vu.drain(2..5).iter().find(|&&i| i == 4) {
+  println!("{}", vu.drain(2..5).iter().find(|&&i| i == 4).unwrap());
+  let vvu: StaticVec<&usize, 4> = vu.iter().collect();
+  for i in &vvu {
     println!("{}", i);
   }
   let mut x = Vec::<&i32>::with_capacity(4);
