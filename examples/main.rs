@@ -1,27 +1,6 @@
 use staticvec::StaticVec;
 use std::iter::FromIterator;
 
-fn bloop() {
-  let mut x = Vec::<&i32>::with_capacity(4);
-  x.push(&1);
-  x.push(&2);
-  x.push(&3);
-  x.push(&4);
-  let mut y = Vec::<&i32>::with_capacity(4);;
-  y.push(&4);
-  y.push(&3);
-  y.push(&2);
-  y.push(&1);
-  let mut z = StaticVec::<&Vec<&i32>, 2>::new();
-  z.push(&x);
-  z.push(&y);
-  for v in &z {
-    for i in *v {
-      println!("{}", i);
-    }
-  }
-}
-
 struct MyStruct {
   s: &'static str,
 }
@@ -156,10 +135,24 @@ fn main() {
   for i in vu.drain(2..5).iter().find(|&&i| i == 4) {
     println!("{}", i);
   }
-  bloop();
-  bloop();
-  bloop();
-  bloop();
+  let mut x = Vec::<&i32>::with_capacity(4);
+  x.push(&1);
+  x.push(&2);
+  x.push(&3);
+  x.push(&4);
+  let mut y = Vec::<&i32>::with_capacity(4);;
+  y.push(&4);
+  y.push(&3);
+  y.push(&2);
+  y.push(&1);
+  let mut z = StaticVec::<&Vec<&i32>, 2>::new();
+  z.push(&x);
+  z.push(&y);
+  for v in &z {
+    for i in *v {
+      println!("{}", i);
+    }
+  }
   let mut empty = StaticVec::<&'static str, 0>::new();
   empty.sort();
   empty.reverse();
