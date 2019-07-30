@@ -1,5 +1,7 @@
 Implements a fixed-capacity Vec alternative backed by a static array using const generics.
 
+**Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
+
 A basic usage example:
 
 ```rust
@@ -21,15 +23,13 @@ fn main() {
   v.insert(v.len() - 2, 51);
   v.insert(v.len() - 3, 52);
   for i in &v {
-    println!("{}", f);
-  }
-  for i in 0..v.len() {
-    println!("{}", v[i]);
-  }
-  v.remove(1);
-  v.remove(2);
-  for i in &v {
     println!("{}", i);
+  }
+  for i in &v.reversed() {
+    println!("{}", i);
+  }
+  while v.is_not_empty() {
+    println!("{}", v.remove(0));
   }
 }
 ```
