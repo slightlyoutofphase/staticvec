@@ -11,7 +11,7 @@ use std::ops::{Bound::*, Index, IndexMut, RangeBounds};
 use std::ptr;
 
 ///A Vec-like struct (directly API-compatible where it can be at least as far as function signatures go) implemented with
-///const generics around a static array of fixed "N" capacity.
+///const generics around a static array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
   data: [MaybeUninit<T>; N],
   length: usize,
