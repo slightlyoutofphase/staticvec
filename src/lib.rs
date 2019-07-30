@@ -218,7 +218,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Copies and appends all elements in a slice to the StaticVec.
   ///Unlike the implementation of this function for Vec, no iterator is used,
-  ///just a single call to copy_non_overlapping().
+  ///just a single pointer-copy call.
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
     let mut added_length = other.len();
