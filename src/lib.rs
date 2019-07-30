@@ -175,10 +175,10 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     self.length = 0;
   }
 
-  ///Performs an in-place sort of the StaticVec's "inhabited" area.
+  ///Performs an *unstable* in-place sort of the StaticVec's "inhabited" area.
   pub fn sort(&mut self)
   where T: Ord {
-    self.as_mut_slice().sort();
+    self.as_mut_slice().sort_unstable();
   }
 
   ///Reverses the contents of the StaticVec's "inhabited" area in-place.
