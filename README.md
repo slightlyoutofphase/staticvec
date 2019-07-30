@@ -1,3 +1,5 @@
+Implements a fixed-capacity Vec alternative backed by a static array using const generics.
+
 **A basic usage example:**
 
 ```rust
