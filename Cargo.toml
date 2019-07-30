@@ -19,7 +19,7 @@ lto = false
 debug-assertions = true
 codegen-units = 1
 panic = 'unwind'
-incremental = true
+incremental = false
 overflow-checks = true
 
 [profile.release]
