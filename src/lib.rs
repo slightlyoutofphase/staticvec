@@ -35,7 +35,7 @@ pub struct StaticVecIterMut<'a, T: 'a> {
   marker: PhantomData<&'a mut T>,
 }
 
-impl<T, const N: usize> StaticVec<T, { N }> {
+impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a new StaticVec instance.
   #[inline(always)]
   pub fn new() -> Self {
@@ -419,7 +419,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> Drop for StaticVec<T, { N }> {
+impl<T, const N: usize> Drop for StaticVec<T, {N}> {
   ///Calls `clear` through the StaticVec before dropping it.
   #[inline(always)]
   fn drop(&mut self) {
@@ -427,7 +427,7 @@ impl<T, const N: usize> Drop for StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> Index<usize> for StaticVec<T, { N }> {
+impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
   type Output = T;
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///as if so returns the value at that position as a constant reference.
@@ -438,7 +438,7 @@ impl<T, const N: usize> Index<usize> for StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> IndexMut<usize> for StaticVec<T, { N }> {
+impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///as if so returns the value at that position as a mutable reference.
   #[inline(always)]
@@ -448,7 +448,7 @@ impl<T, const N: usize> IndexMut<usize> for StaticVec<T, { N }> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, {N}> {
   type IntoIter = StaticVecIterConst<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
   ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
@@ -458,7 +458,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
   type IntoIter = StaticVecIterMut<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
   ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
@@ -468,7 +468,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> FromIterator<T> for StaticVec<T, { N }> {
+impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
   ///Creates a new StaticVec instance from the elements, if any, of `iter`.
   ///If it has a size greater than the StaticVec's capacity, any items after
   ///that point are ignored.
