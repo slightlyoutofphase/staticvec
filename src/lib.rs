@@ -1,37 +1,41 @@
+#![feature(core_intrinsics)]
 #![feature(const_fn)]
 #![feature(const_generics)]
-#![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
+#![feature(maybe_uninit_extra)]
 
-use std::cmp::Ord;
+use crate::utils::*;
+use std::cmp::{Ord, PartialEq};
 use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::mem::MaybeUninit;
-use std::ops::{Bound::*, Index, IndexMut, RangeBounds};
+use std::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, Index, IndexMut, RangeBounds};
 use std::ptr;
+mod utils;
 
-///A [Vec](std::vec::Vec)-like struct (directly API-compatible where it can be at least as far as function signatures go) implemented with
+///A [Vec](std::vec::Vec)-like struct (directly API-compatible where it can be
+///at least as far as function signatures go) implemented with
 ///const generics around a static array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
   data: [MaybeUninit<T>; N],
   length: usize,
 }
 
-///Vaguely similar to a very stripped-down version of [std::slice::Iter](std::slice::Iter).
-pub struct StaticVecIteratorConst<'a, T: 'a> {
-  current: *const T,
+///Similar to std's [Iter](std::slice::IterMut), but specifically implemented with StaticVecs in mind.
+pub struct StaticVecIterConst<'a, T: 'a> {
+  start: *const T,
   end: *const T,
   marker: PhantomData<&'a T>,
 }
 
-///Vaguely similar to a very stripped-down version of [std::slice::IterMut](std::slice::IterMut).
-pub struct StaticVecIteratorMut<'a, T: 'a> {
-  current: *mut T,
+///Similar to std's [IterMut](std::slice::IterMut), but specifically implemented with StaticVecs in mind.
+pub struct StaticVecIterMut<'a, T: 'a> {
+  start: *mut T,
   end: *mut T,
   marker: PhantomData<&'a mut T>,
 }
 
-impl<T, const N: usize> StaticVec<T, {N}> {
+impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a new StaticVec instance.
   #[inline(always)]
   pub fn new() -> Self {
@@ -40,6 +44,43 @@ impl<T, const N: usize> StaticVec<T, {N}> {
         //Sound because data is an array of MaybeUninit<T>, not an array of T.
         data: MaybeUninit::uninit().assume_init(),
         length: 0,
+      }
+    }
+  }
+
+  ///Returns a new StaticVec instance filled with the contents, if any, of a slice.
+  ///If the slice has a length greater than the StaticVec's capacity,
+  ///any contents after that point are ignored.
+  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues.
+  #[inline]
+  pub fn new_from_slice(values: &[T]) -> Self
+  where T: Copy {
+    unsafe {
+      let mut _data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let fill_length = std::cmp::min(values.len(), N);
+      values
+        .as_ptr()
+        .copy_to_nonoverlapping(_data.as_mut_ptr() as *mut T, fill_length);
+      Self {
+        data: _data,
+        length: fill_length,
+      }
+    }
+  }
+
+  ///Returns a new StaticVec instance filled with the return value of
+  ///an initializer function.
+  ///`len()` will return the same as `capacity()` for the newly created StaticVec.
+  #[inline]
+  pub fn filled_with(initializer: fn() -> T) -> Self {
+    unsafe {
+      let mut _data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      for val in _data.iter_mut() {
+        val.write(initializer());
+      }
+      Self {
+        data: _data,
+        length: N,
       }
     }
   }
@@ -108,20 +149,14 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a constant reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
-    unsafe {
-      (self.data.get_unchecked(0..self.length) as *const [MaybeUninit<T>] as *const [T])
-        .as_ref()
-        .unwrap()
-    }
+    unsafe { &*(self.data.get_unchecked(0..self.length) as *const [MaybeUninit<T>] as *const [T]) }
   }
 
   ///Returns a mutable reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_mut_slice(&mut self) -> &mut [T] {
     unsafe {
-      (self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T])
-        .as_mut()
-        .unwrap()
+      &mut *(self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T])
     }
   }
 
@@ -177,7 +212,19 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Asserts that the current length of the StaticVec is less than `N` and that
+  ///Removes the first instance of `item` from the StaticVec if the item exists.
+  #[inline(always)]
+  pub fn remove_item(&mut self, item: &T) -> Option<T>
+  where T: PartialEq {
+    //Adapted this from normal Vec's implementation.
+    if let Some(pos) = self.iter().position(|x| *x == *item) {
+      Some(self.remove(pos))
+    } else {
+      None
+    }
+  }
+
+  ///Asserts that `T`he current length of the StaticVec is less than `N` and that
   ///`index` is less than the length, and if so inserts `value` at that position.
   ///Any values that exist in later positions are shifted to the right.
   #[inline]
@@ -203,9 +250,18 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     self.length = 0;
   }
 
-  ///Performs an unstable in-place sort of the StaticVec's inhabited area.
+  ///Performs an stable in-place sort of the StaticVec's inhabited area.
+  ///Locally requires that `T` implements [Ord](std::cmp::Ord) to make the sorting possible.
   #[inline(always)]
   pub fn sort(&mut self)
+  where T: Ord {
+    self.as_mut_slice().sort();
+  }
+
+  ///Performs an unstable in-place sort of the StaticVec's inhabited area.
+  ///Locally requires that `T` implements [Ord](std::cmp::Ord) to make the sorting possible.
+  #[inline(always)]
+  pub fn sort_unstable(&mut self)
   where T: Ord {
     self.as_mut_slice().sort_unstable();
   }
@@ -216,8 +272,10 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     self.as_mut_slice().reverse();
   }
 
-  ///Returns a separate, sorted StaticVec of the contents of the StaticVec's inhabited area without modifying
-  ///the original data.
+  ///Returns a separate, stable-sorted StaticVec of the contents of the
+  ///StaticVec's inhabited area without modifying the original data.
+  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues,
+  ///and [Ord](std::cmp::Ord) to make the sorting possible.
   #[inline]
   pub fn sorted(&mut self) -> Self
   where T: Copy + Ord {
@@ -232,25 +290,46 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Returns a separate, reversed StaticVec of the contents of the StaticVec's inhabited area without modifying
-  ///the original data.
+  ///Returns a separate, unstable-sorted StaticVec of the contents of the
+  ///StaticVec's inhabited area without modifying the original data.
+  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues,
+  ///and [Ord](std::cmp::Ord) to make the sorting possible.
   #[inline]
-  pub fn reversed(&mut self) -> Self
-  where T: Copy {
+  pub fn sorted_unstable(&mut self) -> Self
+  where T: Copy + Ord {
     unsafe {
       let mut res = Self::new();
       res.length = self.length;
       self
         .as_ptr()
         .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
-      res.reverse();
+      res.sort_unstable();
       res
     }
+  }
+
+  ///Returns a separate, reversed StaticVec of the contents of the StaticVec's
+  ///inhabited area without modifying the original data.
+  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues.
+  #[inline(always)]
+  pub fn reversed(&mut self) -> Self
+  where T: Copy {
+    let mut res = Self::new();
+    res.length = self.length;
+    unsafe {
+      reverse_copy(
+        self.as_ptr(),
+        self.as_ptr().add(self.length),
+        res.as_mut_ptr(),
+      );
+    }
+    res
   }
 
   ///Copies and appends all elements in a slice to the StaticVec.
   ///Unlike the implementation of this function for [Vec](std::vec::Vec), no iterator is used,
   ///just a single pointer-copy call.
+  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues.
   #[inline]
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
@@ -299,19 +378,19 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     res
   }
 
-  ///Returns a `StaticVecIteratorConst` over the StaticVec's inhabited area.
+  ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
   #[inline]
-  pub fn iter<'a>(&'a self) -> StaticVecIteratorConst<'a, T> {
+  pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
     unsafe {
       if self.length > 0 {
-        StaticVecIteratorConst::<'a, T> {
-          current: self.as_ptr(),
+        StaticVecIterConst::<'a, T> {
+          start: self.as_ptr(),
           end: self.as_ptr().add(self.length),
           marker: PhantomData,
         }
       } else {
-        StaticVecIteratorConst::<'a, T> {
-          current: self.as_ptr(),
+        StaticVecIterConst::<'a, T> {
+          start: self.as_ptr(),
           end: self.as_ptr(),
           marker: PhantomData,
         }
@@ -319,19 +398,19 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Returns a `StaticVecIteratorMut` over the StaticVec's inhabited area.
+  ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
   #[inline]
-  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIteratorMut<'a, T> {
+  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
     unsafe {
       if self.length > 0 {
-        StaticVecIteratorMut::<'a, T> {
-          current: self.as_mut_ptr(),
+        StaticVecIterMut::<'a, T> {
+          start: self.as_mut_ptr(),
           end: self.as_mut_ptr().add(self.length),
           marker: PhantomData,
         }
       } else {
-        StaticVecIteratorMut::<'a, T> {
-          current: self.as_mut_ptr(),
+        StaticVecIterMut::<'a, T> {
+          start: self.as_mut_ptr(),
           end: self.as_mut_ptr(),
           marker: PhantomData,
         }
@@ -340,7 +419,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 }
 
-impl<T, const N: usize> Drop for StaticVec<T, {N}> {
+impl<T, const N: usize> Drop for StaticVec<T, { N }> {
   ///Calls `clear` through the StaticVec before dropping it.
   #[inline(always)]
   fn drop(&mut self) {
@@ -348,7 +427,7 @@ impl<T, const N: usize> Drop for StaticVec<T, {N}> {
   }
 }
 
-impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
+impl<T, const N: usize> Index<usize> for StaticVec<T, { N }> {
   type Output = T;
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///as if so returns the value at that position as a constant reference.
@@ -359,7 +438,7 @@ impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
   }
 }
 
-impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
+impl<T, const N: usize> IndexMut<usize> for StaticVec<T, { N }> {
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///as if so returns the value at that position as a mutable reference.
   #[inline(always)]
@@ -369,65 +448,30 @@ impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
   }
 }
 
-impl<'a, T: 'a> Iterator for StaticVecIteratorConst<'a, T> {
-  type Item = &'a T;
-  ///Returns `Some(self.current.as_ref().unwrap())` if `current` is less than `end`,
-  ///and `None` if it's not.
-  #[inline]
-  fn next(&mut self) -> Option<Self::Item> {
-    if self.current < self.end {
-      unsafe {
-        let res = Some(self.current.as_ref().unwrap());
-        self.current = self.current.add(1);
-        res
-      }
-    } else {
-      None
-    }
-  }
-}
-
-impl<'a, T: 'a> Iterator for StaticVecIteratorMut<'a, T> {
-  type Item = &'a mut T;
-  ///Returns `Some(self.current.as_mut().unwrap())` if `current` is less than `end`,
-  ///and `None` if it's not.
-  #[inline]
-  fn next(&mut self) -> Option<Self::Item> {
-    if self.current < self.end {
-      unsafe {
-        let res = Some(self.current.as_mut().unwrap());
-        self.current = self.current.add(1);
-        res
-      }
-    } else {
-      None
-    }
-  }
-}
-
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, {N}> {
-  type IntoIter = StaticVecIteratorConst<'a, T>;
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
+  type IntoIter = StaticVecIterConst<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
-  ///Returns a `StaticVecIteratorConst` over the StaticVec's inhabited area.
+  ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
     self.iter()
   }
 }
 
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
-  type IntoIter = StaticVecIteratorMut<'a, T>;
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
+  type IntoIter = StaticVecIterMut<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
-  ///Returns a `StaticVecIteratorMut`` over the StaticVec's inhabited area.
+  ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
     self.iter_mut()
   }
 }
 
-impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
-  ///Attempts to create a new StaticVec instance of the specified capacity from `iter`.
-  ///If it has a size greater than `N`, any contents after that point are ignored.
+impl<T, const N: usize> FromIterator<T> for StaticVec<T, { N }> {
+  ///Creates a new StaticVec instance from the elements, if any, of `iter`.
+  ///If it has a size greater than the StaticVec's capacity, any items after
+  ///that point are ignored.
   #[inline]
   fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
     let mut res = Self::new();
@@ -443,3 +487,87 @@ impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
     res
   }
 }
+
+impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
+  type Item = &'a T;
+  ///Returns `Some(&*self.start)` if `start` is less than `end`,
+  ///and `None` if it's not.
+  #[inline(always)]
+  fn next(&mut self) -> Option<Self::Item> {
+    if self.start < self.end {
+      unsafe {
+        let res = Some(&*self.start);
+        self.start = self.start.add(1);
+        res
+      }
+    } else {
+      None
+    }
+  }
+  #[inline(always)]
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    let len = distance_between(self.end, self.start);
+    (len, Some(len))
+  }
+}
+
+impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
+  ///Returns `Some(&*self.end)` if `end` is greater than `start`,
+  ///and `None` if it's not.
+  #[inline(always)]
+  fn next_back(&mut self) -> Option<Self::Item> {
+    if self.end > self.start {
+      unsafe {
+        let res = Some(&*self.end);
+        self.end = self.end.sub(1);
+        res
+      }
+    } else {
+      None
+    }
+  }
+}
+
+impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {}
+
+impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
+  type Item = &'a mut T;
+  ///Returns `Some(&mut *self.start)` if `start` is less than `end`,
+  ///and `None` if it's not.
+  #[inline(always)]
+  fn next(&mut self) -> Option<Self::Item> {
+    if self.start < self.end {
+      unsafe {
+        let res = Some(&mut *self.start);
+        self.start = self.start.add(1);
+        res
+      }
+    } else {
+      None
+    }
+  }
+  #[inline(always)]
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    let len = distance_between(self.end, self.start);
+    (len, Some(len))
+  }
+}
+
+impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
+  ///Returns `Some(&mut *self.end)` if `end` is greater than `start`,
+  ///and `None` if it's not.
+  #[inline(always)]
+  fn next_back(&mut self) -> Option<Self::Item> {
+    if self.end > self.start {
+      unsafe {
+        let res = Some(&mut *self.end);
+        self.end = self.end.sub(1);
+        res
+      }
+    } else {
+      None
+    }
+  }
+}
+
+impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {}

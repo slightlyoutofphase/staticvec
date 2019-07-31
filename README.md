@@ -9,8 +9,8 @@ use staticvec::StaticVec;
 
 fn main() {
   let mut v = StaticVec::<i32, 24>::new();
-  for _i in 0..v.capacity() {
-    v.push(42);
+  for i in 0..v.capacity() {
+    v.push(i as i32);
   }
   for i in &v {
     println!("{}", i);
@@ -25,7 +25,7 @@ fn main() {
   for i in &v {
     println!("{}", i);
   }
-  for i in &v.reversed() {
+  for i in &v.reversed().drain(2..4) {
     println!("{}", i);
   }
   while v.is_not_empty() {

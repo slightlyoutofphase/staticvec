@@ -5,22 +5,15 @@ homepage = "https://bitbucket.org/SlightlyOutOfPhase/staticvec"
 repository = "https://bitbucket.org/SlightlyOutOfPhase/staticvec"
 license = "MIT"
 readme = "README.md"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec","array","container","vector","stack"]
 categories = ["data-structures"]
 edition = "2018"
 
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = true
-debug-assertions = false
-codegen-units = 1
-panic = 'abort'
-incremental = false
-overflow-checks = false
+[[bin]]
+name = "main"
+path = "demo/main.rs"
 
 [profile.dev]
 opt-level = 0
@@ -32,5 +25,16 @@ codegen-units = 16
 panic = 'unwind'
 incremental = false
 overflow-checks = true
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = false
 
 [dependencies]
