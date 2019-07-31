@@ -10,7 +10,7 @@ use std::mem::MaybeUninit;
 use std::ops::{Bound::*, Index, IndexMut, RangeBounds};
 use std::ptr;
 
-///A Vec-like struct (directly API-compatible where it can be at least as far as function signatures go) implemented with
+///A [Vec](std::vec::Vec)-like struct (directly API-compatible where it can be at least as far as function signatures go) implemented with
 ///const generics around a static array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
   data: [MaybeUninit<T>; N],
@@ -33,9 +33,11 @@ pub struct StaticVecIteratorMut<'a, T: 'a> {
 
 impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a new StaticVec instance.
+  #[inline(always)]
   pub fn new() -> Self {
     unsafe {
       Self {
+        //Sound because data is an array of MaybeUninit<T>, not an array of T.
         data: MaybeUninit::uninit().assume_init(),
         length: 0,
       }
@@ -43,8 +45,10 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Returns the current length of the StaticVec.
-  ///Just as for a normal Vec, this means the number of elements that
-  ///have been added to it with `push`, `insert`, e.t.c.
+  ///Just as for a normal [Vec](std::vec::Vec), this means the number of elements that
+  ///have been added to it with `push`, `insert`, e.t.c. except in the case
+  ///that it has been set directly with the unsafe `set_len` function.
+  #[inline(always)]
   pub fn len(&self) -> usize {
     self.length
   }
@@ -52,6 +56,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns the total capacity of the StaticVec.
   ///This is always equivalent to the generic `N` parameter it was declared with,
   ///which determines the fixed size of the static backing array.
+  #[inline(always)]
   pub const fn capacity(&self) -> usize {
     N
   }
@@ -59,41 +64,49 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Directly sets the `length` field of the StaticVec to `new_len`. Useful if you intend
   ///to write to it solely element-wise, but marked unsafe due to how it creates the potential for reading
   ///from unitialized memory later on.
+  #[inline(always)]
   pub unsafe fn set_len(&mut self, new_len: usize) {
     self.length = new_len;
   }
 
   ///Returns true if the current length of the StaticVec is 0.
+  #[inline(always)]
   pub fn is_empty(&self) -> bool {
     self.length == 0
   }
 
   ///Returns true if the current length of the StaticVec is greater than 0.
+  #[inline(always)]
   pub fn is_not_empty(&self) -> bool {
     self.length > 0
   }
 
   ///Returns true if the current length of the StaticVec is equal to its capacity.
+  #[inline(always)]
   pub fn is_full(&self) -> bool {
     self.length == N
   }
 
   ///Returns true if the current length of the StaticVec is less than its capacity.
+  #[inline(always)]
   pub fn is_not_full(&self) -> bool {
     self.length < N
   }
 
   ///Returns a constant pointer to the first element of the StaticVec's internal array.
+  #[inline(always)]
   pub fn as_ptr(&self) -> *const T {
     self.data.as_ptr() as *const T
   }
 
   ///Returns a mutable pointer to the first element of the StaticVec's internal array.
+  #[inline(always)]
   pub fn as_mut_ptr(&mut self) -> *mut T {
     self.data.as_mut_ptr() as *mut T
   }
 
   ///Returns a constant reference to a slice of the StaticVec's inhabited area.
+  #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
     unsafe {
       (self.data.get_unchecked(0..self.length) as *const [MaybeUninit<T>] as *const [T])
@@ -103,6 +116,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Returns a mutable reference to a slice of the StaticVec's inhabited area.
+  #[inline(always)]
   pub fn as_mut_slice(&mut self) -> &mut [T] {
     unsafe {
       (self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T])
@@ -113,6 +127,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Asserts that the current length of the StaticVec is less than `N`,
   ///and if so appends a value to the end of it.
+  #[inline(always)]
   pub fn push(&mut self, value: T) {
     assert!(self.length < N, "No space left!");
     unsafe { self.data.get_unchecked_mut(self.length).write(value) };
@@ -121,6 +136,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Removes the value at the last position of the StaticVec and returns it in `Some` if
   ///the StaticVec has a current length greater than 0, and returns `None` otherwise.
+  #[inline(always)]
   pub fn pop(&mut self) -> Option<T> {
     if self.length == 0 {
       None
@@ -132,6 +148,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Appends a value to the end of the StaticVec without asserting that
   ///its current length is less than `N`.
+  #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, value: T) {
     self.data.get_unchecked_mut(self.length).write(value);
     self.length += 1;
@@ -139,6 +156,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Pops a value from the end of the StaticVec and returns it directly without asserting that
   ///the StaticVec's current length is greater than 0.
+  #[inline(always)]
   pub unsafe fn pop_unchecked(&mut self) -> T {
     self.length -= 1;
     self.data.get_unchecked(self.length).read()
@@ -147,6 +165,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///and if so removes the value at that position and returns it. Any values
   ///that exist in later positions are shifted to the left.
+  #[inline]
   pub fn remove(&mut self, index: usize) -> T {
     assert!(index < self.length, "Out of range!");
     unsafe {
@@ -161,6 +180,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Asserts that the current length of the StaticVec is less than `N` and that
   ///`index` is less than the length, and if so inserts `value` at that position.
   ///Any values that exist in later positions are shifted to the right.
+  #[inline]
   pub fn insert(&mut self, index: usize, value: T) {
     assert!(
       self.length < N && index <= self.length,
@@ -175,6 +195,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Removes all contents from the StaticVec and sets its length back to 0.
+  #[inline(always)]
   pub fn clear(&mut self) {
     unsafe {
       ptr::drop_in_place(self.as_mut_slice());
@@ -183,18 +204,21 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Performs an unstable in-place sort of the StaticVec's inhabited area.
+  #[inline(always)]
   pub fn sort(&mut self)
   where T: Ord {
     self.as_mut_slice().sort_unstable();
   }
 
   ///Reverses the contents of the StaticVec's inhabited area in-place.
+  #[inline(always)]
   pub fn reverse(&mut self) {
     self.as_mut_slice().reverse();
   }
 
   ///Returns a separate, sorted StaticVec of the contents of the StaticVec's inhabited area without modifying
   ///the original data.
+  #[inline]
   pub fn sorted(&mut self) -> Self
   where T: Copy + Ord {
     unsafe {
@@ -210,6 +234,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Returns a separate, reversed StaticVec of the contents of the StaticVec's inhabited area without modifying
   ///the original data.
+  #[inline]
   pub fn reversed(&mut self) -> Self
   where T: Copy {
     unsafe {
@@ -226,6 +251,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Copies and appends all elements in a slice to the StaticVec.
   ///Unlike the implementation of this function for [Vec](std::vec::Vec), no iterator is used,
   ///just a single pointer-copy call.
+  #[inline]
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
     let mut added_length = other.len();
@@ -241,6 +267,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Removes the specified range of elements from the StaticVec and returns them in a new one.
+  #[inline]
   pub fn drain<R>(&mut self, range: R) -> Self
   //No Copy bounds here because the original StaticVec gives up all access to the values in question.
   where R: RangeBounds<usize> {
@@ -273,6 +300,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Returns a `StaticVecIteratorConst` over the StaticVec's inhabited area.
+  #[inline]
   pub fn iter<'a>(&'a self) -> StaticVecIteratorConst<'a, T> {
     unsafe {
       if self.length > 0 {
@@ -292,6 +320,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Returns a `StaticVecIteratorMut` over the StaticVec's inhabited area.
+  #[inline]
   pub fn iter_mut<'a>(&'a mut self) -> StaticVecIteratorMut<'a, T> {
     unsafe {
       if self.length > 0 {
@@ -313,6 +342,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
 impl<T, const N: usize> Drop for StaticVec<T, {N}> {
   ///Calls `clear` through the StaticVec before dropping it.
+  #[inline(always)]
   fn drop(&mut self) {
     self.clear();
   }
@@ -322,6 +352,7 @@ impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
   type Output = T;
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///as if so returns the value at that position as a constant reference.
+  #[inline(always)]
   fn index(&self, index: usize) -> &Self::Output {
     assert!(index < self.length, "Out of range!");
     unsafe { self.data.get_unchecked(index).get_ref() }
@@ -331,6 +362,7 @@ impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
 impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///as if so returns the value at that position as a mutable reference.
+  #[inline(always)]
   fn index_mut(&mut self, index: usize) -> &mut Self::Output {
     assert!(index < self.length, "Out of range!");
     unsafe { self.data.get_unchecked_mut(index).get_mut() }
@@ -341,6 +373,7 @@ impl<'a, T: 'a> Iterator for StaticVecIteratorConst<'a, T> {
   type Item = &'a T;
   ///Returns `Some(self.current.as_ref().unwrap())` if `current` is less than `end`,
   ///and `None` if it's not.
+  #[inline]
   fn next(&mut self) -> Option<Self::Item> {
     if self.current < self.end {
       unsafe {
@@ -358,6 +391,7 @@ impl<'a, T: 'a> Iterator for StaticVecIteratorMut<'a, T> {
   type Item = &'a mut T;
   ///Returns `Some(self.current.as_mut().unwrap())` if `current` is less than `end`,
   ///and `None` if it's not.
+  #[inline]
   fn next(&mut self) -> Option<Self::Item> {
     if self.current < self.end {
       unsafe {
@@ -375,6 +409,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, {N}> {
   type IntoIter = StaticVecIteratorConst<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
   ///Returns a `StaticVecIteratorConst` over the StaticVec's inhabited area.
+  #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
     self.iter()
   }
@@ -384,6 +419,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
   type IntoIter = StaticVecIteratorMut<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
   ///Returns a `StaticVecIteratorMut`` over the StaticVec's inhabited area.
+  #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
     self.iter_mut()
   }
@@ -392,8 +428,9 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
 impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
   ///Attempts to create a new StaticVec instance of the specified capacity from `iter`.
   ///If it has a size greater than `N`, any contents after that point are ignored.
+  #[inline]
   fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-    let mut res = StaticVec::<T, {N}>::new();
+    let mut res = Self::new();
     for value in iter {
       if res.is_not_full() {
         unsafe {
