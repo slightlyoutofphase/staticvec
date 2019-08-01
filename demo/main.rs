@@ -1,4 +1,4 @@
-use staticvec::StaticVec;
+use staticvec::{staticvec, StaticVec};
 
 #[derive(Copy, Clone)]
 struct MyStruct {
@@ -220,5 +220,8 @@ fn main() {
   }
   if let Some(i) = v2.iter().rfind(|&&x| x == 2) {
     println!("{}", i);
+  }
+  for f in staticvec![12.0, 14.0, 15.0, 16.0].iter().skip(2) {
+    println!("{}", f);
   }
 }
