@@ -57,7 +57,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   where T: Copy {
     unsafe {
       let mut _data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let fill_length = std::cmp::min(values.len(), N);
+      let fill_length = values.len().min(N);
       values
         .as_ptr()
         .copy_to_nonoverlapping(_data.as_mut_ptr() as *mut T, fill_length);
@@ -326,7 +326,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     res
   }
 
-  ///Copies and appends all elements in a slice to the StaticVec.
+  ///Copies and appends all elements, if any, in a slice to the StaticVec.
   ///Unlike the implementation of this function for [Vec](std::vec::Vec), no iterator is used,
   ///just a single pointer-copy call.
   ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues.
