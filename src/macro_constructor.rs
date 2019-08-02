@@ -1,5 +1,5 @@
 use crate::StaticVec;
-use std::mem::MaybeUninit;
+use core::mem::MaybeUninit;
 
 #[doc(hidden)]
 #[inline(always)]
