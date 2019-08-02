@@ -38,4 +38,8 @@ name = "demo"
 path = "demo/demo.rs"
 doc = false
 
+[features]
+std = []
+default = ["std"]
+
 [dependencies]

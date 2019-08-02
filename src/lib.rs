@@ -1,3 +1,4 @@
+#![cfg_attr(not(feature = "std"), no_std)]
 #![feature(core_intrinsics)]
 #![feature(const_fn)]
 #![feature(const_generics)]
@@ -6,12 +7,12 @@
 #![feature(exact_size_is_empty)]
 
 use crate::utils::*;
-use std::cmp::{Ord, PartialEq};
-use std::iter::FromIterator;
-use std::marker::PhantomData;
-use std::mem::MaybeUninit;
-use std::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, Index, IndexMut, RangeBounds};
-use std::ptr;
+use core::cmp::{Ord, PartialEq};
+use core::iter::FromIterator;
+use core::marker::PhantomData;
+use core::mem::MaybeUninit;
+use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, Index, IndexMut, RangeBounds};
+use core::ptr;
 #[doc(hidden)]
 pub mod macro_constructor;
 mod macros;
@@ -24,14 +25,14 @@ pub struct StaticVec<T, const N: usize> {
   length: usize,
 }
 
-///Similar to std's [Iter](std::slice::IterMut), but specifically implemented with StaticVecs in mind.
+///Similar to [Iter](core::slice::IterMut), but specifically implemented with StaticVecs in mind.
 pub struct StaticVecIterConst<'a, T: 'a> {
   start: *const T,
   end: *const T,
   marker: PhantomData<&'a T>,
 }
 
-///Similar to std's [IterMut](std::slice::IterMut), but specifically implemented with StaticVecs in mind.
+///Similar to [IterMut](core::slice::IterMut), but specifically implemented with StaticVecs in mind.
 pub struct StaticVecIterMut<'a, T: 'a> {
   start: *mut T,
   end: *mut T,
@@ -54,7 +55,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a new StaticVec instance filled with the contents, if any, of a slice.
   ///If the slice has a length greater than the StaticVec's capacity,
   ///any contents after that point are ignored.
-  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues.
+  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
   pub fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
@@ -254,7 +255,8 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Performs an stable in-place sort of the StaticVec's inhabited area.
-  ///Locally requires that `T` implements [Ord](std::cmp::Ord) to make the sorting possible.
+  ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
+  #[cfg(feature = "std")]
   #[inline(always)]
   pub fn sort(&mut self)
   where T: Ord {
@@ -262,7 +264,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Performs an unstable in-place sort of the StaticVec's inhabited area.
-  ///Locally requires that `T` implements [Ord](std::cmp::Ord) to make the sorting possible.
+  ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
   #[inline(always)]
   pub fn sort_unstable(&mut self)
   where T: Ord {
@@ -277,8 +279,9 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Returns a separate, stable-sorted StaticVec of the contents of the
   ///StaticVec's inhabited area without modifying the original data.
-  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues,
-  ///and [Ord](std::cmp::Ord) to make the sorting possible.
+  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues,
+  ///and [Ord](core::cmp::Ord) to make the sorting possible.
+  #[cfg(feature = "std")]
   #[inline]
   pub fn sorted(&mut self) -> Self
   where T: Copy + Ord {
@@ -295,8 +298,8 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Returns a separate, unstable-sorted StaticVec of the contents of the
   ///StaticVec's inhabited area without modifying the original data.
-  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues,
-  ///and [Ord](std::cmp::Ord) to make the sorting possible.
+  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues,
+  ///and [Ord](core::cmp::Ord) to make the sorting possible.
   #[inline]
   pub fn sorted_unstable(&mut self) -> Self
   where T: Copy + Ord {
@@ -313,7 +316,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Returns a separate, reversed StaticVec of the contents of the StaticVec's
   ///inhabited area without modifying the original data.
-  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues.
+  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
   pub fn reversed(&mut self) -> Self
   where T: Copy {
@@ -332,7 +335,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Copies and appends all elements, if any, in a slice to the StaticVec.
   ///Unlike the implementation of this function for [Vec](std::vec::Vec), no iterator is used,
   ///just a single pointer-copy call.
-  ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues.
+  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
@@ -566,6 +569,7 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
   }
+
   #[inline(always)]
   fn is_empty(&self) -> bool {
     distance_between(self.end, self.start) == 0

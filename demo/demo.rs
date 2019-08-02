@@ -121,7 +121,7 @@ fn main() {
   vb.push('b');
   vb.push('a');
   let vbm = vb.as_mut_slice();
-  vbm.sort();
+  vbm.sort_unstable();
   for s in vbm {
     println!("{}", s);
   }
@@ -130,7 +130,7 @@ fn main() {
   for s in vbmb {
     println!("{}", s);
   }
-  for s in &vb.sorted() {
+  for s in &vb.sorted_unstable() {
     println!("{}", s);
   }
   for s in &vb.reversed() {
@@ -180,7 +180,7 @@ fn main() {
     }
   }
   let mut empty = StaticVec::<&'static str, 0>::new();
-  empty.sort();
+  empty.sort_unstable();
   empty.reverse();
   for s in empty.as_slice() {
     println!("{}", s);
@@ -197,7 +197,7 @@ fn main() {
   for s in &empty.reversed() {
     println!("{}", s);
   }
-  for s in &empty.sorted() {
+  for s in &empty.sorted_unstable() {
     println!("{}", s);
   }
   let mut msv = StaticVec::<MyStruct, 4>::new();
