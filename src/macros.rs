@@ -7,6 +7,6 @@ macro_rules! staticvec {
   ($($x:expr),*$(,)*) => ({
     use staticvec::macro_constructor::__new_from_temp_slice;
     const CAP: usize = 0$(+staticvec!(@add_one $x))*;
-    __new_from_temp_slice::<_,{CAP}>(&[$($x,)*])
+    unsafe { __new_from_temp_slice::<_,{CAP}>(&[$($x,)*]) }
   });
 }
