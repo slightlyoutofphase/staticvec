@@ -1,11 +1,11 @@
 [package]
 name = "staticvec"
 description = "Implements a fixed-capacity Vec alternative backed by a static array using const generics."
-homepage = "https://bitbucket.org/SlightlyOutOfPhase/staticvec"
-repository = "https://bitbucket.org/SlightlyOutOfPhase/staticvec"
+homepage = "https://github.com/slightlyoutofphase/staticvec"
+repository = "https://github.com/slightlyoutofphase/staticvec"
 license = "MIT"
 readme = "README.md"
-version = "0.1.9"
+version = "0.1.10"
 authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec","array","container","vector","stack"]
 categories = ["data-structures"]
