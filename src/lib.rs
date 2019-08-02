@@ -12,6 +12,7 @@ use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, Index, IndexMut, RangeBounds};
 use std::ptr;
+#[doc(hidden)]
 pub mod macro_constructor;
 mod macros;
 mod utils;
@@ -313,7 +314,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a separate, reversed StaticVec of the contents of the StaticVec's
   ///inhabited area without modifying the original data.
   ///Locally requires that `T` implements [Copy](std::marker::Copy) to avoid soundness issues.
-  #[inline(always)]
+  #[inline]
   pub fn reversed(&mut self) -> Self
   where T: Copy {
     let mut res = Self::new();
@@ -381,7 +382,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
-  #[inline]
+  #[inline(always)]
   pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
     unsafe {
       StaticVecIterConst::<'a, T> {
@@ -393,7 +394,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
-  #[inline]
+  #[inline(always)]
   pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
     unsafe {
       StaticVecIterMut::<'a, T> {
@@ -458,7 +459,7 @@ impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
   ///Creates a new StaticVec instance from the elements, if any, of `iter`.
   ///If it has a size greater than the StaticVec's capacity, any items after
   ///that point are ignored.
-  #[inline]
+  #[inline(always)]
   fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
     let mut res = Self::new();
     for value in iter {
@@ -476,8 +477,6 @@ impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
 
 impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
   type Item = &'a T;
-  ///Returns `Some(&*self.start)` if `start` is less than `end`,
-  ///and `None` if it's not.
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
     if self.start < self.end {
@@ -490,6 +489,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
       None
     }
   }
+
   #[inline(always)]
   fn size_hint(&self) -> (usize, Option<usize>) {
     let len = distance_between(self.end, self.start);
@@ -498,8 +498,6 @@ impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
 }
 
 impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
-  ///Returns `Some(&*self.end)` if `end` is greater than `start`,
-  ///and `None` if it's not.
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
     if self.end > self.start {
@@ -519,6 +517,7 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
   }
+
   #[inline(always)]
   fn is_empty(&self) -> bool {
     distance_between(self.end, self.start) == 0
@@ -527,8 +526,6 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {
 
 impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
   type Item = &'a mut T;
-  ///Returns `Some(&mut *self.start)` if `start` is less than `end`,
-  ///and `None` if it's not.
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
     if self.start < self.end {
@@ -541,6 +538,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
       None
     }
   }
+
   #[inline(always)]
   fn size_hint(&self) -> (usize, Option<usize>) {
     let len = distance_between(self.end, self.start);
@@ -549,8 +547,6 @@ impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
 }
 
 impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
-  ///Returns `Some(&mut *self.end)` if `end` is greater than `start`,
-  ///and `None` if it's not.
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
     if self.end > self.start {
