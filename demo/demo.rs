@@ -1,4 +1,4 @@
-use staticvec::{staticvec, StaticVec};
+use staticvec::*;
 
 #[derive(Copy, Clone)]
 struct MyStruct {

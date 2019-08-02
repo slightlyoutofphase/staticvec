@@ -1,11 +1,13 @@
-Implements a fixed-capacity Vec alternative backed by a static array using const generics.
+Implements a fixed-capacity stack-allocated Vec alternative backed by a static array, using const generics.
+
+Contributions/suggestions/e.t.c very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
 
 A basic usage example:
 
 ```rust
-use staticvec::{staticvec, StaticVec};
+use staticvec::*;
 
 fn main() {
   let mut v = StaticVec::<i32, 64>::new();
@@ -33,6 +35,16 @@ fn main() {
   }
   for f in staticvec![12.0, 14.0, 15.0, 16.0].iter().skip(2) {
     println!("{}", f);
+  }
+  for v in &staticvec![
+    staticvec![12.0, 14.0],
+    staticvec![16.0, 18.0],
+    staticvec![20.0, 22.0],
+    staticvec![24.0, 26.0]
+  ] {
+    for f in v.iter().skip(1) {
+      println!("{}", f);
+    }
   }
 }
 ```
