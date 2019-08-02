@@ -1,5 +1,7 @@
 Implements a fixed-capacity stack-allocated Vec alternative backed by a static array, using const generics.
 
+`no_std` compatible (with almost no loss of functionality) by setting the `--no-default-features` flag.
+
 Contributions/suggestions/e.t.c very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
