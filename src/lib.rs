@@ -3,6 +3,7 @@
 #![feature(const_generics)]
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_extra)]
+#![feature(exact_size_is_empty)]
 
 use crate::utils::*;
 use std::cmp::{Ord, PartialEq};
@@ -11,11 +12,12 @@ use std::marker::PhantomData;
 use std::mem::MaybeUninit;
 use std::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, Index, IndexMut, RangeBounds};
 use std::ptr;
+pub mod macro_constructor;
+mod macros;
 mod utils;
 
-///A [Vec](std::vec::Vec)-like struct (directly API-compatible where it can be
-///at least as far as function signatures go) implemented with
-///const generics around a static array of fixed `N` capacity.
+///A [Vec](std::vec::Vec)-like struct (mostly directly API-compatible where it can be)
+///implemented with const generics around a static array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
   data: [MaybeUninit<T>; N],
   length: usize,
@@ -70,7 +72,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Returns a new StaticVec instance filled with the return value of
   ///an initializer function.
-  ///`len()` will return the same as `capacity()` for the newly created StaticVec.
+  ///The length field of the newly created StaticVec will be equal to its capacity.
   #[inline]
   pub fn filled_with(initializer: fn() -> T) -> Self {
     unsafe {
@@ -224,7 +226,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Asserts that `T`he current length of the StaticVec is less than `N` and that
+  ///Asserts that the current length of the StaticVec is less than `N` and that
   ///`index` is less than the length, and if so inserts `value` at that position.
   ///Any values that exist in later positions are shifted to the right.
   #[inline]
@@ -382,18 +384,10 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   #[inline]
   pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
     unsafe {
-      if self.length > 0 {
-        StaticVecIterConst::<'a, T> {
-          start: self.as_ptr(),
-          end: self.as_ptr().add(self.length),
-          marker: PhantomData,
-        }
-      } else {
-        StaticVecIterConst::<'a, T> {
-          start: self.as_ptr(),
-          end: self.as_ptr(),
-          marker: PhantomData,
-        }
+      StaticVecIterConst::<'a, T> {
+        start: self.as_ptr(),
+        end: self.as_ptr().add(self.length),
+        marker: PhantomData,
       }
     }
   }
@@ -402,18 +396,10 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   #[inline]
   pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
     unsafe {
-      if self.length > 0 {
-        StaticVecIterMut::<'a, T> {
-          start: self.as_mut_ptr(),
-          end: self.as_mut_ptr().add(self.length),
-          marker: PhantomData,
-        }
-      } else {
-        StaticVecIterMut::<'a, T> {
-          start: self.as_mut_ptr(),
-          end: self.as_mut_ptr(),
-          marker: PhantomData,
-        }
+      StaticVecIterMut::<'a, T> {
+        start: self.as_mut_ptr(),
+        end: self.as_mut_ptr().add(self.length),
+        marker: PhantomData,
       }
     }
   }
@@ -497,7 +483,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
     if self.start < self.end {
       unsafe {
         let res = Some(&*self.start);
-        self.start = self.start.add(1);
+        self.start = self.start.offset(1);
         res
       }
     } else {
@@ -518,8 +504,8 @@ impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
     if self.end > self.start {
       unsafe {
+        self.end = self.end.offset(-1);
         let res = Some(&*self.end);
-        self.end = self.end.sub(1);
         res
       }
     } else {
@@ -528,7 +514,16 @@ impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
   }
 }
 
-impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {}
+impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {
+  #[inline(always)]
+  fn len(&self) -> usize {
+    distance_between(self.end, self.start)
+  }
+  #[inline(always)]
+  fn is_empty(&self) -> bool {
+    distance_between(self.end, self.start) == 0
+  }
+}
 
 impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
   type Item = &'a mut T;
@@ -539,7 +534,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
     if self.start < self.end {
       unsafe {
         let res = Some(&mut *self.start);
-        self.start = self.start.add(1);
+        self.start = self.start.offset(1);
         res
       }
     } else {
@@ -560,8 +555,8 @@ impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
     if self.end > self.start {
       unsafe {
+        self.end = self.end.offset(-1);
         let res = Some(&mut *self.end);
-        self.end = self.end.sub(1);
         res
       }
     } else {
@@ -570,4 +565,13 @@ impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
   }
 }
 
-impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {}
+impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {
+  #[inline(always)]
+  fn len(&self) -> usize {
+    distance_between(self.end, self.start)
+  }
+  #[inline(always)]
+  fn is_empty(&self) -> bool {
+    distance_between(self.end, self.start) == 0
+  }
+}
