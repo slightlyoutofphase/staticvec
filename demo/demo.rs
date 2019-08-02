@@ -221,7 +221,20 @@ fn main() {
   if let Some(i) = v2.iter().rfind(|&&x| x == 2) {
     println!("{}", i);
   }
-  for f in staticvec![12.0, 14.0, 15.0, 16.0].iter().skip(2) {
-    println!("{}", f);
+  for v in &staticvec![
+    staticvec![12.0, 14.0],
+    staticvec![16.0, 18.0],
+    staticvec![20.0, 22.0],
+    staticvec![24.0, 26.0]
+  ] {
+    for f in v.iter().skip(1) {
+      println!("{}", f);
+    }
   }
+  let numbers = staticvec![1, 2, 3, 4, 5];
+  let zero = "0".to_string();
+  let result = numbers
+    .iter()
+    .rfold(zero, |acc, &x| format!("({} + {})", x, acc));
+  println!("{}", result);
 }
