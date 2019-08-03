@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(doc_cfg)]
 #![feature(core_intrinsics)]
 #![feature(const_fn)]
 #![feature(const_generics)]
@@ -6,20 +7,21 @@
 #![feature(maybe_uninit_extra)]
 #![feature(exact_size_is_empty)]
 
-use crate::{iterators::*, utils::*};
+//Literally just for stable-sort.
+#[cfg(feature = "std")]
+extern crate alloc;
+
+#[cfg(rustdoc)]
+use alloc::vec::Vec;
+
+pub use crate::iterators::*;
+use crate::utils::*;
 use core::cmp::{Ord, PartialEq};
 use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, Index, IndexMut, RangeBounds};
 use core::ptr;
-
-#[cfg(feature = "std")]
-mod std_items {
-  extern crate alloc;
-  #[allow(unused_imports)]
-  use alloc::vec::Vec;
-}
 
 mod iterators;
 mod macros;
