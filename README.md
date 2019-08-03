@@ -1,4 +1,4 @@
-[![Latest Version]][crates.io] [![Rustc Version nightly]]
+[![Latest Version]][crates.io] ![Rustc Version nightly]
 
 [Latest Version]: https://img.shields.io/crates/v/staticvec.svg
 [crates.io]: https://crates.io/crates/staticvec
