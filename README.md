@@ -1,7 +1,7 @@
 Implements a fixed-capacity stack-allocated Vec alternative backed by a static array, using const generics.
 
-Fully `no_std` compatible (with almost no loss of functionality) by setting 
-`default-features = false` for the staticvec dependency in your `Cargo.toml`.
+Fully `#![no_std]` compatible (with almost no loss of functionality) by setting 
+`default-features = false` for the `staticvec` dependency in your `Cargo.toml`.
 
 Contributions/suggestions/e.t.c very welcome!
 
