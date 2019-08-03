@@ -5,8 +5,8 @@
 macro_rules! staticvec {
   (@put_one $val:expr) => (1);
   ($($val:expr),*$(,)*) => ({
-    const CAP: usize = 0$(+staticvec!(@put_one $val))*;
-    let mut res = StaticVec::<_, {CAP}>::new(); {
+    let mut res = StaticVec::<_, {0$(+staticvec!(@put_one $val))*}>::new();
+    {
       unsafe {
         ($({
           res.push_unchecked($val);
