@@ -3,10 +3,16 @@
 ///number of elements, if any, in the slice.
 #[macro_export]
 macro_rules! staticvec {
-  (@add_one $x:expr) => (1);
-  ($($x:expr),*$(,)*) => ({
-    use staticvec::macro_constructor::__new_from_temp_slice;
-    const CAP: usize = 0$(+staticvec!(@add_one $x))*;
-    unsafe { __new_from_temp_slice::<_,{CAP}>(&[$($x,)*]) }
+  (@put_one $val:expr) => (1);
+  ($($val:expr),*$(,)*) => ({
+    const CAP: usize = 0$(+staticvec!(@put_one $val))*;
+    let mut res = StaticVec::<_, {CAP}>::new(); {
+      unsafe {
+        ($({
+          res.push_unchecked($val);
+        }),*)
+      }
+    };
+    res
   });
 }

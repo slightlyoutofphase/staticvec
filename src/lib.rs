@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 #![feature(core_intrinsics)]
 #![feature(const_fn)]
 #![feature(const_generics)]
@@ -6,37 +6,30 @@
 #![feature(maybe_uninit_extra)]
 #![feature(exact_size_is_empty)]
 
-use crate::utils::*;
+use crate::{iterators::*, utils::*};
 use core::cmp::{Ord, PartialEq};
 use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, Index, IndexMut, RangeBounds};
 use core::ptr;
-#[doc(hidden)]
-pub mod macro_constructor;
+
+#[cfg(feature = "std")]
+mod std_items {
+  extern crate alloc;
+  #[allow(unused_imports)]
+  use alloc::vec::Vec;
+}
+
+mod iterators;
 mod macros;
 mod utils;
 
-///A [Vec](std::vec::Vec)-like struct (mostly directly API-compatible where it can be)
+///A [Vec](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 ///implemented with const generics around a static array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
   data: [MaybeUninit<T>; N],
   length: usize,
-}
-
-///Similar to [Iter](core::slice::IterMut), but specifically implemented with StaticVecs in mind.
-pub struct StaticVecIterConst<'a, T: 'a> {
-  start: *const T,
-  end: *const T,
-  marker: PhantomData<&'a T>,
-}
-
-///Similar to [IterMut](core::slice::IterMut), but specifically implemented with StaticVecs in mind.
-pub struct StaticVecIterMut<'a, T: 'a> {
-  start: *mut T,
-  end: *mut T,
-  marker: PhantomData<&'a mut T>,
 }
 
 impl<T, const N: usize> StaticVec<T, {N}> {
@@ -60,13 +53,13 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   pub fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
     unsafe {
-      let mut _data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
       let fill_length = values.len().min(N);
       values
         .as_ptr()
-        .copy_to_nonoverlapping(_data.as_mut_ptr() as *mut T, fill_length);
+        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
       Self {
-        data: _data,
+        data: data_,
         length: fill_length,
       }
     }
@@ -78,19 +71,19 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   #[inline]
   pub fn filled_with(initializer: fn() -> T) -> Self {
     unsafe {
-      let mut _data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      for val in _data.iter_mut() {
+      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      for val in data_.iter_mut() {
         val.write(initializer());
       }
       Self {
-        data: _data,
+        data: data_,
         length: N,
       }
     }
   }
 
   ///Returns the current length of the StaticVec.
-  ///Just as for a normal [Vec](std::vec::Vec), this means the number of elements that
+  ///Just as for a normal [Vec](alloc::vec::Vec), this means the number of elements that
   ///have been added to it with `push`, `insert`, e.t.c. except in the case
   ///that it has been set directly with the unsafe `set_len` function.
   #[inline(always)]
@@ -168,7 +161,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///and if so appends a value to the end of it.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
-    assert!(self.length < N, "No space left!");
+    assert!(self.length < N);
     unsafe { self.data.get_unchecked_mut(self.length).write(value) };
     self.length += 1;
   }
@@ -206,7 +199,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///that exist in later positions are shifted to the left.
   #[inline]
   pub fn remove(&mut self, index: usize) -> T {
-    assert!(index < self.length, "Out of range!");
+    assert!(index < self.length);
     unsafe {
       let p = self.as_mut_ptr().add(index);
       let res = p.read();
@@ -233,10 +226,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Any values that exist in later positions are shifted to the right.
   #[inline]
   pub fn insert(&mut self, index: usize, value: T) {
-    assert!(
-      self.length < N && index <= self.length,
-      "Either you're out of range or there's no space left!"
-    );
+    assert!(self.length < N && index <= self.length);
     unsafe {
       let p = self.as_mut_ptr().add(index);
       p.copy_to(p.offset(1), self.length - index);
@@ -333,7 +323,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Copies and appends all elements, if any, in a slice to the StaticVec.
-  ///Unlike the implementation of this function for [Vec](std::vec::Vec), no iterator is used,
+  ///Unlike the implementation of this function for [Vec](alloc::vec::Vec), no iterator is used,
   ///just a single pointer-copy call.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
@@ -367,7 +357,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
       Excluded(&idx) => idx,
       Unbounded => self.length,
     };
-    assert!(start <= end && end <= self.length, "Out of range!");
+    assert!(start <= end && end <= self.length);
     let mut res = Self::new();
     res.length = end - start;
     unsafe {
@@ -409,6 +399,14 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 }
 
+impl<T, const N: usize> Default for StaticVec<T, {N}> {
+  ///Calls `new`.
+  #[inline(always)]
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl<T, const N: usize> Drop for StaticVec<T, {N}> {
   ///Calls `clear` through the StaticVec before dropping it.
   #[inline(always)]
@@ -423,7 +421,7 @@ impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
   ///as if so returns the value at that position as a constant reference.
   #[inline(always)]
   fn index(&self, index: usize) -> &Self::Output {
-    assert!(index < self.length, "Out of range!");
+    assert!(index < self.length);
     unsafe { self.data.get_unchecked(index).get_ref() }
   }
 }
@@ -433,7 +431,7 @@ impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
   ///as if so returns the value at that position as a mutable reference.
   #[inline(always)]
   fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-    assert!(index < self.length, "Out of range!");
+    assert!(index < self.length);
     unsafe { self.data.get_unchecked_mut(index).get_mut() }
   }
 }
@@ -475,103 +473,5 @@ impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
       }
     }
     res
-  }
-}
-
-impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
-  type Item = &'a T;
-  #[inline(always)]
-  fn next(&mut self) -> Option<Self::Item> {
-    if self.start < self.end {
-      unsafe {
-        let res = Some(&*self.start);
-        self.start = self.start.offset(1);
-        res
-      }
-    } else {
-      None
-    }
-  }
-
-  #[inline(always)]
-  fn size_hint(&self) -> (usize, Option<usize>) {
-    let len = distance_between(self.end, self.start);
-    (len, Some(len))
-  }
-}
-
-impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
-  #[inline(always)]
-  fn next_back(&mut self) -> Option<Self::Item> {
-    if self.end > self.start {
-      unsafe {
-        self.end = self.end.offset(-1);
-        let res = Some(&*self.end);
-        res
-      }
-    } else {
-      None
-    }
-  }
-}
-
-impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {
-  #[inline(always)]
-  fn len(&self) -> usize {
-    distance_between(self.end, self.start)
-  }
-
-  #[inline(always)]
-  fn is_empty(&self) -> bool {
-    distance_between(self.end, self.start) == 0
-  }
-}
-
-impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
-  type Item = &'a mut T;
-  #[inline(always)]
-  fn next(&mut self) -> Option<Self::Item> {
-    if self.start < self.end {
-      unsafe {
-        let res = Some(&mut *self.start);
-        self.start = self.start.offset(1);
-        res
-      }
-    } else {
-      None
-    }
-  }
-
-  #[inline(always)]
-  fn size_hint(&self) -> (usize, Option<usize>) {
-    let len = distance_between(self.end, self.start);
-    (len, Some(len))
-  }
-}
-
-impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
-  #[inline(always)]
-  fn next_back(&mut self) -> Option<Self::Item> {
-    if self.end > self.start {
-      unsafe {
-        self.end = self.end.offset(-1);
-        let res = Some(&mut *self.end);
-        res
-      }
-    } else {
-      None
-    }
-  }
-}
-
-impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {
-  #[inline(always)]
-  fn len(&self) -> usize {
-    distance_between(self.end, self.start)
-  }
-
-  #[inline(always)]
-  fn is_empty(&self) -> bool {
-    distance_between(self.end, self.start) == 0
   }
 }
