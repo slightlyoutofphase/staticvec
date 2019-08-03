@@ -1,7 +1,7 @@
 [package]
 name = "staticvec"
 description = "Implements a fixed-capacity stack-allocated Vec alternative backed by a static array, using const generics."
-homepage = "https://github.com/slightlyoutofphase/staticvec"
+homepage = "https://crates.io/crates/staticvec"
 repository = "https://github.com/slightlyoutofphase/staticvec"
 license = "MIT"
 readme = "README.md"
