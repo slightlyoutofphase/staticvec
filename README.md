@@ -1,3 +1,5 @@
+![crates.io](https://img.shields.io/crates/v/staticvec.svg)
+
 Implements a fixed-capacity stack-allocated Vec alternative backed by a static array, using const generics.
 
 Fully `#![no_std]` compatible (with almost no loss of functionality) by setting 
