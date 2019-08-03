@@ -273,7 +273,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///and [Ord](core::cmp::Ord) to make the sorting possible.
   #[cfg(feature = "std")]
   #[inline]
-  pub fn sorted(&mut self) -> Self
+  pub fn sorted(&self) -> Self
   where T: Copy + Ord {
     unsafe {
       let mut res = Self::new();
@@ -291,7 +291,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues,
   ///and [Ord](core::cmp::Ord) to make the sorting possible.
   #[inline]
-  pub fn sorted_unstable(&mut self) -> Self
+  pub fn sorted_unstable(&self) -> Self
   where T: Copy + Ord {
     unsafe {
       let mut res = Self::new();
@@ -308,7 +308,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///inhabited area without modifying the original data.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
-  pub fn reversed(&mut self) -> Self
+  pub fn reversed(&self) -> Self
   where T: Copy {
     let mut res = Self::new();
     res.length = self.length;
