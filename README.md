@@ -1,4 +1,7 @@
-![crates.io](https://img.shields.io/crates/v/staticvec.svg)
+[![Latest Version]][crates.io] [![Rustc Version nightly]][rustc]
+
+[Latest Version]: https://img.shields.io/crates/v/staticvec.svg
+[Rustc Version nightly]: https://img.shields.io/badge/rustc-nightly-lightgray.svg
 
 Implements a fixed-capacity stack-allocated Vec alternative backed by a static array, using const generics.
 
