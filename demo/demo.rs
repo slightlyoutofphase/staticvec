@@ -225,7 +225,11 @@ fn main() {
     staticvec![12.0, 14.0],
     staticvec![16.0, 18.0],
     staticvec![20.0, 22.0],
-    staticvec![24.0, 26.0]
+    staticvec![24.0, 26.0],
+    staticvec![28.0, 30.0],
+    staticvec![32.0, 34.0],
+    staticvec![36.0, 38.0],
+    staticvec![40.0, 42.0]
   ] {
     for f in v.iter().skip(1) {
       println!("{}", f);
