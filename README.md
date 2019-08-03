@@ -9,7 +9,7 @@ Implements a fixed-capacity stack-allocated Vec alternative backed by a static a
 Fully `#![no_std]` compatible (with almost no loss of functionality) by setting 
 `default-features = false` for the `staticvec` dependency in your `Cargo.toml`.
 
-Contributions/suggestions/e.t.c very welcome!
+Contributions/suggestions/etc. very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
 
