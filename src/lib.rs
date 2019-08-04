@@ -67,22 +67,21 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Returns a new StaticVec instance filled with the return value of
-  ///an initializer function.
+  ///Returns a new StaticVec instance filled with the return value of an initializer function.
   ///The length field of the newly created StaticVec will be equal to its capacity.
   ///
   ///```rust
-  /// use staticvec::*;
+  ///use staticvec::*;
   ///
-  /// let mut i = 0;
-  /// let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
-  ///
-  /// assert_eq(v.len(), 64);
-  ///
-  /// assert_eq(v[0], 1);
-  /// assert_eq(v[1], 2);
-  /// assert_eq(v[2], 3);
-  /// assert_eq(v[3], 4);
+  ///fn main() {
+  ///  let mut i = 0;
+  ///  let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
+  ///  assert_eq!(v.len(), 64);
+  ///  assert_eq!(v[0], 1);
+  ///  assert_eq!(v[1], 2);
+  ///  assert_eq!(v[2], 3);
+  ///  assert_eq!(v[3], 4);
+  ///}
   /// ```
   #[inline]
   pub fn filled_with<F>(mut initializer: F) -> Self
@@ -172,25 +171,6 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Asserts that the current length of the StaticVec is less than `N`,
-  ///and if so appends a value to the end of it.
-  #[inline(always)]
-  pub fn push(&mut self, value: T) {
-    assert!(self.length < N);
-    unsafe { self.push_unchecked(value); }
-  }
-
-  ///Removes the value at the last position of the StaticVec and returns it in `Some` if
-  ///the StaticVec has a current length greater than 0, and returns `None` otherwise.
-  #[inline(always)]
-  pub fn pop(&mut self) -> Option<T> {
-    if self.length == 0 {
-      None
-    } else {
-      Some(unsafe{ self.pop_unchecked() })
-    }
-  }
-
   ///Appends a value to the end of the StaticVec without asserting that
   ///its current length is less than `N`.
   #[inline(always)]
@@ -205,6 +185,27 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   pub unsafe fn pop_unchecked(&mut self) -> T {
     self.length -= 1;
     self.data.get_unchecked(self.length).read()
+  }
+
+  ///Asserts that the current length of the StaticVec is less than `N`,
+  ///and if so appends a value to the end of it.
+  #[inline(always)]
+  pub fn push(&mut self, value: T) {
+    assert!(self.length < N);
+    unsafe {
+      self.push_unchecked(value);
+    }
+  }
+
+  ///Removes the value at the last position of the StaticVec and returns it in `Some` if
+  ///the StaticVec has a current length greater than 0, and returns `None` otherwise.
+  #[inline(always)]
+  pub fn pop(&mut self) -> Option<T> {
+    if self.length == 0 {
+      None
+    } else {
+      Some(unsafe { self.pop_unchecked() })
+    }
   }
 
   ///Asserts that `index` is less than the current length of the StaticVec,
