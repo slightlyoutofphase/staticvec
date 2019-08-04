@@ -236,6 +236,20 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
+  ///Asserts that `index` is less than the current length of the StaticVec,
+  ///and if so removes the value at that position and returns it, and then
+  ///moves the last value in the StaticVec into the empty slot.
+  #[inline]
+  pub fn swap_remove(&mut self, index: usize) -> T {
+    assert!(index < self.length);
+    unsafe {
+      let hole = self.as_mut_ptr().add(index);
+      let last = self.data.get_unchecked(self.length - 1).read();
+      self.length -= 1;
+      hole.replace(last)
+    }
+  }
+
   ///Asserts that the current length of the StaticVec is less than `N` and that
   ///`index` is less than the length, and if so inserts `value` at that position.
   ///Any values that exist in later positions are shifted to the right.

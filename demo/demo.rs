@@ -241,4 +241,13 @@ fn main() {
     .iter()
     .rfold(zero, |acc, &x| format!("({} + {})", x, acc));
   println!("{}", result);
+  let mut strings = staticvec!["foo", "bar", "baz", "qux"];
+  println!("{}", strings.swap_remove(1));
+  for s in &strings {
+    println!("{}", s);
+  }
+  println!("{}", strings.swap_remove(0));
+  for s in &strings {
+    println!("{}", s);
+  }
 }
