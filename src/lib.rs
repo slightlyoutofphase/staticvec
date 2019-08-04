@@ -70,18 +70,31 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a new StaticVec instance filled with the return value of
   ///an initializer function.
   ///The length field of the newly created StaticVec will be equal to its capacity.
+  ///
+  ///```rust
+  /// use staticvec::*;
+  ///
+  /// let mut i = 0;
+  /// let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
+  ///
+  /// assert_eq(v.len(), 64);
+  ///
+  /// assert_eq(v[0], 1);
+  /// assert_eq(v[1], 2);
+  /// assert_eq(v[2], 3);
+  /// assert_eq(v[3], 4);
+  /// ```
   #[inline]
-  pub fn filled_with(initializer: fn() -> T) -> Self {
-    unsafe {
-      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      for val in data_.iter_mut() {
-        val.write(initializer());
-      }
-      Self {
-        data: data_,
-        length: N,
+  pub fn filled_with<F>(mut initializer: F) -> Self
+  where F: FnMut() -> T {
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res.data.get_unchecked_mut(i).write(initializer());
+        res.length += 1;
       }
     }
+    res
   }
 
   ///Returns the current length of the StaticVec.
@@ -164,8 +177,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   #[inline(always)]
   pub fn push(&mut self, value: T) {
     assert!(self.length < N);
-    unsafe { self.data.get_unchecked_mut(self.length).write(value) };
-    self.length += 1;
+    unsafe { self.push_unchecked(value); }
   }
 
   ///Removes the value at the last position of the StaticVec and returns it in `Some` if
@@ -175,8 +187,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     if self.length == 0 {
       None
     } else {
-      self.length -= 1;
-      unsafe { Some(self.data.get_unchecked(self.length).read()) }
+      Some(unsafe{ self.pop_unchecked() })
     }
   }
 
