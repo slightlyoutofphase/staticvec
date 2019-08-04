@@ -5,6 +5,16 @@ struct MyStruct {
   s: &'static str,
 }
 
+struct MyOtherStruct {
+  s: &'static str,
+}
+
+impl Drop for MyOtherStruct {
+  fn drop(&mut self) {
+    println!("Dropping MyOtherStruct with value: {}", self.s)
+  }
+}
+
 fn main() {
   let mut v = StaticVec::<f32, 24>::new();
   for i in 0..v.capacity() {
@@ -249,5 +259,24 @@ fn main() {
   println!("{}", strings.swap_remove(0));
   for s in &strings {
     println!("{}", s);
+  }
+  let mut structs = staticvec![
+    MyOtherStruct { s: "a" },
+    MyOtherStruct { s: "b" },
+    MyOtherStruct { s: "c" },
+    MyOtherStruct { s: "d" },
+    MyOtherStruct { s: "e" },
+    MyOtherStruct { s: "f" },
+  ];
+  let mut newstructs = structs.drain_filter(|x| x.s < "d");
+  for s in &structs {
+    println!("{}", s.s);
+  }
+  for s in &newstructs {
+    println!("{}", s.s);
+  }
+  newstructs.retain(|x| x.s == "a");
+  for s in &newstructs {
+    println!("{}", s.s);
   }
 }

@@ -1,4 +1,5 @@
 #![no_std]
+#![allow(incomplete_features)]
 #![feature(doc_cfg)]
 #![feature(core_intrinsics)]
 #![feature(const_fn)]
@@ -239,14 +240,13 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///and if so removes the value at that position and returns it, and then
   ///moves the last value in the StaticVec into the empty slot.
-  #[inline]
+  #[inline(always)]
   pub fn swap_remove(&mut self, index: usize) -> T {
     assert!(index < self.length);
     unsafe {
-      let hole = self.as_mut_ptr().add(index);
-      let last = self.data.get_unchecked(self.length - 1).read();
+      let last_value = self.data.get_unchecked(self.length - 1).read();
       self.length -= 1;
-      hole.replace(last)
+      self.as_mut_ptr().add(index).replace(last_value)
     }
   }
 
@@ -401,6 +401,39 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
     self.length -= res.length;
     res
+  }
+
+  ///Removes all elements in the StaticVec for which `filter` returns true and
+  ///returns them in a new one.
+  #[inline]
+  pub fn drain_filter<F>(&mut self, mut filter: F) -> Self
+  where F: FnMut(&mut T) -> bool {
+    let mut res = Self::new();
+    let old_length = self.length;
+    self.length = 0;
+    unsafe {
+      for i in 0..old_length {
+        let val = self.as_mut_ptr().add(i);
+        if filter(&mut *val) {
+          res.data.get_unchecked_mut(res.length).write(val.read());
+          res.length += 1;
+        } else if res.length > 0 {
+          self
+            .as_ptr()
+            .add(i)
+            .copy_to_nonoverlapping(self.as_mut_ptr().add(i - res.length), 1);
+        }
+      }
+    }
+    self.length = old_length - res.length;
+    res
+  }
+
+  ///Removes all elements in the StaticVec for which `filter` returns false.
+  #[inline(always)]
+  pub fn retain<F>(&mut self, mut filter: F)
+  where F: FnMut(&T) -> bool {
+    self.drain_filter(|val| !filter(val));
   }
 
   ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.

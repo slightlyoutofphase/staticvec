@@ -1,9 +1,12 @@
 #[inline(always)]
 pub(crate) fn distance_between<T>(self_: *const T, origin: *const T) -> usize {
-  let type_size: usize = core::mem::size_of::<T>();
-  assert!(0 < type_size);
-  let distance: usize = (self_ as usize).wrapping_sub(origin as usize);
-  unsafe { core::intrinsics::exact_div(distance, type_size) }
+  assert!(0 < core::intrinsics::size_of::<T>());
+  unsafe {
+    core::intrinsics::exact_div(
+      (self_ as usize).wrapping_sub(origin as usize),
+      core::intrinsics::size_of::<T>(),
+    )
+  }
 }
 
 #[inline(always)]
