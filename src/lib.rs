@@ -70,7 +70,8 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a new StaticVec instance filled with the return value of an initializer function.
   ///The length field of the newly created StaticVec will be equal to its capacity.
   ///
-  ///```rust
+  ///Example usage:
+  ///```
   ///use staticvec::*;
   ///
   ///fn main() {
