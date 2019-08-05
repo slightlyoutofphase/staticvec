@@ -4,7 +4,11 @@
 [crates.io]: https://crates.io/crates/staticvec
 [Rustc Version nightly]: https://img.shields.io/badge/rustc-nightly-lightgray.svg
 
-Implements a fixed-capacity stack-allocated Vec alternative backed by a static array, using const generics.
+Implements a fixed-capacity stack-allocated Vec alternative backed by an array, using const generics.
+
+Note: the word "static" here is meant by the traditional definition of "unchanging" / "not dynamic" etc.
+
+This crate does **not** use literal `static` variables for anything.
 
 Fully `#![no_std]` compatible (with almost no loss of functionality) by setting 
 `default-features = false` for the `staticvec` dependency in your `Cargo.toml`.
