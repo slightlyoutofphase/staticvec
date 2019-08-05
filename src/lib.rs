@@ -480,7 +480,7 @@ impl<T, const N: usize> Drop for StaticVec<T, {N}> {
 impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
   type Output = T;
   ///Asserts that `index` is less than the current length of the StaticVec,
-  ///as if so returns the value at that position as a constant reference.
+  ///and if so returns the value at that position as a constant reference.
   #[inline(always)]
   fn index(&self, index: usize) -> &Self::Output {
     assert!(index < self.length);
@@ -490,7 +490,7 @@ impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
 
 impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
   ///Asserts that `index` is less than the current length of the StaticVec,
-  ///as if so returns the value at that position as a mutable reference.
+  ///and if so returns the value at that position as a mutable reference.
   #[inline(always)]
   fn index_mut(&mut self, index: usize) -> &mut Self::Output {
     assert!(index < self.length);
