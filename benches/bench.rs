@@ -51,7 +51,7 @@ impl<T: Copy + 'static> Vector<T> for Vec<T> {
     //SlightlyOutOfPhase, August 2019:
 
     //StaticVec can't start with a capacity of VEC_SIZE and grow to SPILLED_SIZE,
-    //so we start both normal Vec and StaticVec with a capacity of SPILLED_SIZE.
+    //so I start both normal Vec and StaticVec with a capacity of SPILLED_SIZE.
     Self::with_capacity(SPILLED_SIZE)
   }
 
