@@ -6,8 +6,8 @@
 
 //This is, obviously, a modified version of SmallVec's benchmark suite.
 //The main difference is that while the original was a lot about capacity-increase performance,
-//that's not relevant for StaticVec, and so instead I compare it exclusively against Vecs constructed
-//via the `with_capacity` function, in order to keep things as equal as possible.
+//that's not relevant for StaticVec, and so instead I compare it moreso against Vecs constructed
+//via the `with_capacity` function in order to keep things as equal as possible.
 
 use staticvec::*;
 
