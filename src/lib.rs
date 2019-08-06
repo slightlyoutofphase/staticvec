@@ -30,7 +30,7 @@ mod macros;
 pub mod utils;
 
 ///A [Vec](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
-///implemented with const generics around a static array of fixed `N` capacity.
+///implemented with const generics around an array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
   data: [MaybeUninit<T>; N],
   length: usize,
