@@ -26,7 +26,8 @@ use core::ptr;
 
 mod iterators;
 mod macros;
-mod utils;
+#[doc(hidden)]
+pub mod utils;
 
 ///A [Vec](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 ///implemented with const generics around a static array of fixed `N` capacity.
@@ -49,7 +50,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Returns a new StaticVec instance filled with the contents, if any, of a slice.
-  ///If the slice has a length greater than the StaticVec's capacity,
+  ///If the slice has a length greater than the StaticVec's declared capacity,
   ///any contents after that point are ignored.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
@@ -109,7 +110,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Returns the total capacity of the StaticVec.
   ///This is always equivalent to the generic `N` parameter it was declared with,
-  ///which determines the fixed size of the static backing array.
+  ///which determines the fixed size of the backing array.
   #[inline(always)]
   pub const fn capacity(&self) -> usize {
     N
@@ -351,7 +352,9 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     res
   }
 
-  ///Copies and appends all elements, if any, in a slice to the StaticVec.
+  ///Copies and appends all elements, if any, of a slice to the StaticVec.
+  ///If the slice has a length greater than the StaticVec's declared capacity,
+  ///any contents after that point are ignored.
   ///Unlike the implementation of this function for [Vec](alloc::vec::Vec), no iterator is used,
   ///just a single pointer-copy call.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
@@ -359,8 +362,8 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
     let mut added_length = other.len();
-    while self.length + added_length > N {
-      added_length -= 1;
+    if self.length + added_length > N {
+      added_length = N - self.length;
     }
     unsafe {
       other
@@ -436,6 +439,19 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     self.drain_filter(|val| !filter(val));
   }
 
+  ///Shortens the StaticVec, keeping the first `length` elements and dropping the rest.
+  #[inline(always)]
+  pub fn truncate(&mut self, length: usize) {
+    let old_length = self.length;
+    self.length = length;
+    unsafe {
+      ptr::drop_in_place(
+        &mut *(self.data.get_unchecked_mut(length..old_length) as *mut [MaybeUninit<T>]
+          as *mut [T]),
+      );
+    }
+  }
+
   ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
   #[inline(always)]
   pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
@@ -498,6 +514,15 @@ impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
   }
 }
 
+impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, {N}> {
+  ///Creates a new StaticVec instance from the contents of `values`, using
+  ///[new_from_slice](crate::StaticVec::new_from_slice) internally.
+  #[inline(always)]
+  fn from(values: &[T]) -> Self {
+    Self::new_from_slice(values)
+  }
+}
+
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, {N}> {
   type IntoIter = StaticVecIterConst<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
@@ -520,20 +545,44 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
 
 impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
   ///Creates a new StaticVec instance from the elements, if any, of `iter`.
-  ///If it has a size greater than the StaticVec's capacity, any items after
+  ///If `iter` has a size greater than the StaticVec's capacity, any items after
   ///that point are ignored.
-  #[inline(always)]
+  #[inline]
   fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
     let mut res = Self::new();
-    for value in iter {
-      if res.is_not_full() {
+    let mut it = iter.into_iter();
+    for i in 0..N {
+      if let Some(val) = it.next() {
         unsafe {
-          res.push_unchecked(value);
+          res.data.get_unchecked_mut(i).write(val);
         }
       } else {
-        break;
+        res.length = i;
+        return res;
       }
     }
+    res.length = N;
     res
+  }
+}
+
+impl<T, const N: usize> Extend<T> for StaticVec<T, {N}> {
+  ///Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than
+  ///the StaticVec's capacity, any items after that point are ignored.
+  #[inline]
+  fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+    let old_length = self.length;
+    let mut it = iter.into_iter();
+    for i in old_length..N {
+      if let Some(val) = it.next() {
+        unsafe {
+          self.data.get_unchecked_mut(i).write(val);
+        }
+      } else {
+        self.length += i;
+        return;
+      }
+    }
+    self.length = N;
   }
 }

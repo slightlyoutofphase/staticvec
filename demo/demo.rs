@@ -268,15 +268,42 @@ fn main() {
     MyOtherStruct { s: "e" },
     MyOtherStruct { s: "f" },
   ];
-  let mut newstructs = structs.drain_filter(|x| x.s < "d");
+  let mut newstructs = structs.drain_filter(|s| s.s < "d");
   for s in &structs {
     println!("{}", s.s);
   }
   for s in &newstructs {
     println!("{}", s.s);
   }
-  newstructs.retain(|x| x.s == "a");
+  newstructs.retain(|s| s.s == "a");
   for s in &newstructs {
     println!("{}", s.s);
+  }
+  let mut morestructs = staticvec![
+    MyOtherStruct { s: "a" },
+    MyOtherStruct { s: "b" },
+    MyOtherStruct { s: "c" },
+    MyOtherStruct { s: "d" },
+    MyOtherStruct { s: "e" },
+    MyOtherStruct { s: "f" },
+  ];
+  morestructs.truncate(3);
+  for s in &morestructs {
+    println!("{}", s.s);
+  }
+  let mut twelve = StaticVec::<f32, 12>::new();
+  twelve.extend([1.0, 2.0, 3.0, 4.0, 5.0, 6.0].iter().copied());
+  for f in &twelve {
+    println!("{}", f);
+  }
+  println!("{}", twelve.capacity());
+  println!("{}", twelve.len());
+  let single_element_macro_test = staticvec!["ABCD"; 26];
+  for s in &single_element_macro_test {
+    println!("{}", s);
+  }
+  let eight_from = StaticVec::<usize, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8].as_slice());
+  for i in &eight_from {
+    println!("{}", i);
   }
 }

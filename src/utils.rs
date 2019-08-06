@@ -1,3 +1,5 @@
+use crate::StaticVec;
+
 #[inline(always)]
 pub(crate) fn distance_between<T>(self_: *const T, origin: *const T) -> usize {
   assert!(0 < core::intrinsics::size_of::<T>());
@@ -19,4 +21,17 @@ where T: Copy {
       result = result.offset(1);
     }
   }
+}
+
+#[inline(always)]
+pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, {COUNT}>
+where T: Copy {
+  let mut res = StaticVec::<T, {COUNT}>::new();
+  res.length = COUNT;
+  for i in 0..COUNT {
+    unsafe {
+      res.data.get_unchecked_mut(i).write(value);
+    }
+  }
+  res
 }
