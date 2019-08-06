@@ -101,7 +101,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Returns the current length of the StaticVec.
   ///Just as for a normal [Vec](alloc::vec::Vec), this means the number of elements that
-  ///have been added to it with `push`, `insert`, e.t.c. except in the case
+  ///have been added to it with `push`, `insert`, etc. except in the case
   ///that it has been set directly with the unsafe `set_len` function.
   #[inline(always)]
   pub fn len(&self) -> usize {
