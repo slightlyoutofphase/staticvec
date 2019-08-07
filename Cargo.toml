@@ -56,7 +56,7 @@ doc = false
 [[test]]
 name = "test"
 path = "test/test.rs"
-doc = fals
+doc = false
 
 [features]
 std = []
