@@ -316,7 +316,7 @@ fn main() {
   let mut vec3 = staticvec![10, 20, 21, 30, 20];
   vec3.dedup_by_key(|i| *i / 10);
   assert_eq!(vec3.as_slice(), [10, 20, 30, 20]);
-  let mut vec4 = vec![1, 2, 3];
+  let mut vec4 = staticvec![1, 2, 3];
   let vec5 = vec4.split_off(1);
   assert_eq!(vec4.as_slice(), [1]);
   assert_eq!(vec5.as_slice(), [2, 3]);
