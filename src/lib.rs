@@ -7,6 +7,7 @@
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_extra)]
 #![feature(exact_size_is_empty)]
+#![feature(slice_partition_dedup)]
 
 //Literally just for stable-sort.
 #[cfg(feature = "std")]
@@ -117,8 +118,8 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Directly sets the `length` field of the StaticVec to `new_len`. Useful if you intend
-  ///to write to it solely element-wise, but marked unsafe due to how it creates the potential for reading
-  ///from unitialized memory later on.
+  ///to write to it solely element-wise, but marked unsafe due to how it creates
+  ///the potential for reading from unitialized memory later on.
   #[inline(always)]
   pub unsafe fn set_len(&mut self, new_len: usize) {
     self.length = new_len;
@@ -169,9 +170,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a mutable reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_mut_slice(&mut self) -> &mut [T] {
-    unsafe {
-      &mut *(self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T])
-    }
+    unsafe { &mut *(self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T]) }
   }
 
   ///Appends a value to the end of the StaticVec without asserting that
@@ -214,7 +213,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///and if so removes the value at that position and returns it. Any values
   ///that exist in later positions are shifted to the left.
-  #[inline]
+  #[inline(always)]
   pub fn remove(&mut self, index: usize) -> T {
     assert!(index < self.length);
     unsafe {
@@ -272,6 +271,30 @@ impl<T, const N: usize> StaticVec<T, {N}> {
       ptr::drop_in_place(self.as_mut_slice());
     }
     self.length = 0;
+  }
+
+  ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
+  #[inline(always)]
+  pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
+    unsafe {
+      StaticVecIterConst::<'a, T> {
+        start: self.as_ptr(),
+        end: self.as_ptr().add(self.length),
+        marker: PhantomData,
+      }
+    }
+  }
+
+  ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
+  #[inline(always)]
+  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
+    unsafe {
+      StaticVecIterMut::<'a, T> {
+        start: self.as_mut_ptr(),
+        end: self.as_mut_ptr().add(self.length),
+        marker: PhantomData,
+      }
+    }
   }
 
   ///Performs an stable in-place sort of the StaticVec's inhabited area.
@@ -343,11 +366,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     let mut res = Self::new();
     res.length = self.length;
     unsafe {
-      reverse_copy(
-        self.as_ptr(),
-        self.as_ptr().add(self.length),
-        res.as_mut_ptr(),
-      );
+      reverse_copy(self.as_ptr(), self.as_ptr().add(self.length), res.as_mut_ptr());
     }
     res
   }
@@ -446,34 +465,60 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     self.length = length;
     unsafe {
       ptr::drop_in_place(
-        &mut *(self.data.get_unchecked_mut(length..old_length) as *mut [MaybeUninit<T>]
-          as *mut [T]),
+        &mut *(self.data.get_unchecked_mut(length..old_length) as *mut [MaybeUninit<T>] as *mut [T]),
       );
     }
   }
 
-  ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
-  #[inline(always)]
-  pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
+  ///Splits the StaticVec into two at the given index.
+  ///The original StaticVec will contain elements `0..at`,
+  ///and the new one will contain elements `at..length`.
+  #[inline]
+  pub fn split_off(&mut self, at: usize) -> Self {
+    assert!(at <= self.length);
+    let split_length = self.length - at;
+    let mut split = Self::new();
     unsafe {
-      StaticVecIterConst::<'a, T> {
-        start: self.as_ptr(),
-        end: self.as_ptr().add(self.length),
-        marker: PhantomData,
-      }
+      self.length = at;
+      split.length = split_length;
+      self
+        .as_ptr()
+        .add(at)
+        .copy_to_nonoverlapping(split.as_mut_ptr(), split_length);
     }
+    split
   }
 
-  ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
+  ///Removes all but the first of consecutive elements in the StaticVec satisfying a given equality relation.
+  #[inline]
+  pub fn dedup_by<F>(&mut self, same_bucket: F)
+  where F: FnMut(&mut T, &mut T) -> bool {
+    //Exactly the same as Vec's version.
+    let len = {
+      let (dedup, _) = self.as_mut_slice().partition_dedup_by(same_bucket);
+      dedup.len()
+    };
+    self.truncate(len);
+  }
+
+  ///Removes consecutive repeated elements in the StaticVec according to the
+  ///locally required [PartialEq](core::cmp::PartialEq) trait implementation for `T`.
   #[inline(always)]
-  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
-    unsafe {
-      StaticVecIterMut::<'a, T> {
-        start: self.as_mut_ptr(),
-        end: self.as_mut_ptr().add(self.length),
-        marker: PhantomData,
-      }
-    }
+  pub fn dedup(&mut self)
+  where T: PartialEq {
+    //Exactly the same as Vec's version.
+    self.dedup_by(|a, b| a == b)
+  }
+
+  ///Removes all but the first of consecutive elements in the StaticVec that
+  ///resolve to the same key.
+  #[inline(always)]
+  pub fn dedup_by_key<F, K>(&mut self, mut key: F)
+  where
+    F: FnMut(&mut T) -> K,
+    K: PartialEq<K>, {
+    //Exactly the same as Vec's version.
+    self.dedup_by(|a, b| key(a) == key(b))
   }
 }
 
@@ -493,24 +538,32 @@ impl<T, const N: usize> Drop for StaticVec<T, {N}> {
   }
 }
 
-impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
-  type Output = T;
-  ///Asserts that `index` is less than the current length of the StaticVec,
-  ///and if so returns the value at that position as a constant reference.
-  #[inline(always)]
-  fn index(&self, index: usize) -> &Self::Output {
-    assert!(index < self.length);
-    unsafe { self.data.get_unchecked(index).get_ref() }
-  }
-}
-
-impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
-  ///Asserts that `index` is less than the current length of the StaticVec,
-  ///and if so returns the value at that position as a mutable reference.
-  #[inline(always)]
-  fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-    assert!(index < self.length);
-    unsafe { self.data.get_unchecked_mut(index).get_mut() }
+impl<T, const N: usize> Extend<T> for StaticVec<T, {N}> {
+  ///Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than
+  ///the StaticVec's capacity, any items after that point are ignored.
+  #[inline]
+  fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+    let mut it = iter.into_iter();
+    let iter_length = it.size_hint().0;
+    if iter_length > 0 {
+      let new_length = (self.length + iter_length).min(N);
+      for i in self.length..new_length {
+        unsafe {
+          self.data.get_unchecked_mut(i).write(it.next().unwrap());
+        }
+      }
+      self.length = new_length;
+    } else {
+      for i in self.length..N {
+        if let Some(val) = it.next() {
+          unsafe {
+            self.data.get_unchecked_mut(i).write(val);
+          }
+        } else {
+          self.length = i;
+        }
+      }
+    }
   }
 }
 
@@ -520,26 +573,6 @@ impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, {N}> {
   #[inline(always)]
   fn from(values: &[T]) -> Self {
     Self::new_from_slice(values)
-  }
-}
-
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, {N}> {
-  type IntoIter = StaticVecIterConst<'a, T>;
-  type Item = <Self::IntoIter as Iterator>::Item;
-  ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
-  #[inline(always)]
-  fn into_iter(self) -> Self::IntoIter {
-    self.iter()
-  }
-}
-
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
-  type IntoIter = StaticVecIterMut<'a, T>;
-  type Item = <Self::IntoIter as Iterator>::Item;
-  ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
-  #[inline(always)]
-  fn into_iter(self) -> Self::IntoIter {
-    self.iter_mut()
   }
 }
 
@@ -566,23 +599,43 @@ impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
   }
 }
 
-impl<T, const N: usize> Extend<T> for StaticVec<T, {N}> {
-  ///Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than
-  ///the StaticVec's capacity, any items after that point are ignored.
-  #[inline]
-  fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-    let old_length = self.length;
-    let mut it = iter.into_iter();
-    for i in old_length..N {
-      if let Some(val) = it.next() {
-        unsafe {
-          self.data.get_unchecked_mut(i).write(val);
-        }
-      } else {
-        self.length += i;
-        return;
-      }
-    }
-    self.length = N;
+impl<T, const N: usize> Index<usize> for StaticVec<T, {N}> {
+  type Output = T;
+  ///Asserts that `index` is less than the current length of the StaticVec,
+  ///and if so returns the value at that position as a constant reference.
+  #[inline(always)]
+  fn index(&self, index: usize) -> &Self::Output {
+    assert!(index < self.length);
+    unsafe { self.data.get_unchecked(index).get_ref() }
+  }
+}
+
+impl<T, const N: usize> IndexMut<usize> for StaticVec<T, {N}> {
+  ///Asserts that `index` is less than the current length of the StaticVec,
+  ///and if so returns the value at that position as a mutable reference.
+  #[inline(always)]
+  fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+    assert!(index < self.length);
+    unsafe { self.data.get_unchecked_mut(index).get_mut() }
+  }
+}
+
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, {N}> {
+  type IntoIter = StaticVecIterConst<'a, T>;
+  type Item = <Self::IntoIter as Iterator>::Item;
+  ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
+  #[inline(always)]
+  fn into_iter(self) -> Self::IntoIter {
+    self.iter()
+  }
+}
+
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
+  type IntoIter = StaticVecIterMut<'a, T>;
+  type Item = <Self::IntoIter as Iterator>::Item;
+  ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
+  #[inline(always)]
+  fn into_iter(self) -> Self::IntoIter {
+    self.iter_mut()
   }
 }
