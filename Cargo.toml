@@ -45,7 +45,7 @@ overflow-checks = false
 
 [[bench]]
 name = "bench"
-path = "benchmark/demo.rs"
+path = "benchmark/bench.rs"
 doc = false
 
 [[example]]
