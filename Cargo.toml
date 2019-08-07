@@ -44,14 +44,19 @@ incremental = false
 overflow-checks = false
 
 [[bench]]
-name = "bench"
-path = "benchmark/bench.rs"
+name = "benchmark"
+path = "benchmark/benchmark.rs"
 doc = false
 
 [[example]]
 name = "demo"
 path = "demo/demo.rs"
 doc = false
+
+[[test]]
+name = "test"
+path = "test/test.rs"
+doc = fals
 
 [features]
 std = []
