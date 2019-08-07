@@ -5,11 +5,22 @@ homepage = "https://crates.io/crates/staticvec"
 repository = "https://github.com/slightlyoutofphase/staticvec"
 license = "MIT"
 readme = "README.md"
-version = "0.2.4"
+version = "0.2.5"
 authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec","array","container","vector","stack"]
 categories = ["data-structures"]
 edition = "2018"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = false
 
 [profile.dev]
 opt-level = 0
@@ -22,14 +33,13 @@ panic = 'unwind'
 incremental = false
 overflow-checks = true
 
-[profile.release]
+[profile.bench]
 opt-level = 3
 debug = false
 rpath = false
 lto = true
 debug-assertions = false
 codegen-units = 1
-panic = 'abort'
 incremental = false
 overflow-checks = false
 
