@@ -214,7 +214,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///and if so removes the value at that position and returns it. Any values
   ///that exist in later positions are shifted to the left.
-  #[inline(always)]
+  #[inline]
   pub fn remove(&mut self, index: usize) -> T {
     assert!(index < self.length);
     unsafe {
