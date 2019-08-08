@@ -307,17 +307,19 @@ fn main() {
   for i in &staticvec![1, 2, 3, 4, 5, 6, 7, 8].split_off(3) {
     println!("{}", i);
   }
-  let mut vec1 = staticvec!["foo", "bar", "Bar", "baz", "bar"];
-  vec1.dedup_by(|a, b| a.eq_ignore_ascii_case(b));
-  assert_eq!(vec1.as_slice(), ["foo", "bar", "baz", "bar"]);
-  let mut vec2 = staticvec![1, 2, 2, 3, 2];
-  vec2.dedup();
-  assert_eq!(vec2.as_slice(), [1, 2, 3, 2]);
-  let mut vec3 = staticvec![10, 20, 21, 30, 20];
-  vec3.dedup_by_key(|i| *i / 10);
-  assert_eq!(vec3.as_slice(), [10, 20, 30, 20]);
-  let mut vec4 = staticvec![1, 2, 3];
-  let vec5 = vec4.split_off(1);
-  assert_eq!(vec4.as_slice(), [1]);
-  assert_eq!(vec5.as_slice(), [2, 3]);
+  let mut strings2 = staticvec!["foo", "bar", "Bar", "baz", "bar"];
+  strings2.dedup_by(|a, b| a.eq_ignore_ascii_case(b));
+  for s in &strings2 {
+    println!("{}", s);
+  }
+  let mut ints = staticvec![10, 20, 21, 30, 20];
+  ints.dedup_by_key(|i| *i / 10);
+  for i in &ints {
+    println!("{}", i);
+  }
+  let mut ints2 = staticvec![1, 2, 2, 3, 2];
+  ints2.dedup();
+  for i in &ints2 {
+    println!("{}", i);
+  }
 }
