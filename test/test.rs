@@ -170,7 +170,7 @@ fn set_len() {
 
 #[test]
 fn split_off() {
-  let mut vec = vec![1, 2, 3];
+  let mut vec = staticvec![1, 2, 3];
   let vec2 = vec.split_off(1);
   assert_eq!(vec, [1]);
   assert_eq!(vec2, [2, 3]);
