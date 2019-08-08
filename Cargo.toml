@@ -11,6 +11,9 @@ keywords = ["vec","array","container","vector","stack"]
 categories = ["data-structures"]
 edition = "2018"
 
+[lib]
+doctest = false
+
 [profile.release]
 opt-level = 3
 debug = false
@@ -43,20 +46,20 @@ codegen-units = 1
 incremental = false
 overflow-checks = false
 
+[profile.test]
+incremental = false
+
 [[bench]]
 name = "benchmark"
 path = "benchmark/benchmark.rs"
-doc = false
 
 [[example]]
 name = "demo"
 path = "demo/demo.rs"
-doc = false
 
 [[test]]
 name = "test"
 path = "test/test.rs"
-doc = false
 
 [features]
 std = []
