@@ -53,6 +53,37 @@ impl<T, const N: usize> Extend<T> for StaticVec<T, {N}> {
           }
         } else {
           self.length = i;
+          return;
+        }
+      }
+    }
+  }
+}
+
+impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, {N}> {
+  ///Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than
+  ///the StaticVec's capacity, any items after that point are ignored.
+  #[inline]
+  fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
+    let mut it = iter.into_iter();
+    let iter_length = it.size_hint().0;
+    if iter_length > 0 {
+      let new_length = (self.length + iter_length).min(N);
+      for i in self.length..new_length {
+        unsafe {
+          self.data.get_unchecked_mut(i).write(*it.next().unwrap());
+        }
+      }
+      self.length = new_length;
+    } else {
+      for i in self.length..N {
+        if let Some(val) = it.next() {
+          unsafe {
+            self.data.get_unchecked_mut(i).write(*val);
+          }
+        } else {
+          self.length = i;
+          return;
         }
       }
     }
@@ -80,6 +111,29 @@ impl<T, const N: usize> FromIterator<T> for StaticVec<T, {N}> {
       if let Some(val) = it.next() {
         unsafe {
           res.data.get_unchecked_mut(i).write(val);
+        }
+      } else {
+        res.length = i;
+        return res;
+      }
+    }
+    res.length = N;
+    res
+  }
+}
+
+impl<'a, T: 'a + Copy, const N: usize> FromIterator<&'a T> for StaticVec<T, {N}> {
+  ///Creates a new StaticVec instance from the elements, if any, of `iter`.
+  ///If `iter` has a size greater than the StaticVec's capacity, any items after
+  ///that point are ignored.
+  #[inline]
+  fn from_iter<I: IntoIterator<Item = &'a T>>(iter: I) -> Self {
+    let mut res = Self::new();
+    let mut it = iter.into_iter();
+    for i in 0..N {
+      if let Some(val) = it.next() {
+        unsafe {
+          res.data.get_unchecked_mut(i).write(*val);
         }
       } else {
         res.length = i;
