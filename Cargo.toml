@@ -5,11 +5,12 @@ homepage = "https://crates.io/crates/staticvec"
 repository = "https://github.com/slightlyoutofphase/staticvec"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-version = "0.2.5"
+version = "0.2.6"
 authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec","array","container","vector","stack"]
 categories = ["data-structures"]
 edition = "2018"
+include = ["Cargo.toml", "rustfmt.toml", "src/**/*.rs", "demo/**/*.rs", "benchmark/**/*.rs", "test/**/*.rs", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
 
 [lib]
 doctest = false
