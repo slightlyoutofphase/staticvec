@@ -2,9 +2,21 @@ use staticvec::*;
 use std::io::{self, Read, Write};
 
 #[test]
+fn as_mut_ptr() {
+  let mut v = staticvec![1, 2, 3];
+  unsafe { assert_eq!(*v.as_mut_ptr(), 1) };
+}
+
+#[test]
 fn as_mut_slice() {
   let mut buffer = staticvec![0; 3];
   io::repeat(0b101).read_exact(buffer.as_mut_slice()).unwrap();
+}
+
+#[test]
+fn as_ptr() {
+  let v = staticvec![1, 2, 3];
+  unsafe { assert_eq!(*v.as_ptr(), 1) };
 }
 
 #[test]
@@ -67,10 +79,34 @@ fn drain_filter() {
 }
 
 #[test]
+fn extend() {
+  let mut c = StaticVec::<i32, 6>::new();
+  c.push(5);
+  c.push(6);
+  c.push(7);
+  c.extend(staticvec![1, 2, 3].iter());
+  assert_eq!("[5, 6, 7, 1, 2, 3]", format!("{:?}", c));
+}
+
+#[test]
 fn extend_from_slice() {
   let mut vec = StaticVec::<i32, 4>::new_from_slice(&[1]);
   vec.extend_from_slice(&[2, 3, 4]);
   assert_eq!(vec, [1, 2, 3, 4]);
+}
+
+#[test]
+fn filled_with() {
+  let mut i = 0;
+  let v = StaticVec::<i32, 64>::filled_with(|| {
+    i += 1;
+    i
+  });
+  assert_eq!(v.len(), 64);
+  assert_eq!(v[0], 1);
+  assert_eq!(v[1], 2);
+  assert_eq!(v[2], 3);
+  assert_eq!(v[3], 4);
 }
 
 #[test]
@@ -124,6 +160,14 @@ fn new() {
 }
 
 #[test]
+fn new_from_slice() {
+  let vec = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3]);
+  assert_eq!(vec, [1, 2, 3]);
+  let vec2 = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3, 4, 5, 6]);
+  assert_eq!(vec2, [1, 2, 3]);
+}
+
+#[test]
 fn pop() {
   let mut vec = staticvec![1, 2, 3];
   assert_eq!(vec.pop(), Some(3));
@@ -161,6 +205,19 @@ fn retain() {
 }
 
 #[test]
+fn reverse() {
+  let mut v = staticvec![1, 2, 3];
+  v.reverse();
+  assert!(v == [3, 2, 1]);
+}
+
+#[test]
+fn reversed() {
+  let v = staticvec![1, 2, 3].reversed();
+  assert!(v == [3, 2, 1]);
+}
+
+#[test]
 fn set_len() {
   let mut v = staticvec![1, 2, 3];
   assert_eq!(v.len(), 3);
@@ -169,9 +226,57 @@ fn set_len() {
 }
 
 #[test]
+fn sort() {
+  let mut v = staticvec![-5, 4, 1, -3, 2];
+  v.sort();
+  assert!(v == [-5, -3, 1, 2, 4]);
+}
+
+#[test]
+fn sorted() {
+  let v = staticvec![-5, 4, 1, -3, 2].sorted();
+  assert!(v == [-5, -3, 1, 2, 4]);
+}
+
+#[test]
+fn sort_unstable() {
+  let mut v = staticvec![-5, 4, 1, -3, 2];
+  v.sort_unstable();
+  assert!(v == [-5, -3, 1, 2, 4]);
+}
+
+#[test]
+fn sorted_unstable() {
+  let v = staticvec![-5, 4, 1, -3, 2].sorted_unstable();
+  assert!(v == [-5, -3, 1, 2, 4]);
+}
+
+#[test]
 fn split_off() {
   let mut vec = staticvec![1, 2, 3];
   let vec2 = vec.split_off(1);
   assert_eq!(vec, [1]);
   assert_eq!(vec2, [2, 3]);
+}
+
+#[test]
+fn swap_remove() {
+  let mut v = staticvec!["foo", "bar", "baz", "qux"];
+  assert_eq!(v.swap_remove(1), "bar");
+  assert_eq!(v, ["foo", "qux", "baz"]);
+  assert_eq!(v.swap_remove(0), "foo");
+  assert_eq!(v, ["baz", "qux"]);
+}
+
+#[test]
+fn truncate() {
+  let mut vec = staticvec![1, 2, 3, 4, 5];
+  vec.truncate(2);
+  assert_eq!(vec, [1, 2]);
+  let mut vec2 = staticvec![1, 2, 3, 4, 5];
+  vec2.truncate(2);
+  assert_eq!(vec2, [1, 2]);
+  let mut vec3 = staticvec![1, 2, 3];
+  vec3.truncate(0);
+  assert_eq!(vec3, []);
 }
