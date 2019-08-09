@@ -290,7 +290,7 @@ fn main() {
     println!("{}", s.s);
   }
   let mut twelve = StaticVec::<f32, 12>::new();
-  twelve.extend([1.0, 2.0, 3.0, 4.0, 5.0, 6.0].iter().copied());
+  twelve.extend([1.0, 2.0, 3.0, 4.0, 5.0, 6.0].iter());
   for f in &twelve {
     println!("{}", f);
   }
