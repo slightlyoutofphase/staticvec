@@ -322,4 +322,10 @@ fn main() {
   for i in &ints2 {
     println!("{}", i);
   }
+  let mut y = StaticVec::<MyStruct, 2>::new();
+  y.push(MyStruct{s: "hey"});
+  let z: &MyStruct = y.as_ref();
+  println!("{}", z.s);
+  let zz: &mut MyStruct = y.as_mut();
+  println!("{}", zz.s);
 }
