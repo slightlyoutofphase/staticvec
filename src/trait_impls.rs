@@ -116,7 +116,7 @@ impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, {N}> {
 
 impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, {N2}> {
   ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_slice](crate::StaticVec::new_from_slice) internally.
+  ///[new_from_slice](crate::StaticVec::new_from_array) internally.
   #[inline(always)]
   fn from(values: &[T; N1]) -> Self {
     Self::new_from_array(*values)
