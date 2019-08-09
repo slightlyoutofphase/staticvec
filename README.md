@@ -64,5 +64,4 @@ fn main() {
 
 **License:**
 
-Licensed under either of <a href="LICENSE-MIT">MIT license</a> or <a href="LICENSE-APACHE">Apache License, Version
-2.0</a> at your option.
+Licensed under either the <a href="LICENSE-MIT">MIT license</a> or version 2.0 of the <a href="LICENSE-APACHE">Apache License</a>. Your choice!
