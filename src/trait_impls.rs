@@ -8,15 +8,23 @@ use core::mem::MaybeUninit;
 use core::ops::{Index, IndexMut, Range, RangeInclusive};
 
 impl<T, const N: usize> AsMut<T> for StaticVec<T, {N}> {
+  ///Asserts that the StaticVec's current length is greater than 0 to avoid
+  ///returning an invalid reference, and if so calls [as_mut_ptr](crate::StaticVec::as_mut_ptr)
+  ///internally and converts it to one.
   #[inline(always)]
   fn as_mut(&mut self) -> &mut T {
+    assert!(self.length > 0);
     unsafe { self.as_mut_ptr().as_mut().unwrap() }
   }
 }
 
 impl<T, const N: usize> AsRef<T> for StaticVec<T, {N}> {
+  ///Asserts that the StaticVec's current length is greater than 0 to avoid
+  ///returning an invalid reference, and if so calls [as_ptr](crate::StaticVec::as_ptr)
+  ///internally and converts it to one.
   #[inline(always)]
   fn as_ref(&self) -> &T {
+    assert!(self.length > 0);
     unsafe { self.as_ptr().as_ref().unwrap() }
   }
 }
