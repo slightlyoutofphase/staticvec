@@ -71,6 +71,26 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
+  ///Returns a new StaticVec instance filled with the contents, if any, of an array.
+  ///If the array has a length greater than the StaticVec's declared capacity,
+  ///any contents after that point are ignored.
+  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
+  #[inline]
+  pub fn new_from_array<const N2: usize>(values: [T; N2]) -> Self
+  where T: Copy {
+    unsafe {
+      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let fill_length = N2.min(N);
+      values
+        .as_ptr()
+        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
+      Self {
+        data: data_,
+        length: fill_length,
+      }
+    }
+  }
+
   ///Returns a new StaticVec instance filled with the return value of an initializer function.
   ///The length field of the newly created StaticVec will be equal to its capacity.
   ///
@@ -491,7 +511,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Removes all but the first of consecutive elements in the StaticVec satisfying a given equality relation.
-  #[inline]
+  #[inline(always)]
   pub fn dedup_by<F>(&mut self, same_bucket: F)
   where F: FnMut(&mut T, &mut T) -> bool {
     //Exactly the same as Vec's version.

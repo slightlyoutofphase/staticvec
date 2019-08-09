@@ -1,4 +1,5 @@
 use crate::StaticVec;
+use core::cmp::{Ordering, PartialOrd};
 
 #[inline(always)]
 pub(crate) fn distance_between<T>(self_: *const T, origin: *const T) -> usize {
@@ -34,4 +35,20 @@ where T: Copy {
     }
   }
   res
+}
+
+#[inline]
+pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(self_: &[T2], other: &[T1]) -> Option<Ordering> {
+  let min_length = self_.len().min(other.len());
+  unsafe {
+    let left = self_.get_unchecked(0..min_length);
+    let right = other.get_unchecked(0..min_length);
+    for i in 0..min_length {
+      match left.get_unchecked(i).partial_cmp(right.get_unchecked(i)) {
+        Some(Ordering::Equal) => (),
+        non_eq => return non_eq,
+      }
+    }
+  }
+  self_.len().partial_cmp(&other.len())
 }
