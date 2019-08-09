@@ -328,4 +328,8 @@ fn main() {
   println!("{}", z.s);
   let zz: &mut MyStruct = y.as_mut();
   println!("{}", zz.s);
+  let zzz: &[MyStruct] = y.as_ref();
+  println!("{}", zzz[0].s);
+  let zzzz: &mut [MyStruct] = y.as_mut();
+  println!("{}", zzzz[0].s);
 }
