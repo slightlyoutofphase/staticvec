@@ -86,6 +86,12 @@ fn extend() {
   c.push(7);
   c.extend(staticvec![1, 2, 3].iter());
   assert_eq!("[5, 6, 7, 1, 2, 3]", format!("{:?}", c));
+  c.clear();
+  assert_eq!(c.len(), 0);
+  c.extend([1].iter());
+  assert_eq!(c.len(), 1);
+  c.extend(staticvec![1, 2, 3, 4, 5, 6, 7].iter());
+  assert_eq!(c.len(), 6);
 }
 
 #[test]
@@ -107,6 +113,26 @@ fn filled_with() {
   assert_eq!(v[1], 2);
   assert_eq!(v[2], 3);
   assert_eq!(v[3], 4);
+}
+
+#[test]
+fn from() {
+  assert_eq!(
+    "[5, 6, 7, 1, 2, 3]",
+    format!("{:?}", StaticVec::<i32, 6>::from(&[5, 6, 7, 1, 2, 3]))
+  );
+  let mut v = staticvec![1];
+  v.clear();
+  assert_eq!(StaticVec::<i32, 6>::from(v.as_slice()).len(), 0);
+}
+
+#[test]
+fn index() {
+  let vec = staticvec![0, 1, 2, 3, 4];
+  assert_eq!(vec[1..4], [1, 2, 3]);
+  assert_eq!(vec[1..=1], [1]);
+  assert_eq!(vec[1..3], [1, 2]);
+  assert_eq!(vec[1..=3], [1, 2, 3]);
 }
 
 #[test]
@@ -165,6 +191,14 @@ fn new_from_slice() {
   assert_eq!(vec, [1, 2, 3]);
   let vec2 = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3, 4, 5, 6]);
   assert_eq!(vec2, [1, 2, 3]);
+}
+
+#[test]
+fn new_from_array() {
+  let vec = StaticVec::<i32, 3>::new_from_array([1; 3]);
+  assert_eq!(vec, [1, 1, 1]);
+  let vec2 = StaticVec::<i32, 3>::new_from_array([1; 6]);
+  assert_eq!(vec2, [1, 1, 1]);
 }
 
 #[test]
