@@ -195,6 +195,8 @@ fn new_from_slice() {
   assert_eq!(vec, [1, 2, 3]);
   let vec2 = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3, 4, 5, 6]);
   assert_eq!(vec2, [1, 2, 3]);
+  let vec3 = StaticVec::<i32, 27>::new_from_slice(&[]);
+  assert_eq!(vec3, []);
 }
 
 #[test]
@@ -203,6 +205,8 @@ fn new_from_array() {
   assert_eq!(vec, [1, 1, 1]);
   let vec2 = StaticVec::<i32, 3>::new_from_array([1; 6]);
   assert_eq!(vec2, [1, 1, 1]);
+  let vec3 = StaticVec::<i32, 27>::new_from_array([0; 0]);
+  assert_eq!(vec3, []);
 }
 
 #[test]
