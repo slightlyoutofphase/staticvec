@@ -304,6 +304,10 @@ fn main() {
   for i in &eight_from {
     println!("{}", i);
   }
+  let twenty_from_ten = StaticVec::<i32, 20>::from([123; 10]);
+  for i in &twenty_from_ten {
+    println!("{}", i);
+  }
   for i in &staticvec![1, 2, 3, 4, 5, 6, 7, 8].split_off(3) {
     println!("{}", i);
   }
