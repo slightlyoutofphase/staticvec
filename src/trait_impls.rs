@@ -14,6 +14,7 @@ impl<T, const N: usize> AsMut<T> for StaticVec<T, {N}> {
   ///internally and converts it to one.
   #[inline(always)]
   fn as_mut(&mut self) -> &mut T {
+    //I don't know how useful this impl actually is. We'll see I guess.
     assert!(self.length > 0);
     unsafe { self.as_mut_ptr().as_mut().unwrap() }
   }
@@ -25,6 +26,7 @@ impl<T, const N: usize> AsRef<T> for StaticVec<T, {N}> {
   ///internally and converts it to one.
   #[inline(always)]
   fn as_ref(&self) -> &T {
+    //I don't know how useful this impl actually is. We'll see I guess.
     assert!(self.length > 0);
     unsafe { self.as_ptr().as_ref().unwrap() }
   }
