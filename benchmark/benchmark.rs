@@ -30,9 +30,9 @@ impl<T: Copy> ExtendFromSlice<T> for Vec<T> {
   }
 }
 
-impl<T: Copy, const N: usize> ExtendFromSlice<T> for StaticVec<T, { N }> {
+impl<T: Copy, const N: usize> ExtendFromSlice<T> for StaticVec<T, {N}> {
   fn extend_from_slice(&mut self, other: &[T]) {
-    StaticVec::<T, { N }>::extend_from_slice(self, other)
+    StaticVec::<T, {N}>::extend_from_slice(self, other)
   }
 }
 
@@ -80,7 +80,7 @@ impl<T: Copy + 'static> Vector<T> for Vec<T> {
   }
 }
 
-impl<T: Copy + 'static, const N: usize> Vector<T> for StaticVec<T, { N }> {
+impl<T: Copy + 'static, const N: usize> Vector<T> for StaticVec<T, {N}> {
   fn new() -> Self {
     Self::new()
   }
