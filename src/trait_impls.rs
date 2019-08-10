@@ -46,6 +46,22 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, {N}> {
   }
 }
 
+impl<T: Clone, const N: usize> Clone for StaticVec<T, {N}> {
+  fn clone(&self) -> Self {
+    let mut res = Self::new();
+    for i in 0..self.length {
+      unsafe {
+        res
+          .data
+          .get_unchecked_mut(i)
+          .write(self.data.get_unchecked(i).get_ref().clone());
+      }
+    }
+    res.length = self.length;
+    res
+  }
+}
+
 impl<T: Debug, const N: usize> Debug for StaticVec<T, {N}> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> Result {

@@ -43,6 +43,13 @@ fn clear() {
 }
 
 #[test]
+fn clone() {
+  let v = staticvec![1, 2, 3, 4, 5, 6, 7, 8];
+  let vv = v.clone();
+  assert_eq!(v, vv);
+}
+
+#[test]
 fn dedup() {
   let mut vec = staticvec![1, 2, 2, 3, 2];
   vec.dedup();
