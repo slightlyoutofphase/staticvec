@@ -300,6 +300,16 @@ fn split_off() {
 }
 
 #[test]
+fn swap_pop() {
+  let mut v = staticvec!["foo", "bar", "baz", "qux"];
+  assert_eq!(v.swap_pop(1).unwrap(), "bar");
+  assert_eq!(v, ["foo", "qux", "baz"]);
+  assert_eq!(v.swap_pop(0).unwrap(), "foo");
+  assert_eq!(v, ["baz", "qux"]);
+  assert_eq!(v.swap_pop(17), None);
+}
+
+#[test]
 fn swap_remove() {
   let mut v = staticvec!["foo", "bar", "baz", "qux"];
   assert_eq!(v.swap_remove(1), "bar");

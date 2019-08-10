@@ -258,6 +258,22 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
+  ///Returns `None` if `index` is greather than or equal to the current length of the StaticVec.
+  ///Otherwise, removes the value at that position and returns it in `Some`, and then
+  ///moves the last value in the StaticVec into the empty slot.
+  #[inline(always)]
+  pub fn swap_pop(&mut self, index: usize) -> Option<T> {
+    if index >= self.length {
+      None
+    } else {
+      unsafe {
+        let last_value = self.data.get_unchecked(self.length - 1).read();
+        self.length -= 1;
+        Some(self.as_mut_ptr().add(index).replace(last_value))
+      }
+    }
+  }
+
   ///Asserts that `index` is less than the current length of the StaticVec,
   ///and if so removes the value at that position and returns it, and then
   ///moves the last value in the StaticVec into the empty slot.
