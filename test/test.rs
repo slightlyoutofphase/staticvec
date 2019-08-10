@@ -1,4 +1,6 @@
 use staticvec::*;
+
+#[cfg(feature = "std")]
 use std::io::{self, Read, Write};
 
 #[test]
@@ -7,6 +9,7 @@ fn as_mut_ptr() {
   unsafe { assert_eq!(*v.as_mut_ptr(), 1) };
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn as_mut_slice() {
   let mut buffer = staticvec![0; 3];
@@ -19,6 +22,7 @@ fn as_ptr() {
   unsafe { assert_eq!(*v.as_ptr(), 1) };
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn as_slice() {
   let buffer = staticvec![1, 2, 3, 5, 8];
@@ -259,6 +263,7 @@ fn set_len() {
   assert_eq!(v.len(), 0);
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn sort() {
   let mut v = staticvec![-5, 4, 1, -3, 2];
@@ -266,6 +271,7 @@ fn sort() {
   assert!(v == [-5, -3, 1, 2, 4]);
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn sorted() {
   let v = staticvec![-5, 4, 1, -3, 2].sorted();
