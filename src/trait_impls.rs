@@ -47,6 +47,7 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, {N}> {
 }
 
 impl<T: Clone, const N: usize> Clone for StaticVec<T, {N}> {
+  #[inline]
   fn clone(&self) -> Self {
     let mut res = Self::new();
     for i in 0..self.length {
