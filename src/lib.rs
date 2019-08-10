@@ -480,14 +480,17 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Shortens the StaticVec, keeping the first `length` elements and dropping the rest.
+  ///Does nothing if `length` is greater than or equal to the current length of the StaticVec.
   #[inline(always)]
   pub fn truncate(&mut self, length: usize) {
-    let old_length = self.length;
-    self.length = length;
-    unsafe {
-      ptr::drop_in_place(
-        &mut *(self.data.get_unchecked_mut(length..old_length) as *mut [MaybeUninit<T>] as *mut [T]),
-      );
+    if length < self.length {
+      let old_length = self.length;
+      self.length = length;
+      unsafe {
+        ptr::drop_in_place(
+          &mut *(self.data.get_unchecked_mut(length..old_length) as *mut [MaybeUninit<T>] as *mut [T]),
+        );
+      }
     }
   }
 

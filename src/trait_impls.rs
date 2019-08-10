@@ -207,7 +207,7 @@ impl<T, const N: usize> Index<Range<usize>> for StaticVec<T, {N}> {
   type Output = [T];
   ///Asserts that the lower bound of `index` is less than its upper bound,
   ///and that its upper bound is less than or equal to the current length of the StaticVec,
-  ///and if so returns a constant reference to a slice of elements `0..index.end`.
+  ///and if so returns a constant reference to a slice of elements `index.start..index.end`.
   #[inline(always)]
   fn index(&self, index: Range<usize>) -> &Self::Output {
     assert!(index.start < index.end && index.end <= self.length);
@@ -218,7 +218,7 @@ impl<T, const N: usize> Index<Range<usize>> for StaticVec<T, {N}> {
 impl<T, const N: usize> IndexMut<Range<usize>> for StaticVec<T, {N}> {
   ///Asserts that the lower bound of `index` is less than its upper bound,
   ///and that its upper bound is less than or equal to the current length of the StaticVec,
-  ///and if so returns a mutable reference to a slice of elements `0..index.end`.
+  ///and if so returns a mutable reference to a slice of elements `index.start..index.end`.
   #[inline(always)]
   fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
     assert!(index.start < index.end && index.end <= self.length);
@@ -230,7 +230,7 @@ impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, {N}> {
   type Output = [T];
   ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
   //and that its upper bound is less than the current length of the StaticVec,
-  ///and if so returns a const reference to a slice of elements `0..=index.end`.
+  ///and if so returns a constant reference to a slice of elements `index.start()..=index.end()`.
   #[inline(always)]
   fn index(&self, index: RangeInclusive<usize>) -> &Self::Output {
     assert!(index.start() <= index.end() && index.end() < &self.length);
@@ -241,7 +241,7 @@ impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, {N}> {
 impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, {N}> {
   ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
   //and that its upper bound is less than the current length of the StaticVec,
-  ///and if so returns a mutable reference to a slice of elements `0..=index.end`.
+  ///and if so returns a mutable reference to a slice of elements `index.start()..=index.end()`.
   #[inline(always)]
   fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
     assert!(index.start() <= index.end() && index.end() < &self.length);
