@@ -17,6 +17,7 @@ use test::Bencher;
 
 const VEC_SIZE: usize = 16;
 const SPILLED_SIZE: usize = 100;
+
 //Needed to not crash the insert benchmark since capacity can't change for StaticVec.
 const SPILLED_SIZE_TWO: usize = 98;
 
