@@ -3,6 +3,7 @@ use crate::utils::partial_compare;
 use crate::StaticVec;
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{Debug, Formatter, Result};
+use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::mem::MaybeUninit;
 use core::ops::{Index, IndexMut, Range, RangeInclusive};
@@ -131,6 +132,15 @@ impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, 
   }
 }
 
+impl<T: Copy, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, {N2}> {
+  ///Creates a new StaticVec instance from the contents of `values`, using
+  ///[new_from_slice](crate::StaticVec::new_from_array) internally.
+  #[inline(always)]
+  fn from(values: [T; N1]) -> Self {
+    Self::new_from_array(values)
+  }
+}
+
 //TODO: Figure out how to handle "may or may not need explicit dereferencing" in macros,
 //so that I can macro-ize the two FromIterator implementations below.
 
@@ -179,6 +189,13 @@ impl<'a, T: 'a + Copy, const N: usize> FromIterator<&'a T> for StaticVec<T, {N}>
     }
     res.length = i;
     res
+  }
+}
+
+impl<T: Hash, const N: usize> Hash for StaticVec<T, {N}> {
+  #[inline(always)]
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    self.as_slice().hash(state);
   }
 }
 
