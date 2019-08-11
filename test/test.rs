@@ -230,7 +230,10 @@ fn partial_eq() {
   if staticvec![1; 64] != [1; 64] {
     panic!();
   }
-  if staticvec![1; 64] != [1; 64] {
+  if &staticvec![1; 64] != [1; 64] {
+    panic!();
+  }
+  if &mut staticvec![1; 64] != [1; 64] {
     panic!();
   }
   if staticvec![1; 64] != &[1; 64] {
