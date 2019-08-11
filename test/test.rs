@@ -217,6 +217,40 @@ fn new_from_array() {
 }
 
 #[test]
+fn partial_eq() {
+  assert_eq!(StaticVec::<i32, 0>::new(), [0; 0]);
+  assert_eq!(StaticVec::<i32, 0>::new(), []);
+  assert_eq!(StaticVec::<i32, 0>::new(), &[]);
+  assert_eq!(StaticVec::<i32, 0>::new(), &mut []);
+  assert_eq!(StaticVec::<i32, 0>::new(), StaticVec::<i32, 0>::new());
+  assert_eq!(StaticVec::<i32, 0>::new(), &StaticVec::<i32, 0>::new());
+  assert_eq!(StaticVec::<i32, 0>::new(), &mut StaticVec::<i32, 0>::new());
+  //assert_eq! is written in a way that's limited by LengthAtMost32, so I can't
+  //use it for the next part.
+  if staticvec![1; 64] != [1; 64] {
+    panic!();
+  }
+  if staticvec![1; 64] != [1; 64] {
+    panic!();
+  }
+  if staticvec![1; 64] != &[1; 64] {
+    panic!();
+  }
+  if staticvec![1; 64] != &mut [1; 64] {
+    panic!();
+  }
+  if staticvec![1; 64] != staticvec![1; 64] {
+    panic!();
+  }
+  if staticvec![1; 64] != &staticvec![1; 64] {
+    panic!();
+  }
+  if staticvec![1; 64] != &mut staticvec![1; 64] {
+    panic!();
+  }
+}
+
+#[test]
 fn pop() {
   let mut vec = staticvec![1, 2, 3];
   assert_eq!(vec.pop(), Some(3));
