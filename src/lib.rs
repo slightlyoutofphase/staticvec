@@ -258,7 +258,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Returns `None` if `index` is greather than or equal to the current length of the StaticVec.
+  ///Returns `None` if `index` is greater than or equal to the current length of the StaticVec.
   ///Otherwise, removes the value at that position and returns it in `Some`, and then
   ///moves the last value in the StaticVec into the empty slot.
   #[inline(always)]
