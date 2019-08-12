@@ -10,8 +10,11 @@
 #![feature(slice_partition_dedup)]
 
 //Literally just for stable-sort.
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", rustdoc))]
 extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(rustdoc)]
 use alloc::vec::Vec;
@@ -74,6 +77,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Returns a new StaticVec instance filled with the contents, if any, of an array.
   ///If the array has a length greater than the StaticVec's declared capacity,
   ///any contents after that point are ignored.
+  ///The `N2` parameter does not need to be provided explicitly, and can be inferred from the array itself.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
   pub fn new_from_array<const N2: usize>(values: [T; N2]) -> Self
@@ -334,7 +338,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Performs an stable in-place sort of the StaticVec's inhabited area.
+  ///Performs a stable in-place sort of the StaticVec's inhabited area.
   ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
   #[cfg(feature = "std")]
   #[inline(always)]

@@ -7,6 +7,8 @@ use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::mem::MaybeUninit;
 use core::ops::{Index, IndexMut, Range, RangeInclusive};
+#[cfg(feature = "std")]
+use std::io::{self, Error, ErrorKind, IoSlice, Read, Write};
 
 impl<T, const N: usize> AsMut<T> for StaticVec<T, {N}> {
   ///Asserts that the StaticVec's current length is greater than 0 to avoid
@@ -435,3 +437,53 @@ impl_partial_ord_with_as_slice_against_slice!([T1], &StaticVec<T2, {N}>);
 impl_partial_ord_with_as_slice_against_slice!([T1], &mut StaticVec<T2, {N}>);
 impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, {N}>);
 impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, {N}>);
+
+#[cfg(feature = "std")]
+impl<const N: usize> Read for StaticVec<u8, {N}> {
+  #[inline(always)]
+  fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+    let buf_len = buf.len();
+    if buf_len < N {
+      unsafe {
+        buf.copy_from_slice(self.as_slice().get_unchecked(0..buf_len));
+      }
+      Ok(buf_len)
+    } else {
+      Err(Error::new(ErrorKind::Other, "Not enough data available!"))
+    }
+  }
+}
+
+#[cfg(feature = "std")]
+impl<const N: usize> Write for StaticVec<u8, {N}> {
+  #[inline(always)]
+  fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+    let old_length = self.length;
+    self.extend_from_slice(buf);
+    Ok(self.length - old_length)
+  }
+
+  #[inline(always)]
+  fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> io::Result<usize> {
+    let len = bufs.iter().map(|b| b.len()).sum();
+    if self.length + len <= N {
+      for buf in bufs {
+        self.extend_from_slice(buf);
+      }
+      Ok(len)
+    } else {
+      Err(Error::new(ErrorKind::Other, "No space left!"))
+    }
+  }
+
+  #[inline(always)]
+  fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
+    self.extend_from_slice(buf);
+    Ok(())
+  }
+
+  #[inline(always)]
+  fn flush(&mut self) -> io::Result<()> {
+    Ok(())
+  }
+}
