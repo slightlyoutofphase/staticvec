@@ -17,6 +17,10 @@ Contributions/suggestions/etc. very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
 
+**Known issues:** Incremental linking is, currently, an acknowledged cause of "internal compiler errors" when used
+in conjunction with const generics. If you encounter any while trying to use this crate, there's a relatively good chance
+they can be worked around by setting `incremental = false` for the relevant build profile in your `Cargo.toml`.
+
 A basic usage example:
 
 ```rust
