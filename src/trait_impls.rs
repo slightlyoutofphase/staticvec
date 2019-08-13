@@ -287,6 +287,25 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, {N}> {
   }
 }
 
+impl<T, const N: usize> Index<RangeFull> for StaticVec<T, {N}> {
+  type Output = [T];
+  ///Returns a constant reference to a slice consisting of `0..self.length`
+  //elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
+  #[inline(always)]
+  fn index(&self, _index: RangeFull) -> &Self::Output {
+    self.as_slice()
+  }
+}
+
+impl<T, const N: usize> IndexMut<RangeFull> for StaticVec<T, {N}> {
+  ///Returns a mutable reference to a slice consisting of `0..self.length`
+  //elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
+  #[inline(always)]
+  fn index_mut(&mut self, _index: RangeFull) -> &mut Self::Output {
+    self.as_mut_slice()
+  }
+}
+
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, {N}> {
   type IntoIter = StaticVecIterConst<'a, T>;
   type Item = <Self::IntoIter as Iterator>::Item;
