@@ -10,7 +10,7 @@ Note: the word "static" here is meant by the traditional definition of "unchangi
 
 This crate does **not** use literal `static` variables for anything.
 
-Fully `#![no_std]` compatible (with almost no loss of functionality) by setting 
+Fully `#![no_std]` compatible (with almost no loss of functionality) by setting
 `default-features = false` for the `staticvec` dependency in your `Cargo.toml`.
 
 Contributions/suggestions/etc. very welcome!
