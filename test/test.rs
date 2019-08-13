@@ -254,6 +254,15 @@ fn partial_eq() {
 }
 
 #[test]
+fn partial_ord() {
+  assert!(staticvec![1] < staticvec![2]);
+  assert!(staticvec![1] > []);
+  assert!(staticvec![1] < &staticvec![2]);
+  assert!(staticvec![1] > &[]);
+  assert!(staticvec![1] > &mut []);
+}
+
+#[test]
 fn pop() {
   let mut vec = staticvec![1, 2, 3];
   assert_eq!(vec.pop(), Some(3));
@@ -265,6 +274,15 @@ fn push() {
   let mut vec = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
   vec.push(3);
   assert_eq!(vec, [1, 2, 3, 3]);
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn read() {
+  let mut ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
+  let mut buffer = staticvec![0; 4];
+  assert_eq!(ints.read(buffer.as_mut_slice()).unwrap(), 4);
+  assert_eq!(buffer, [1, 2, 3, 4]);
 }
 
 #[test]
@@ -380,4 +398,16 @@ fn truncate() {
   let mut vec4 = staticvec![1, 2, 3, 4];
   vec4.truncate(97);
   assert_eq!(vec4.len(), 4);
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn write() {
+  //From ArrayVec...
+  let mut v = StaticVec::<u8, 8>::new();
+  write!(&mut v, "\x01\x02\x03").unwrap();
+  assert_eq!(&v[..], &[1, 2, 3]);
+  let r = v.write(&[9; 16]).unwrap();
+  assert_eq!(r, 5);
+  assert_eq!(&v[..], &[1, 2, 3, 9, 9, 9, 9, 9]);
 }
