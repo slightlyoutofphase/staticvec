@@ -6,7 +6,7 @@ use core::fmt::{Debug, Formatter, Result};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::mem::MaybeUninit;
-use core::ops::{Index, IndexMut, Range, RangeInclusive};
+use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
 #[cfg(feature = "std")]
 use std::io::{self, Error, ErrorKind, IoSlice, Read, Write};
 
@@ -264,6 +264,25 @@ impl<T, const N: usize> IndexMut<Range<usize>> for StaticVec<T, {N}> {
   }
 }
 
+impl<T, const N: usize> Index<RangeFull> for StaticVec<T, {N}> {
+  type Output = [T];
+  ///Returns a constant reference to a slice consisting of `0..self.length`
+  //elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
+  #[inline(always)]
+  fn index(&self, _index: RangeFull) -> &Self::Output {
+    self.as_slice()
+  }
+}
+
+impl<T, const N: usize> IndexMut<RangeFull> for StaticVec<T, {N}> {
+  ///Returns a mutable reference to a slice consisting of `0..self.length`
+  //elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
+  #[inline(always)]
+  fn index_mut(&mut self, _index: RangeFull) -> &mut Self::Output {
+    self.as_mut_slice()
+  }
+}
+
 impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, {N}> {
   type Output = [T];
   ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
@@ -284,25 +303,6 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, {N}> {
   fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
     assert!(index.start() <= index.end() && index.end() < &self.length);
     unsafe { &mut *(self.data.get_unchecked_mut(index) as *mut [MaybeUninit<T>] as *mut [T]) }
-  }
-}
-
-impl<T, const N: usize> Index<RangeFull> for StaticVec<T, {N}> {
-  type Output = [T];
-  ///Returns a constant reference to a slice consisting of `0..self.length`
-  //elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
-  #[inline(always)]
-  fn index(&self, _index: RangeFull) -> &Self::Output {
-    self.as_slice()
-  }
-}
-
-impl<T, const N: usize> IndexMut<RangeFull> for StaticVec<T, {N}> {
-  ///Returns a mutable reference to a slice consisting of `0..self.length`
-  //elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
-  #[inline(always)]
-  fn index_mut(&mut self, _index: RangeFull) -> &mut Self::Output {
-    self.as_mut_slice()
   }
 }
 
@@ -462,7 +462,7 @@ impl<const N: usize> Read for StaticVec<u8, {N}> {
   #[inline]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     let buf_len = buf.len();
-    if buf_len < N {
+    if buf_len <= N {
       unsafe {
         buf.copy_from_slice(self.as_slice().get_unchecked(0..buf_len));
       }
