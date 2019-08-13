@@ -255,10 +255,11 @@ fn partial_eq() {
 
 #[test]
 fn partial_ord() {
+  //TODO: add more here.
   assert!(staticvec![1] < staticvec![2]);
   assert!(staticvec![1] > []);
-  assert!(staticvec![1] < &staticvec![2]);
-  assert!(staticvec![1] > &[]);
+  assert!(staticvec![1] <= &staticvec![2]);
+  assert!(staticvec![1] >= &[]);
   assert!(staticvec![1] > &mut []);
 }
 
