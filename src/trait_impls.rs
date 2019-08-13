@@ -440,7 +440,7 @@ impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, {N}>);
 
 #[cfg(feature = "std")]
 impl<const N: usize> Read for StaticVec<u8, {N}> {
-  #[inline(always)]
+  #[inline]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     let buf_len = buf.len();
     if buf_len < N {
@@ -463,7 +463,7 @@ impl<const N: usize> Write for StaticVec<u8, {N}> {
     Ok(self.length - old_length)
   }
 
-  #[inline(always)]
+  #[inline]
   fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> io::Result<usize> {
     let len = bufs.iter().map(|b| b.len()).sum();
     if self.length + len <= N {
