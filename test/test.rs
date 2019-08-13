@@ -403,7 +403,7 @@ fn truncate() {
 #[cfg(feature = "std")]
 #[test]
 fn write() {
-  //From ArrayVec...
+  //From arrayvec
   let mut v = StaticVec::<u8, 8>::new();
   write!(&mut v, "\x01\x02\x03").unwrap();
   assert_eq!(&v[..], &[1, 2, 3]);
