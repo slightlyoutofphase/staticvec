@@ -54,12 +54,32 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     }
   }
 
-  ///Returns a new StaticVec instance filled with the contents, if any, of a slice.
+  ///Returns a new StaticVec instance filled with the contents, if any, of a constant slice reference.
   ///If the slice has a length greater than the StaticVec's declared capacity,
   ///any contents after that point are ignored.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
   pub fn new_from_slice(values: &[T]) -> Self
+  where T: Copy {
+    unsafe {
+      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let fill_length = values.len().min(N);
+      values
+        .as_ptr()
+        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
+      Self {
+        data: data_,
+        length: fill_length,
+      }
+    }
+  }
+
+  ///Returns a new StaticVec instance filled with the contents, if any, of a mutable slice reference.
+  ///If the slice has a length greater than the StaticVec's declared capacity,
+  ///any contents after that point are ignored.
+  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
+  #[inline]
+  pub fn new_from_mut_slice(values: &mut [T]) -> Self
   where T: Copy {
     unsafe {
       let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
@@ -267,14 +287,14 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///moves the last value in the StaticVec into the empty slot.
   #[inline(always)]
   pub fn swap_pop(&mut self, index: usize) -> Option<T> {
-    if index >= self.length {
-      None
-    } else {
+    if index < self.length {
       unsafe {
         let last_value = self.data.get_unchecked(self.length - 1).read();
         self.length -= 1;
         Some(self.as_mut_ptr().add(index).replace(last_value))
       }
+    } else {
+      None
     }
   }
 
@@ -418,13 +438,10 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///Unlike the implementation of this function for [Vec](alloc::vec::Vec), no iterator is used,
   ///just a single pointer-copy call.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
-  #[inline]
+  #[inline(always)]
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
-    let mut added_length = other.len();
-    if self.length + added_length > N {
-      added_length = N - self.length;
-    }
+    let added_length = (self.length + other.len()).min(N - self.length);
     unsafe {
       other
         .as_ptr()

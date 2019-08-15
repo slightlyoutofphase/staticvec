@@ -8,7 +8,7 @@ use core::iter::FromIterator;
 use core::mem::MaybeUninit;
 use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
 #[cfg(feature = "std")]
-use std::io::{self, Error, ErrorKind, IoSlice, Read, Write};
+use std::io::{self, IoSlice, Read, Write};
 
 impl<T, const N: usize> AsMut<T> for StaticVec<T, {N}> {
   ///Asserts that the StaticVec's current length is greater than 0 to avoid
@@ -58,9 +58,9 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, {N}> {
           .data
           .get_unchecked_mut(i)
           .write(self.data.get_unchecked(i).get_ref().clone());
+        res.length += 1;
       }
     }
-    res.length = self.length;
     res
   }
 }
@@ -144,21 +144,39 @@ impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, {N}> {
   }
 }
 
+impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, {N}> {
+  ///Creates a new StaticVec instance from the contents of `values`, using
+  ///[new_from_mut_slice](crate::StaticVec::new_from_mut_slice) internally.
+  #[inline(always)]
+  fn from(values: &mut [T]) -> Self {
+    Self::new_from_mut_slice(values)
+  }
+}
+
+impl<T: Copy, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, {N2}> {
+  ///Creates a new StaticVec instance from the contents of `values`, using
+  ///[new_from_array](crate::StaticVec::new_from_array) internally.
+  #[inline(always)]
+  fn from(values: [T; N1]) -> Self {
+    Self::new_from_array(values)
+  }
+}
+
 impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, {N2}> {
   ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_slice](crate::StaticVec::new_from_array) internally.
+  ///[new_from_array](crate::StaticVec::new_from_array) internally.
   #[inline(always)]
   fn from(values: &[T; N1]) -> Self {
     Self::new_from_array(*values)
   }
 }
 
-impl<T: Copy, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, {N2}> {
+impl<T: Copy, const N1: usize, const N2: usize> From<&mut [T; N1]> for StaticVec<T, {N2}> {
   ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_slice](crate::StaticVec::new_from_array) internally.
+  ///[new_from_array](crate::StaticVec::new_from_array) internally.
   #[inline(always)]
-  fn from(values: [T; N1]) -> Self {
-    Self::new_from_array(values)
+  fn from(values: &mut [T; N1]) -> Self {
+    Self::new_from_array(*values)
   }
 }
 
@@ -459,17 +477,15 @@ impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, {N}>);
 
 #[cfg(feature = "std")]
 impl<const N: usize> Read for StaticVec<u8, {N}> {
-  #[inline]
+  #[inline(always)]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-    let buf_len = buf.len();
-    if buf_len <= N {
-      unsafe {
-        buf.copy_from_slice(self.as_slice().get_unchecked(0..buf_len));
-      }
-      Ok(buf_len)
-    } else {
-      Err(Error::new(ErrorKind::Other, "Not enough data available!"))
+    let read_length = self.length.min(buf.len());
+    unsafe {
+      self
+        .as_ptr()
+        .copy_to_nonoverlapping(buf.as_mut_ptr(), read_length);
     }
+    Ok(read_length)
   }
 }
 
@@ -484,15 +500,11 @@ impl<const N: usize> Write for StaticVec<u8, {N}> {
 
   #[inline]
   fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> io::Result<usize> {
-    let len = bufs.iter().map(|b| b.len()).sum();
-    if self.length + len <= N {
-      for buf in bufs {
-        self.extend_from_slice(buf);
-      }
-      Ok(len)
-    } else {
-      Err(Error::new(ErrorKind::Other, "No space left!"))
+    let old_length = self.length;
+    for buf in bufs {
+      self.extend_from_slice(buf);
     }
+    Ok(self.length - old_length)
   }
 
   #[inline(always)]

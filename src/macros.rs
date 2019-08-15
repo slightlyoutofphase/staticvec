@@ -1,6 +1,7 @@
 ///Creates a new StaticVec from a `vec!`-style pseudo-slice.
 ///The newly created StaticVec will have a `capacity` and `length` exactly equal to the
-///number of elements, if any, in the slice.
+///number of elements in the slice. The "array-like" `[value; N]` syntax is also supported
+///for types that implement `Copy`.
 #[macro_export]
 macro_rules! staticvec {
   (@put_one $val:expr) => (1);
