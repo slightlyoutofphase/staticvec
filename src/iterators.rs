@@ -1,5 +1,5 @@
 use crate::utils::distance_between;
-use core::iter::FusedIterator;
+use core::iter::{FusedIterator, TrustedLen};
 use core::marker::PhantomData;
 
 ///Similar to [Iter](core::slice::IterMut), but specifically implemented with StaticVecs in mind.
@@ -65,6 +65,7 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {
 }
 
 impl<'a, T: 'a> FusedIterator for StaticVecIterConst<'a, T> {}
+impl<'a, T: 'a> TrustedLen for StaticVecIterConst<'a, T> {}
 
 impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
   type Item = &'a mut T;
@@ -115,3 +116,4 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {
 }
 
 impl<'a, T: 'a> FusedIterator for StaticVecIterMut<'a, T> {}
+impl<'a, T: 'a> TrustedLen for StaticVecIterMut<'a, T> {}
