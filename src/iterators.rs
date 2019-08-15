@@ -65,7 +65,7 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {
 }
 
 impl<'a, T: 'a> FusedIterator for StaticVecIterConst<'a, T> {}
-impl<'a, T: 'a> TrustedLen for StaticVecIterConst<'a, T> {}
+unsafe impl<'a, T: 'a> TrustedLen for StaticVecIterConst<'a, T> {}
 
 impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
   type Item = &'a mut T;
@@ -116,4 +116,4 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {
 }
 
 impl<'a, T: 'a> FusedIterator for StaticVecIterMut<'a, T> {}
-impl<'a, T: 'a> TrustedLen for StaticVecIterMut<'a, T> {}
+unsafe impl<'a, T: 'a> TrustedLen for StaticVecIterMut<'a, T> {}
