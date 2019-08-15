@@ -1,7 +1,7 @@
 use staticvec::*;
 
 #[cfg(feature = "std")]
-use std::io::{self, Read, Write};
+use std::io::{IoSlice, Read, Write};
 
 #[test]
 fn as_mut_ptr() {
@@ -9,11 +9,10 @@ fn as_mut_ptr() {
   unsafe { assert_eq!(*v.as_mut_ptr(), 1) };
 }
 
-#[cfg(feature = "std")]
 #[test]
 fn as_mut_slice() {
-  let mut buffer = staticvec![0; 3];
-  io::repeat(0b101).read_exact(buffer.as_mut_slice()).unwrap();
+  let mut buffer = staticvec![1, 2, 3, 5, 8];
+  assert_eq!(buffer.as_mut_slice(), &mut [1, 2, 3, 5, 8]);
 }
 
 #[test]
@@ -22,11 +21,10 @@ fn as_ptr() {
   unsafe { assert_eq!(*v.as_ptr(), 1) };
 }
 
-#[cfg(feature = "std")]
 #[test]
 fn as_slice() {
   let buffer = staticvec![1, 2, 3, 5, 8];
-  io::sink().write(buffer.as_slice()).unwrap();
+  assert_eq!(buffer.as_slice(), &[1, 2, 3, 5, 8]);
 }
 
 #[test]
@@ -132,6 +130,10 @@ fn from() {
     "[5, 6, 7, 1, 2, 3]",
     format!("{:?}", StaticVec::<i32, 6>::from(&[5, 6, 7, 1, 2, 3]))
   );
+  assert_eq!(
+    "[1, 1, 1, 1, 1, 1]",
+    format!("{:?}", StaticVec::<i32, 6>::from([1; 6]))
+  );
   let mut v = staticvec![1];
   v.clear();
   assert_eq!(StaticVec::<i32, 6>::from(v.as_slice()).len(), 0);
@@ -144,6 +146,7 @@ fn index() {
   assert_eq!(vec[1..=1], [1]);
   assert_eq!(vec[1..3], [1, 2]);
   assert_eq!(vec[1..=3], [1, 2, 3]);
+  assert_eq!(vec[..], [0, 1, 2, 3, 4]);
 }
 
 #[test]
@@ -203,6 +206,16 @@ fn new_from_slice() {
   let vec2 = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3, 4, 5, 6]);
   assert_eq!(vec2, [1, 2, 3]);
   let vec3 = StaticVec::<i32, 27>::new_from_slice(&[]);
+  assert_eq!(vec3, []);
+}
+
+#[test]
+fn new_from_mut_slice() {
+  let vec = StaticVec::<i32, 3>::new_from_mut_slice(&mut [1, 2, 3]);
+  assert_eq!(vec, [1, 2, 3]);
+  let vec2 = StaticVec::<i32, 3>::new_from_mut_slice(&mut [1, 2, 3, 4, 5, 6]);
+  assert_eq!(vec2, [1, 2, 3]);
+  let vec3 = StaticVec::<i32, 27>::new_from_mut_slice(&mut []);
   assert_eq!(vec3, []);
 }
 
@@ -281,9 +294,15 @@ fn push() {
 #[test]
 fn read() {
   let mut ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
-  let mut buffer = staticvec![0; 4];
-  assert_eq!(ints.read(buffer.as_mut_slice()).unwrap(), 4);
+  let mut buffer = [0, 0, 0, 0];
+  assert_eq!(ints.read(&mut buffer).unwrap(), 4);
   assert_eq!(buffer, [1, 2, 3, 4]);
+  let mut buffer2 = [];
+  assert_eq!(ints.read(&mut buffer2).unwrap(), 0);
+  assert_eq!(buffer2, []);
+  let mut buffer3 = staticvec![0; 9];
+  assert_eq!(ints.read(buffer3.as_mut_slice()).unwrap(), 9);
+  assert_eq!(ints, buffer3);
 }
 
 #[test]
@@ -411,4 +430,16 @@ fn write() {
   let r = v.write(&[9; 16]).unwrap();
   assert_eq!(r, 5);
   assert_eq!(&v[..], &[1, 2, 3, 9, 9, 9, 9, 9]);
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn write_vectored() {
+  let mut v = StaticVec::<u8, 8>::new();
+  assert_eq!(
+    v.write_vectored(&[IoSlice::new(&[1, 2, 3, 4]), IoSlice::new(&[5, 6, 7, 8])])
+      .unwrap(),
+    8
+  );
+  assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
 }
