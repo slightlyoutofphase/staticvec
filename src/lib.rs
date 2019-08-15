@@ -7,6 +7,7 @@
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_extra)]
 #![feature(exact_size_is_empty)]
+#![feature(trusted_len)]
 #![feature(slice_partition_dedup)]
 
 //Literally just for stable-sort.
