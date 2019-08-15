@@ -306,6 +306,7 @@ impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, {N}> {
   ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
   //and that its upper bound is less than the current length of the StaticVec,
   ///and if so returns a constant reference to a slice of elements `index.start()..=index.end()`.
+  #[allow(clippy::op_ref)]
   #[inline(always)]
   fn index(&self, index: RangeInclusive<usize>) -> &Self::Output {
     assert!(index.start() <= index.end() && index.end() < &self.length);
@@ -317,6 +318,7 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, {N}> {
   ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
   //and that its upper bound is less than the current length of the StaticVec,
   ///and if so returns a mutable reference to a slice of elements `index.start()..=index.end()`.
+  #[allow(clippy::op_ref)]
   #[inline(always)]
   fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
     assert!(index.start() <= index.end() && index.end() < &self.length);
@@ -346,7 +348,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, {N}> {
 
 impl<T: Ord, const N: usize> Ord for StaticVec<T, {N}> {
   #[inline(always)]
-  fn cmp(&self, other: &StaticVec<T, {N}>) -> Ordering {
+  fn cmp(&self, other: &Self) -> Ordering {
     Ord::cmp(self.as_slice(), other.as_slice())
   }
 }
@@ -358,6 +360,7 @@ macro_rules! impl_partial_eq_with_as_slice {
       fn eq(&self, other: &$left) -> bool {
         self.as_slice() == other.as_slice()
       }
+      #[allow(clippy::partialeq_ne_impl)]
       #[inline(always)]
       fn ne(&self, other: &$left) -> bool {
         self.as_slice() != other.as_slice()
@@ -373,6 +376,7 @@ macro_rules! impl_partial_eq_with_get_unchecked {
       fn eq(&self, other: &$left) -> bool {
         unsafe { self.as_slice() == other.get_unchecked(..) }
       }
+      #[allow(clippy::partialeq_ne_impl)]
       #[inline(always)]
       fn ne(&self, other: &$left) -> bool {
         unsafe { self.as_slice() != other.get_unchecked(..) }
@@ -388,6 +392,7 @@ macro_rules! impl_partial_eq_with_equals_no_deref {
       fn eq(&self, other: &$left) -> bool {
         self.as_slice() == other
       }
+      #[allow(clippy::partialeq_ne_impl)]
       #[inline(always)]
       fn ne(&self, other: &$left) -> bool {
         self.as_slice() != other
@@ -403,6 +408,7 @@ macro_rules! impl_partial_eq_with_equals_deref {
       fn eq(&self, other: &$left) -> bool {
         self.as_slice() == *other
       }
+      #[allow(clippy::partialeq_ne_impl)]
       #[inline(always)]
       fn ne(&self, other: &$left) -> bool {
         self.as_slice() != *other
