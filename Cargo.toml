@@ -67,3 +67,4 @@ std = []
 default = ["std"]
 
 [dependencies]
+serde = { optional = true, version = "1.0" }
