@@ -13,6 +13,9 @@ This crate does **not** use literal `static` variables for anything.
 Fully `#![no_std]` compatible (with almost no loss of functionality) by setting
 `default-features = false` for the `staticvec` dependency in your `Cargo.toml`.
 
+Optional support for serialization and deserialization of the `StaticVec` struct
+via `serde` is available by activating the `serde_support` feature.
+
 Contributions/suggestions/etc. very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
