@@ -5,12 +5,14 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
 
 #[cfg(feature = "std")]
 use std::io::{self, IoSlice, Read, Write};
+
+#[cfg(feature = "serde_support")]
+use core::marker::PhantomData;
 
 #[cfg(feature = "serde_support")]
 use serde::{
