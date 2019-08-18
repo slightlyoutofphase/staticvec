@@ -2,13 +2,21 @@ use crate::iterators::*;
 use crate::utils::partial_compare;
 use crate::StaticVec;
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
-use core::fmt::{Debug, Formatter, Result};
+use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
+use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
+
 #[cfg(feature = "std")]
 use std::io::{self, IoSlice, Read, Write};
+
+#[cfg(feature = "serde_support")]
+use serde::{
+  de::{Error, SeqAccess, Visitor},
+  Deserialize, Deserializer, Serialize, Serializer,
+};
 
 impl<T, const N: usize> AsMut<T> for StaticVec<T, {N}> {
   ///Asserts that the StaticVec's current length is greater than 0 to avoid
@@ -67,7 +75,7 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, {N}> {
 
 impl<T: Debug, const N: usize> Debug for StaticVec<T, {N}> {
   #[inline(always)]
-  fn fmt(&self, f: &mut Formatter) -> Result {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     Debug::fmt(self.as_slice(), f)
   }
 }
@@ -522,5 +530,47 @@ impl<const N: usize> Write for StaticVec<u8, {N}> {
   #[inline(always)]
   fn flush(&mut self) -> io::Result<()> {
     Ok(())
+  }
+}
+
+#[cfg(feature = "serde_support")]
+impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, {N}>
+where T: Deserialize<'de> {
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where D: Deserializer<'de> {
+    struct StaticVecVisitor<'de, T, const N: usize>(PhantomData<(&'de (), T)>);
+
+    impl<'de, T, const N: usize> Visitor<'de> for StaticVecVisitor<'de, T, {N}>
+    where T: Deserialize<'de> {
+      type Value = StaticVec<T, {N}>;
+
+      fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "no more than {} items", N)
+      }
+
+      fn visit_seq<SA>(self, mut seq: SA) -> Result<Self::Value, SA::Error>
+      where SA: SeqAccess<'de> {
+        let mut vec = StaticVec::<T, {N}>::new();
+        while let Some(value) = seq.next_element()? {
+          if vec.len() == N {
+            return Err(SA::Error::invalid_length(N + 1, &self));
+          }
+          unsafe {
+            vec.push_unchecked(value);
+          }
+        }
+        Ok(vec)
+      }
+    }
+    deserializer.deserialize_seq(StaticVecVisitor::<T, {N}>(PhantomData))
+  }
+}
+
+#[cfg(feature = "serde_support")]
+impl<T, const N: usize> Serialize for StaticVec<T, {N}>
+where T: Serialize {
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where S: Serializer {
+    serializer.collect_seq(self)
   }
 }

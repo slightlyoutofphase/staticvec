@@ -3,6 +3,7 @@ name = "staticvec"
 description = "Implements a fixed-capacity stack-allocated Vec alternative backed by an array, using const generics."
 homepage = "https://crates.io/crates/staticvec"
 repository = "https://github.com/slightlyoutofphase/staticvec"
+documentation = "https://docs.rs/staticvec/"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 version = "0.3.3"
@@ -55,8 +56,13 @@ name = "benchmark"
 path = "benchmark/benchmark.rs"
 
 [[example]]
-name = "demo"
-path = "demo/demo.rs"
+name = "main_demo"
+path = "demo/main_demo.rs"
+
+[[example]]
+name = "serde_support_demo"
+path = "demo/serde_support_demo.rs"
+required-features = ["serde_support","serde_json_support"]
 
 [[test]]
 name = "test"
@@ -65,6 +71,9 @@ path = "test/test.rs"
 [features]
 std = []
 default = ["std"]
+serde_support = ["serde"]
+serde_json_support = ["serde_json"]
 
 [dependencies]
-serde = { optional = true, version = "1.0" }
+serde = { optional = true, version = "1.0", features = ["derive"] }
+serde_json = { optional = true, version = "1.0" }

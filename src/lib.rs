@@ -28,14 +28,6 @@ use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
 use core::ptr;
-#[cfg(feature = "serde")]
-use {
-  core::fmt,
-  serde::{
-    de::{Error, SeqAccess, Visitor},
-    Deserialize, Deserializer, Serialize, Serializer,
-  },
-};
 
 mod iterators;
 mod macros;
@@ -589,51 +581,5 @@ impl<T, const N: usize> StaticVec<T, {N}> {
     K: PartialEq<K>, {
     //Exactly the same as Vec's version.
     self.dedup_by(|a, b| key(a) == key(b))
-  }
-}
-
-#[cfg(feature = "serde")]
-impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, { N }>
-where T: Deserialize<'de>
-{
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where D: Deserializer<'de> {
-    struct StaticVecVisitor<'de, T, const N: usize>(PhantomData<(&'de (), T)>);
-
-    impl<'de, T, const N: usize> Visitor<'de> for StaticVecVisitor<'de, T, { N }>
-    where T: Deserialize<'de>
-    {
-      type Value = StaticVec<T, { N }>;
-
-      fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter, "no more than {} items", N)
-      }
-
-      fn visit_seq<SA>(self, mut seq: SA) -> Result<Self::Value, SA::Error>
-      where SA: SeqAccess<'de> {
-        let mut vec = StaticVec::<T, { N }>::new();
-
-        while let Some(value) = seq.next_element()? {
-          if vec.len() == N {
-            return Err(SA::Error::invalid_length(N + 1, &self));
-          }
-          vec.push(value);
-        }
-
-        Ok(vec)
-      }
-    }
-
-    deserializer.deserialize_seq(StaticVecVisitor::<T, { N }>(PhantomData))
-  }
-}
-
-#[cfg(feature = "serde")]
-impl<T, const N: usize> Serialize for StaticVec<T, { N }>
-where T: Serialize
-{
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where S: Serializer {
-    serializer.collect_seq(self)
   }
 }
