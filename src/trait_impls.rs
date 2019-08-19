@@ -538,6 +538,7 @@ impl<const N: usize> Write for StaticVec<u8, {N}> {
 #[cfg(feature = "serde_support")]
 impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, {N}>
 where T: Deserialize<'de> {
+  #[inline]
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where D: Deserializer<'de> {
     struct StaticVecVisitor<'de, T, const N: usize>(PhantomData<(&'de (), T)>);
@@ -546,10 +547,12 @@ where T: Deserialize<'de> {
     where T: Deserialize<'de> {
       type Value = StaticVec<T, {N}>;
 
+      #[inline(always)]
       fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         write!(formatter, "no more than {} items", N)
       }
 
+      #[inline]
       fn visit_seq<SA>(self, mut seq: SA) -> Result<Self::Value, SA::Error>
       where SA: SeqAccess<'de> {
         let mut res = StaticVec::<T, {N}>::new();
@@ -571,6 +574,7 @@ where T: Deserialize<'de> {
 #[cfg(feature = "serde_support")]
 impl<T, const N: usize> Serialize for StaticVec<T, {N}>
 where T: Serialize {
+  #[inline(always)]
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where S: Serializer {
     serializer.collect_seq(self)
