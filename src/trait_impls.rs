@@ -552,16 +552,16 @@ where T: Deserialize<'de> {
 
       fn visit_seq<SA>(self, mut seq: SA) -> Result<Self::Value, SA::Error>
       where SA: SeqAccess<'de> {
-        let mut vec = StaticVec::<T, {N}>::new();
-        while let Some(value) = seq.next_element()? {
-          if vec.len() == N {
+        let mut res = StaticVec::<T, {N}>::new();
+        while let Some(val) = seq.next_element()? {
+          if res.len() == N {
             return Err(SA::Error::invalid_length(N + 1, &self));
           }
           unsafe {
-            vec.push_unchecked(value);
+            res.push_unchecked(val);
           }
         }
-        Ok(vec)
+        Ok(res)
       }
     }
     deserializer.deserialize_seq(StaticVecVisitor::<T, {N}>(PhantomData))
