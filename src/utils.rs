@@ -25,9 +25,9 @@ where T: Copy {
 }
 
 #[inline(always)]
-pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, {COUNT}>
+pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, { COUNT }>
 where T: Copy {
-  let mut res = StaticVec::<T, {COUNT}>::new();
+  let mut res = StaticVec::<T, { COUNT }>::new();
   res.length = COUNT;
   for i in 0..COUNT {
     unsafe {

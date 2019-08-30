@@ -42,7 +42,7 @@ pub struct StaticVec<T, const N: usize> {
   length: usize,
 }
 
-impl<T, const N: usize> StaticVec<T, {N}> {
+impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a new StaticVec instance.
   #[inline(always)]
   pub fn new() -> Self {
