@@ -246,7 +246,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   }
 
   ///Pushes `value` to the StaticVec if its current length is less than its capacity,
-  ///and returns an error indicating there's no remaining capacity otherwise.
+  ///or returns an error indicating there's no remaining capacity otherwise.
   #[inline(always)]
   pub fn try_push(&mut self, value: T) -> Result<(), &'static str> {
     if self.length < N {
