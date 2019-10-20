@@ -16,7 +16,7 @@ use core::marker::PhantomData;
 
 #[cfg(feature = "serde_support")]
 use serde::{
-  de::{Error, SeqAccess, Visitor},
+  de::{SeqAccess, Visitor},
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
@@ -556,12 +556,13 @@ where T: Deserialize<'de> {
       fn visit_seq<SA>(self, mut seq: SA) -> Result<Self::Value, SA::Error>
       where SA: SeqAccess<'de> {
         let mut res = StaticVec::<T, {N}>::new();
-        while let Some(val) = seq.next_element()? {
-          if res.len() == N {
-            return Err(SA::Error::invalid_length(N + 1, &self));
-          }
-          unsafe {
-            res.push_unchecked(val);
+        while res.length < N {
+          if let Some(val) = seq.next_element()? {
+            unsafe {
+              res.push_unchecked(val);
+            }
+          } else {
+            break;
           }
         }
         Ok(res)
