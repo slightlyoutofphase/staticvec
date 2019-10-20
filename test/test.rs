@@ -420,6 +420,28 @@ fn truncate() {
   assert_eq!(vec4.len(), 4);
 }
 
+#[allow(unused_must_use)]
+#[test]
+fn try_insert() {
+  let mut vec = staticvec![1, 2, 3, 4, 5];
+  assert_eq!(
+    vec.try_insert(2, 0),
+    Err("One of `self.length < N` or `index <= self.length` is false!")
+  );
+  let mut vec2 = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
+  vec2.try_insert(2, 3);
+  assert_eq!(vec2, [1, 2, 3, 3]);
+}
+
+#[test]
+fn try_push() {
+  let mut vec = staticvec![1, 2, 3, 4, 5];
+  assert_eq!(vec.try_push(2), Err("No space left!"));
+  let mut vec2 = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
+  vec2.push(3);
+  assert_eq!(vec2, [1, 2, 3, 3]);
+}
+
 #[cfg(feature = "std")]
 #[test]
 fn write() {
