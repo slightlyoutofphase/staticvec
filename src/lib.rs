@@ -328,7 +328,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Asserts that the current length of the StaticVec is less than `N` and that
   ///`index` is less than the length, and if so inserts `value` at that position.
-  ///Any values that exist in later positions are shifted to the right.
+  ///Any values that exist in positions after `index` are shifted to the right.
   #[inline]
   pub fn insert(&mut self, index: usize, value: T) {
     assert!(self.length < N && index <= self.length);
@@ -337,6 +337,24 @@ impl<T, const N: usize> StaticVec<T, {N}> {
       p.copy_to(p.offset(1), self.length - index);
       p.write(value);
       self.length += 1;
+    }
+  }
+
+  ///Inserts `value` at `index` if the current length of the StaticVec is less than `N` and `index`
+  ///is less than the length, or returns a error stating one of the two is not the case otherwise.
+  ///Any values that exist in positions after `index` are shifted to the right.
+  #[inline]
+  pub fn try_insert(&mut self, index: usize, value: T) -> Result<(), &'static str> {
+    if self.length < N && index <= self.length {
+      unsafe {
+        let p = self.as_mut_ptr().add(index);
+        p.copy_to(p.offset(1), self.length - index);
+        p.write(value);
+        self.length += 1;
+        Ok(())
+      }
+    } else {
+      Err("One of `self.length < N` or `index <= self.length` is false!")
     }
   }
 
