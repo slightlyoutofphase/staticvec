@@ -1,13 +1,36 @@
 use serde::{Deserialize, Serialize};
 use staticvec::*;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct MyStruct {
   value: &'static str,
 }
 
+const JSON_STR: &str = r#"
+[
+  {
+    "value": "easy!"
+  },
+  {
+    "value": "really"
+  },
+  {
+    "value": "this"
+  },
+  {
+    "value": "makes"
+  },
+  {
+    "value": "sure"
+  },
+  {
+    "value": "Serde"
+  }
+]
+"#;
+
 fn main() {
-  let structs = staticvec![
+  let structs_a = staticvec![
     MyStruct { value: "Serde" },
     MyStruct { value: "sure" },
     MyStruct { value: "makes" },
@@ -15,8 +38,12 @@ fn main() {
     MyStruct { value: "really" },
     MyStruct { value: "easy!" },
   ];
+
+  let structs_b: StaticVec<MyStruct, 6> = serde_json::from_str(JSON_STR).unwrap();
+
   println!(
-    "{}",
-    serde_json::to_string_pretty(&structs).expect("You should never see this!")
+    "{} \n\n{:?}",
+    serde_json::to_string_pretty(&structs_a).unwrap(),
+    structs_b
   );
 }
