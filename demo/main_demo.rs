@@ -1,3 +1,5 @@
+#![allow(clippy::all)]
+
 use staticvec::*;
 
 #[derive(Copy, Clone)]

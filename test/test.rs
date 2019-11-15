@@ -1,3 +1,5 @@
+#![allow(clippy::all)]
+
 use staticvec::*;
 
 #[cfg(feature = "std")]

@@ -121,7 +121,6 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///
   ///Example usage:
   ///```
-  ///use staticvec::*;
   ///
   ///fn main() {
   ///  let mut i = 0;
