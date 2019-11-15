@@ -3,7 +3,7 @@
 [Latest Version]: https://img.shields.io/crates/v/staticvec.svg
 [crates.io]: https://crates.io/crates/staticvec
 [Rustc Version nightly]: https://img.shields.io/badge/rustc-nightly-lightgray.svg
-[build]: https://travis-ci.com/slightlyoutofphase/staticvec.svg?branch=master
+[![Build Status](https://travis-ci.com/slightlyoutofphase/staticvec.svg?branch=master)](https://travis-ci.com/slightlyoutofphase/staticvec)
 
 Implements a fixed-capacity stack-allocated Vec alternative backed by an array, using const generics.
 
