@@ -308,6 +308,13 @@ fn read() {
 }
 
 #[test]
+fn remaining_capacity() {
+  let mut v = StaticVec::<i32, 3>::new();
+  v.push(12);
+  assert_eq!(v.remaining_capacity(), 2);
+}
+
+#[test]
 fn remove() {
   let mut v = staticvec![1, 2, 3];
   assert_eq!(v.remove(1), 2);

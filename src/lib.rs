@@ -42,7 +42,7 @@ pub struct StaticVec<T, const N: usize> {
   length: usize,
 }
 
-impl<T, const N: usize> StaticVec<T, {N}> {
+impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a new StaticVec instance.
   #[inline(always)]
   pub fn new() -> Self {
@@ -150,7 +150,7 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   ///have been added to it with `push`, `insert`, etc. except in the case
   ///that it has been set directly with the unsafe `set_len` function.
   #[inline(always)]
-  pub fn len(&self) -> usize {
+  pub const fn len(&self) -> usize {
     self.length
   }
 
@@ -160,6 +160,12 @@ impl<T, const N: usize> StaticVec<T, {N}> {
   #[inline(always)]
   pub const fn capacity(&self) -> usize {
     N
+  }
+
+  /// Returns the remaining capacity of the `StaticVec`.
+  #[inline(always)]
+  pub const fn remaining_capacity(&self) -> usize {
+    self.capacity() - self.len()
   }
 
   ///Directly sets the `length` field of the StaticVec to `new_len`. Useful if you intend
@@ -172,25 +178,25 @@ impl<T, const N: usize> StaticVec<T, {N}> {
 
   ///Returns true if the current length of the StaticVec is 0.
   #[inline(always)]
-  pub fn is_empty(&self) -> bool {
+  pub const fn is_empty(&self) -> bool {
     self.length == 0
   }
 
   ///Returns true if the current length of the StaticVec is greater than 0.
   #[inline(always)]
-  pub fn is_not_empty(&self) -> bool {
+  pub const fn is_not_empty(&self) -> bool {
     self.length > 0
   }
 
   ///Returns true if the current length of the StaticVec is equal to its capacity.
   #[inline(always)]
-  pub fn is_full(&self) -> bool {
+  pub const fn is_full(&self) -> bool {
     self.length == N
   }
 
   ///Returns true if the current length of the StaticVec is less than its capacity.
   #[inline(always)]
-  pub fn is_not_full(&self) -> bool {
+  pub const fn is_not_full(&self) -> bool {
     self.length < N
   }
 

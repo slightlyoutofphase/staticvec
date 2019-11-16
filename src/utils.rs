@@ -3,8 +3,8 @@ use core::cmp::{Ordering, PartialOrd};
 
 #[inline(always)]
 pub(crate) fn distance_between<T>(self_: *const T, origin: *const T) -> usize {
-  assert!(0 < core::intrinsics::size_of::<T>());
   unsafe {
+    core::intrinsics::panic_if_uninhabited::<T>();
     core::intrinsics::exact_div(
       (self_ as usize).wrapping_sub(origin as usize),
       core::intrinsics::size_of::<T>(),
@@ -25,9 +25,9 @@ where T: Copy {
 }
 
 #[inline(always)]
-pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, {COUNT}>
+pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, { COUNT }>
 where T: Copy {
-  let mut res = StaticVec::<T, {COUNT}>::new();
+  let mut res = StaticVec::<T, { COUNT }>::new();
   res.length = COUNT;
   for i in 0..COUNT {
     unsafe {
