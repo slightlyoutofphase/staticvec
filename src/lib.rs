@@ -121,7 +121,6 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///
   ///Example usage:
   ///```
-  ///
   ///fn main() {
   ///  let mut i = 0;
   ///  let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
@@ -486,6 +485,20 @@ impl<T, const N: usize> StaticVec<T, { N }> {
         .copy_to_nonoverlapping(self.as_mut_ptr().add(self.length), added_length);
     }
     self.length += added_length;
+  }
+
+  ///Copies and appends all elements, if any, of a slice to the StaticVec if the
+  ///StaticVec's remaining capacity is greater than the length of the slice, or returns
+  ///an error indicating that's not the case otherwise.
+  #[inline(always)]
+  pub fn try_extend_from_slice(&mut self, other: &[T]) -> Result<(), &'static str>
+  where T: Copy {
+    if self.remaining_capacity() < other.len() {
+      Err("No space left!")
+    } else {
+      self.extend_from_slice(other);
+      Ok(())
+    }
   }
 
   ///Removes the specified range of elements from the StaticVec and returns them in a new one.

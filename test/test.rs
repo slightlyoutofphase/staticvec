@@ -429,6 +429,14 @@ fn truncate() {
   assert_eq!(vec4.len(), 4);
 }
 
+#[test]
+fn try_extend_from_slice() {
+  let mut v = StaticVec::<i32, 3>::from([1, 2, 3]);
+  assert_eq!(v.try_extend_from_slice(&[2, 3]), Err("No space left!"));
+  let mut w = StaticVec::<i32, 4>::from([1, 2, 3]);
+  assert_eq!(w.try_extend_from_slice(&[2]), Ok(()));
+}
+
 #[allow(unused_must_use)]
 #[test]
 fn try_insert() {
