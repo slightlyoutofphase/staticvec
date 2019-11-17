@@ -21,19 +21,15 @@ Contributions/suggestions/etc. very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
 
-**Known issues:** Incremental linking is, currently, an acknowledged cause of "internal compiler errors" when used
-in conjunction with const generics. If you encounter any while trying to use this crate, there's a relatively good chance
-they can be worked around by setting `incremental = false` for the relevant build profile in your `Cargo.toml`.
-
 A basic usage example:
 
 ```rust
 use staticvec::*;
 
 fn main() {
-  let mut v = StaticVec::<i32, 64>::new();
+  let mut v = StaticVec::<usize, 64>::new();
   for i in 0..v.capacity() {
-    v.push(i as i32);
+    v.push(i);
   }
   for i in &v {
     println!("{}", i);
@@ -57,14 +53,17 @@ fn main() {
   for f in staticvec![12.0, 14.0, 15.0, 16.0].iter().skip(2) {
     println!("{}", f);
   }
-  for v in &staticvec![
-    staticvec![12.0, 14.0],
-    staticvec![16.0, 18.0],
-    staticvec![20.0, 22.0],
-    staticvec![24.0, 26.0]
-  ] {
-    for f in v.iter().skip(1) {
-      println!("{}", f);
+  for v in staticvec![
+    staticvec![14, 12].sorted(),
+    staticvec![18, 16].sorted(),
+    staticvec![22, 20].sorted(),
+    staticvec![26, 24].sorted(),
+  ]
+  .iter()
+  .cloned::<StaticVec<usize, 2>>()
+  {
+    for i in &v {
+      println!("{}", i);
     }
   }
 }
