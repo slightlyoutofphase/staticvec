@@ -220,7 +220,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a mutable reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_mut_slice(&mut self) -> &mut [T] {
-    unsafe { &mut *(self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T]) }
+    unsafe {
+      &mut *(self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T])
+    }
   }
 
   ///Appends a value to the end of the StaticVec without asserting that
@@ -271,6 +273,50 @@ impl<T, const N: usize> StaticVec<T, { N }> {
       None
     } else {
       Some(unsafe { self.pop_unchecked() })
+    }
+  }
+
+  ///Returns a constant reference to the first element of the StaticVec in `Some` if the StaticVec is not empty,
+  ///or `None` otherwise.
+  #[inline(always)]
+  pub fn first(&self) -> Option<&T> {
+    if self.length == 0 {
+      None
+    } else {
+      Some(unsafe { self.data.get_unchecked(0).get_ref() })
+    }
+  }
+
+  ///Returns a mutable reference to the first element of the StaticVec in `Some` if the StaticVec is not empty,
+  ///or `None` otherwise.
+  #[inline(always)]
+  pub fn first_mut(&mut self) -> Option<&mut T> {
+    if self.length == 0 {
+      None
+    } else {
+      Some(unsafe { self.data.get_unchecked_mut(0).get_mut() })
+    }
+  }
+
+  ///Returns a constant reference to the last element of the StaticVec in `Some` if the StaticVec is not empty,
+  ///or `None` otherwise.
+  #[inline(always)]
+  pub fn last(&self) -> Option<&T> {
+    if self.length == 0 {
+      None
+    } else {
+      Some(unsafe { self.data.get_unchecked(self.length - 1).get_ref() })
+    }
+  }
+
+  ///Returns a mutable reference to the last element of the StaticVec in `Some` if the StaticVec is not empty,
+  ///or `None` otherwise.
+  #[inline(always)]
+  pub fn last_mut(&mut self) -> Option<&mut T> {
+    if self.length == 0 {
+      None
+    } else {
+      Some(unsafe { self.data.get_unchecked_mut(self.length - 1).get_mut() })
     }
   }
 
@@ -464,7 +510,11 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     let mut res = Self::new();
     res.length = self.length;
     unsafe {
-      reverse_copy(self.as_ptr(), self.as_ptr().add(self.length), res.as_mut_ptr());
+      reverse_copy(
+        self.as_ptr(),
+        self.as_ptr().add(self.length),
+        res.as_mut_ptr(),
+      );
     }
     res
   }
@@ -576,7 +626,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
       self.length = length;
       unsafe {
         ptr::drop_in_place(
-          &mut *(self.data.get_unchecked_mut(length..old_length) as *mut [MaybeUninit<T>] as *mut [T]),
+          &mut *(self.data.get_unchecked_mut(length..old_length) as *mut [MaybeUninit<T>]
+            as *mut [T]),
         );
       }
     }

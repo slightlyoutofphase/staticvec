@@ -38,7 +38,11 @@ where T: Copy {
 }
 
 #[inline]
-pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(self_: &[T2], other: &[T1]) -> Option<Ordering> {
+pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
+  self_: &[T2],
+  other: &[T1],
+) -> Option<Ordering>
+{
   let min_length = self_.len().min(other.len());
   unsafe {
     let left = self_.get_unchecked(0..min_length);
