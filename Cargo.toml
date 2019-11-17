@@ -5,7 +5,7 @@ repository = "https://github.com/slightlyoutofphase/staticvec"
 documentation = "https://docs.rs/staticvec/"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-version = "0.3.6"
+version = "0.4.0"
 authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec", "array", "no_std", "vector", "stack"]
 categories = ["data-structures", "no-std"]
@@ -50,9 +50,17 @@ overflow-checks = false
 [profile.test]
 incremental = false
 
+[[test]]
+name = "test"
+path = "test/test.rs"
+
 [[bench]]
-name = "benchmark"
-path = "benchmark/benchmark.rs"
+name = "smallvec_full_suite.rs"
+path = "benchmark/smallvec_full_suite.rs"
+
+[[bench]]
+name = "arrayvec_extend_suite"
+path = "benchmark/arrayvec_extend_suite.rs"
 
 [[example]]
 name = "main_demo"
@@ -61,11 +69,7 @@ path = "demo/main_demo.rs"
 [[example]]
 name = "serde_support_demo"
 path = "demo/serde_support_demo.rs"
-required-features = ["serde_support","serde_json_support"]
-
-[[test]]
-name = "test"
-path = "test/test.rs"
+required-features = ["serde_support", "serde_json_support"]
 
 [features]
 std = []
