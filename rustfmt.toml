@@ -1,6 +1,7 @@
 tab_spaces = 2
-edition = '2018'
+edition = "2018"
 where_single_line = true
-brace_style = 'PreferSameLine'
+brace_style = "PreferSameLine"
+control_brace_style = "AlwaysSameLine"
 format_macro_matchers = true
-max_width = 110
+max_width = 100
