@@ -55,7 +55,7 @@ name = "test"
 path = "test/test.rs"
 
 [[bench]]
-name = "smallvec_full_suite.rs"
+name = "smallvec_full_suite"
 path = "benchmark/smallvec_full_suite.rs"
 
 [[bench]]
