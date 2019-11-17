@@ -127,6 +127,18 @@ fn filled_with() {
 }
 
 #[test]
+fn first() {
+  let v = staticvec![1, 2, 3];
+  assert_eq!(*v.first().unwrap(), 1);
+}
+
+#[test]
+fn first_mut() {
+  let mut v = staticvec![1, 2, 3];
+  assert_eq!(*v.first_mut().unwrap(), 1);
+}
+
+#[test]
 fn from() {
   assert_eq!(
     "[5, 6, 7, 1, 2, 3]",
@@ -187,6 +199,18 @@ fn is_full() {
 fn is_not_full() {
   let v = StaticVec::<i32, 1>::new();
   assert!(v.is_not_full());
+}
+
+#[test]
+fn last() {
+  let v = staticvec![1, 2, 3];
+  assert_eq!(*v.last().unwrap(), 3);
+}
+
+#[test]
+fn last_mut() {
+  let mut v = staticvec![1, 2, 3];
+  assert_eq!(*v.last_mut().unwrap(), 3);
 }
 
 #[test]
