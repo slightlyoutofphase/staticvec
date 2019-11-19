@@ -20,30 +20,6 @@ use serde::{
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
-impl<T, const N: usize> AsMut<T> for StaticVec<T, { N }> {
-  ///Asserts that the StaticVec's current length is greater than 0 to avoid
-  ///returning an invalid reference, and if so calls [as_mut_ptr](crate::StaticVec::as_mut_ptr)
-  ///internally and converts it to one.
-  #[inline(always)]
-  fn as_mut(&mut self) -> &mut T {
-    //I don't know how useful this impl actually is. We'll see I guess.
-    assert!(self.length > 0);
-    unsafe { self.as_mut_ptr().as_mut().unwrap() }
-  }
-}
-
-impl<T, const N: usize> AsRef<T> for StaticVec<T, { N }> {
-  ///Asserts that the StaticVec's current length is greater than 0 to avoid
-  ///returning an invalid reference, and if so calls [as_ptr](crate::StaticVec::as_ptr)
-  ///internally and converts it to one.
-  #[inline(always)]
-  fn as_ref(&self) -> &T {
-    //I don't know how useful this impl actually is. We'll see I guess.
-    assert!(self.length > 0);
-    unsafe { self.as_ptr().as_ref().unwrap() }
-  }
-}
-
 impl<T, const N: usize> AsMut<[T]> for StaticVec<T, { N }> {
   #[inline(always)]
   fn as_mut(&mut self) -> &mut [T] {
@@ -498,6 +474,7 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
     let read_length = self.length.min(buf.len());
     unsafe {
       self
+        .drain(0..read_length)
         .as_ptr()
         .copy_to_nonoverlapping(buf.as_mut_ptr(), read_length);
     }
@@ -525,12 +502,13 @@ impl<const N: usize> Write for StaticVec<u8, { N }> {
 
   #[inline(always)]
   fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
+    //Our implementation of `write` always returns `Ok(self.length - old_length)`, so we can unwrap safely here.
     if self.write(buf).unwrap() == buf.len() {
       Ok(())
     } else {
       Err(Error::new(
         ErrorKind::WriteZero,
-        "Not enough capacity left!",
+        "Insufficient remaining capacity!",
       ))
     }
   }

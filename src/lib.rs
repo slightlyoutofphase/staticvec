@@ -30,6 +30,7 @@ use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds}
 use core::ptr;
 
 mod iterators;
+#[macro_use]
 mod macros;
 mod trait_impls;
 #[doc(hidden)]
@@ -62,17 +63,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
-    unsafe {
-      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let fill_length = values.len().min(N);
-      values
-        .as_ptr()
-        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
-      Self {
-        data: data_,
-        length: fill_length,
-      }
-    }
+    new_from_slice_internal!(values, values.len().min(N))
   }
 
   ///Returns a new StaticVec instance filled with the contents, if any, of a mutable slice reference.
@@ -82,17 +73,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn new_from_mut_slice(values: &mut [T]) -> Self
   where T: Copy {
-    unsafe {
-      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let fill_length = values.len().min(N);
-      values
-        .as_ptr()
-        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
-      Self {
-        data: data_,
-        length: fill_length,
-      }
-    }
+    new_from_slice_internal!(values, values.len().min(N))
   }
 
   ///Returns a new StaticVec instance filled with the contents, if any, of an array.
@@ -103,17 +84,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn new_from_array<const N2: usize>(values: [T; N2]) -> Self
   where T: Copy {
-    unsafe {
-      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let fill_length = N2.min(N);
-      values
-        .as_ptr()
-        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
-      Self {
-        data: data_,
-        length: fill_length,
-      }
-    }
+    new_from_slice_internal!(values, N2.min(N))
   }
 
   ///Returns a new StaticVec instance filled with the return value of an initializer function.

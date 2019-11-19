@@ -20,3 +20,19 @@ macro_rules! staticvec {
     res
   });
 }
+
+macro_rules! new_from_slice_internal {
+  ($vals:expr, $len_getter:expr) => {
+    unsafe {
+      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let fill_length = $len_getter;
+      $vals
+        .as_ptr()
+        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
+      Self {
+        data: data_,
+        length: fill_length,
+      }
+    }
+  };
+}
