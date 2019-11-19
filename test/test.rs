@@ -327,8 +327,8 @@ fn read() {
   assert_eq!(ints.read(&mut buffer2).unwrap(), 0);
   assert_eq!(buffer2, []);
   let mut buffer3 = staticvec![0; 9];
-  assert_eq!(ints.read(buffer3.as_mut_slice()).unwrap(), 9);
-  assert_eq!(ints, buffer3);
+  assert_eq!(ints.read(buffer3.as_mut_slice()).unwrap(), 5);
+  assert_eq!(ints, []);
 }
 
 #[test]
