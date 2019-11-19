@@ -24,7 +24,7 @@ Contributions/suggestions/etc. very welcome!
 A basic usage example:
 
 ```rust
-use staticvec::*;
+use staticvec::{staticvec, StaticVec};
 
 fn main() {
   let mut v = StaticVec::<usize, 64>::new();
