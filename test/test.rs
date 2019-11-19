@@ -1,9 +1,39 @@
 #![allow(clippy::all)]
 
+use core::cell;
 use staticvec::*;
 
 #[cfg(feature = "std")]
-use std::io::{IoSlice, Read, Write};
+use std::io::{self, IoSlice, Read, Write};
+
+// Helper struct for ensuring things are correctly dropped. Use the `instance`
+// method to create a DropCountingInstance, and the `count` method to see how
+// many such instances have been dropped.
+#[derive(Debug, Default)]
+struct DropCounter {
+  count: cell::Cell<u32>,
+}
+
+impl DropCounter {
+  fn instance(&self) -> DropCountingInstance {
+    DropCountingInstance { count: &self.count }
+  }
+
+  fn count(&self) -> u32 {
+    self.count.get()
+  }
+}
+
+#[derive(Debug)]
+struct DropCountingInstance<'a> {
+  count: &'a cell::Cell<u32>,
+}
+
+impl<'a> Drop for DropCountingInstance<'a> {
+  fn drop(&mut self) {
+    self.count.set(self.count.get() + 1)
+  }
+}
 
 #[test]
 fn as_mut_ptr() {
@@ -39,6 +69,21 @@ fn capacity() {
 fn clear() {
   let mut v = staticvec![1, 2, 3];
   v.clear();
+  assert!(v.is_empty());
+}
+
+#[test]
+fn clear_drops() {
+  let counter = DropCounter::default();
+
+  let mut v = staticvec![counter.instance(), counter.instance(), counter.instance(),];
+
+  assert_eq!(counter.count(), 0);
+  assert_eq!(v.len(), 3);
+
+  v.clear();
+
+  assert_eq!(counter.count(), 3);
   assert!(v.is_empty());
 }
 
@@ -181,24 +226,10 @@ fn is_empty() {
 }
 
 #[test]
-fn is_not_empty() {
-  let mut v = StaticVec::<i32, 1>::new();
-  assert!(v.is_empty());
-  v.push(1);
-  assert!(v.is_not_empty());
-}
-
-#[test]
 fn is_full() {
   let mut v = StaticVec::<i32, 1>::new();
   v.push(1);
   assert!(v.is_full());
-}
-
-#[test]
-fn is_not_full() {
-  let v = StaticVec::<i32, 1>::new();
-  assert!(v.is_not_full());
 }
 
 #[test]
@@ -223,6 +254,7 @@ fn len() {
 fn new() {
   let v = StaticVec::<i32, 1>::new();
   assert_eq!(v.capacity(), 1);
+  assert_eq!(v.len(), 0);
 }
 
 #[test]
@@ -253,6 +285,28 @@ fn new_from_array() {
   assert_eq!(vec2, [1, 1, 1]);
   let vec3 = StaticVec::<i32, 27>::new_from_array([0; 0]);
   assert_eq!(vec3, []);
+}
+
+#[test]
+fn new_from_array_drops() {
+  let counter = DropCounter::default();
+
+  {
+    let array = [
+      counter.instance(),
+      counter.instance(),
+      counter.instance(),
+      counter.instance(),
+      counter.instance(),
+      counter.instance(),
+    ];
+    assert_eq!(counter.count(), 0);
+
+    let vec = StaticVec::<_, 4>::new_from_array(array);
+    assert_eq!(vec.len(), 4);
+    assert_eq!(counter.count(), 2);
+  }
+  assert_eq!(counter.count(), 6);
 }
 
 #[test]
@@ -319,16 +373,17 @@ fn push() {
 #[cfg(feature = "std")]
 #[test]
 fn read() {
-  let mut ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
+  let ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
+  let mut cursor = io::Cursor::new(ints);
   let mut buffer = [0, 0, 0, 0];
-  assert_eq!(ints.read(&mut buffer).unwrap(), 4);
+  assert_eq!(cursor.read(&mut buffer).unwrap(), 4);
   assert_eq!(buffer, [1, 2, 3, 4]);
   let mut buffer2 = [];
-  assert_eq!(ints.read(&mut buffer2).unwrap(), 0);
+  assert_eq!(cursor.read(&mut buffer2).unwrap(), 0);
   assert_eq!(buffer2, []);
   let mut buffer3 = staticvec![0; 9];
-  assert_eq!(ints.read(buffer3.as_mut_slice()).unwrap(), 9);
-  assert_eq!(ints, buffer3);
+  assert_eq!(cursor.read(buffer3.as_mut_slice()).unwrap(), 5);
+  assert_eq!(buffer3, [6, 7, 8, 9, 10, 0, 0, 0, 0]);
 }
 
 #[test]

@@ -69,7 +69,7 @@ fn main() {
   for i in &va {
     println!("{}", i)
   }
-  while va.is_not_empty() {
+  while !va.is_empty() {
     println!("{}", va.pop().unwrap());
   }
   let mut vb = StaticVec::<char, 26>::new();
@@ -122,7 +122,7 @@ fn main() {
   for _i in 0..vb.capacity() {
     vb.push('h');
   }
-  while vb.is_not_empty() {
+  while !vb.is_empty() {
     println!("{}", vb.remove(0));
   }
   vb.push('g');
@@ -220,7 +220,7 @@ fn main() {
   for ms in &msv.reversed() {
     println!("{}", ms.s);
   }
-  while msv.is_not_empty() {
+  while !msv.is_empty() {
     println!("{}", msv.remove(msv.len() - 1).s)
   }
   let v2 = StaticVec::<i32, 8>::new_from_slice(&[1, 2, 3, 4, 5, 6, 7, 8]);
@@ -332,12 +332,8 @@ fn main() {
   }
   let mut y = StaticVec::<MyStruct, 2>::new();
   y.push(MyStruct { s: "hey" });
-  let z: &MyStruct = y.as_ref();
-  println!("{}", z.s);
-  let zz: &mut MyStruct = y.as_mut();
-  println!("{}", zz.s);
-  let zzz: &[MyStruct] = y.as_ref();
-  println!("{}", zzz[0].s);
-  let zzzz: &mut [MyStruct] = y.as_mut();
-  println!("{}", zzzz[0].s);
+  let z: &[MyStruct] = y.as_ref();
+  println!("{}", z[0].s);
+  let zz: &mut [MyStruct] = y.as_mut();
+  println!("{}", zz[0].s);
 }

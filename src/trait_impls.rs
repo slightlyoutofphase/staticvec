@@ -1,15 +1,14 @@
-use crate::iterators::*;
 use crate::utils::partial_compare;
 use crate::StaticVec;
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::MaybeUninit;
-use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
+use core::ops::{Deref, DerefMut, Index, IndexMut};
+use core::slice;
 
 #[cfg(feature = "std")]
-use std::io::{self, Error, ErrorKind, IoSlice, Read, Write};
+use std::io::{self, IoSlice, Write};
 
 #[cfg(feature = "serde_support")]
 use core::marker::PhantomData;
@@ -19,30 +18,6 @@ use serde::{
   de::{SeqAccess, Visitor},
   Deserialize, Deserializer, Serialize, Serializer,
 };
-
-impl<T, const N: usize> AsMut<T> for StaticVec<T, { N }> {
-  ///Asserts that the StaticVec's current length is greater than 0 to avoid
-  ///returning an invalid reference, and if so calls [as_mut_ptr](crate::StaticVec::as_mut_ptr)
-  ///internally and converts it to one.
-  #[inline(always)]
-  fn as_mut(&mut self) -> &mut T {
-    //I don't know how useful this impl actually is. We'll see I guess.
-    assert!(self.length > 0);
-    unsafe { self.as_mut_ptr().as_mut().unwrap() }
-  }
-}
-
-impl<T, const N: usize> AsRef<T> for StaticVec<T, { N }> {
-  ///Asserts that the StaticVec's current length is greater than 0 to avoid
-  ///returning an invalid reference, and if so calls [as_ptr](crate::StaticVec::as_ptr)
-  ///internally and converts it to one.
-  #[inline(always)]
-  fn as_ref(&self) -> &T {
-    //I don't know how useful this impl actually is. We'll see I guess.
-    assert!(self.length > 0);
-    unsafe { self.as_ptr().as_ref().unwrap() }
-  }
-}
 
 impl<T, const N: usize> AsMut<[T]> for StaticVec<T, { N }> {
   #[inline(always)]
@@ -58,27 +33,60 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
   }
 }
 
+impl<T, const N: usize> Deref for StaticVec<T, { N }> {
+  type Target = [T];
+
+  #[inline(always)]
+  fn deref(&self) -> &[T] {
+    self.as_slice()
+  }
+}
+
+impl<T, const N: usize> DerefMut for StaticVec<T, { N }> {
+  #[inline(always)]
+  fn deref_mut(&mut self) -> &mut [T] {
+    self.as_mut()
+  }
+}
+
 impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   fn clone(&self) -> Self {
     let mut res = Self::new();
+
+    for item in self {
+      // Safety: self is the same type as res, so it can never go over capacity
+      unsafe { res.push_unchecked(item.clone()) };
+    }
+
+    res
+  }
+
+  #[inline]
+  fn clone_from(&mut self, rhs: &Self) {
+    self.truncate(rhs.length);
+
     for i in 0..self.length {
+      // Safety: after the truncate, self.len <= rhs.len, which means that
+      // for every i in self, there is definitely an element at rhs[i]
       unsafe {
-        res
-          .data
-          .get_unchecked_mut(i)
-          .write(self.data.get_unchecked(i).get_ref().clone());
-        res.length += 1;
+        self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
       }
     }
-    res
+
+    for i in self.length..rhs.length {
+      // Safety: i < rhs.length, so get_unchecked is safe. i starts at
+      // self.length, which is <= rhs.length, so there is always an available
+      // slot at self[i]
+      unsafe { self.push_unchecked(rhs.get_unchecked(i).clone()) }
+    }
   }
 }
 
 impl<T: Debug, const N: usize> Debug for StaticVec<T, { N }> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Debug::fmt(self.as_slice(), f)
+    self.as_slice().fmt(f)
   }
 }
 
@@ -94,6 +102,8 @@ impl<T, const N: usize> Drop for StaticVec<T, { N }> {
   ///Calls `clear` through the StaticVec before dropping it.
   #[inline(always)]
   fn drop(&mut self) {
+    // This sets length to 0 unnecessarily, but we asume the optimizer
+    // will take care of it.
     self.clear();
   }
 }
@@ -129,19 +139,7 @@ impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, { N }> {
   ///the StaticVec's capacity, any items after that point are ignored.
   #[inline]
   fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
-    let mut it = iter.into_iter();
-    let mut i = self.length;
-    while i < N {
-      if let Some(val) = it.next() {
-        unsafe {
-          self.data.get_unchecked_mut(i).write(*val);
-        }
-      } else {
-        break;
-      }
-      i += 1;
-    }
-    self.length = i;
+    self.extend(iter.into_iter().copied());
   }
 }
 
@@ -163,7 +161,7 @@ impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, { N }> {
   }
 }
 
-impl<T: Copy, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, { N2 }> {
+impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, { N2 }> {
   ///Creates a new StaticVec instance from the contents of `values`, using
   ///[new_from_array](crate::StaticVec::new_from_array) internally.
   #[inline(always)]
@@ -190,53 +188,16 @@ impl<T: Copy, const N1: usize, const N2: usize> From<&mut [T; N1]> for StaticVec
   }
 }
 
-//TODO: Figure out how to handle "may or may not need explicit dereferencing" in macros,
-//so that I can macro-ize the two FromIterator implementations below.
-
-impl<T, const N: usize> FromIterator<T> for StaticVec<T, { N }> {
+impl<T, U, const N: usize> FromIterator<U> for StaticVec<T, { N }>
+where Self: Extend<U>
+{
   ///Creates a new StaticVec instance from the elements, if any, of `iter`.
   ///If `iter` has a size greater than the StaticVec's capacity, any items after
   ///that point are ignored.
   #[inline]
-  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+  fn from_iter<I: IntoIterator<Item = U>>(iter: I) -> Self {
     let mut res = Self::new();
-    let mut it = iter.into_iter();
-    let mut i = 0;
-    while i < N {
-      if let Some(val) = it.next() {
-        unsafe {
-          res.data.get_unchecked_mut(i).write(val);
-        }
-      } else {
-        break;
-      }
-      i += 1;
-    }
-    res.length = i;
-    res
-  }
-}
-
-impl<'a, T: 'a + Copy, const N: usize> FromIterator<&'a T> for StaticVec<T, { N }> {
-  ///Creates a new StaticVec instance from the elements, if any, of `iter`.
-  ///If `iter` has a size greater than the StaticVec's capacity, any items after
-  ///that point are ignored.
-  #[inline]
-  fn from_iter<I: IntoIterator<Item = &'a T>>(iter: I) -> Self {
-    let mut res = Self::new();
-    let mut it = iter.into_iter();
-    let mut i = 0;
-    while i < N {
-      if let Some(val) = it.next() {
-        unsafe {
-          res.data.get_unchecked_mut(i).write(*val);
-        }
-      } else {
-        break;
-      }
-      i += 1;
-    }
-    res.length = i;
+    res.extend(iter);
     res
   }
 }
@@ -248,97 +209,25 @@ impl<T: Hash, const N: usize> Hash for StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> Index<usize> for StaticVec<T, { N }> {
-  type Output = T;
-  ///Asserts that `index` is less than the current length of the StaticVec,
-  ///and if so returns the value at that position as a constant reference.
+impl<T, I: slice::SliceIndex<[T]>, const N: usize> Index<I> for StaticVec<T, { N }> {
+  type Output = I::Output;
+
   #[inline(always)]
-  fn index(&self, index: usize) -> &Self::Output {
-    assert!(index < self.length);
-    unsafe { self.data.get_unchecked(index).get_ref() }
+  fn index(&self, index: I) -> &I::Output {
+    &self.as_slice()[index]
   }
 }
 
-impl<T, const N: usize> IndexMut<usize> for StaticVec<T, { N }> {
-  ///Asserts that `index` is less than the current length of the StaticVec,
-  ///and if so returns the value at that position as a mutable reference.
+impl<T, I: slice::SliceIndex<[T]>, const N: usize> IndexMut<I> for StaticVec<T, { N }> {
   #[inline(always)]
-  fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-    assert!(index < self.length);
-    unsafe { self.data.get_unchecked_mut(index).get_mut() }
-  }
-}
-
-impl<T, const N: usize> Index<Range<usize>> for StaticVec<T, { N }> {
-  type Output = [T];
-  ///Asserts that the lower bound of `index` is less than its upper bound,
-  ///and that its upper bound is less than or equal to the current length of the StaticVec,
-  ///and if so returns a constant reference to a slice of elements `index.start..index.end`.
-  #[inline(always)]
-  fn index(&self, index: Range<usize>) -> &Self::Output {
-    assert!(index.start < index.end && index.end <= self.length);
-    unsafe { &*(self.data.get_unchecked(index) as *const [MaybeUninit<T>] as *const [T]) }
-  }
-}
-
-impl<T, const N: usize> IndexMut<Range<usize>> for StaticVec<T, { N }> {
-  ///Asserts that the lower bound of `index` is less than its upper bound,
-  ///and that its upper bound is less than or equal to the current length of the StaticVec,
-  ///and if so returns a mutable reference to a slice of elements `index.start..index.end`.
-  #[inline(always)]
-  fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
-    assert!(index.start < index.end && index.end <= self.length);
-    unsafe { &mut *(self.data.get_unchecked_mut(index) as *mut [MaybeUninit<T>] as *mut [T]) }
-  }
-}
-
-impl<T, const N: usize> Index<RangeFull> for StaticVec<T, { N }> {
-  type Output = [T];
-  ///Returns a constant reference to a slice consisting of `0..self.length`
-  //elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
-  #[inline(always)]
-  fn index(&self, _index: RangeFull) -> &Self::Output {
-    self.as_slice()
-  }
-}
-
-impl<T, const N: usize> IndexMut<RangeFull> for StaticVec<T, { N }> {
-  ///Returns a mutable reference to a slice consisting of `0..self.length`
-  //elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
-  #[inline(always)]
-  fn index_mut(&mut self, _index: RangeFull) -> &mut Self::Output {
-    self.as_mut_slice()
-  }
-}
-
-impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, { N }> {
-  type Output = [T];
-  ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
-  //and that its upper bound is less than the current length of the StaticVec,
-  ///and if so returns a constant reference to a slice of elements `index.start()..=index.end()`.
-  #[allow(clippy::op_ref)]
-  #[inline(always)]
-  fn index(&self, index: RangeInclusive<usize>) -> &Self::Output {
-    assert!(index.start() <= index.end() && index.end() < &self.length);
-    unsafe { &*(self.data.get_unchecked(index) as *const [MaybeUninit<T>] as *const [T]) }
-  }
-}
-
-impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, { N }> {
-  ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
-  //and that its upper bound is less than the current length of the StaticVec,
-  ///and if so returns a mutable reference to a slice of elements `index.start()..=index.end()`.
-  #[allow(clippy::op_ref)]
-  #[inline(always)]
-  fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
-    assert!(index.start() <= index.end() && index.end() < &self.length);
-    unsafe { &mut *(self.data.get_unchecked_mut(index) as *mut [MaybeUninit<T>] as *mut [T]) }
+  fn index_mut(&mut self, index: I) -> &mut I::Output {
+    &mut self.as_mut_slice()[index]
   }
 }
 
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
-  type IntoIter = StaticVecIterConst<'a, T>;
-  type Item = <Self::IntoIter as Iterator>::Item;
+  type IntoIter = slice::Iter<'a, T>;
+  type Item = &'a T;
   ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
@@ -347,8 +236,8 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
 }
 
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
-  type IntoIter = StaticVecIterMut<'a, T>;
-  type Item = <Self::IntoIter as Iterator>::Item;
+  type IntoIter = slice::IterMut<'a, T>;
+  type Item = &'a mut T;
   ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
@@ -492,20 +381,6 @@ impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, {N}>);
 impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, {N}>);
 
 #[cfg(feature = "std")]
-impl<const N: usize> Read for StaticVec<u8, { N }> {
-  #[inline(always)]
-  fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-    let read_length = self.length.min(buf.len());
-    unsafe {
-      self
-        .as_ptr()
-        .copy_to_nonoverlapping(buf.as_mut_ptr(), read_length);
-    }
-    Ok(read_length)
-  }
-}
-
-#[cfg(feature = "std")]
 impl<const N: usize> Write for StaticVec<u8, { N }> {
   #[inline(always)]
   fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
@@ -519,18 +394,22 @@ impl<const N: usize> Write for StaticVec<u8, { N }> {
     let old_length = self.length;
     for buf in bufs {
       self.extend_from_slice(buf);
+      if self.is_full() {
+        break;
+      }
     }
     Ok(self.length - old_length)
   }
 
   #[inline(always)]
   fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
-    if self.write(buf).unwrap() == buf.len() {
+    // We need at-most one write to `self`, and this `write` is infallible.
+    if self.write(buf)? == buf.len() {
       Ok(())
     } else {
-      Err(Error::new(
-        ErrorKind::WriteZero,
-        "Not enough capacity left!",
+      Err(io::Error::new(
+        io::ErrorKind::WriteZero,
+        "Not enough capacity left in StaticVec",
       ))
     }
   }

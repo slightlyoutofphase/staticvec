@@ -8,7 +8,7 @@ macro_rules! staticvec {
   ($val:expr; $n:expr) => (
     $crate::utils::new_from_value::<_, $n>($val)
   );
-  ($($val:expr),*$(,)*) => ({
+  ($($val:expr),* $(,)?) => ({
     let mut res = StaticVec::<_, {0$(+staticvec!(@put_one $val))*}>::new();
     {
       unsafe {

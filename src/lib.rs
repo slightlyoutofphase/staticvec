@@ -4,11 +4,11 @@
 #![feature(core_intrinsics)]
 #![feature(const_fn)]
 #![feature(const_generics)]
-#![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_extra)]
 #![feature(exact_size_is_empty)]
 #![feature(trusted_len)]
 #![feature(slice_partition_dedup)]
+#![feature(read_initializer)]
 
 //Literally just for stable-sort.
 #[cfg(any(feature = "std", rustdoc))]
@@ -20,16 +20,14 @@ extern crate std;
 #[cfg(rustdoc)]
 use alloc::vec::Vec;
 
-pub use crate::iterators::*;
 pub use crate::trait_impls::*;
 use crate::utils::*;
 use core::cmp::{Ord, PartialEq};
-use core::marker::PhantomData;
-use core::mem::MaybeUninit;
+use core::mem::{self, MaybeUninit};
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
 use core::ptr;
+use core::slice;
 
-mod iterators;
 mod macros;
 mod trait_impls;
 #[doc(hidden)]
@@ -38,20 +36,18 @@ pub mod utils;
 ///A [Vec](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 ///implemented with const generics around an array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
-  data: [MaybeUninit<T>; N],
   length: usize,
+  data: [MaybeUninit<T>; N],
 }
 
 impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a new StaticVec instance.
   #[inline(always)]
   pub fn new() -> Self {
-    unsafe {
-      Self {
-        //Sound because data is an array of MaybeUninit<T>, not an array of T.
-        data: MaybeUninit::uninit().assume_init(),
-        length: 0,
-      }
+    Self {
+      //Sound because data is an array of MaybeUninit<T>, not an array of T.
+      data: unsafe { MaybeUninit::uninit().assume_init() },
+      length: 0,
     }
   }
 
@@ -63,15 +59,12 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   pub fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
     unsafe {
-      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let fill_length = values.len().min(N);
+      let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let length = values.len().min(N);
       values
         .as_ptr()
-        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
-      Self {
-        data: data_,
-        length: fill_length,
-      }
+        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
+      Self { data, length }
     }
   }
 
@@ -82,64 +75,61 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn new_from_mut_slice(values: &mut [T]) -> Self
   where T: Copy {
-    unsafe {
-      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let fill_length = values.len().min(N);
-      values
-        .as_ptr()
-        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
-      Self {
-        data: data_,
-        length: fill_length,
-      }
-    }
+    Self::new_from_slice(values)
   }
 
   ///Returns a new StaticVec instance filled with the contents, if any, of an array.
   ///If the array has a length greater than the StaticVec's declared capacity,
-  ///any contents after that point are ignored.
+  ///any contents after that point are ignored (and dropped)
   ///The `N2` parameter does not need to be provided explicitly, and can be inferred from the array itself.
-  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
-  pub fn new_from_array<const N2: usize>(values: [T; N2]) -> Self
-  where T: Copy {
+  pub fn new_from_array<const N2: usize>(mut values: [T; N2]) -> Self {
+    // TODO: if N == N2, use transmute; this will allow the compiler to reuse
+    // the array on the stack without copying anything
+    let mut data: [MaybeUninit<T>; N] = unsafe { MaybeUninit::uninit().assume_init() };
+    let length = N.min(N2);
+
+    // Copy values into data
+    // Safety: length <= N2, so all the values exist. These values will be
+    // forgotten at the end of this function.
     unsafe {
-      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let fill_length = N2.min(N);
       values
         .as_ptr()
-        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
-      Self {
-        data: data_,
-        length: fill_length,
-      }
+        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
     }
+
+    // drop any extra values
+    unsafe {
+      ptr::drop_in_place(values.get_unchecked_mut(length..N2));
+    }
+
+    // Don't run destructors for the passed-in array
+    mem::forget(values);
+
+    Self { data, length }
   }
 
-  ///Returns a new StaticVec instance filled with the return value of an initializer function.
-  ///The length field of the newly created StaticVec will be equal to its capacity.
+  /// Returns a new StaticVec instance filled with the return value of an initializer function.
+  /// The length field of the newly created StaticVec will be equal to its capacity.
   ///
-  ///Example usage:
-  ///```
-  ///fn main() {
-  ///  let mut i = 0;
-  ///  let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
-  ///  assert_eq!(v.len(), 64);
-  ///  assert_eq!(v[0], 1);
-  ///  assert_eq!(v[1], 2);
-  ///  assert_eq!(v[2], 3);
-  ///  assert_eq!(v[3], 4);
-  ///}
+  /// Example usage:
+  ///
+  /// ```
+  /// let mut i = 0;
+  /// let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
+  /// assert_eq!(v.len(), 64);
+  /// assert_eq!(v[0], 1);
+  /// assert_eq!(v[1], 2);
+  /// assert_eq!(v[2], 3);
+  /// assert_eq!(v[3], 4);
   /// ```
   #[inline]
   pub fn filled_with<F>(mut initializer: F) -> Self
   where F: FnMut() -> T {
     let mut res = Self::new();
-    for i in 0..N {
-      unsafe {
-        res.data.get_unchecked_mut(i).write(initializer());
-        res.length += 1;
-      }
+    for _ in 0..N {
+      // Safety: this is guaranteed to push N items into res
+      unsafe { res.push_unchecked(initializer()) };
     }
     res
   }
@@ -154,6 +144,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 
   ///Returns the total capacity of the StaticVec.
+  ///
   ///This is always equivalent to the generic `N` parameter it was declared with,
   ///which determines the fixed size of the backing array.
   #[inline(always)]
@@ -167,36 +158,36 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     self.capacity() - self.len()
   }
 
-  ///Directly sets the `length` field of the StaticVec to `new_len`. Useful if you intend
-  ///to write to it solely element-wise, but marked unsafe due to how it creates
-  ///the potential for reading from unitialized memory later on.
+  /// Directly sets the `length` field of the StaticVec to `new_len`. Useful if you intend
+  /// to write to it solely element-wise, but marked unsafe due to how it creates
+  /// the potential for reading from unitialized memory later on.
+  ///
+  /// # Safety
+  ///
+  /// This function is only safe if it is associated with direct writes
+  /// to the underlying storage, via [`as_mut_ptr`]. When increasing the
+  /// length, additional items must be inserted into the array, and when
+  /// decreasing it, they must be dropped in place. It is NEVER safe to set
+  /// the length to greater than `N`.
   #[inline(always)]
   pub unsafe fn set_len(&mut self, new_len: usize) {
+    debug_assert!(
+      new_len <= N,
+      "Attempted to unsafely set the length to greated than the capacity"
+    );
     self.length = new_len;
   }
 
-  ///Returns true if the current length of the StaticVec is 0.
+  /// Check if the `StaticVec` is empty; that is, if its length is 0.
   #[inline(always)]
   pub const fn is_empty(&self) -> bool {
     self.length == 0
-  }
-
-  ///Returns true if the current length of the StaticVec is greater than 0.
-  #[inline(always)]
-  pub const fn is_not_empty(&self) -> bool {
-    self.length > 0
   }
 
   ///Returns true if the current length of the StaticVec is equal to its capacity.
   #[inline(always)]
   pub const fn is_full(&self) -> bool {
     self.length == N
-  }
-
-  ///Returns true if the current length of the StaticVec is less than its capacity.
-  #[inline(always)]
-  pub const fn is_not_full(&self) -> bool {
-    self.length < N
   }
 
   ///Returns a constant pointer to the first element of the StaticVec's internal array.
@@ -214,41 +205,55 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a constant reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
-    unsafe { &*(self.data.get_unchecked(0..self.length) as *const [MaybeUninit<T>] as *const [T]) }
+    // Safety: elements from 0..length are guaranteed to have been initialized
+    unsafe { slice::from_raw_parts(self.as_ptr(), self.length) }
   }
 
   ///Returns a mutable reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_mut_slice(&mut self) -> &mut [T] {
-    unsafe {
-      &mut *(self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T])
-    }
+    // Safety: elements from 0..length are guaranteed to have been initialized
+    unsafe { slice::from_raw_parts_mut(self.as_mut_ptr(), self.length) }
   }
 
-  ///Appends a value to the end of the StaticVec without asserting that
-  ///its current length is less than `N`.
+  /// Appends a value to the end of the StaticVec without asserting that
+  /// its current length is less than `N`.
+  ///
+  /// # Safety
+  ///
+  /// This function is only safe to call if the current length is less than
+  /// the capacity. It correctly updates the length, so it's suitable for use
+  /// in loops that are guaranteed to not overflow the `StaticVec`.
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, value: T) {
+    debug_assert!(
+      !self.is_full(),
+      "Attempted to push_unchecked a full StaticVec"
+    );
     self.data.get_unchecked_mut(self.length).write(value);
     self.length += 1;
   }
 
-  ///Pops a value from the end of the StaticVec and returns it directly without asserting that
-  ///the StaticVec's current length is greater than 0.
+  /// Pops a value from the end of the StaticVec and returns it directly without asserting that
+  /// the StaticVec's current length is greater than 0.
+  ///
+  /// # Safety
+  ///
+  /// This function is only safe to call if the current length is at least 1.
   #[inline(always)]
   pub unsafe fn pop_unchecked(&mut self) -> T {
+    debug_assert!(
+      !self.is_empty(),
+      "Attempted to pop_unchecked an empty StaticVec"
+    );
     self.length -= 1;
     self.data.get_unchecked(self.length).read()
   }
 
-  ///Asserts that the current length of the StaticVec is less than `N`,
-  ///and if so appends a value to the end of it.
+  /// Append an element to self. Panics if self.length == self.capactiy
   #[inline(always)]
   pub fn push(&mut self, value: T) {
-    assert!(self.length < N);
-    unsafe {
-      self.push_unchecked(value);
-    }
+    self.try_push(value).expect("StaticVec at capacity")
   }
 
   ///Pushes `value` to the StaticVec if its current length is less than its capacity,
@@ -256,6 +261,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline(always)]
   pub fn try_push(&mut self, value: T) -> Result<(), &'static str> {
     if self.length < N {
+      // Safetly: self.length < N
       unsafe {
         self.push_unchecked(value);
       }
@@ -272,51 +278,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     if self.length == 0 {
       None
     } else {
+      // Safety: there is guaranteed to be an element in self
       Some(unsafe { self.pop_unchecked() })
-    }
-  }
-
-  ///Returns a constant reference to the first element of the StaticVec in `Some` if the StaticVec is not empty,
-  ///or `None` otherwise.
-  #[inline(always)]
-  pub fn first(&self) -> Option<&T> {
-    if self.length == 0 {
-      None
-    } else {
-      Some(unsafe { self.data.get_unchecked(0).get_ref() })
-    }
-  }
-
-  ///Returns a mutable reference to the first element of the StaticVec in `Some` if the StaticVec is not empty,
-  ///or `None` otherwise.
-  #[inline(always)]
-  pub fn first_mut(&mut self) -> Option<&mut T> {
-    if self.length == 0 {
-      None
-    } else {
-      Some(unsafe { self.data.get_unchecked_mut(0).get_mut() })
-    }
-  }
-
-  ///Returns a constant reference to the last element of the StaticVec in `Some` if the StaticVec is not empty,
-  ///or `None` otherwise.
-  #[inline(always)]
-  pub fn last(&self) -> Option<&T> {
-    if self.length == 0 {
-      None
-    } else {
-      Some(unsafe { self.data.get_unchecked(self.length - 1).get_ref() })
-    }
-  }
-
-  ///Returns a mutable reference to the last element of the StaticVec in `Some` if the StaticVec is not empty,
-  ///or `None` otherwise.
-  #[inline(always)]
-  pub fn last_mut(&mut self) -> Option<&mut T> {
-    if self.length == 0 {
-      None
-    } else {
-      Some(unsafe { self.data.get_unchecked_mut(self.length - 1).get_mut() })
     }
   }
 
@@ -411,57 +374,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///Removes all contents from the StaticVec and sets its length back to 0.
   #[inline(always)]
   pub fn clear(&mut self) {
-    unsafe {
-      ptr::drop_in_place(self.as_mut_slice());
-    }
+    unsafe { ptr::drop_in_place(self.as_mut_slice()) }
     self.length = 0;
-  }
-
-  ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
-  #[inline(always)]
-  pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
-    unsafe {
-      StaticVecIterConst::<'a, T> {
-        start: self.as_ptr(),
-        end: self.as_ptr().add(self.length),
-        marker: PhantomData,
-      }
-    }
-  }
-
-  ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
-  #[inline(always)]
-  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
-    unsafe {
-      StaticVecIterMut::<'a, T> {
-        start: self.as_mut_ptr(),
-        end: self.as_mut_ptr().add(self.length),
-        marker: PhantomData,
-      }
-    }
-  }
-
-  ///Performs a stable in-place sort of the StaticVec's inhabited area.
-  ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
-  #[cfg(feature = "std")]
-  #[inline(always)]
-  pub fn sort(&mut self)
-  where T: Ord {
-    self.as_mut_slice().sort();
-  }
-
-  ///Performs an unstable in-place sort of the StaticVec's inhabited area.
-  ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
-  #[inline(always)]
-  pub fn sort_unstable(&mut self)
-  where T: Ord {
-    self.as_mut_slice().sort_unstable();
-  }
-
-  ///Reverses the contents of the StaticVec's inhabited area in-place.
-  #[inline(always)]
-  pub fn reverse(&mut self) {
-    self.as_mut_slice().reverse();
   }
 
   ///Returns a separate, stable-sorted StaticVec of the contents of the
@@ -472,15 +386,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn sorted(&self) -> Self
   where T: Copy + Ord {
-    unsafe {
-      let mut res = Self::new();
-      res.length = self.length;
-      self
-        .as_ptr()
-        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
-      res.sort();
-      res
-    }
+    let mut res = Self::new_from_slice(&self);
+    res.sort();
+    res
   }
 
   ///Returns a separate, unstable-sorted StaticVec of the contents of the
@@ -490,15 +398,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn sorted_unstable(&self) -> Self
   where T: Copy + Ord {
-    unsafe {
-      let mut res = Self::new();
-      res.length = self.length;
-      self
-        .as_ptr()
-        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
-      res.sort_unstable();
-      res
-    }
+    let mut res = Self::new_from_slice(&self);
+    res.sort_unstable();
+    res
   }
 
   ///Returns a separate, reversed StaticVec of the contents of the StaticVec's
@@ -622,13 +524,11 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline(always)]
   pub fn truncate(&mut self, length: usize) {
     if length < self.length {
-      let old_length = self.length;
       self.length = length;
+      // Safety: self.length has been updated, so these elements are no longer
+      // in the array. length is < self.length, so get_unchecked_mut is safe.
       unsafe {
-        ptr::drop_in_place(
-          &mut *(self.data.get_unchecked_mut(length..old_length) as *mut [MaybeUninit<T>]
-            as *mut [T]),
-        );
+        ptr::drop_in_place(self.get_unchecked_mut(length..));
       }
     }
   }
