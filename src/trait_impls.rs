@@ -9,7 +9,7 @@ use core::mem::MaybeUninit;
 use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
 
 #[cfg(feature = "std")]
-use std::io::{self, IoSlice, Read, Write};
+use std::io::{self, Error, ErrorKind, IoSlice, Read, Write};
 
 #[cfg(feature = "serde_support")]
 use core::marker::PhantomData;
@@ -525,8 +525,14 @@ impl<const N: usize> Write for StaticVec<u8, { N }> {
 
   #[inline(always)]
   fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
-    self.extend_from_slice(buf);
-    Ok(())
+    if self.write(buf).unwrap() == buf.len() {
+      Ok(())
+    } else {
+      Err(Error::new(
+        ErrorKind::WriteZero,
+        "Not enough capacity left!",
+      ))
+    }
   }
 
   #[inline(always)]
