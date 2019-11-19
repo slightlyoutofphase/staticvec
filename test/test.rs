@@ -497,6 +497,15 @@ fn write() {
 
 #[cfg(feature = "std")]
 #[test]
+fn write_all() {
+  let mut v = StaticVec::<u8, 6>::new();
+  assert!(v.write_all(&[1, 2, 3, 4, 5, 6, 7, 8]).is_err());
+  v.clear();
+  assert!(v.write_all(&[1, 2, 3, 4, 5, 6]).is_ok());
+}
+
+#[cfg(feature = "std")]
+#[test]
 fn write_vectored() {
   let mut v = StaticVec::<u8, 8>::new();
   assert_eq!(
