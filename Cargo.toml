@@ -73,6 +73,7 @@ required-features = ["serde_support", "serde_json_support"]
 
 [features]
 std = []
+deref_to_slice = []
 default = ["std"]
 serde_support = ["serde"]
 serde_json_support = ["serde_json"]
