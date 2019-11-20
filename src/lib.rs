@@ -237,7 +237,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
       }
       Ok(())
     } else {
-      Err("No space left!")
+      Err("Insufficient remaining capacity!")
     }
   }
 
@@ -520,7 +520,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   pub fn try_extend_from_slice(&mut self, other: &[T]) -> Result<(), &'static str>
   where T: Copy {
     if self.remaining_capacity() < other.len() {
-      Err("No space left!")
+      Err("Insufficient remaining capacity!")
     } else {
       self.extend_from_slice(other);
       Ok(())
