@@ -399,7 +399,11 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     unsafe {
       StaticVecIterConst::<'a, T> {
         start: self.as_ptr(),
-        end: self.as_ptr().add(self.length),
+        end: if core::intrinsics::size_of::<T>() == 0 {
+          (self.as_ptr() as *const u8).wrapping_add(self.len()) as *const T
+        } else {
+          self.as_ptr().add(self.length)
+        },
         marker: PhantomData,
       }
     }
@@ -411,7 +415,11 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     unsafe {
       StaticVecIterMut::<'a, T> {
         start: self.as_mut_ptr(),
-        end: self.as_mut_ptr().add(self.length),
+        end: if core::intrinsics::size_of::<T>() == 0 {
+          (self.as_mut_ptr() as *mut u8).wrapping_add(self.len()) as *mut T
+        } else {
+          self.as_mut_ptr().add(self.length)
+        },
         marker: PhantomData,
       }
     }
@@ -420,6 +428,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///Performs a stable in-place sort of the StaticVec's inhabited area.
   ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
   #[cfg(feature = "std")]
+  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   pub fn sort(&mut self)
   where T: Ord {
@@ -445,6 +454,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues,
   ///and [Ord](core::cmp::Ord) to make the sorting possible.
   #[cfg(feature = "std")]
+  #[doc(cfg(feature = "std"))]
   #[inline]
   pub fn sorted(&self) -> Self
   where T: Copy + Ord {

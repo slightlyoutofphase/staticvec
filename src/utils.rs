@@ -4,11 +4,14 @@ use core::cmp::{Ordering, PartialOrd};
 #[inline(always)]
 pub(crate) fn distance_between<T>(self_: *const T, origin: *const T) -> usize {
   unsafe {
-    assert!(0 < core::mem::size_of::<T>());
-    core::intrinsics::exact_div(
-      (self_ as usize).wrapping_sub(origin as usize),
-      core::intrinsics::size_of::<T>(),
-    )
+    return if core::intrinsics::size_of::<T>() > 0 {
+      core::intrinsics::exact_div(
+        (self_ as usize).wrapping_sub(origin as usize),
+        core::intrinsics::size_of::<T>(),
+      )
+    } else {
+      (self_ as usize).wrapping_sub(origin as usize)
+    };
   }
 }
 
