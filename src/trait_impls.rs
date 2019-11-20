@@ -393,6 +393,7 @@ impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, {N}>);
 impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, {N}>);
 
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> Read for StaticVec<u8, { N }> {
   #[inline(always)]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
@@ -427,6 +428,7 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
 }
 
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> Write for StaticVec<u8, { N }> {
   #[inline(always)]
   fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
