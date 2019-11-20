@@ -7,8 +7,11 @@ use core::hash::{Hash, Hasher};
 use core::intrinsics;
 use core::iter::FromIterator;
 use core::mem::MaybeUninit;
-use core::ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFull, RangeInclusive};
+use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
 use core::ptr;
+
+#[cfg(feature = "deref_to_slice")]
+use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "std")]
 use std::io::{self, Error, ErrorKind, IoSlice, IoSliceMut, Read, Write};
