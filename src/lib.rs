@@ -48,8 +48,6 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a new StaticVec instance.
   #[inline(always)]
   pub fn new() -> Self {
-    //TODO: Open issue asking them to make `assume_init` a const fn, which it can be,
-    //because it just calls an intrinsic and then another const fn. Then we could have const `new`!
     Self {
       //Sound because data is an array of MaybeUninit<T>, not an array of T.
       data: unsafe { MaybeUninit::uninit().assume_init() },
