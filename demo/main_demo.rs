@@ -2,6 +2,9 @@
 
 use staticvec::*;
 
+#[derive(Copy, Clone, Debug)]
+struct ZST {}
+
 #[derive(Copy, Clone)]
 struct MyStruct {
   s: &'static str,
@@ -335,4 +338,14 @@ fn main() {
   for x in y.as_mut() {
     println!("{}", x.s);
   }
+  println!("Size of ZST: {}", core::mem::size_of::<ZST>());
+  let zsts = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  for zst in &zsts {
+    println!("{:?}", zst);
+  }
+  for zst in &zsts.reversed() {
+    println!("{:?}", zst);
+  }
+  println!("{:?}", zsts.iter().size_hint());
+  println!("{}", zsts.iter().len());
 }
