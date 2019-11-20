@@ -64,7 +64,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
-    new_from_slice_internal!(values, values.len().min(N))
+    new_from_slice_internal!(values)
   }
 
   ///Returns a new StaticVec instance filled with the contents, if any, of a mutable slice reference.
@@ -74,7 +74,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn new_from_mut_slice(values: &mut [T]) -> Self
   where T: Copy {
-    new_from_slice_internal!(values, values.len().min(N))
+    new_from_slice_internal!(values)
   }
 
   ///Returns a new StaticVec instance filled with the contents, if any, of an array.
@@ -107,8 +107,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     let mut res = Self::new();
     //You might think it would make more sense to use `push_unchecked` here.
     //Originally, I did also! However, as of today (November 19, 2019), doing so
-    //both in this function and several others throughout the crate defeats the ability
-    //of `rustc` to fully unroll and autovectorize the constant-bounds loop. If this changes
+    //both in this function and several others throughout the crate inhibits the ability
+    //of `rustc` to fully unroll and autovectorize various constant-bounds loops. If this changes
     //in the future, feel free to open a PR switching out the manual code for `get_unchecked`, if
     //you happen to notice it before I do.
     for i in 0..N {

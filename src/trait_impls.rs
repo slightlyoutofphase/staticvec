@@ -35,23 +35,6 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
   }
 }
 
-#[cfg(feature = "deref_to_slice")]
-impl<T, const N: usize> Deref for StaticVec<T, { N }> {
-  type Target = [T];
-  #[inline(always)]
-  fn deref(&self) -> &[T] {
-    self.as_slice()
-  }
-}
-
-#[cfg(feature = "deref_to_slice")]
-impl<T, const N: usize> DerefMut for StaticVec<T, { N }> {
-  #[inline(always)]
-  fn deref_mut(&mut self) -> &mut [T] {
-    self.as_mut()
-  }
-}
-
 impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   fn clone(&self) -> Self {
@@ -81,6 +64,25 @@ impl<T, const N: usize> Default for StaticVec<T, { N }> {
   #[inline(always)]
   fn default() -> Self {
     Self::new()
+  }
+}
+
+#[cfg(feature = "deref_to_slice")]
+#[doc(cfg(feature = "deref_to_slice"))]
+impl<T, const N: usize> Deref for StaticVec<T, { N }> {
+  type Target = [T];
+  #[inline(always)]
+  fn deref(&self) -> &[T] {
+    self.as_slice()
+  }
+}
+
+#[cfg(feature = "deref_to_slice")]
+#[doc(cfg(feature = "deref_to_slice"))]
+impl<T, const N: usize> DerefMut for StaticVec<T, { N }> {
+  #[inline(always)]
+  fn deref_mut(&mut self) -> &mut [T] {
+    self.as_mut()
   }
 }
 

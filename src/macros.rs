@@ -22,10 +22,10 @@ macro_rules! staticvec {
 }
 
 macro_rules! new_from_slice_internal {
-  ($vals:expr, $len_getter:expr) => {
+  ($vals:expr) => {
     unsafe {
       let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let length = $len_getter;
+      let length = values.len().min(N);
       $vals
         .as_ptr()
         .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
