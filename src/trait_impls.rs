@@ -67,10 +67,11 @@ impl<T, const N: usize> Default for StaticVec<T, { N }> {
 }
 
 impl<T, const N: usize> Drop for StaticVec<T, { N }> {
-  ///Calls `clear` through the StaticVec before dropping it.
   #[inline(always)]
   fn drop(&mut self) {
-    self.clear();
+    unsafe {
+      ptr::drop_in_place(self.as_mut_slice());
+    }
   }
 }
 
