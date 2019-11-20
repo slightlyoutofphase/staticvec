@@ -17,8 +17,8 @@ Fully `#![no_std]` compatible (with almost no loss of functionality) by setting
 Optional support for serialization and deserialization of the `StaticVec` struct
 via `serde` is available by activating the `serde_support` feature.
 
-`StaticVec` also implements both `Deref` and `DerefMut` to `[T]` if (and only if)
-the `deref_to_slice` crate feature is enabled.
+`StaticVec` also implements both `Deref` and `DerefMut` to `[T]` if the `deref_to_slice` 
+crate feature is enabled.
 
 Contributions/suggestions/etc. very welcome!
 
