@@ -106,6 +106,12 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   pub fn filled_with<F>(mut initializer: F) -> Self
   where F: FnMut() -> T {
     let mut res = Self::new();
+    //You might think it would make more sense to use `push_unchecked` here.
+    //Originally, I did also! However, as of today (November 19, 2019), doing so
+    //both in this function and several others throughout the crate defeats the ability
+    //of `rustc` to fully unroll and autovectorize the constant-bounds loop. If this changes
+    //in the future, feel free to open a PR switching out the manual code for `get_unchecked`, if
+    //you happen to notice it before I do.
     for i in 0..N {
       unsafe {
         res.data.get_unchecked_mut(i).write(initializer());
