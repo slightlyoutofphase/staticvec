@@ -6,7 +6,8 @@ use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::mem::MaybeUninit;
-use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
+use core::ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFull, RangeInclusive};
+use core::ptr;
 
 #[cfg(feature = "std")]
 use std::io::{self, Error, ErrorKind, IoSlice, IoSliceMut, Read, Write};
@@ -31,6 +32,23 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
   #[inline(always)]
   fn as_ref(&self) -> &[T] {
     self.as_slice()
+  }
+}
+
+#[cfg(feature = "deref_to_slice")]
+impl<T, const N: usize> Deref for StaticVec<T, { N }> {
+  type Target = [T];
+  #[inline(always)]
+  fn deref(&self) -> &[T] {
+    self.as_slice()
+  }
+}
+
+#[cfg(feature = "deref_to_slice")]
+impl<T, const N: usize> DerefMut for StaticVec<T, { N }> {
+  #[inline(always)]
+  fn deref_mut(&mut self) -> &mut [T] {
+    self.as_mut()
   }
 }
 
@@ -130,9 +148,6 @@ impl<T: Copy, const N1: usize, const N2: usize> From<&mut [T; N1]> for StaticVec
     Self::new_from_array(*values)
   }
 }
-
-//TODO: Figure out how to handle "may or may not need explicit dereferencing" in macros,
-//so that I can macro-ize the two FromIterator implementations below.
 
 impl<T, const N: usize> FromIterator<T> for StaticVec<T, { N }> {
   impl_from_iterator!(val, val, T);
