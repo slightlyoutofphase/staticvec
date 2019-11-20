@@ -24,15 +24,77 @@ macro_rules! staticvec {
 macro_rules! new_from_slice_internal {
   ($vals:expr, $len_getter:expr) => {
     unsafe {
-      let mut data_: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let fill_length = $len_getter;
+      let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let length = $len_getter;
       $vals
         .as_ptr()
-        .copy_to_nonoverlapping(data_.as_mut_ptr() as *mut T, fill_length);
-      Self {
-        data: data_,
-        length: fill_length,
+        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
+      Self { data, length }
+    }
+  };
+}
+
+macro_rules! new_from_array_internal {
+  ($vals:expr) => {
+    unsafe {
+      let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let length = N2.min(N);
+      $vals
+        .as_ptr()
+        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
+      //Drops any extra values left in the source array, then "forgets it".
+      ptr::drop_in_place($vals.get_unchecked_mut(length..N2));
+      mem::forget($vals);
+      Self { data, length }
+    }
+  };
+}
+
+macro_rules! impl_extend {
+  ($var_a:tt, $var_b:tt, $type:ty) => {
+    ///Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than
+    ///the StaticVec's capacity, any items after that point are ignored.
+    #[inline]
+    fn extend<I: IntoIterator<Item = $type>>(&mut self, iter: I) {
+      let mut it = iter.into_iter();
+      let mut i = self.length;
+      while i < N {
+        if let Some($var_a) = it.next() {
+          unsafe {
+            self.data.get_unchecked_mut(i).write($var_b);
+          }
+        } else {
+          break;
+        }
+        i += 1;
       }
+      self.length = i;
+    }
+  };
+}
+
+macro_rules! impl_from_iterator {
+  ($var_a:tt, $var_b:tt, $type:ty) => {
+    ///Creates a new StaticVec instance from the elements, if any, of `iter`.
+    ///If `iter` has a size greater than the StaticVec's capacity, any items after
+    ///that point are ignored.
+    #[inline]
+    fn from_iter<I: IntoIterator<Item = $type>>(iter: I) -> Self {
+      let mut res = Self::new();
+      let mut it = iter.into_iter();
+      let mut i = 0;
+      while i < N {
+        if let Some($var_a) = it.next() {
+          unsafe {
+            res.data.get_unchecked_mut(i).write($var_b);
+          }
+        } else {
+          break;
+        }
+        i += 1;
+      }
+      res.length = i;
+      res
     }
   };
 }

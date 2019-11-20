@@ -9,6 +9,7 @@
 #![feature(exact_size_is_empty)]
 #![feature(trusted_len)]
 #![feature(slice_partition_dedup)]
+#![feature(slice_concat_trait)]
 
 //Literally just for stable-sort.
 #[cfg(any(feature = "std", rustdoc))]
@@ -25,7 +26,7 @@ pub use crate::trait_impls::*;
 use crate::utils::*;
 use core::cmp::{Ord, PartialEq};
 use core::marker::PhantomData;
-use core::mem::MaybeUninit;
+use core::mem::{self, MaybeUninit};
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
 use core::ptr;
 
@@ -47,12 +48,12 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a new StaticVec instance.
   #[inline(always)]
   pub fn new() -> Self {
-    unsafe {
-      Self {
-        //Sound because data is an array of MaybeUninit<T>, not an array of T.
-        data: MaybeUninit::uninit().assume_init(),
-        length: 0,
-      }
+    //TODO: Open issue asking them to make `assume_init` a const fn, which it can be,
+    //because it just calls an intrinsic and then another const fn. Then we could have const `new`!
+    Self {
+      //Sound because data is an array of MaybeUninit<T>, not an array of T.
+      data: unsafe { MaybeUninit::uninit().assume_init() },
+      length: 0,
     }
   }
 
@@ -80,11 +81,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///If the array has a length greater than the StaticVec's declared capacity,
   ///any contents after that point are ignored.
   ///The `N2` parameter does not need to be provided explicitly, and can be inferred from the array itself.
-  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
-  pub fn new_from_array<const N2: usize>(values: [T; N2]) -> Self
-  where T: Copy {
-    new_from_slice_internal!(values, N2.min(N))
+  pub fn new_from_array<const N2: usize>(mut values: [T; N2]) -> Self {
+    new_from_array_internal!(values)
   }
 
   ///Returns a new StaticVec instance filled with the return value of an initializer function.

@@ -9,7 +9,7 @@ use core::mem::MaybeUninit;
 use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
 
 #[cfg(feature = "std")]
-use std::io::{self, Error, ErrorKind, IoSlice, Read, Write};
+use std::io::{self, Error, ErrorKind, IoSlice, IoSliceMut, Read, Write};
 
 #[cfg(feature = "serde_support")]
 use core::marker::PhantomData;
@@ -76,49 +76,13 @@ impl<T, const N: usize> Drop for StaticVec<T, { N }> {
 
 impl<T: Eq, const N: usize> Eq for StaticVec<T, { N }> {}
 
-//TODO: Figure out how to handle "may or may not need explicit dereferencing" in macros,
-//so that I can macro-ize the two Extend implementations below.
-
 impl<T, const N: usize> Extend<T> for StaticVec<T, { N }> {
-  ///Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than
-  ///the StaticVec's capacity, any items after that point are ignored.
-  #[inline]
-  fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
-    let mut it = iter.into_iter();
-    let mut i = self.length;
-    while i < N {
-      if let Some(val) = it.next() {
-        unsafe {
-          self.data.get_unchecked_mut(i).write(val);
-        }
-      } else {
-        break;
-      }
-      i += 1;
-    }
-    self.length = i;
-  }
+  impl_extend!(val, val, T);
 }
 
+#[allow(unused_parens)]
 impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, { N }> {
-  ///Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than
-  ///the StaticVec's capacity, any items after that point are ignored.
-  #[inline]
-  fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
-    let mut it = iter.into_iter();
-    let mut i = self.length;
-    while i < N {
-      if let Some(val) = it.next() {
-        unsafe {
-          self.data.get_unchecked_mut(i).write(*val);
-        }
-      } else {
-        break;
-      }
-      i += 1;
-    }
-    self.length = i;
-  }
+  impl_extend!(val, (*val), &'a T);
 }
 
 impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, { N }> {
@@ -139,7 +103,7 @@ impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, { N }> {
   }
 }
 
-impl<T: Copy, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, { N2 }> {
+impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, { N2 }> {
   ///Creates a new StaticVec instance from the contents of `values`, using
   ///[new_from_array](crate::StaticVec::new_from_array) internally.
   #[inline(always)]
@@ -170,51 +134,12 @@ impl<T: Copy, const N1: usize, const N2: usize> From<&mut [T; N1]> for StaticVec
 //so that I can macro-ize the two FromIterator implementations below.
 
 impl<T, const N: usize> FromIterator<T> for StaticVec<T, { N }> {
-  ///Creates a new StaticVec instance from the elements, if any, of `iter`.
-  ///If `iter` has a size greater than the StaticVec's capacity, any items after
-  ///that point are ignored.
-  #[inline]
-  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
-    let mut res = Self::new();
-    let mut it = iter.into_iter();
-    let mut i = 0;
-    while i < N {
-      if let Some(val) = it.next() {
-        unsafe {
-          res.data.get_unchecked_mut(i).write(val);
-        }
-      } else {
-        break;
-      }
-      i += 1;
-    }
-    res.length = i;
-    res
-  }
+  impl_from_iterator!(val, val, T);
 }
 
+#[allow(unused_parens)]
 impl<'a, T: 'a + Copy, const N: usize> FromIterator<&'a T> for StaticVec<T, { N }> {
-  ///Creates a new StaticVec instance from the elements, if any, of `iter`.
-  ///If `iter` has a size greater than the StaticVec's capacity, any items after
-  ///that point are ignored.
-  #[inline]
-  fn from_iter<I: IntoIterator<Item = &'a T>>(iter: I) -> Self {
-    let mut res = Self::new();
-    let mut it = iter.into_iter();
-    let mut i = 0;
-    while i < N {
-      if let Some(val) = it.next() {
-        unsafe {
-          res.data.get_unchecked_mut(i).write(*val);
-        }
-      } else {
-        break;
-      }
-      i += 1;
-    }
-    res.length = i;
-    res
-  }
+  impl_from_iterator!(val, (*val), &'a T);
 }
 
 impl<T: Hash, const N: usize> Hash for StaticVec<T, { N }> {
@@ -477,6 +402,25 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
         .drain(0..read_length)
         .as_ptr()
         .copy_to_nonoverlapping(buf.as_mut_ptr(), read_length);
+    }
+    Ok(read_length)
+  }
+
+  #[inline(always)]
+  fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
+    //Our implementation of `read` always returns `Ok(read_length)`, so we can unwrap safely here.
+    self.read(buf).unwrap();
+    Ok(())
+  }
+
+  #[inline]
+  fn read_vectored(&mut self, bufs: &mut [IoSliceMut]) -> io::Result<usize> {
+    if self.is_empty() {
+      return Ok(0);
+    }
+    let mut read_length = 0;
+    for buf in bufs {
+      read_length += self.read(buf).unwrap();
     }
     Ok(read_length)
   }
