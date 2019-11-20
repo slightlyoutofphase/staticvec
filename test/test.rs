@@ -485,7 +485,10 @@ fn truncate() {
 #[test]
 fn try_extend_from_slice() {
   let mut v = StaticVec::<i32, 3>::from([1, 2, 3]);
-  assert_eq!(v.try_extend_from_slice(&[2, 3]), Err("Insufficient remaining capacity!"));
+  assert_eq!(
+    v.try_extend_from_slice(&[2, 3]),
+    Err("Insufficient remaining capacity!")
+  );
   let mut w = StaticVec::<i32, 4>::from([1, 2, 3]);
   assert_eq!(w.try_extend_from_slice(&[2]), Ok(()));
 }
