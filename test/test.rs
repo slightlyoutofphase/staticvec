@@ -485,7 +485,7 @@ fn truncate() {
 #[test]
 fn try_extend_from_slice() {
   let mut v = StaticVec::<i32, 3>::from([1, 2, 3]);
-  assert_eq!(v.try_extend_from_slice(&[2, 3]), Err("No space left!"));
+  assert_eq!(v.try_extend_from_slice(&[2, 3]), Err("Insufficient remaining capacity!"));
   let mut w = StaticVec::<i32, 4>::from([1, 2, 3]);
   assert_eq!(w.try_extend_from_slice(&[2]), Ok(()));
 }
@@ -506,7 +506,7 @@ fn try_insert() {
 #[test]
 fn try_push() {
   let mut vec = staticvec![1, 2, 3, 4, 5];
-  assert_eq!(vec.try_push(2), Err("No space left!"));
+  assert_eq!(vec.try_push(2), Err("Insufficient remaining capacity!"));
   let mut vec2 = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
   vec2.push(3);
   assert_eq!(vec2, [1, 2, 3, 3]);
