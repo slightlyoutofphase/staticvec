@@ -1,4 +1,5 @@
 use crate::utils::distance_between;
+use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
 use core::marker::PhantomData;
 
@@ -23,7 +24,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
     if (self.start as usize) < (self.end as usize) {
       unsafe {
         let res = Some(&*self.start);
-        self.start = if core::intrinsics::size_of::<T>() == 0 {
+        self.start = if intrinsics::size_of::<T>() == 0 {
           (self.start as usize + 1) as *const _
         } else {
           self.start.offset(1)
@@ -47,7 +48,7 @@ impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
     if self.end as usize > self.start as usize {
       unsafe {
-        self.end = if core::intrinsics::size_of::<T>() == 0 {
+        self.end = if intrinsics::size_of::<T>() == 0 {
           (self.end as usize - 1) as *const _
         } else {
           self.end.offset(-1)
@@ -82,7 +83,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
     if (self.start as usize) < (self.end as usize) {
       unsafe {
         let res = Some(&mut *self.start);
-        self.start = if core::intrinsics::size_of::<T>() == 0 {
+        self.start = if intrinsics::size_of::<T>() == 0 {
           (self.start as usize + 1) as *mut _
         } else {
           self.start.offset(1)
@@ -106,7 +107,7 @@ impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
   fn next_back(&mut self) -> Option<Self::Item> {
     if self.end as usize > self.start as usize {
       unsafe {
-        self.end = if core::intrinsics::size_of::<T>() == 0 {
+        self.end = if intrinsics::size_of::<T>() == 0 {
           (self.end as usize - 1) as *mut _
         } else {
           self.end.offset(-1)

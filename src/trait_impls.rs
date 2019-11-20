@@ -4,6 +4,7 @@ use crate::StaticVec;
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
+use core::intrinsics;
 use core::iter::FromIterator;
 use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFull, RangeInclusive};

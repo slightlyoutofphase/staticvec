@@ -25,6 +25,7 @@ pub use crate::iterators::*;
 pub use crate::trait_impls::*;
 use crate::utils::*;
 use core::cmp::{Ord, PartialEq};
+use core::intrinsics;
 use core::marker::PhantomData;
 use core::mem::{self, MaybeUninit};
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
@@ -399,7 +400,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     unsafe {
       StaticVecIterConst::<'a, T> {
         start: self.as_ptr(),
-        end: if core::intrinsics::size_of::<T>() == 0 {
+        end: if intrinsics::size_of::<T>() == 0 {
           (self.as_ptr() as *const u8).wrapping_add(self.len()) as *const T
         } else {
           self.as_ptr().add(self.length)
@@ -415,7 +416,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     unsafe {
       StaticVecIterMut::<'a, T> {
         start: self.as_mut_ptr(),
-        end: if core::intrinsics::size_of::<T>() == 0 {
+        end: if intrinsics::size_of::<T>() == 0 {
           (self.as_mut_ptr() as *mut u8).wrapping_add(self.len()) as *mut T
         } else {
           self.as_mut_ptr().add(self.length)
