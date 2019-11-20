@@ -3,7 +3,7 @@
 use staticvec::*;
 
 #[cfg(feature = "std")]
-use std::io::{IoSlice, Read, Write};
+use std::io::{IoSlice, IoSliceMut, Read, Write};
 
 #[test]
 fn as_mut_ptr() {
@@ -329,6 +329,35 @@ fn read() {
   let mut buffer3 = staticvec![0; 9];
   assert_eq!(ints.read(buffer3.as_mut_slice()).unwrap(), 5);
   assert_eq!(ints, []);
+  assert_eq!(ints.read(staticvec![].as_mut_slice()).unwrap(), 0);
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn read_exact() {
+  let mut ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
+  let mut buffer = [0, 0, 0, 0];
+  ints.read_exact(&mut buffer).unwrap();
+  assert_eq!(buffer, [1, 2, 3, 4]);
+}
+
+#[cfg(feature = "std")]
+#[test]
+fn read_vectored() {
+  let mut ints = staticvec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  let mut buf1 = [0; 4];
+  let mut buf2 = [0; 4];
+  let mut buf3 = [0; 4];
+  let bufs = &mut [
+    IoSliceMut::new(&mut buf1),
+    IoSliceMut::new(&mut buf2),
+    IoSliceMut::new(&mut buf3),
+  ];
+  assert_eq!(ints.read_vectored(bufs).unwrap(), 12);
+  assert_eq!(
+    "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]",
+    format!("{:?}", bufs)
+  );
 }
 
 #[test]
