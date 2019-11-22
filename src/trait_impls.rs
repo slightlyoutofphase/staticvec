@@ -427,6 +427,12 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
 
   #[inline(always)]
   fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
+    if buf.len() > self.len() {
+      return Err(Error::new(
+        ErrorKind::UnexpectedEof,
+        "Not enough data available to fill the provided buffer!"
+      ));
+    }
     //Our implementation of `read` always returns `Ok(read_length)`, so we can unwrap safely here.
     self.read(buf).unwrap();
     Ok(())
