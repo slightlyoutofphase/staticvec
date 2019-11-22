@@ -258,7 +258,7 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, { N }> 
 
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
   type IntoIter = StaticVecIterConst<'a, T>;
-  type Item = <Self::IntoIter as Iterator>::Item;
+  type Item = &'a T;
   ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
@@ -268,7 +268,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
 
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
   type IntoIter = StaticVecIterMut<'a, T>;
-  type Item = <Self::IntoIter as Iterator>::Item;
+  type Item = &'a mut T;
   ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
