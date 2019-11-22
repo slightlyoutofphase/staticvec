@@ -145,10 +145,21 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     N
   }
 
+  ///Does the same thing as [capacity](crate::StaticVec::capacity), but as an associated
+  ///function rather than a method.
+  #[inline(always)]
+  pub const fn cap() -> usize {
+    N
+  }
+
+  ///Serves the same purpose as [capacity](crate::StaticVec::capacity), but as an associated
+  ///constant rather than a method.
+  pub const CAPACITY: usize = Self::cap();
+
   /// Returns the remaining capacity of the `StaticVec`.
   #[inline(always)]
   pub const fn remaining_capacity(&self) -> usize {
-    self.capacity() - self.len()
+    N - self.length
   }
 
   ///Directly sets the `length` field of the StaticVec to `new_len`. Useful if you intend
@@ -213,6 +224,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///its current length is less than `N`.
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, value: T) {
+    //Written this way to avoid the `&mut` return value (that we don't use)
+    //of `MaybeUninit::write()`, which seems to have a strange effect on the optimizer
+    //for this function.
     self
       .data
       .get_unchecked_mut(self.length)

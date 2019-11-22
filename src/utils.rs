@@ -2,15 +2,15 @@ use crate::StaticVec;
 use core::cmp::{Ordering, PartialOrd};
 
 #[inline(always)]
-pub(crate) fn distance_between<T>(self_: *const T, origin: *const T) -> usize {
+pub(crate) fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
   unsafe {
-    return if core::intrinsics::size_of::<T>() > 0 {
-      core::intrinsics::exact_div(
-        (self_ as usize).wrapping_sub(origin as usize),
-        core::intrinsics::size_of::<T>(),
+    return if intrinsics::size_of::<T>() > 0 {
+      intrinsics::exact_div(
+        (dest as usize).wrapping_sub(origin as usize),
+        intrinsics::size_of::<T>(),
       )
     } else {
-      (self_ as usize).wrapping_sub(origin as usize)
+      (dest as usize).wrapping_sub(origin as usize)
     };
   }
 }
@@ -30,25 +30,27 @@ where T: Copy {
 #[inline(always)]
 pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, { COUNT }>
 where T: Copy {
-  let mut res = StaticVec::<T, { COUNT }>::new();
-  res.length = COUNT;
-  for i in 0..COUNT {
-    unsafe {
-      res.data.get_unchecked_mut(i).write(value);
-    }
+  StaticVec::<T, { COUNT }> {
+    data: {
+      let mut data: [MaybeUninit<T>; COUNT] = MaybeUninit::uninit().assume_init();
+      for i in 0..COUNT {
+        data.get_unchecked_mut(i).write(value);
+      }
+      data
+    },
+    length: COUNT,
   }
-  res
 }
 
 #[inline]
 pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
-  self_: &[T2],
+  dest: &[T2],
   other: &[T1],
 ) -> Option<Ordering>
 {
-  let min_length = self_.len().min(other.len());
+  let min_length = dest.len().min(other.len());
   unsafe {
-    let left = self_.get_unchecked(0..min_length);
+    let left = dest.get_unchecked(0..min_length);
     let right = other.get_unchecked(0..min_length);
     for i in 0..min_length {
       match left.get_unchecked(i).partial_cmp(right.get_unchecked(i)) {
@@ -57,5 +59,5 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
       }
     }
   }
-  self_.len().partial_cmp(&other.len())
+  dest.len().partial_cmp(&other.len())
 }
