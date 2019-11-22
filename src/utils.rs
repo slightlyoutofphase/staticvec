@@ -34,11 +34,13 @@ pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, { COUNT }
 where T: Copy {
   StaticVec::<T, { COUNT }> {
     data: {
-      let mut data: [MaybeUninit<T>; COUNT] = MaybeUninit::uninit().assume_init();
-      for i in 0..COUNT {
-        data.get_unchecked_mut(i).write(value);
+      unsafe {
+        let mut data: [MaybeUninit<T>; COUNT] = MaybeUninit::uninit().assume_init();
+        for i in 0..COUNT {
+          data.get_unchecked_mut(i).write(value);
+        }
+        data
       }
-      data
     },
     length: COUNT,
   }
