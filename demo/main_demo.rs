@@ -348,7 +348,4 @@ fn main() {
   }
   println!("{:?}", zsts.iter().size_hint());
   println!("{}", zsts.iter().len());
-  let x = StaticVec::<usize, 12>::new();
-  let y = StaticVec::<usize, 12>::new();
-  let z = x.concat(&y);
 }
