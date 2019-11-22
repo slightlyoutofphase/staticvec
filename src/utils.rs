@@ -1,5 +1,6 @@
 use crate::StaticVec;
 use core::cmp::{Ordering, PartialOrd};
+use core::intrinsics;
 
 #[inline(always)]
 pub(crate) fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
