@@ -77,7 +77,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///If the array has a length greater than the StaticVec's declared capacity,
   ///any contents after that point are ignored.
   ///The `N2` parameter does not need to be provided explicitly, and can be inferred from the array itself.
-  ///This function does not *not* leak memory, as any ignored extra elements in the source array are explicitly
+  ///This function does *not* leak memory, as any ignored extra elements in the source array are explicitly
   ///dropped before [mem::forget](core::mem::forget) is called on it.
   #[inline]
   pub fn new_from_array<const N2: usize>(mut values: [T; N2]) -> Self {
