@@ -21,35 +21,6 @@ macro_rules! staticvec {
   });
 }
 
-macro_rules! new_from_slice_internal {
-  ($vals:expr) => {
-    unsafe {
-      let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let length = $vals.len().min(N);
-      $vals
-        .as_ptr()
-        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
-      Self { data, length }
-    }
-  };
-}
-
-macro_rules! new_from_array_internal {
-  ($vals:expr) => {
-    unsafe {
-      let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let length = N2.min(N);
-      $vals
-        .as_ptr()
-        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
-      //Drops any extra values left in the source array, then "forgets it".
-      ptr::drop_in_place($vals.get_unchecked_mut(length..N2));
-      mem::forget($vals);
-      Self { data, length }
-    }
-  };
-}
-
 macro_rules! impl_extend {
   ($var_a:tt, $var_b:tt, $type:ty) => {
     ///Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than

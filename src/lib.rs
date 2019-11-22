@@ -55,33 +55,43 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     }
   }
 
-  ///Returns a new StaticVec instance filled with the contents, if any, of a constant slice reference.
+  ///Returns a new StaticVec instance filled with the contents, if any, of a slice reference,
+  ///which can be either `&mut` or `&` as if it is `&mut` it will implicitly coerce to `&`.
   ///If the slice has a length greater than the StaticVec's declared capacity,
   ///any contents after that point are ignored.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline]
   pub fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
-    new_from_slice_internal!(values)
-  }
-
-  ///Returns a new StaticVec instance filled with the contents, if any, of a mutable slice reference.
-  ///If the slice has a length greater than the StaticVec's declared capacity,
-  ///any contents after that point are ignored.
-  ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
-  #[inline]
-  pub fn new_from_mut_slice(values: &mut [T]) -> Self
-  where T: Copy {
-    new_from_slice_internal!(values)
+    unsafe {
+      let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let length = values.len().min(N);
+      values
+        .as_ptr()
+        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
+      Self { data, length }
+    }
   }
 
   ///Returns a new StaticVec instance filled with the contents, if any, of an array.
   ///If the array has a length greater than the StaticVec's declared capacity,
   ///any contents after that point are ignored.
   ///The `N2` parameter does not need to be provided explicitly, and can be inferred from the array itself.
+  ///This function does not *not* leak memory, as any ignored extra elements in the source array are explicitly
+  ///dropped before [mem::forget](core::mem::forget) is called on it.
   #[inline]
   pub fn new_from_array<const N2: usize>(mut values: [T; N2]) -> Self {
-    new_from_array_internal!(values)
+    unsafe {
+      let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+      let length = N2.min(N);
+      values
+        .as_ptr()
+        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
+      //Drops any extra values left in the source array, then "forgets it".
+      ptr::drop_in_place(values.get_unchecked_mut(length..N2));
+      mem::forget(values);
+      Self { data, length }
+    }
   }
 
   ///Returns a new StaticVec instance filled with the return value of an initializer function.
@@ -203,7 +213,11 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///its current length is less than `N`.
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, value: T) {
-    self.data.get_unchecked_mut(self.length).write(value);
+    self
+      .data
+      .get_unchecked_mut(self.length)
+      .as_mut_ptr()
+      .write(value);
     self.length += 1;
   }
 

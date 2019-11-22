@@ -71,23 +71,19 @@ impl<T, const N: usize> Default for StaticVec<T, { N }> {
 }
 
 #[cfg(feature = "deref_to_slice")]
-#[doc(cfg(feature = "deref_to_slice"))]
 impl<T, const N: usize> Deref for StaticVec<T, { N }> {
   type Target = [T];
   #[inline(always)]
-  #[doc(cfg(feature = "deref_to_slice"))]
   fn deref(&self) -> &[T] {
     self.as_slice()
   }
 }
 
 #[cfg(feature = "deref_to_slice")]
-#[doc(cfg(feature = "deref_to_slice"))]
 impl<T, const N: usize> DerefMut for StaticVec<T, { N }> {
   #[inline(always)]
-  #[doc(cfg(feature = "deref_to_slice"))]
   fn deref_mut(&mut self) -> &mut [T] {
-    self.as_mut()
+    self.as_mut_slice()
   }
 }
 
@@ -122,10 +118,10 @@ impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, { N }> {
 
 impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, { N }> {
   ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_mut_slice](crate::StaticVec::new_from_mut_slice) internally.
+  ///[new_from_slice](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &mut [T]) -> Self {
-    Self::new_from_mut_slice(values)
+    Self::new_from_slice(values)
   }
 }
 
@@ -149,10 +145,10 @@ impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, 
 
 impl<T: Copy, const N1: usize, const N2: usize> From<&mut [T; N1]> for StaticVec<T, { N2 }> {
   ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_mut_slices](crate::StaticVec::new_from_mut_slice) internally.
+  ///[new_from_slice](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &mut [T; N1]) -> Self {
-    Self::new_from_mut_slice(values)
+    Self::new_from_slice(values)
   }
 }
 
@@ -416,9 +412,7 @@ impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, {N}>);
 impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, {N}>);
 
 #[cfg(feature = "std")]
-#[doc(cfg(feature = "std"))]
 impl<const N: usize> Read for StaticVec<u8, { N }> {
-  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     let read_length = self.length.min(buf.len());
@@ -431,7 +425,6 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
     Ok(read_length)
   }
 
-  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
     //Our implementation of `read` always returns `Ok(read_length)`, so we can unwrap safely here.
@@ -439,7 +432,6 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
     Ok(())
   }
 
-  #[doc(cfg(feature = "std"))]
   #[inline]
   fn read_vectored(&mut self, bufs: &mut [IoSliceMut]) -> io::Result<usize> {
     if self.is_empty() {
@@ -454,9 +446,7 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
 }
 
 #[cfg(feature = "std")]
-#[doc(cfg(feature = "std"))]
 impl<const N: usize> Write for StaticVec<u8, { N }> {
-  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
     let old_length = self.length;
@@ -464,7 +454,6 @@ impl<const N: usize> Write for StaticVec<u8, { N }> {
     Ok(self.length - old_length)
   }
 
-  #[doc(cfg(feature = "std"))]
   #[inline]
   fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> io::Result<usize> {
     let old_length = self.length;
@@ -474,7 +463,6 @@ impl<const N: usize> Write for StaticVec<u8, { N }> {
     Ok(self.length - old_length)
   }
 
-  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
     //Our implementation of `write` always returns `Ok(self.length - old_length)`, so we can unwrap safely here.
@@ -488,7 +476,6 @@ impl<const N: usize> Write for StaticVec<u8, { N }> {
     }
   }
 
-  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn flush(&mut self) -> io::Result<()> {
     Ok(())
@@ -496,12 +483,10 @@ impl<const N: usize> Write for StaticVec<u8, { N }> {
 }
 
 #[cfg(feature = "serde_support")]
-#[doc(cfg(feature = "serde_support"))]
 impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, { N }>
 where T: Deserialize<'de>
 {
   #[inline]
-  #[doc(cfg(feature = "serde_support"))]
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where D: Deserializer<'de> {
     struct StaticVecVisitor<'de, T, const N: usize>(PhantomData<(&'de (), T)>);
@@ -537,12 +522,10 @@ where T: Deserialize<'de>
 }
 
 #[cfg(feature = "serde_support")]
-#[doc(cfg(feature = "serde_support"))]
 impl<T, const N: usize> Serialize for StaticVec<T, { N }>
 where T: Serialize
 {
   #[inline(always)]
-  #[doc(cfg(feature = "serde_support"))]
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where S: Serializer {
     serializer.collect_seq(self)

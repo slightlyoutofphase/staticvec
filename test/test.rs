@@ -236,16 +236,6 @@ fn new_from_slice() {
 }
 
 #[test]
-fn new_from_mut_slice() {
-  let vec = StaticVec::<i32, 3>::new_from_mut_slice(&mut [1, 2, 3]);
-  assert_eq!(vec, [1, 2, 3]);
-  let vec2 = StaticVec::<i32, 3>::new_from_mut_slice(&mut [1, 2, 3, 4, 5, 6]);
-  assert_eq!(vec2, [1, 2, 3]);
-  let vec3 = StaticVec::<i32, 27>::new_from_mut_slice(&mut []);
-  assert_eq!(vec3, []);
-}
-
-#[test]
 fn new_from_array() {
   let vec = StaticVec::<i32, 3>::new_from_array([1; 3]);
   assert_eq!(vec, [1, 1, 1]);
