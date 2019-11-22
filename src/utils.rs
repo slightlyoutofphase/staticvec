@@ -1,5 +1,6 @@
 use crate::StaticVec;
 use core::cmp::{Ordering, PartialOrd};
+use core::mem::MaybeUninit;
 use core::intrinsics;
 
 #[inline(always)]
@@ -45,13 +46,13 @@ where T: Copy {
 
 #[inline]
 pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
-  dest: &[T2],
+  this: &[T2],
   other: &[T1],
 ) -> Option<Ordering>
 {
-  let min_length = dest.len().min(other.len());
+  let min_length = this.len().min(other.len());
   unsafe {
-    let left = dest.get_unchecked(0..min_length);
+    let left = this.get_unchecked(0..min_length);
     let right = other.get_unchecked(0..min_length);
     for i in 0..min_length {
       match left.get_unchecked(i).partial_cmp(right.get_unchecked(i)) {
@@ -60,5 +61,5 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
       }
     }
   }
-  dest.len().partial_cmp(&other.len())
+  this.len().partial_cmp(&other.len())
 }
