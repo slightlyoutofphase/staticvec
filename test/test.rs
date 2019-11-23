@@ -32,13 +32,17 @@ fn as_slice() {
 #[test]
 fn bounds_to_string() {
   let mut v = staticvec![1, 2, 3, 4];
+  let mut it = v.iter();
+  it.next_back();
   assert_eq!(
-    "Current value of `start`: 1\nCurrent value of `end`: 1",
-    v.iter().bounds_to_string()
+    "Current value of `start`: 1\nCurrent value of `end`: 4",
+    it.bounds_to_string()
   );
+  let mut itm = v.iter_mut();
+  itm.next_back();
   assert_eq!(
-    "Current value of `start`: 1\nCurrent value of `end`: 1",
-    v.iter_mut().bounds_to_string()
+    "Current value of `start`: 1\nCurrent value of `end`: 4",
+    itm.bounds_to_string()
   );
 }
 

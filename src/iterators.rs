@@ -33,7 +33,7 @@ impl<'a, T: 'a + Debug> StaticVecIterConst<'a, T> {
   #[inline(always)]
   ///Returns a string displaying the current values of the
   ///iterator's `start` and `end` elements on two separate lines.
-  ///Locally requires that T implements [Debug](core::fmt::Debug)
+  ///Locally requires that `T` implements [Debug](core::fmt::Debug)
   ///to make it possible to pretty-print the elements.
   pub fn bounds_to_string(&self) -> String {
     unsafe {
@@ -74,7 +74,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
 impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
-    if self.end as usize > self.start as usize {
+    if (self.end as usize) > (self.start as usize) {
       unsafe {
         self.end = if intrinsics::size_of::<T>() == 0 {
           (self.end as usize - 1) as *const _
@@ -110,7 +110,7 @@ impl<'a, T: 'a + Debug> StaticVecIterMut<'a, T> {
   #[inline(always)]
   ///Returns a string displaying the current values of the
   ///iterator's `start` and `end` elements on two separate lines.
-  ///Locally requires that T implements [Debug](core::fmt::Debug)
+  ///Locally requires that `T` implements [Debug](core::fmt::Debug)
   ///to make it possible to pretty-print the elements.
   pub fn bounds_to_string(&self) -> String {
     unsafe {
@@ -151,7 +151,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
 impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
-    if self.end as usize > self.start as usize {
+    if (self.end as usize) > (self.start as usize) {
       unsafe {
         self.end = if intrinsics::size_of::<T>() == 0 {
           (self.end as usize - 1) as *mut _

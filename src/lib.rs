@@ -533,11 +533,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     res
   }
 
-  ///Copies and appends all elements, if any, of a slice to the StaticVec.
-  ///If the slice has a length greater than the StaticVec's remaining capacity,
-  ///any contents after that point are ignored.
-  ///Unlike the implementation of this function for [Vec](alloc::vec::Vec), no iterator is used,
-  ///just a single pointer-copy call.
+  ///Copies and appends all elements, if any, of a slice (which can also be `&mut` as it will coerce
+  ///implicitly to `&`) to the StaticVec. If the slice has a length greater than the StaticVec's
+  ///remaining capacity, any contents after that point are ignored.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
   #[inline(always)]
   pub fn extend_from_slice(&mut self, other: &[T])
