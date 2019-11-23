@@ -30,6 +30,19 @@ fn as_slice() {
 }
 
 #[test]
+fn bounds_to_string() {
+  let mut v = staticvec![1, 2, 3, 4];
+  assert_eq!(
+    "Current value of `start`: 1\nCurrent value of `end`: 1",
+    v.iter().bounds_to_string()
+  );
+  assert_eq!(
+    "Current value of `start`: 1\nCurrent value of `end`: 1",
+    v.iter_mut().bounds_to_string()
+  );
+}
+
+#[test]
 fn capacity() {
   let vec = StaticVec::<i32, 10>::new();
   assert_eq!(vec.capacity(), 10);
@@ -329,6 +342,8 @@ fn read_exact() {
   let mut buffer = [0, 0, 0, 0];
   ints.read_exact(&mut buffer).unwrap();
   assert_eq!(buffer, [1, 2, 3, 4]);
+  let mut buffer2 = [0, 0, 0, 0, 0, 0, 0, 0];
+  assert!(ints.read_exact(&mut buffer2).is_err());
 }
 
 #[cfg(feature = "std")]

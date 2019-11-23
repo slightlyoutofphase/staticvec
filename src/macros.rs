@@ -4,21 +4,15 @@
 ///for types that implement `Copy`.
 #[macro_export]
 macro_rules! staticvec {
-  (@put_one $val:expr) => (1);
-  ($val:expr; $n:expr) => (
+  (@put_one $val:expr) => {
+    1
+  };
+  ($val:expr; $n:expr) => {
     $crate::utils::new_from_value::<_, $n>($val)
-  );
-  ($($val:expr),*$(,)*) => ({
-    let mut res = StaticVec::<_, {0$(+staticvec!(@put_one $val))*}>::new();
-    {
-      unsafe {
-        ($({
-          res.push_unchecked($val);
-        }),*)
-      }
-    };
-    res
-  });
+  };
+  ($($val:expr),* $(,)*) => {
+    StaticVec::<_, {0$(+staticvec!(@put_one $val))*}>::new_from_array([$($val),*])
+  };
 }
 
 macro_rules! impl_extend {
@@ -66,6 +60,103 @@ macro_rules! impl_from_iterator {
       }
       res.length = i;
       res
+    }
+  };
+}
+
+macro_rules! impl_partial_eq_with_as_slice {
+  ($left:ty, $right:ty) => {
+    impl<T1, T2: PartialEq<T1>, const N1: usize, const N2: usize> PartialEq<$left> for $right {
+      #[inline(always)]
+      fn eq(&self, other: &$left) -> bool {
+        self.as_slice() == other.as_slice()
+      }
+      #[allow(clippy::partialeq_ne_impl)]
+      #[inline(always)]
+      fn ne(&self, other: &$left) -> bool {
+        self.as_slice() != other.as_slice()
+      }
+    }
+  };
+}
+
+macro_rules! impl_partial_eq_with_get_unchecked {
+  ($left:ty, $right:ty) => {
+    impl<T1, T2: PartialEq<T1>, const N1: usize, const N2: usize> PartialEq<$left> for $right {
+      #[inline(always)]
+      fn eq(&self, other: &$left) -> bool {
+        unsafe { self.as_slice() == other.get_unchecked(..) }
+      }
+      #[allow(clippy::partialeq_ne_impl)]
+      #[inline(always)]
+      fn ne(&self, other: &$left) -> bool {
+        unsafe { self.as_slice() != other.get_unchecked(..) }
+      }
+    }
+  };
+}
+
+macro_rules! impl_partial_eq_with_equals_no_deref {
+  ($left:ty, $right:ty) => {
+    impl<T1, T2: PartialEq<T1>, const N: usize> PartialEq<$left> for $right {
+      #[inline(always)]
+      fn eq(&self, other: &$left) -> bool {
+        self.as_slice() == other
+      }
+      #[allow(clippy::partialeq_ne_impl)]
+      #[inline(always)]
+      fn ne(&self, other: &$left) -> bool {
+        self.as_slice() != other
+      }
+    }
+  };
+}
+
+macro_rules! impl_partial_eq_with_equals_deref {
+  ($left:ty, $right:ty) => {
+    impl<T1, T2: PartialEq<T1>, const N: usize> PartialEq<$left> for $right {
+      #[inline(always)]
+      fn eq(&self, other: &$left) -> bool {
+        self.as_slice() == *other
+      }
+      #[allow(clippy::partialeq_ne_impl)]
+      #[inline(always)]
+      fn ne(&self, other: &$left) -> bool {
+        self.as_slice() != *other
+      }
+    }
+  };
+}
+
+macro_rules! impl_partial_ord_with_as_slice {
+  ($left:ty, $right:ty) => {
+    impl<T1, T2: PartialOrd<T1>, const N1: usize, const N2: usize> PartialOrd<$left> for $right {
+      #[inline(always)]
+      fn partial_cmp(&self, other: &$left) -> Option<Ordering> {
+        partial_compare(self.as_slice(), other.as_slice())
+      }
+    }
+  };
+}
+
+macro_rules! impl_partial_ord_with_get_unchecked {
+  ($left:ty, $right:ty) => {
+    impl<T1, T2: PartialOrd<T1>, const N1: usize, const N2: usize> PartialOrd<$left> for $right {
+      #[inline(always)]
+      fn partial_cmp(&self, other: &$left) -> Option<Ordering> {
+        unsafe { partial_compare(self.as_slice(), other.get_unchecked(..)) }
+      }
+    }
+  };
+}
+
+macro_rules! impl_partial_ord_with_as_slice_against_slice {
+  ($left:ty, $right:ty) => {
+    impl<T1, T2: PartialOrd<T1>, const N: usize> PartialOrd<$left> for $right {
+      #[inline(always)]
+      fn partial_cmp(&self, other: &$left) -> Option<Ordering> {
+        partial_compare(self.as_slice(), other)
+      }
     }
   };
 }

@@ -78,19 +78,23 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///any contents after that point are ignored.
   ///The `N2` parameter does not need to be provided explicitly, and can be inferred from the array itself.
   ///This function does *not* leak memory, as any ignored extra elements in the source array are explicitly
-  ///dropped before [mem::forget](core::mem::forget) is called on it.
+  ///dropped with [drop_in_place](core::ptr::drop_in_place) before [forget](core::mem::forget) is called on it.
   #[inline]
   pub fn new_from_array<const N2: usize>(mut values: [T; N2]) -> Self {
-    unsafe {
-      let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
-      let length = N2.min(N);
-      values
-        .as_ptr()
-        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
-      //Drops any extra values left in the source array, then "forgets it".
-      ptr::drop_in_place(values.get_unchecked_mut(length..N2));
-      mem::forget(values);
-      Self { data, length }
+    Self {
+      data: {
+        unsafe {
+          let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit().assume_init();
+          values
+            .as_ptr()
+            .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, N2.min(N));
+          //Drops any extra values left in the source array, then "forgets it".
+          ptr::drop_in_place(values.get_unchecked_mut(N2.min(N)..N2));
+          mem::forget(values);
+          data
+        }
+      },
+      length: N2.min(N),
     }
   }
 
@@ -99,15 +103,13 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///
   ///Example usage:
   ///```
-  ///fn main() {
-  ///  let mut i = 0;
-  ///  let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
-  ///  assert_eq!(v.len(), 64);
-  ///  assert_eq!(v[0], 1);
-  ///  assert_eq!(v[1], 2);
-  ///  assert_eq!(v[2], 3);
-  ///  assert_eq!(v[3], 4);
-  ///}
+  ///let mut i = 0;
+  ///let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
+  ///assert_eq!(v.len(), 64);
+  ///assert_eq!(v[0], 1);
+  ///assert_eq!(v[1], 2);
+  ///assert_eq!(v[2], 3);
+  ///assert_eq!(v[3], 4);
   /// ```
   #[inline]
   pub fn filled_with<F>(mut initializer: F) -> Self
@@ -426,7 +428,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
       StaticVecIterConst::<'a, T> {
         start: self.as_ptr(),
         end: if intrinsics::size_of::<T>() == 0 {
-          (self.as_ptr() as *const u8).wrapping_add(self.len()) as *const T
+          (self.as_ptr() as *const u8).wrapping_add(self.length) as *const T
         } else {
           self.as_ptr().add(self.length)
         },
@@ -442,7 +444,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
       StaticVecIterMut::<'a, T> {
         start: self.as_mut_ptr(),
         end: if intrinsics::size_of::<T>() == 0 {
-          (self.as_mut_ptr() as *mut u8).wrapping_add(self.len()) as *mut T
+          (self.as_mut_ptr() as *mut u8).wrapping_add(self.length) as *mut T
         } else {
           self.as_mut_ptr().add(self.length)
         },
@@ -532,7 +534,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 
   ///Copies and appends all elements, if any, of a slice to the StaticVec.
-  ///If the slice has a length greater than the StaticVec's declared capacity,
+  ///If the slice has a length greater than the StaticVec's remaining capacity,
   ///any contents after that point are ignored.
   ///Unlike the implementation of this function for [Vec](alloc::vec::Vec), no iterator is used,
   ///just a single pointer-copy call.

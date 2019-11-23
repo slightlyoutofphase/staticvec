@@ -283,133 +283,36 @@ impl<T: Ord, const N: usize> Ord for StaticVec<T, { N }> {
   }
 }
 
-macro_rules! impl_partial_eq_with_as_slice {
-  ($left:ty, $right:ty) => {
-    impl<T1, T2: PartialEq<T1>, const N1: usize, const N2: usize> PartialEq<$left> for $right {
-      #[inline(always)]
-      fn eq(&self, other: &$left) -> bool {
-        self.as_slice() == other.as_slice()
-      }
-      #[allow(clippy::partialeq_ne_impl)]
-      #[inline(always)]
-      fn ne(&self, other: &$left) -> bool {
-        self.as_slice() != other.as_slice()
-      }
-    }
-  };
-}
-
-macro_rules! impl_partial_eq_with_get_unchecked {
-  ($left:ty, $right:ty) => {
-    impl<T1, T2: PartialEq<T1>, const N1: usize, const N2: usize> PartialEq<$left> for $right {
-      #[inline(always)]
-      fn eq(&self, other: &$left) -> bool {
-        unsafe { self.as_slice() == other.get_unchecked(..) }
-      }
-      #[allow(clippy::partialeq_ne_impl)]
-      #[inline(always)]
-      fn ne(&self, other: &$left) -> bool {
-        unsafe { self.as_slice() != other.get_unchecked(..) }
-      }
-    }
-  };
-}
-
-macro_rules! impl_partial_eq_with_equals_no_deref {
-  ($left:ty, $right:ty) => {
-    impl<T1, T2: PartialEq<T1>, const N: usize> PartialEq<$left> for $right {
-      #[inline(always)]
-      fn eq(&self, other: &$left) -> bool {
-        self.as_slice() == other
-      }
-      #[allow(clippy::partialeq_ne_impl)]
-      #[inline(always)]
-      fn ne(&self, other: &$left) -> bool {
-        self.as_slice() != other
-      }
-    }
-  };
-}
-
-macro_rules! impl_partial_eq_with_equals_deref {
-  ($left:ty, $right:ty) => {
-    impl<T1, T2: PartialEq<T1>, const N: usize> PartialEq<$left> for $right {
-      #[inline(always)]
-      fn eq(&self, other: &$left) -> bool {
-        self.as_slice() == *other
-      }
-      #[allow(clippy::partialeq_ne_impl)]
-      #[inline(always)]
-      fn ne(&self, other: &$left) -> bool {
-        self.as_slice() != *other
-      }
-    }
-  };
-}
-
-macro_rules! impl_partial_ord_with_as_slice {
-  ($left:ty, $right:ty) => {
-    impl<T1, T2: PartialOrd<T1>, const N1: usize, const N2: usize> PartialOrd<$left> for $right {
-      #[inline(always)]
-      fn partial_cmp(&self, other: &$left) -> Option<Ordering> {
-        partial_compare(self.as_slice(), other.as_slice())
-      }
-    }
-  };
-}
-
-macro_rules! impl_partial_ord_with_get_unchecked {
-  ($left:ty, $right:ty) => {
-    impl<T1, T2: PartialOrd<T1>, const N1: usize, const N2: usize> PartialOrd<$left> for $right {
-      #[inline(always)]
-      fn partial_cmp(&self, other: &$left) -> Option<Ordering> {
-        unsafe { partial_compare(self.as_slice(), other.get_unchecked(..)) }
-      }
-    }
-  };
-}
-
-macro_rules! impl_partial_ord_with_as_slice_against_slice {
-  ($left:ty, $right:ty) => {
-    impl<T1, T2: PartialOrd<T1>, const N: usize> PartialOrd<$left> for $right {
-      #[inline(always)]
-      fn partial_cmp(&self, other: &$left) -> Option<Ordering> {
-        partial_compare(self.as_slice(), other)
-      }
-    }
-  };
-}
-
-impl_partial_eq_with_as_slice!(StaticVec<T1, {N1}>, StaticVec<T2, {N2}>);
-impl_partial_eq_with_as_slice!(StaticVec<T1, {N1}>, &StaticVec<T2, {N2}>);
-impl_partial_eq_with_as_slice!(StaticVec<T1, {N1}>, &mut StaticVec<T2, {N2}>);
-impl_partial_eq_with_as_slice!(&StaticVec<T1, {N1}>, StaticVec<T2, {N2}>);
-impl_partial_eq_with_as_slice!(&mut StaticVec<T1, {N1}>, StaticVec<T2, {N2}>);
-impl_partial_eq_with_get_unchecked!([T1; N1], StaticVec<T2, {N2}>);
-impl_partial_eq_with_get_unchecked!([T1; N1], &StaticVec<T2, {N2}>);
-impl_partial_eq_with_get_unchecked!([T1; N1], &mut StaticVec<T2, {N2}>);
-impl_partial_eq_with_get_unchecked!(&[T1; N1], StaticVec<T2, {N2}>);
-impl_partial_eq_with_get_unchecked!(&mut [T1; N1], StaticVec<T2, {N2}>);
-impl_partial_eq_with_equals_no_deref!([T1], StaticVec<T2, {N}>);
-impl_partial_eq_with_equals_no_deref!([T1], &StaticVec<T2, {N}>);
-impl_partial_eq_with_equals_no_deref!([T1], &mut StaticVec<T2, {N}>);
-impl_partial_eq_with_equals_deref!(&[T1], StaticVec<T2, {N}>);
-impl_partial_eq_with_equals_deref!(&mut [T1], StaticVec<T2, {N}>);
-impl_partial_ord_with_as_slice!(StaticVec<T1, {N1}>, StaticVec<T2, {N2}>);
-impl_partial_ord_with_as_slice!(StaticVec<T1, {N1}>, &StaticVec<T2, {N2}>);
-impl_partial_ord_with_as_slice!(StaticVec<T1, {N1}>, &mut StaticVec<T2, {N2}>);
-impl_partial_ord_with_as_slice!(&StaticVec<T1, {N1}>, StaticVec<T2, {N2}>);
-impl_partial_ord_with_as_slice!(&mut StaticVec<T1, {N1}>, StaticVec<T2, {N2}>);
-impl_partial_ord_with_get_unchecked!([T1; N1], StaticVec<T2, {N2}>);
-impl_partial_ord_with_get_unchecked!([T1; N1], &StaticVec<T2, {N2}>);
-impl_partial_ord_with_get_unchecked!([T1; N1], &mut StaticVec<T2, {N2}>);
-impl_partial_ord_with_get_unchecked!(&[T1; N1], StaticVec<T2, {N2}>);
-impl_partial_ord_with_get_unchecked!(&mut [T1; N1], StaticVec<T2, {N2}>);
-impl_partial_ord_with_as_slice_against_slice!([T1], StaticVec<T2, {N}>);
-impl_partial_ord_with_as_slice_against_slice!([T1], &StaticVec<T2, {N}>);
-impl_partial_ord_with_as_slice_against_slice!([T1], &mut StaticVec<T2, {N}>);
-impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, {N}>);
-impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, {N}>);
+impl_partial_eq_with_as_slice!(StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
+impl_partial_eq_with_as_slice!(StaticVec<T1, { N1 }>, &StaticVec<T2, { N2 }>);
+impl_partial_eq_with_as_slice!(StaticVec<T1, { N1 }>, &mut StaticVec<T2, { N2 }>);
+impl_partial_eq_with_as_slice!(&StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
+impl_partial_eq_with_as_slice!(&mut StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
+impl_partial_eq_with_get_unchecked!([T1; N1], StaticVec<T2, { N2 }>);
+impl_partial_eq_with_get_unchecked!([T1; N1], &StaticVec<T2, { N2 }>);
+impl_partial_eq_with_get_unchecked!([T1; N1], &mut StaticVec<T2, { N2 }>);
+impl_partial_eq_with_get_unchecked!(&[T1; N1], StaticVec<T2, { N2 }>);
+impl_partial_eq_with_get_unchecked!(&mut [T1; N1], StaticVec<T2, { N2 }>);
+impl_partial_eq_with_equals_no_deref!([T1], StaticVec<T2, { N }>);
+impl_partial_eq_with_equals_no_deref!([T1], &StaticVec<T2, { N }>);
+impl_partial_eq_with_equals_no_deref!([T1], &mut StaticVec<T2, { N }>);
+impl_partial_eq_with_equals_deref!(&[T1], StaticVec<T2, { N }>);
+impl_partial_eq_with_equals_deref!(&mut [T1], StaticVec<T2, { N }>);
+impl_partial_ord_with_as_slice!(StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
+impl_partial_ord_with_as_slice!(StaticVec<T1, { N1 }>, &StaticVec<T2, { N2 }>);
+impl_partial_ord_with_as_slice!(StaticVec<T1, { N1 }>, &mut StaticVec<T2, { N2 }>);
+impl_partial_ord_with_as_slice!(&StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
+impl_partial_ord_with_as_slice!(&mut StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
+impl_partial_ord_with_get_unchecked!([T1; N1], StaticVec<T2, { N2 }>);
+impl_partial_ord_with_get_unchecked!([T1; N1], &StaticVec<T2, { N2 }>);
+impl_partial_ord_with_get_unchecked!([T1; N1], &mut StaticVec<T2, { N2 }>);
+impl_partial_ord_with_get_unchecked!(&[T1; N1], StaticVec<T2, { N2 }>);
+impl_partial_ord_with_get_unchecked!(&mut [T1; N1], StaticVec<T2, { N2 }>);
+impl_partial_ord_with_as_slice_against_slice!([T1], StaticVec<T2, { N }>);
+impl_partial_ord_with_as_slice_against_slice!([T1], &StaticVec<T2, { N }>);
+impl_partial_ord_with_as_slice_against_slice!([T1], &mut StaticVec<T2, { N }>);
+impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, { N }>);
+impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, { N }>);
 
 #[cfg(feature = "std")]
 impl<const N: usize> Read for StaticVec<u8, { N }> {
@@ -427,10 +330,10 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
 
   #[inline(always)]
   fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
-    if buf.len() > self.len() {
+    if buf.len() > self.length {
       return Err(Error::new(
         ErrorKind::UnexpectedEof,
-        "Not enough data available to fill the provided buffer!"
+        "Not enough data available to fill the provided buffer!",
       ));
     }
     //Our implementation of `read` always returns `Ok(read_length)`, so we can unwrap safely here.
