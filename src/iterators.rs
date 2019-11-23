@@ -36,6 +36,7 @@ impl<'a, T: 'a + Debug> StaticVecIterConst<'a, T> {
   ///Locally requires that `T` implements [Debug](core::fmt::Debug)
   ///to make it possible to pretty-print the elements.
   pub fn bounds_to_string(&self) -> String {
+    //Safety: `start` and `end` are never null.
     unsafe {
       format!(
         "Current value of `start`: {:?}\nCurrent value of `end`: {:?}",
@@ -113,6 +114,7 @@ impl<'a, T: 'a + Debug> StaticVecIterMut<'a, T> {
   ///Locally requires that `T` implements [Debug](core::fmt::Debug)
   ///to make it possible to pretty-print the elements.
   pub fn bounds_to_string(&self) -> String {
+    //Safety: `start` and `end` are never null.
     unsafe {
       format!(
         "Current value of `start`: {:?}\nCurrent value of `end`: {:?}",
