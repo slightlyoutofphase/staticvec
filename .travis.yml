@@ -5,7 +5,7 @@ rust:
   - nightly
 
 script:
-  - cargo build --verbose
-  - cargo test --verbose --all-features
-  - cargo bench
-  - ./ci/run_miri.sh
+  - cargo build -j16 --verbose
+  - cargo test -j16 --verbose --all-features
+  - cargo bench -j16
+  - cargo miri test -j16 --all-features
