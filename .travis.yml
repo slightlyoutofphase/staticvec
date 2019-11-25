@@ -1,5 +1,4 @@
 language: rust
-cache: cargo
 
 rust:
   - nightly
@@ -8,6 +7,7 @@ script:
   - cargo build -j16
   - cargo test -j16 --features="std"
   - cargo bench -j16
+  - cargo clean
   - rustup component add miri
-  - cargo miri setup
-  - cargo miri test --features="std"
+  - cargo miri -j16 setup
+  - cargo miri -j16 test --features="std"
