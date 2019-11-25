@@ -569,10 +569,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 
   ///Returns a [Vec](alloc::vec::Vec) containing the contents of the StaticVec instance.
-  ///The [Vec](alloc::vec::Vec) is created via [with_capacity](alloc::vec::Vec::with_capacity),
-  ///with the StaticVec's generic `N` parameter passed as the argument, and as such will initially have
-  ///the same return value for [len](alloc::vec::Vec::len) and [capacity](alloc::vec::Vec::capacity) as
-  ///the source StaticVec.
+  ///The returned [Vec](alloc::vec::Vec) will initially have the same value for
+  ///[len](alloc::vec::Vec::len) and [capacity](alloc::vec::Vec::capacity) as the source StaticVec.
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
