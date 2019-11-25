@@ -4,4 +4,5 @@ rust:
 script: |
   cargo build --verbose &&
   cargo test --verbose &&
-  cargo test --verbose --all-features
+  cargo test --verbose --all-features &&
+  ./ci/run_miri.sh
