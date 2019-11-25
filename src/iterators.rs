@@ -40,7 +40,7 @@ impl<'a, T: 'a> StaticVecIterConst<'a, T> {
     //Safety: `start` and `end` are never null.
     unsafe {
       format!(
-        "Current value of `start`: {:?}\nCurrent value of `end`: {:?}",
+        "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
         *self.start, *self.end
       )
     }
