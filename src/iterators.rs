@@ -27,7 +27,7 @@ pub struct StaticVecIterMut<'a, T: 'a> {
   pub(crate) marker: PhantomData<&'a mut T>,
 }
 
-impl<'a, T: 'a + Debug> StaticVecIterConst<'a, T> {
+impl<'a, T: 'a> StaticVecIterConst<'a, T> {
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
@@ -35,7 +35,8 @@ impl<'a, T: 'a + Debug> StaticVecIterConst<'a, T> {
   ///iterator's `start` and `end` elements on two separate lines.
   ///Locally requires that `T` implements [Debug](core::fmt::Debug)
   ///to make it possible to pretty-print the elements.
-  pub fn bounds_to_string(&self) -> String {
+  pub fn bounds_to_string(&self) -> String
+  where T: Debug {
     //Safety: `start` and `end` are never null.
     unsafe {
       format!(
@@ -113,7 +114,8 @@ impl<'a, T: 'a + Debug> StaticVecIterMut<'a, T> {
   ///iterator's `start` and `end` elements on two separate lines.
   ///Locally requires that `T` implements [Debug](core::fmt::Debug)
   ///to make it possible to pretty-print the elements.
-  pub fn bounds_to_string(&self) -> String {
+  pub fn bounds_to_string(&self) -> String
+  where T: Debug {
     //Safety: `start` and `end` are never null.
     unsafe {
       format!(
