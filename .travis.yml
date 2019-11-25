@@ -7,7 +7,7 @@ script:
   - cargo build -j16
   - cargo test -j16 --features="std"
   - cargo bench -j16
-  - cargo clean
   - rustup component add miri
   - cargo miri -j16 setup
+  - cargo clean
   - cargo miri -j16 test --features="std"
