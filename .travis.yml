@@ -6,8 +6,8 @@ rust:
 
 script:
   - cargo build -j16
-  - cargo test -j16 --feature="std"
+  - cargo test -j16 --features="std"
   - cargo bench -j16
   - rustup component add miri
   - cargo miri setup
-  - cargo miri test --feature="std"
+  - cargo miri test --features="std"
