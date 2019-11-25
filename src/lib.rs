@@ -571,6 +571,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a [Vec](alloc::vec::Vec) containing the contents of the StaticVec instance.
   ///The returned [Vec](alloc::vec::Vec) will initially have the same value for
   ///[len](alloc::vec::Vec::len) and [capacity](alloc::vec::Vec::capacity) as the source StaticVec.
+  ///Note that while using this function does *not* consume the source StaticVec in the sense of rendering
+  ///it completely inaccessible / unusable, it *does* empty it (that is, it will have no contents and
+  ///a `length` of 0 afterwards.)
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]

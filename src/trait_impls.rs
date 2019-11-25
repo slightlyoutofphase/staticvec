@@ -218,7 +218,7 @@ impl<T, const N: usize> IndexMut<Range<usize>> for StaticVec<T, { N }> {
 impl<T, const N: usize> Index<RangeFull> for StaticVec<T, { N }> {
   type Output = [T];
   ///Returns a constant reference to a slice consisting of `0..self.length`
-  //elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
+  ///elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
   #[inline(always)]
   fn index(&self, _index: RangeFull) -> &Self::Output {
     self.as_slice()
@@ -227,7 +227,7 @@ impl<T, const N: usize> Index<RangeFull> for StaticVec<T, { N }> {
 
 impl<T, const N: usize> IndexMut<RangeFull> for StaticVec<T, { N }> {
   ///Returns a mutable reference to a slice consisting of `0..self.length`
-  //elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
+  ///elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
   #[inline(always)]
   fn index_mut(&mut self, _index: RangeFull) -> &mut Self::Output {
     self.as_mut_slice()
@@ -237,7 +237,7 @@ impl<T, const N: usize> IndexMut<RangeFull> for StaticVec<T, { N }> {
 impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, { N }> {
   type Output = [T];
   ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
-  //and that its upper bound is less than the current length of the StaticVec,
+  ///and that its upper bound is less than the current length of the StaticVec,
   ///and if so returns a constant reference to a slice of elements `index.start()..=index.end()`.
   #[allow(clippy::op_ref)]
   #[inline(always)]
@@ -249,7 +249,7 @@ impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, { N }> {
 
 impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, { N }> {
   ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
-  //and that its upper bound is less than the current length of the StaticVec,
+  ///and that its upper bound is less than the current length of the StaticVec,
   ///and if so returns a mutable reference to a slice of elements `index.start()..=index.end()`.
   #[allow(clippy::op_ref)]
   #[inline(always)]
