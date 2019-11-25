@@ -354,8 +354,10 @@ fn main() {
     Box::new(MyOtherStruct { s: "BBB" }),
     Box::new(MyOtherStruct { s: "CCC" })
   ];
+  println!("{} {}", v.capacity(), v.len());
   let vv = v.into_vec();
   println!("{} {}", v.capacity(), v.len());
+  println!("{} {}", vv.capacity(), vv.len());
   for s in vv {
     println!("{:?}", s);
   }
