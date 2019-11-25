@@ -585,7 +585,6 @@ impl<T, const N: usize> StaticVec<T, { N }> {
         .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
       res.set_len(self.length);
       self.length = 0;
-      mem::forget(self.as_mut_slice());
       res
     }
   }
