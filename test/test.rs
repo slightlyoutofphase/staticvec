@@ -9,6 +9,8 @@ struct Struct {
 
 impl Drop for Struct {
   fn drop(&mut self) {
+    //This won't do anything observable in the test context, but it
+    //works as a placeholder.
     println!("Dropping Struct with value: {}", self.s)
   }
 }
