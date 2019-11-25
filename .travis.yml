@@ -5,7 +5,9 @@ rust:
   - nightly
 
 script:
-  - cargo build -j16 --verbose
-  - cargo test -j16 --verbose --all-features
+  - cargo build -j16
+  - cargo test -j16 --feature="std"
   - cargo bench -j16
-  - cargo miri test -j16 --all-features
+  - rustup component add miri
+  - cargo miri setup
+  - cargo miri test --feature="std"
