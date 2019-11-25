@@ -14,7 +14,7 @@ use staticvec::*;
 
 extern crate test;
 
-use test::Bencher;
+use test::{Bencher, black_box};
 
 const VEC_SIZE: usize = 16;
 const SPILLED_SIZE: usize = 100;
@@ -298,5 +298,74 @@ fn vec_bench_macro_from_list(b: &mut Bencher) {
       0x100000,
     ];
     vec
+  });
+}
+
+#[bench]
+fn bench_clone(b: &mut Bencher) {
+  let v: StaticVec<Vec<u32>, {200}> = (0..100)
+    .map(|i| (0..i).collect())
+    .collect();
+
+  b.iter(move || {
+    let _v2 = black_box(v.clone());
+  });
+}
+
+#[bench]
+fn bench_clone_from_shorter(b: &mut Bencher) {
+  // We create some vectors with semi-random lengths to provoke
+  // different behaviors in the underlying Vec::clone_from. This allows us to
+  // demonstrate the advantage of using an underlying clone_from over a raw
+  // clone.
+  let src: StaticVec<Vec<u32>, {200}> = (0..50)
+    .map(|i| (0..i % 7).collect())
+    .collect();
+
+  b.iter(move || {
+    // TODO: find a way to make the bencher not include the time required to
+    // instantiate `dst`. We can't move it outside of b.iter because we need
+    // to make sure dst is in the same state before each bench run. We don't
+    // want to clone it, either, because part of the test includes the
+    // allocations into `vec`
+    let mut dst: StaticVec<Vec<u32>, {200}> = black_box((0..100)
+    .map(|i| {
+      // ensure we have enouch capacity to benefit from clone_from
+      let mut vec = Vec::with_capacity(20);
+      vec.extend(1..1+(i % 11));
+      vec
+    })
+    .collect());
+
+    dst.clone_from(&src);
+  });
+}
+
+#[bench]
+fn bench_clone_from_longer(b: &mut Bencher) {
+  // We create some vectors with semi-random lengths to provoke
+  // different behaviors in the underlying Vec::clone_from. This allows us to
+  // demonstrate the advantage of using an underlying clone_from over a raw
+  // clone.
+  let src: StaticVec<Vec<u32>, {200}> = (0..100)
+    .map(|i| (0..i % 7).collect())
+    .collect();
+
+  b.iter(move || {
+    // TODO: find a way to make the bencher not include the time required to
+    // instantiate `dst`. We can't move it outside of b.iter because we need
+    // to make sure dst is in the same state before each bench run. We don't
+    // want to clone it, either, because part of the test includes the
+    // allocations into `vec`
+    let mut dst: StaticVec<Vec<u32>, {200}> = black_box((0..50)
+    .map(|i| {
+      // ensure we have enouch capacity to benefit from clone_from
+      let mut vec = Vec::with_capacity(20);
+      vec.extend(1..1+(i % 11));
+      vec
+    })
+    .collect());
+
+    dst.clone_from(&src);
   });
 }
