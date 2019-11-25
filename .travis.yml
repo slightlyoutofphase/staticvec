@@ -6,5 +6,5 @@ rust:
 
 script:
   - rustup component add miri
-  - cargo miri test --verbose --all-features
+  - cargo miri test -j16 --verbose --all-features
   - cargo bench -j16
