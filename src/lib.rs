@@ -555,12 +555,17 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline(always)]
   pub fn try_extend_from_slice(&mut self, other: &[T]) -> Result<(), &'static str>
   where T: Copy {
-    if self.remaining_capacity() < other.len() {
-      Err("Insufficient remaining capacity!")
-    } else {
-      self.extend_from_slice(other);
-      Ok(())
+    let added_length = other.len();
+    if self.remaining_capacity() < added_length {
+      return Err("Insufficient remaining capacity!");
     }
+    unsafe {
+      other
+        .as_ptr()
+        .copy_to_nonoverlapping(self.as_mut_ptr().add(self.length), added_length);
+    }
+    self.length += added_length;
+    Ok(())
   }
 
   ///Removes the specified range of elements from the StaticVec and returns them in a new one.
