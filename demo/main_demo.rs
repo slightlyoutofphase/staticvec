@@ -10,6 +10,7 @@ struct MyStruct {
   s: &'static str,
 }
 
+#[derive(Debug)]
 struct MyOtherStruct {
   s: &'static str,
 }
@@ -348,4 +349,18 @@ fn main() {
   }
   println!("{:?}", zsts.iter().size_hint());
   println!("{}", zsts.iter().len());
+  let mut v = staticvec![
+    Box::new(MyOtherStruct { s: "AAA" }),
+    Box::new(MyOtherStruct { s: "BBB" }),
+    Box::new(MyOtherStruct { s: "CCC" })
+  ];
+  let vv = v.into_vec();
+  println!("{} {}", v.capacity(), v.len());
+  for s in vv {
+    println!("{:?}", s);
+  }
+  v.push(Box::new(MyOtherStruct { s: "AAA" }));
+  v.push(Box::new(MyOtherStruct { s: "BBB" }));
+  v.push(Box::new(MyOtherStruct { s: "CCC" }));
+  println!("{} {}", v.capacity(), v.len());
 }

@@ -2,6 +2,17 @@
 
 use staticvec::*;
 
+#[derive(Debug)]
+struct Struct {
+  s: &'static str,
+}
+
+impl Drop for Struct {
+  fn drop(&mut self) {
+    println!("Dropping Struct with value: {}", self.s)
+  }
+}
+
 #[cfg(feature = "std")]
 use std::io::{IoSlice, IoSliceMut, Read, Write};
 
@@ -216,6 +227,25 @@ fn is_full() {
 fn is_not_full() {
   let v = StaticVec::<i32, 1>::new();
   assert!(v.is_not_full());
+}
+
+#[test]
+fn into_vec() {
+  let mut v = staticvec![
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" })
+  ];
+  let vv = v.into_vec();
+  assert_eq!(vv.capacity(), 3);
+  assert_eq!(vv.len(), 3);
+  assert_eq!(v.capacity(), 3);
+  assert_eq!(v.len(), 0);
+  v.push(Box::new(Struct { s: "AAA" }));
+  v.push(Box::new(Struct { s: "BBB" }));
+  v.push(Box::new(Struct { s: "CCC" }));
+  assert_eq!(v.capacity(), 3);
+  assert_eq!(v.len(), 3);
 }
 
 #[test]

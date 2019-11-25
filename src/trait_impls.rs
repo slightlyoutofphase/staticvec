@@ -13,6 +13,9 @@ use core::ptr;
 use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "std")]
+use alloc::vec::Vec;
+
+#[cfg(feature = "std")]
 use std::io::{self, Error, ErrorKind, IoSlice, IoSliceMut, Read, Write};
 
 #[cfg(feature = "serde_support")]
@@ -253,6 +256,16 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, { N }> 
   fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
     assert!(index.start() <= index.end() && index.end() < &self.length);
     unsafe { &mut *(self.data.get_unchecked_mut(index) as *mut [MaybeUninit<T>] as *mut [T]) }
+  }
+}
+
+#[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
+impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, { N }> {
+  ///Functionally equivalent to [into_vec](crate::StaticVec::into_vec).
+  #[inline(always)]
+  fn into(self) -> Vec<T> {
+    self.into_vec()
   }
 }
 

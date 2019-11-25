@@ -17,7 +17,7 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-#[cfg(rustdoc)]
+#[cfg(any(feature = "std", rustdoc))]
 use alloc::vec::Vec;
 
 pub use crate::iterators::*;
@@ -566,6 +566,27 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     }
     self.length += added_length;
     Ok(())
+  }
+
+  ///Returns a [Vec](alloc::vec::Vec) containing the contents of the StaticVec instance.
+  ///The [Vec](alloc::vec::Vec) is created via [with_capacity](alloc::vec::Vec::with_capacity),
+  ///with the StaticVec's generic `N` parameter passed as the argument, and as such will initially have
+  ///the same return value for [len](alloc::vec::Vec::len) and [capacity](alloc::vec::Vec::capacity] as_mut_ptr
+  ///the source StaticVec.
+  #[cfg(feature = "std")]
+  #[doc(cfg(feature = "std"))]
+  #[inline(always)]
+  pub fn into_vec(&mut self) -> Vec<T> {
+    let mut res = Vec::<T>::with_capacity(N);
+    unsafe {
+      self
+        .as_ptr()
+        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
+      res.set_len(self.length);
+      self.length = 0;
+      mem::forget(self.as_mut_slice());
+      res
+    }
   }
 
   ///Removes the specified range of elements from the StaticVec and returns them in a new one.
