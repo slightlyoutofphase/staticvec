@@ -17,9 +17,9 @@ Fully `#![no_std]` compatible (with almost no loss of functionality) by setting
 Optional support for serialization and deserialization of the `StaticVec` struct
 via `serde` is available by activating the `serde_support` feature.
 
-StaticVec implements both Deref and DerefMut to [T], which means it provides
-all the existing slice methods, and references to it can be used in contexts
-where [T] is expected.
+StaticVec also implements both `Deref` and `DerefMut` to `[T]`, meaning that all existing slice
+methods are accessible through instances of it and that references to it can be used in contexts
+where `[T]` is expected.
 
 Contributions/suggestions/etc. very welcome!
 
