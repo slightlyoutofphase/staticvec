@@ -3,6 +3,8 @@
 #![feature(doc_cfg)]
 #![feature(core_intrinsics)]
 #![feature(const_fn)]
+#![feature(const_if_match)]
+#![feature(const_raw_ptr_to_usize_cast)]
 #![feature(const_generics)]
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_extra)]
@@ -10,6 +12,7 @@
 #![feature(trusted_len)]
 #![feature(slice_partition_dedup)]
 #![feature(read_initializer)]
+#![feature(specialization)]
 
 //Literally just for stable-sort.
 #[cfg(any(feature = "std", rustdoc))]
