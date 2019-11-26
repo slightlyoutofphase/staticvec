@@ -336,7 +336,7 @@ fn bench_clone_from_shorter(b: &mut Bencher) {
     let mut dst: StaticVec<Vec<u32>, { 200 }> = black_box(
       (0..100)
         .map(|i| {
-          // ensure we have enouch capacity to benefit from clone_from
+          // ensure we have enough capacity to benefit from clone_from
           let mut vec = Vec::with_capacity(20);
           vec.extend(1..1 + (i % 11));
           vec

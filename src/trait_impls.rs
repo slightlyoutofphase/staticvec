@@ -12,6 +12,7 @@ use core::str;
 
 #[cfg(feature = "std")]
 use alloc::string::String;
+
 #[cfg(feature = "std")]
 use alloc::vec::Vec;
 
@@ -45,11 +46,18 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   fn clone(&self) -> Self {
     let mut res = Self::new();
-    for item in self {
-      // Safety: `self` has the same capacity of `res`, and `res` is
-      // empty, so all of these pushes are safe
+    for i in 0..self.length {
+      // Safety: `self` has the same capacity as `res`, and `res` is
+      // empty, so all of following writes are safe.
       unsafe {
-        res.push_unchecked(item.clone());
+        //`push_unchecked` (and the previously used iterator) seem to have the same optimizer problem
+        //in this "hot loop" context as `filled_with` did generally. So for loop plus `get_unchecked` it is
+        //for the time being.
+        res
+          .data
+          .get_unchecked_mut(i)
+          .write(self.get_unchecked(i).clone());
+        res.length += 1;
       }
     }
     res
@@ -58,21 +66,24 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   fn clone_from(&mut self, rhs: &Self) {
     self.truncate(rhs.length);
-
     for i in 0..self.length {
       // Safety: after the truncate, self.len <= rhs.len, which means that for
-      // every i in self, there is definitely an element at rhs[i]
+      // every i in self, there is definitely an element at rhs[i].
       unsafe {
         self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
       }
     }
-
     for i in self.length..rhs.length {
       // Safety: i < rhs.length, so rhs.get_unchecked is safe. i starts at
       // self.length, which is <= rhs.length, so there is always an available
-      // slot at self[i] to push into
+      // slot at self[i] to write into.
       unsafe {
-        self.push_unchecked(rhs.get_unchecked(i).clone());
+        //Same thing with `push_unchecked` here as for `clone`.
+        self
+          .data
+          .get_unchecked_mut(i)
+          .write(rhs.get_unchecked(i).clone());
+        self.length += 1;
       }
     }
   }
@@ -355,7 +366,7 @@ impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, { N }>);
 /// [slice-read]: https://doc.rust-lang.org/stable/std/primitive.slice.html#impl-Read]
 #[cfg(feature = "std")]
 impl<const N: usize> Read for StaticVec<u8, { N }> {
-  #[inline]
+  #[inline(always)]
   unsafe fn initializer(&self) -> io::Initializer {
     io::Initializer::nop()
   }
