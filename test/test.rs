@@ -1,5 +1,6 @@
 #![allow(clippy::all)]
 
+use cool_asserts::assert_panics;
 use staticvec::*;
 
 #[derive(Debug)]
@@ -215,12 +216,20 @@ fn get_unchecked_mut() {
 
 #[test]
 fn index() {
-  let vec = staticvec![0, 1, 2, 3, 4];
+  let vec = staticvec![0u32, 1, 2, 3, 4];
+  assert_eq!(vec[3], 3);
   assert_eq!(vec[1..4], [1, 2, 3]);
   assert_eq!(vec[1..=1], [1]);
   assert_eq!(vec[1..3], [1, 2]);
   assert_eq!(vec[1..=3], [1, 2, 3]);
   assert_eq!(vec[..], [0, 1, 2, 3, 4]);
+
+  // Check bounds checking
+  assert_panics!(vec[10]);
+  assert_panics!(&vec[..10]);
+  assert_panics!(&vec[10..]);
+  assert_panics!(&vec[10..15]);
+  assert_panics!(&vec[1..0]);
 }
 
 #[test]
