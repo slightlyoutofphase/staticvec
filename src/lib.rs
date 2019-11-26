@@ -30,6 +30,7 @@ use core::marker::PhantomData;
 use core::mem::{self, MaybeUninit};
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
 use core::ptr;
+use core::slice;
 
 mod iterators;
 #[macro_use]

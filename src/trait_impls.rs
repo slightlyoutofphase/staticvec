@@ -6,7 +6,7 @@ use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::mem::MaybeUninit;
-use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive, Deref, DerefMut};
+use core::ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFull, RangeInclusive};
 use core::ptr;
 use core::str;
 
