@@ -497,13 +497,6 @@ fn retain() {
 }
 
 #[test]
-fn reverse() {
-  let mut v = staticvec![1, 2, 3];
-  v.reverse();
-  assert!(v == [3, 2, 1]);
-}
-
-#[test]
 fn reversed() {
   let v = staticvec![1, 2, 3].reversed();
   assert!(v == [3, 2, 1]);
@@ -519,23 +512,8 @@ fn set_len() {
 
 #[cfg(feature = "std")]
 #[test]
-fn sort() {
-  let mut v = staticvec![-5, 4, 1, -3, 2];
-  v.sort();
-  assert!(v == [-5, -3, 1, 2, 4]);
-}
-
-#[cfg(feature = "std")]
-#[test]
 fn sorted() {
   let v = staticvec![-5, 4, 1, -3, 2].sorted();
-  assert!(v == [-5, -3, 1, 2, 4]);
-}
-
-#[test]
-fn sort_unstable() {
-  let mut v = staticvec![-5, 4, 1, -3, 2];
-  v.sort_unstable();
   assert!(v == [-5, -3, 1, 2, 4]);
 }
 

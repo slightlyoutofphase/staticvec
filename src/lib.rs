@@ -30,6 +30,7 @@ use core::marker::PhantomData;
 use core::mem::{self, MaybeUninit};
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
 use core::ptr;
+use core::slice;
 
 mod iterators;
 #[macro_use]
@@ -212,15 +213,16 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///Returns a constant reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
-    unsafe { &*(self.data.get_unchecked(0..self.length) as *const [MaybeUninit<T>] as *const [T]) }
+    // Safety: Self is an array, and is guaranteed that the first `length`
+    // elements are initialized. Therefore this is a valid slice.
+    unsafe { slice::from_raw_parts(self.as_ptr(), self.length) }
   }
 
   ///Returns a mutable reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_mut_slice(&mut self) -> &mut [T] {
-    unsafe {
-      &mut *(self.data.get_unchecked_mut(0..self.length) as *mut [MaybeUninit<T>] as *mut [T])
-    }
+    // Safety: See as_slice
+    unsafe { slice::from_raw_parts_mut(self.as_mut_ptr(), self.length) }
   }
 
   ///Returns a constant reference to the element of the StaticVec at `index`, if `index` is within the range `0..length`.
@@ -472,30 +474,6 @@ impl<T, const N: usize> StaticVec<T, { N }> {
         marker: PhantomData,
       }
     }
-  }
-
-  ///Performs a stable in-place sort of the StaticVec's inhabited area.
-  ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
-  #[cfg(feature = "std")]
-  #[doc(cfg(feature = "std"))]
-  #[inline(always)]
-  pub fn sort(&mut self)
-  where T: Ord {
-    self.as_mut_slice().sort();
-  }
-
-  ///Performs an unstable in-place sort of the StaticVec's inhabited area.
-  ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
-  #[inline(always)]
-  pub fn sort_unstable(&mut self)
-  where T: Ord {
-    self.as_mut_slice().sort_unstable();
-  }
-
-  ///Reverses the contents of the StaticVec's inhabited area in-place.
-  #[inline(always)]
-  pub fn reverse(&mut self) {
-    self.as_mut_slice().reverse();
   }
 
   ///Returns a separate, stable-sorted StaticVec of the contents of the
