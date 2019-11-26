@@ -25,18 +25,14 @@ extern crate std;
 #[cfg(any(feature = "std", rustdoc))]
 use alloc::vec::Vec;
 
-pub use crate::iterators::*;
 pub use crate::trait_impls::*;
 use crate::utils::*;
 use core::cmp::{Ord, PartialEq};
-use core::intrinsics;
-use core::marker::PhantomData;
 use core::mem::{self, MaybeUninit};
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
 use core::ptr;
 use core::slice;
 
-mod iterators;
 #[macro_use]
 mod macros;
 mod trait_impls;
@@ -511,38 +507,16 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     self.length = 0;
   }
 
-  /// Returns a [StaticVecIterConst](crate::iterators::StaticVecIterConst) over the StaticVec's
-  /// inhabited area.
+  /// Returns an iterator over the StaticVec's inhabited area.
   #[inline(always)]
-  pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
-    unsafe {
-      StaticVecIterConst::<'a, T> {
-        start: self.as_ptr(),
-        end: if intrinsics::size_of::<T>() == 0 {
-          (self.as_ptr() as *const u8).wrapping_add(self.length) as *const T
-        } else {
-          self.as_ptr().add(self.length)
-        },
-        marker: PhantomData,
-      }
-    }
+  pub fn iter(&self) -> slice::Iter<T> {
+    self.as_slice().iter()
   }
 
-  /// Returns a [StaticVecIterMut](crate::iterators::StaticVecIterMut) over the StaticVec's
-  /// inhabited area.
+  /// Returns a mutable iterator over the StaticVec's inhabited area.
   #[inline(always)]
-  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
-    unsafe {
-      StaticVecIterMut::<'a, T> {
-        start: self.as_mut_ptr(),
-        end: if intrinsics::size_of::<T>() == 0 {
-          (self.as_mut_ptr() as *mut u8).wrapping_add(self.length) as *mut T
-        } else {
-          self.as_mut_ptr().add(self.length)
-        },
-        marker: PhantomData,
-      }
-    }
+  pub fn iter_mut(&mut self) -> slice::IterMut<T> {
+    self.as_mut_slice().iter_mut()
   }
 
   /// Returns a separate, stable-sorted StaticVec of the contents of the

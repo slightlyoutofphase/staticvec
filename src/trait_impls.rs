@@ -1,4 +1,3 @@
-use crate::iterators::*;
 use crate::utils::partial_compare;
 use crate::StaticVec;
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
@@ -7,7 +6,7 @@ use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
-use core::slice::SliceIndex;
+use core::slice::{SliceIndex, self};
 use core::str;
 
 #[cfg(feature = "std")]
@@ -234,7 +233,7 @@ impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, { N }> {
 }
 
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
-  type IntoIter = StaticVecIterConst<'a, T>;
+  type IntoIter = slice::Iter<'a, T>;
   type Item = &'a T;
   /// Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
   #[inline(always)]
@@ -244,7 +243,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
 }
 
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
-  type IntoIter = StaticVecIterMut<'a, T>;
+  type IntoIter = slice::IterMut<'a, T>;
   type Item = &'a mut T;
   /// Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
   #[inline(always)]

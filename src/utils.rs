@@ -1,6 +1,5 @@
 use crate::StaticVec;
 use core::cmp::{Ordering, PartialOrd};
-use core::intrinsics;
 use core::mem::MaybeUninit;
 
 #[cfg(not(miri))]
@@ -19,20 +18,6 @@ pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usi
 }
 
 #[cfg(miri)]
-#[inline(always)]
-pub(crate) fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
-  unsafe {
-    if intrinsics::size_of::<T>() > 0 {
-      intrinsics::exact_div(
-        (dest as usize).wrapping_sub(origin as usize),
-        intrinsics::size_of::<T>(),
-      )
-    } else {
-      (dest as usize).wrapping_sub(origin as usize)
-    }
-  }
-}
-
 #[inline(always)]
 pub(crate) fn reverse_copy<T>(first: *const T, mut last: *const T, mut result: *mut T)
 where T: Copy {
