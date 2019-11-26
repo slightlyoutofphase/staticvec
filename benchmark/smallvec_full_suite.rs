@@ -146,7 +146,7 @@ make_benches! {
 
 make_benches! {
   StaticVec<u64, {VEC_SIZE}> {
-    bench_macro_from_elem_small => gen_from_elem(VEC_SIZE as _),
+    staticvec_bench_macro_from_elem_small => gen_from_elem(VEC_SIZE as _),
   }
 }
 
@@ -278,7 +278,7 @@ fn gen_from_elem<V: Vector<u64>>(n: usize, b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_macro_from_list(b: &mut Bencher) {
+fn staticvec_bench_macro_from_list(b: &mut Bencher) {
   b.iter(|| {
     let vec = staticvec![
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 32, 36, 0x40, 0x80, 0x100,
@@ -290,7 +290,7 @@ fn bench_macro_from_list(b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_macro_from_list_vec(b: &mut Bencher) {
+fn staticvec_bench_macro_from_list_vec(b: &mut Bencher) {
   b.iter(|| {
     let vec: Vec<u64> = vec![
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 20, 24, 32, 36, 0x40, 0x80, 0x100,
