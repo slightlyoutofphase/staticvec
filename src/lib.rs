@@ -265,7 +265,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// Note that, unlike [`slice::get_unchecked_mut`], this method only supports
   /// accessing individual elements via `usize`; it cannot also produce
   /// subslices. To unsafely get a mutable subslice without a bounds check, use
-  /// `vec.as_slice().get_unchecked_mut(a..b)`.
+  /// `vec.as_mut_slice().get_unchecked_mut(a..b)`.
   ///
   /// # Safety
   ///
