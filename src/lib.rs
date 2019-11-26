@@ -274,11 +274,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     //Written this way to avoid the `&mut` return value (that we don't use)
     //of `MaybeUninit::write()`, which seems to have a strange effect on the optimizer
     //for this function.
-    self
-      .data
-      .get_unchecked_mut(self.length)
-      .as_mut_ptr()
-      .write(value);
+    self.as_mut_ptr().add(self.length).write(value);
     self.length += 1;
   }
 
@@ -302,10 +298,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
       unsafe {
         self.push_unchecked(value);
       }
-      Ok(())
-    } else {
-      Err("Insufficient remaining capacity!")
+      return Ok(());
     }
+    Err("Insufficient remaining capacity!")
   }
 
   /// Push a value to the end of this `StaticVec`. Panics if the collection is
