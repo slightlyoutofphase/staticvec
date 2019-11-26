@@ -216,7 +216,7 @@ fn get_unchecked_mut() {
 
 #[test]
 fn index() {
-  let vec = staticvec![0u32, 1, 2, 3, 4];
+  let vec = staticvec![0, 1, 2, 3, 4];
   assert_eq!(vec[3], 3);
   assert_eq!(vec[1..4], [1, 2, 3]);
   assert_eq!(vec[1..=1], [1]);
