@@ -9,6 +9,7 @@
 #![feature(exact_size_is_empty)]
 #![feature(trusted_len)]
 #![feature(slice_partition_dedup)]
+#![feature(read_initializer)]
 
 //Literally just for stable-sort.
 #[cfg(any(feature = "std", rustdoc))]
