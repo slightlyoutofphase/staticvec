@@ -16,7 +16,7 @@ impl Drop for Struct {
 }
 
 #[cfg(feature = "std")]
-use std::io::{IoSlice, IoSliceMut, Read, Write};
+use std::io::{IoSlice, Write};
 
 #[test]
 fn as_mut_ptr() {
@@ -356,49 +356,84 @@ fn push() {
 }
 
 #[cfg(feature = "std")]
-#[test]
-fn read() {
-  let mut ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
-  let mut buffer = [0, 0, 0, 0];
-  assert_eq!(ints.read(&mut buffer).unwrap(), 4);
-  assert_eq!(buffer, [1, 2, 3, 4]);
-  let mut buffer2 = [];
-  assert_eq!(ints.read(&mut buffer2).unwrap(), 0);
-  assert_eq!(buffer2, []);
-  let mut buffer3 = staticvec![0; 9];
-  assert_eq!(ints.read(buffer3.as_mut_slice()).unwrap(), 5);
-  assert_eq!(ints, []);
-  assert_eq!(ints.read(staticvec![].as_mut_slice()).unwrap(), 0);
-}
+mod read_tests {
+  use staticvec::*;
+  use std::io::{self, Read};
+  // We provide custom implementations of most `Read` methods; test those
+  // impls
+  #[test]
+  fn read() {
+    let mut ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
+    let mut buffer = [0, 0, 0, 0];
+    assert_eq!(ints.read(&mut buffer).unwrap(), 4);
+    assert_eq!(buffer, [1, 2, 3, 4]);
+    let mut buffer2 = [];
+    assert_eq!(ints.read(&mut buffer2).unwrap(), 0);
+    assert_eq!(buffer2, []);
+    let mut buffer3 = staticvec![0; 9];
+    assert_eq!(ints.read(buffer3.as_mut_slice()).unwrap(), 5);
+    assert_eq!(ints, []);
+    assert_eq!(ints.read(staticvec![].as_mut_slice()).unwrap(), 0);
+  }
 
-#[cfg(feature = "std")]
-#[test]
-fn read_exact() {
-  let mut ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
-  let mut buffer = [0, 0, 0, 0];
-  ints.read_exact(&mut buffer).unwrap();
-  assert_eq!(buffer, [1, 2, 3, 4]);
-  let mut buffer2 = [0, 0, 0, 0, 0, 0, 0, 0];
-  assert!(ints.read_exact(&mut buffer2).is_err());
-}
+  #[test]
+  fn read_to_end() {
+    let mut ints = staticvec![1, 2, 3, 4, 5, 6, 7];
+    let mut buffer = vec![2, 3];
+    assert_eq!(ints.read_to_end(&mut buffer).unwrap(), 7);
+    assert_eq!(ints, &[]);
+    assert_eq!(buffer, &[2, 3, 1, 2, 3, 4, 5, 6, 7]);
+  }
 
-#[cfg(feature = "std")]
-#[test]
-fn read_vectored() {
-  let mut ints = staticvec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-  let mut buf1 = [0; 4];
-  let mut buf2 = [0; 4];
-  let mut buf3 = [0; 4];
-  let bufs = &mut [
-    IoSliceMut::new(&mut buf1),
-    IoSliceMut::new(&mut buf2),
-    IoSliceMut::new(&mut buf3),
-  ];
-  assert_eq!(ints.read_vectored(bufs).unwrap(), 12);
-  assert_eq!(
-    "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]",
-    format!("{:?}", bufs)
-  );
+  #[test]
+  fn read_to_string() {
+    // Hello world in ascii
+    let mut input = StaticVec::<u8, 30>::new_from_slice(b"World!");
+    let mut dest = String::from("Hello, ");
+    assert_eq!(input.read_to_string(&mut dest).unwrap(), 6);
+    assert_eq!(dest, "Hello, World!");
+    assert_eq!(input, &[]);
+  }
+
+  #[test]
+  fn read_to_string_failure() {
+    // Invalid UTF-8 bytes
+    let mut input = staticvec![0b1101_1010, 0b1100_0000];
+    let mut dest = String::new();
+    let err = input.read_to_string(&mut dest).unwrap_err();
+    assert_eq!(err.kind(), io::ErrorKind::InvalidData);
+  }
+
+  #[test]
+  fn read_exact() {
+    let mut ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
+    let mut buffer = [0, 0, 0, 0];
+    ints.read_exact(&mut buffer).unwrap();
+    assert_eq!(buffer, [1, 2, 3, 4]);
+    assert_eq!(ints, &[6, 7, 8, 9, 10]);
+
+    let mut buffer2 = [0, 0, 0, 0, 0, 0, 0, 0];
+    let err = ints.read_exact(&mut buffer2).unwrap_err();
+    assert_eq!(err.kind(), io::ErrorKind::UnexpectedEof);
+  }
+
+  #[test]
+  fn read_vectored() {
+    let mut ints = staticvec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    let mut buf1 = [0; 4];
+    let mut buf2 = [0; 4];
+    let mut buf3 = [0; 4];
+    let bufs = &mut [
+      io::IoSliceMut::new(&mut buf1),
+      io::IoSliceMut::new(&mut buf2),
+      io::IoSliceMut::new(&mut buf3),
+    ];
+    assert_eq!(ints.read_vectored(bufs).unwrap(), 12);
+    assert_eq!(
+      "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]",
+      format!("{:?}", bufs)
+    );
+  }
 }
 
 #[test]
