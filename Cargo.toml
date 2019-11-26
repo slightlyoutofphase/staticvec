@@ -78,7 +78,6 @@ serde_support = ["serde"]
 serde_json_support = ["serde_json"]
 
 [dev-dependencies]
-cool_asserts = "1.0.0"
 # This is here so we can compare against it in one of the benchmarks.
 arrayvec = "0.5.1"
 
