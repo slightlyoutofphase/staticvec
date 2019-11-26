@@ -234,11 +234,21 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     unsafe { slice::from_raw_parts_mut(self.as_mut_ptr(), self.length) }
   }
 
-  ///Returns a constant reference to the element of the StaticVec at `index`, if `index` is within the range `0..length`.
-  ///No checks are performed to ensure that is the case, so this function is marked `unsafe` and should be used with caution
-  ///only when performance is absolutely paramount.
-  ///# Safety
-  ///It is up to the caller to ensure that `index` is within the appropriate bounds.
+  /// Returns a constant reference to the element of the StaticVec at `index`,
+  /// if `index` is within the range `0..length`. No checks are performed to
+  /// ensure that is the case, so this function is marked `unsafe` and should
+  /// be used with caution only when performance is absolutely paramount.
+  ///
+  /// Note that, unlike [`slice::get_unchecked`], this method only supports
+  /// accessing individual elements via `usize`; it cannot also produce
+  /// subslices. To unsafely get a subslice without a bounds check, use
+  /// `vec.as_slice().get_unchecked(a..b)`.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that `index` is within the appropriate bounds.
+  ///
+  /// [`slice::get_unchecked`]: https://doc.rust-lang.org/std/primitive.slice.html#method.get_unchecked
   #[inline(always)]
   pub unsafe fn get_unchecked(&self, index: usize) -> &T {
     debug_assert!(
@@ -250,11 +260,21 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     self.data.get_unchecked(index).get_ref()
   }
 
-  ///Returns a mutable reference to the element of the StaticVec at `index`, if `index` is within the range `0..length`.
-  ///No checks are performed to ensure that is the case, so this function is marked `unsafe` and should be used with caution
-  ///only when performance is absolutely paramount.
-  ///# Safety
-  ///It is up to the caller to ensure that `index` is within the appropriate bounds.
+  /// Returns a mutable reference to the element of the StaticVec at `index`,
+  /// if `index` is within the range `0..length`. No checks are performed to
+  /// ensure that is the case, so this function is marked `unsafe` and should
+  /// be used with caution only when performance is absolutely paramount.
+  ///
+  /// Note that, unlike [`slice::get_unchecked_mut`], this method only supports
+  /// accessing individual elements via `usize`; it cannot also produce
+  /// subslices. To unsafely get a mutable subslice without a bounds check, use
+  /// `vec.as_mut_slice().get_unchecked_mut(a..b)`.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that `index` is within the appropriate bounds.
+  ///
+  /// [`slice::get_unchecked_mut`]: https://doc.rust-lang.org/std/primitive.slice.html#method.get_unchecked_mut
   #[inline(always)]
   pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
     debug_assert!(

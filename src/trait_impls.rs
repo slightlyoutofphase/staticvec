@@ -5,9 +5,9 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::MaybeUninit;
-use core::ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFull, RangeInclusive};
+use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
+use core::slice::SliceIndex;
 use core::str;
 
 #[cfg(feature = "std")]
@@ -222,91 +222,19 @@ impl<T: Hash, const N: usize> Hash for StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> Index<usize> for StaticVec<T, { N }> {
-  type Output = T;
-  ///Asserts that `index` is less than the current length of the StaticVec,
-  ///and if so returns the value at that position as a constant reference.
+impl<T, I: SliceIndex<[T]>, const N: usize> Index<I> for StaticVec<T, { N }> {
+  type Output = I::Output;
+
   #[inline(always)]
-  fn index(&self, index: usize) -> &Self::Output {
-    assert!(index < self.length);
-    unsafe { self.data.get_unchecked(index).get_ref() }
+  fn index(&self, index: I) -> &Self::Output {
+    self.as_slice().index(index)
   }
 }
 
-impl<T, const N: usize> IndexMut<usize> for StaticVec<T, { N }> {
-  ///Asserts that `index` is less than the current length of the StaticVec,
-  ///and if so returns the value at that position as a mutable reference.
+impl<T, I: SliceIndex<[T]>, const N: usize> IndexMut<I> for StaticVec<T, { N }> {
   #[inline(always)]
-  fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-    assert!(index < self.length);
-    unsafe { self.data.get_unchecked_mut(index).get_mut() }
-  }
-}
-
-impl<T, const N: usize> Index<Range<usize>> for StaticVec<T, { N }> {
-  type Output = [T];
-  ///Asserts that the lower bound of `index` is less than its upper bound,
-  ///and that its upper bound is less than or equal to the current length of the StaticVec,
-  ///and if so returns a constant reference to a slice of elements `index.start..index.end`.
-  #[inline(always)]
-  fn index(&self, index: Range<usize>) -> &Self::Output {
-    assert!(index.start < index.end && index.end <= self.length);
-    unsafe { &*(self.data.get_unchecked(index) as *const [MaybeUninit<T>] as *const [T]) }
-  }
-}
-
-impl<T, const N: usize> IndexMut<Range<usize>> for StaticVec<T, { N }> {
-  ///Asserts that the lower bound of `index` is less than its upper bound,
-  ///and that its upper bound is less than or equal to the current length of the StaticVec,
-  ///and if so returns a mutable reference to a slice of elements `index.start..index.end`.
-  #[inline(always)]
-  fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
-    assert!(index.start < index.end && index.end <= self.length);
-    unsafe { &mut *(self.data.get_unchecked_mut(index) as *mut [MaybeUninit<T>] as *mut [T]) }
-  }
-}
-
-impl<T, const N: usize> Index<RangeFull> for StaticVec<T, { N }> {
-  type Output = [T];
-  ///Returns a constant reference to a slice consisting of `0..self.length`
-  ///elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
-  #[inline(always)]
-  fn index(&self, _index: RangeFull) -> &Self::Output {
-    self.as_slice()
-  }
-}
-
-impl<T, const N: usize> IndexMut<RangeFull> for StaticVec<T, { N }> {
-  ///Returns a mutable reference to a slice consisting of `0..self.length`
-  ///elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
-  #[inline(always)]
-  fn index_mut(&mut self, _index: RangeFull) -> &mut Self::Output {
-    self.as_mut_slice()
-  }
-}
-
-impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, { N }> {
-  type Output = [T];
-  ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
-  ///and that its upper bound is less than the current length of the StaticVec,
-  ///and if so returns a constant reference to a slice of elements `index.start()..=index.end()`.
-  #[allow(clippy::op_ref)]
-  #[inline(always)]
-  fn index(&self, index: RangeInclusive<usize>) -> &Self::Output {
-    assert!(index.start() <= index.end() && index.end() < &self.length);
-    unsafe { &*(self.data.get_unchecked(index) as *const [MaybeUninit<T>] as *const [T]) }
-  }
-}
-
-impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, { N }> {
-  ///Asserts that the lower bound of `index` is less than or equal to its upper bound,
-  ///and that its upper bound is less than the current length of the StaticVec,
-  ///and if so returns a mutable reference to a slice of elements `index.start()..=index.end()`.
-  #[allow(clippy::op_ref)]
-  #[inline(always)]
-  fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
-    assert!(index.start() <= index.end() && index.end() < &self.length);
-    unsafe { &mut *(self.data.get_unchecked_mut(index) as *mut [MaybeUninit<T>] as *mut [T]) }
+  fn index_mut(&mut self, index: I) -> &mut Self::Output {
+    self.as_mut_slice().index_mut(index)
   }
 }
 
