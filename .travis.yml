@@ -1,10 +1,10 @@
 language: rust
+sudo: true
 cache: cargo
 
 rust:
   - nightly
 
 script:
-  - rustup component add miri
-  - cargo miri test -j16 --verbose --all-features
+  - ./ci/run_miri.sh
   - cargo bench -j16
