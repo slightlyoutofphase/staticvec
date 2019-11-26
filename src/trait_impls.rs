@@ -5,11 +5,10 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::MaybeUninit;
-use core::ops::{Deref, DerefMut, Index, IndexMut, Range, RangeFull, RangeInclusive};
+use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
-use core::str;
 use core::slice::SliceIndex;
+use core::str;
 
 #[cfg(feature = "std")]
 use alloc::string::String;
@@ -201,7 +200,7 @@ impl<T: Hash, const N: usize> Hash for StaticVec<T, { N }> {
   }
 }
 
-impl<T, I: SliceIndex<[T]>, const N: usize> Index<I> for StaticVec<T, {N}> {
+impl<T, I: SliceIndex<[T]>, const N: usize> Index<I> for StaticVec<T, { N }> {
   type Output = I::Output;
 
   #[inline(always)]
