@@ -6,5 +6,5 @@ rust:
   - nightly
 
 script:
-  - ./ci/run_miri.sh
+  - bash ./ci/run_miri.sh
   - cargo bench -j16
