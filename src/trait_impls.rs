@@ -6,12 +6,9 @@ use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::mem::MaybeUninit;
-use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive};
+use core::ops::{Index, IndexMut, Range, RangeFull, RangeInclusive, Deref, DerefMut};
 use core::ptr;
 use core::str;
-
-#[cfg(feature = "deref_to_slice")]
-use core::ops::{Deref, DerefMut};
 
 #[cfg(feature = "std")]
 use alloc::string::String;
@@ -76,7 +73,6 @@ impl<T, const N: usize> Default for StaticVec<T, { N }> {
   }
 }
 
-#[cfg(feature = "deref_to_slice")]
 impl<T, const N: usize> Deref for StaticVec<T, { N }> {
   type Target = [T];
   #[inline(always)]
@@ -85,7 +81,6 @@ impl<T, const N: usize> Deref for StaticVec<T, { N }> {
   }
 }
 
-#[cfg(feature = "deref_to_slice")]
 impl<T, const N: usize> DerefMut for StaticVec<T, { N }> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut [T] {
