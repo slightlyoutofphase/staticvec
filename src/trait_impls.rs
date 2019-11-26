@@ -455,6 +455,9 @@ impl<const N: usize> Write for StaticVec<u8, { N }> {
   fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> io::Result<usize> {
     let old_length = self.length;
     for buf in bufs {
+      if self.is_full() {
+        break;
+      }
       self.extend_from_slice(buf);
     }
     Ok(self.length - old_length)
