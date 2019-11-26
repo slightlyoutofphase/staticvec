@@ -81,8 +81,8 @@ fn clone() {
 
 #[test]
 fn clone_from_shorter() {
-  let src: StaticVec<u32, {20}> = (1..10).collect();
-  let mut dst: StaticVec<u32, {20}> = (0..15).collect();
+  let src: StaticVec<u32, { 20 }> = (1..10).collect();
+  let mut dst: StaticVec<u32, { 20 }> = (0..15).collect();
 
   dst.clone_from(&src);
   assert_eq!(dst, src);
@@ -90,8 +90,8 @@ fn clone_from_shorter() {
 
 #[test]
 fn clone_from_longer() {
-  let src: StaticVec<u32, {20}> = (0..15).collect();
-  let mut dst: StaticVec<u32, {20}> = (1..10).collect();
+  let src: StaticVec<u32, { 20 }> = (0..15).collect();
+  let mut dst: StaticVec<u32, { 20 }> = (1..10).collect();
 
   dst.clone_from(&src);
   assert_eq!(dst, src);
