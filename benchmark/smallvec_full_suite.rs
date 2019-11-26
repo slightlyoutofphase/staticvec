@@ -311,6 +311,15 @@ fn bench_clone(b: &mut Bencher) {
 }
 
 #[bench]
+fn bench_trivial_clone(b: &mut Bencher) {
+  let v: StaticVec<u32, { 200 }> = (50..150).collect();
+
+  b.iter(move || {
+    let _v2 = black_box(v.clone());
+  })
+}
+
+#[bench]
 fn bench_clone_from_shorter(b: &mut Bencher) {
   // We create some vectors with semi-random lengths to provoke
   // different behaviors in the underlying Vec::clone_from. This allows us to
