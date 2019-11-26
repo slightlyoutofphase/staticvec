@@ -4,10 +4,10 @@ use crate::utils::distance_between;
 use core::fmt::Debug;
 
 #[cfg(feature = "std")]
-use std::string::String;
+use alloc::string::String;
 
 #[cfg(feature = "std")]
-use std::format;
+use alloc::format;
 
 use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
