@@ -48,16 +48,36 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   fn clone(&self) -> Self {
     let mut res = Self::new();
-    for i in 0..self.length {
+    for item in self {
+      // Safety: `self` has the same capacity of `res`, and `res` is
+      // empty, so all of these pushes are safe
       unsafe {
-        res
-          .data
-          .get_unchecked_mut(i)
-          .write(self.data.get_unchecked(i).get_ref().clone());
-        res.length += 1;
+        res.push_unchecked(item.clone());
       }
     }
     res
+  }
+
+  #[inline]
+  fn clone_from(&mut self, rhs: &Self) {
+    self.truncate(rhs.length);
+
+    for i in 0..self.length {
+      // Safety: after the truncate, self.len <= rhs.len, which means that for
+      // every i in self, there is definitely an element at rhs[i]
+      unsafe {
+        self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
+      }
+    }
+
+    for i in self.length..rhs.length {
+      // Safety: i < rhs.length, so rhs.get_unchecked is safe. i starts at
+      // self.length, which is <= rhs.length, so there is always an available
+      // slot at self[i] to push into
+      unsafe {
+        self.push_unchecked(rhs.get_unchecked(i).clone());
+      }
+    }
   }
 }
 
