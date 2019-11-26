@@ -348,8 +348,18 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
   #[inline]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     let read_length = self.length.min(buf.len());
-    buf[..read_length].copy_from_slice(&self.as_slice()[..read_length]);
+    // Safety:  read_length <= buf.length and self.length. Rust borrowing
+    // rules mean that buf is guaranteed not to overlap with self.
+    unsafe {
+      buf
+        .as_mut_ptr()
+        .copy_from_nonoverlapping(self.as_ptr(), read_length);
+    }
+
     if read_length < self.length {
+      // TODO: find out if the optimizer elides the bounds check here. It
+      // should be able to, since the only non-const value is read_length,
+      // which is known to be <= self.length
       self.as_mut_slice().copy_within(read_length.., 0);
     }
     // Safety: 0 <= read_length <= self.length
@@ -394,25 +404,40 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
     // Minimize copies: copy to each output buf in sequence, then shfit the
     // internal data only once. This as opposed to calling `read` in a loop,
     // which shifts the inner data each time.
-    let mut source = self.as_slice();
+    let mut start_ptr = self.as_ptr();
+    let original_length = self.length;
+
+    // We update self.length inplace in the loop to track how many bytes
+    // have been written. This means that when we perform the shift at the
+    // end, self.length is already correct.
     for buf in bufs {
-      if source.is_empty() {
+      if self.length == 0 {
         break;
       }
-      let read_length = buf.len().min(source.len());
-      buf[..read_length].copy_from_slice(&source[..read_length]);
-      source = &source[read_length..];
+
+      // The number of bytes we'll be reading out of self
+      let read_length = self.length.min(buf.len());
+
+      // Safety: start_ptr is known to point to the array in self, which
+      // is different than `buf`. read_length <= self.length.
+      unsafe {
+        buf
+          .as_mut_ptr()
+          .copy_from_nonoverlapping(start_ptr, read_length);
+        start_ptr = start_ptr.add(read_length);
+        self.length -= read_length;
+      }
     }
 
-    let total_read = self.length - source.len();
+    let total_read = original_length - self.length;
 
-    if total_read < self.length {
+    if self.length > 0 {
+      // TODO: find out if the optimizer elides the bounds check here. It
+      // should be able to, since the only non-const value is total_read,
+      // which is known to be <= self.length
       self.as_mut_slice().copy_within(total_read.., 0);
     }
 
-    // Safety: source comes from self and only gets shorter, so
-    // 0 <= total_read <= self.length
-    self.length -= total_read;
     Ok(total_read)
   }
 }
