@@ -223,6 +223,26 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     }
   }
 
+  ///Returns a constant reference to the element of the StaticVec at `index`, if `index` is within the range `0..length`.
+  ///No checks are performed to ensure that is the case, so this function is marked `unsafe` and should be used with caution
+  ///only when performance is absolutely paramount.
+  ///# Safety
+  ///It is up to the caller to ensure that `index` is within the appropriate bounds.
+  #[inline(always)]
+  pub unsafe fn get_unchecked(&self, index: usize) -> &T {
+    self.data.get_unchecked(index).get_ref()
+  }
+
+  ///Returns a mutable reference to the element of the StaticVec at `index`, if `index` is within the range `0..length`.
+  ///No checks are performed to ensure that is the case, so this function is marked `unsafe` and should be used with caution
+  ///only when performance is absolutely paramount.
+  ///# Safety
+  ///It is up to the caller to ensure that `index` is within the appropriate bounds.
+  #[inline(always)]
+  pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+    self.data.get_unchecked_mut(index).get_mut()
+  }
+
   ///Appends a value to the end of the StaticVec without asserting that
   ///its current length is less than `N`.
   #[inline(always)]

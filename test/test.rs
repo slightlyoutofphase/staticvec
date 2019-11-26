@@ -184,6 +184,18 @@ fn from() {
 }
 
 #[test]
+fn get_unchecked() {
+  let v = staticvec!["a", "b", "c"];
+  assert_eq!(unsafe { *v.get_unchecked(1) }, "b");
+}
+
+#[test]
+fn get_unchecked_mut() {
+  let mut v = staticvec!["a", "b", "c"];
+  assert_eq!(unsafe { *v.get_unchecked_mut(1) }, "b");
+}
+
+#[test]
 fn index() {
   let vec = staticvec![0, 1, 2, 3, 4];
   assert_eq!(vec[1..4], [1, 2, 3]);
