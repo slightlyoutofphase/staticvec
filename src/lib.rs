@@ -158,7 +158,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
 
   ///Serves the same purpose as [capacity](crate::StaticVec::capacity), but as an associated
   ///constant rather than a method.
-  pub const CAPACITY: usize = Self::cap();
+  pub const CAPACITY: usize = N;
 
   /// Returns the remaining capacity of the `StaticVec`.
   #[inline(always)]
@@ -171,6 +171,12 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///the potential for reading from unitialized memory later on.
   #[inline(always)]
   pub unsafe fn set_len(&mut self, new_len: usize) {
+    debug_assert!(
+      new_len <= N,
+      "Attempted to unsafely set length to {}; maximum is {}",
+      new_len,
+      N
+    );
     self.length = new_len;
   }
 
@@ -232,6 +238,12 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///It is up to the caller to ensure that `index` is within the appropriate bounds.
   #[inline(always)]
   pub unsafe fn get_unchecked(&self, index: usize) -> &T {
+    debug_assert!(
+      index < self.length,
+      "Attempted to unsafely get at index {} when length is {}",
+      index,
+      self.length
+    );
     self.data.get_unchecked(index).get_ref()
   }
 
@@ -242,6 +254,12 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///It is up to the caller to ensure that `index` is within the appropriate bounds.
   #[inline(always)]
   pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+    debug_assert!(
+      index < self.length,
+      "Attempted to unsafely get at index {} when length is {}",
+      index,
+      self.length
+    );
     self.data.get_unchecked_mut(index).get_mut()
   }
 
@@ -249,6 +267,10 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///its current length is less than `N`.
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, value: T) {
+    debug_assert!(
+      self.is_not_full(),
+      "Attempted to unsafely push to a full StaticVec"
+    );
     //Written this way to avoid the `&mut` return value (that we don't use)
     //of `MaybeUninit::write()`, which seems to have a strange effect on the optimizer
     //for this function.
@@ -264,18 +286,19 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///the StaticVec's current length is greater than 0.
   #[inline(always)]
   pub unsafe fn pop_unchecked(&mut self) -> T {
+    debug_assert!(
+      self.is_not_empty(),
+      "Attempted to unsafely pop from an emtpy StaticVec"
+    );
     self.length -= 1;
     self.data.get_unchecked(self.length).read()
   }
 
-  ///Asserts that the current length of the StaticVec is less than `N`,
-  ///and if so appends a value to the end of it.
+  /// Push a value to the end of this `StaticVec`. Panics if the collection is
+  /// full; that is, if `self.len() == self.capacity()`.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
-    assert!(self.length < N);
-    unsafe {
-      self.push_unchecked(value);
-    }
+    self.try_push(value).unwrap()
   }
 
   ///Pushes `value` to the StaticVec if its current length is less than its capacity,
@@ -310,7 +333,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     if self.length == 0 {
       None
     } else {
-      Some(unsafe { self.data.get_unchecked(0).get_ref() })
+      Some(unsafe { self.get_unchecked(0) })
     }
   }
 
@@ -321,7 +344,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     if self.length == 0 {
       None
     } else {
-      Some(unsafe { self.data.get_unchecked_mut(0).get_mut() })
+      Some(unsafe { self.get_unchecked_mut(0) })
     }
   }
 
@@ -332,7 +355,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     if self.length == 0 {
       None
     } else {
-      Some(unsafe { self.data.get_unchecked(self.length - 1).get_ref() })
+      Some(unsafe { self.get_unchecked(self.length - 1) })
     }
   }
 
@@ -343,7 +366,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     if self.length == 0 {
       None
     } else {
-      Some(unsafe { self.data.get_unchecked_mut(self.length - 1).get_mut() })
+      Some(unsafe { self.get_unchecked_mut(self.length - 1) })
     }
   }
 
@@ -539,7 +562,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline(always)]
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
-    let added_length = (self.length + other.len()).min(N - self.length);
+    let added_length = other.len().min(self.remaining_capacity());
+
+    // Safety: added_length is <= our remaining capacity and other.len
     unsafe {
       other
         .as_ptr()
@@ -577,7 +602,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
   pub fn into_vec(&mut self) -> Vec<T> {
-    let mut res = Vec::<T>::with_capacity(N);
+    let mut res = Vec::with_capacity(N);
     unsafe {
       self
         .as_ptr()
