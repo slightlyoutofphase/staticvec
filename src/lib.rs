@@ -475,30 +475,6 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     }
   }
 
-  ///Performs a stable in-place sort of the StaticVec's inhabited area.
-  ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
-  #[cfg(feature = "std")]
-  #[doc(cfg(feature = "std"))]
-  #[inline(always)]
-  pub fn sort(&mut self)
-  where T: Ord {
-    self.as_mut_slice().sort();
-  }
-
-  ///Performs an unstable in-place sort of the StaticVec's inhabited area.
-  ///Locally requires that `T` implements [Ord](core::cmp::Ord) to make the sorting possible.
-  #[inline(always)]
-  pub fn sort_unstable(&mut self)
-  where T: Ord {
-    self.as_mut_slice().sort_unstable();
-  }
-
-  ///Reverses the contents of the StaticVec's inhabited area in-place.
-  #[inline(always)]
-  pub fn reverse(&mut self) {
-    self.as_mut_slice().reverse();
-  }
-
   ///Returns a separate, stable-sorted StaticVec of the contents of the
   ///StaticVec's inhabited area without modifying the original data.
   ///Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues,
