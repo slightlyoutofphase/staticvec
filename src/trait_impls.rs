@@ -48,7 +48,7 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
     let mut res = Self::new();
     for i in 0..self.length {
       // Safety: `self` has the same capacity as `res`, and `res` is
-      // empty, so all of following writes are safe.
+      // empty, so all of the following writes are safe.
       unsafe {
         //`push_unchecked` (and the previously used iterator) seem to have the same optimizer problem
         //in this "hot loop" context as `filled_with` did generally. So for loop plus `get_unchecked` it is

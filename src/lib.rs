@@ -288,17 +288,10 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   pub unsafe fn pop_unchecked(&mut self) -> T {
     debug_assert!(
       self.is_not_empty(),
-      "Attempted to unsafely pop from an emtpy StaticVec"
+      "Attempted to unsafely pop from an empty StaticVec"
     );
     self.length -= 1;
     self.data.get_unchecked(self.length).read()
-  }
-
-  /// Push a value to the end of this `StaticVec`. Panics if the collection is
-  /// full; that is, if `self.len() == self.capacity()`.
-  #[inline(always)]
-  pub fn push(&mut self, value: T) {
-    self.try_push(value).unwrap()
   }
 
   ///Pushes `value` to the StaticVec if its current length is less than its capacity,
@@ -313,6 +306,13 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     } else {
       Err("Insufficient remaining capacity!")
     }
+  }
+
+  /// Push a value to the end of this `StaticVec`. Panics if the collection is
+  /// full; that is, if `self.len() == self.capacity()`.
+  #[inline(always)]
+  pub fn push(&mut self, value: T) {
+    self.try_push(value).unwrap()
   }
 
   ///Removes the value at the last position of the StaticVec and returns it in `Some` if
@@ -563,8 +563,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
     let added_length = other.len().min(self.remaining_capacity());
-
-    // Safety: added_length is <= our remaining capacity and other.len
+    // Safety: added_length is <= our remaining capacity and other.len.
     unsafe {
       other
         .as_ptr()
