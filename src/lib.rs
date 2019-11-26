@@ -310,7 +310,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// full; that is, if `self.len() == self.capacity()`.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
-    self.try_push(value).unwrap()
+    assert!(self.length < N, "Insufficient remaining capacity!");
+    unsafe { self.push_unchecked(value) }
   }
 
   ///Removes the value at the last position of the StaticVec and returns it in `Some` if
@@ -506,15 +507,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn sorted(&self) -> Self
   where T: Copy + Ord {
-    unsafe {
-      let mut res = Self::new();
-      res.length = self.length;
-      self
-        .as_ptr()
-        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
-      res.sort();
-      res
-    }
+    let mut res = self.clone();
+    res.sort();
+    res
   }
 
   ///Returns a separate, unstable-sorted StaticVec of the contents of the
@@ -524,15 +519,9 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn sorted_unstable(&self) -> Self
   where T: Copy + Ord {
-    unsafe {
-      let mut res = Self::new();
-      res.length = self.length;
-      self
-        .as_ptr()
-        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
-      res.sort_unstable();
-      res
-    }
+    let mut res = self.clone();
+    res.sort_unstable();
+    res
   }
 
   ///Returns a separate, reversed StaticVec of the contents of the StaticVec's
