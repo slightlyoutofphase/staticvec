@@ -216,10 +216,9 @@ fn panicking_clone() {
   assert_eq!(lifespan_tracker.init_count(), 6);
   assert_eq!(lifespan_tracker.drop_count(), 0);
 
-  // Attempt to clone the staticvec; this will panic. We don't care how many
-  // instances were created during this clone (an ordinary implementation, with
-  // forward iteration, will clone 5 times before panicking); we only care
-  // that the drop count is the same.
+  // Attempt to clone the staticvec; this will panic. This should result in
+  // 5 successful clones, followed by a panic, followed by 5 drops during
+  // unwinding.
   let result = panic::catch_unwind(AssertUnwindSafe(|| {
     let vec2 = vec1.clone();
     vec2
