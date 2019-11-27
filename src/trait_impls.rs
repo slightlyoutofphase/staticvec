@@ -70,21 +70,25 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   default fn clone_from(&mut self, rhs: &Self) {
     self.truncate(rhs.length);
-    // Safety: after the truncate, `self.len()` <= `rhs.len()`, which means that for
-    // every i in self, there is definitely an element at `rhs[i]`.
-    // As above, we put the clones in a separate array first so that we don't than
-    // need to increment our `self.length` one by one (and don't need to do two loops.)
-    let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit_array();
-    for i in 0..rhs.length {
+    for i in 0..self.length {
+      // Safety: after the truncate, self.len <= rhs.len, which means that for
+      // every i in self, there is definitely an element at rhs[i].
       unsafe {
-        data
-          .get_unchecked_mut(i)
-          .write(rhs.get_unchecked(i).clone());
+        self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
       }
     }
-    // `transmute_copy` is the fastest possible way to assign the array to `self`.
-    self.data = unsafe { core::mem::transmute_copy(&data) };
-    self.length = rhs.length;
+    for i in self.length..rhs.length {
+      // Safety: i < rhs.length, so rhs.get_unchecked is safe. i starts at
+      // self.length, which is <= rhs.length, so there is always an available
+      // slot at self[i] to write into.
+      unsafe {
+        self
+          .data
+          .get_unchecked_mut(i)
+          .write(rhs.get_unchecked(i).clone());
+        self.length += 1;
+      }
+    }
   }
 }
 
