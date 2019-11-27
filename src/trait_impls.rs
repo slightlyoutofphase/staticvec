@@ -69,7 +69,7 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   default fn clone_from(&mut self, rhs: &Self) {
     self.truncate(rhs.length);
     for i in 0..rhs.length {
-      if i > self.length {
+      if i >= self.length {
         // Safety: i < rhs.length, so rhs.get_unchecked is safe. i starts at
         // self.length, which is <= rhs.length, so there is always an available
         // slot at self[i] to push into
