@@ -514,16 +514,13 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// inhabited area.
   #[inline(always)]
   pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
-    unsafe {
-      StaticVecIterConst::<'a, T> {
-        start: self.as_ptr(),
-        end: if intrinsics::size_of::<T>() == 0 {
-          (self.as_ptr() as *const u8).wrapping_add(self.length) as *const T
-        } else {
-          self.as_ptr().add(self.length)
-        },
-        marker: PhantomData,
-      }
+    StaticVecIterConst::<'a, T> {
+      start: self.as_ptr(),
+      end: match intrinsics::size_of::<T>() {
+        0 => (self.as_ptr() as *const u8).wrapping_add(self.length) as *const T,
+        _ => unsafe { self.as_ptr().add(self.length) },
+      },
+      marker: PhantomData,
     }
   }
 
@@ -531,16 +528,13 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// inhabited area.
   #[inline(always)]
   pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
-    unsafe {
-      StaticVecIterMut::<'a, T> {
-        start: self.as_mut_ptr(),
-        end: if intrinsics::size_of::<T>() == 0 {
-          (self.as_mut_ptr() as *mut u8).wrapping_add(self.length) as *mut T
-        } else {
-          self.as_mut_ptr().add(self.length)
-        },
-        marker: PhantomData,
-      }
+    StaticVecIterMut::<'a, T> {
+      start: self.as_mut_ptr(),
+      end: match intrinsics::size_of::<T>() {
+        0 => (self.as_mut_ptr() as *mut u8).wrapping_add(self.length) as *mut T,
+        _ => unsafe { self.as_mut_ptr().add(self.length) },
+      },
+      marker: PhantomData,
     }
   }
 
