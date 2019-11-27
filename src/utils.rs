@@ -35,7 +35,7 @@ where T: Copy {
   StaticVec::<T, { COUNT }> {
     data: {
       unsafe {
-        let mut data: [MaybeUninit<T>; COUNT] = MaybeUninit::uninit().assume_init();
+        let mut data: [MaybeUninit<T>; COUNT] = MaybeUninit::uninit_array();
         for i in 0..COUNT {
           data.get_unchecked_mut(i).write(value);
         }

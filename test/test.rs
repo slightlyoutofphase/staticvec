@@ -12,8 +12,8 @@ struct Struct {
 
 impl Drop for Struct {
   fn drop(&mut self) {
-    //This won't do anything observable in the test context, but it
-    //works as a placeholder.
+    // This won't do anything observable in the test context, but it
+    // works as a placeholder.
     println!("Dropping Struct with value: {}", self.s)
   }
 }
@@ -86,7 +86,6 @@ fn clone() {
 fn clone_from_shorter() {
   let src: StaticVec<u32, { 20 }> = (1..10).collect();
   let mut dst: StaticVec<u32, { 20 }> = (0..15).collect();
-
   dst.clone_from(&src);
   assert_eq!(dst, src);
 }
@@ -95,7 +94,6 @@ fn clone_from_shorter() {
 fn clone_from_longer() {
   let src: StaticVec<u32, { 20 }> = (0..15).collect();
   let mut dst: StaticVec<u32, { 20 }> = (1..10).collect();
-
   dst.clone_from(&src);
   assert_eq!(dst, src);
 }
@@ -225,8 +223,7 @@ fn index() {
   assert_eq!(vec[1..3], [1, 2]);
   assert_eq!(vec[1..=3], [1, 2, 3]);
   assert_eq!(vec[..], [0, 1, 2, 3, 4]);
-
-  // Because this block incldues obviously-violated bounds checks, miri
+  // Because this block includes obviously-violated bounds checks, miri
   // complains about it
   #[cfg(not(miri))]
   {
@@ -349,8 +346,8 @@ fn partial_eq() {
   assert_eq!(StaticVec::<i32, 0>::new(), StaticVec::<i32, 0>::new());
   assert_eq!(StaticVec::<i32, 0>::new(), &StaticVec::<i32, 0>::new());
   assert_eq!(StaticVec::<i32, 0>::new(), &mut StaticVec::<i32, 0>::new());
-  //assert_eq! is written in a way that's limited by LengthAtMost32, so I can't
-  //use it for the next part.
+  // assert_eq! is written in a way that's limited by LengthAtMost32, so I can't
+  // use it for the next part.
   if staticvec![1; 64] != [1; 64] {
     panic!();
   }
@@ -379,7 +376,7 @@ fn partial_eq() {
 
 #[test]
 fn partial_ord() {
-  //TODO: add more here.
+  // TODO: add more here.
   assert!(staticvec![1] < staticvec![2]);
   assert!(staticvec![1] > []);
   assert!(staticvec![1] <= &staticvec![2]);
@@ -618,7 +615,7 @@ fn try_push() {
 #[cfg(feature = "std")]
 #[test]
 fn write() {
-  //From arrayvec
+  // From arrayvec
   let mut v = StaticVec::<u8, 8>::new();
   write!(&mut v, "\x01\x02\x03").unwrap();
   assert_eq!(&v[..], &[1, 2, 3]);

@@ -365,4 +365,11 @@ fn main() {
   v.push(Box::new(MyOtherStruct { s: "BBB" }));
   v.push(Box::new(MyOtherStruct { s: "CCC" }));
   println!("{} {}", v.capacity(), v.len());
+  let cc = staticvec!["AAA", "BBB"];
+  let dd = cc.clone();
+  let mut ee = StaticVec::new();
+  ee.clone_from(&dd);
+  for s in &ee.reversed() {
+    println!("{}", s);
+  }
 }

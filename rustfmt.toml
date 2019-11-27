@@ -4,4 +4,6 @@ where_single_line = true
 brace_style = "PreferSameLine"
 control_brace_style = "AlwaysSameLine"
 format_macro_matchers = true
+comment_width = 100
+wrap_comments = true
 max_width = 100

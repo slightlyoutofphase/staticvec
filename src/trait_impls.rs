@@ -5,6 +5,7 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
+use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
 use core::slice::SliceIndex;
@@ -45,69 +46,61 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
 impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   default fn clone(&self) -> Self {
-    let mut res = Self::new();
-    for i in 0..self.length {
-      // Safety: `self` has the same capacity as `res`, and `res` is
-      // empty, so all of the following writes are safe.
-      unsafe {
-        //`push_unchecked` (and the previously used iterator) seem to have the same optimizer problem
-        //in this "hot loop" context as `filled_with` did generally. So for loop plus `get_unchecked` it is
-        //for the time being.
-        res
-          .data
-          .get_unchecked_mut(i)
-          .write(self.get_unchecked(i).clone());
-        res.length += 1;
-      }
+    Self {
+      data: {
+        unsafe {
+          let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit_array();
+          for i in 0..self.length {
+            // Put the clones in a separate stack-allocated array first, so we're
+            // not forced to increment `res.length` one by one in order to account
+            // for the possibility of a `clone` call panicking.
+            data
+              .get_unchecked_mut(i)
+              .write(self.get_unchecked(i).clone());
+          }
+          // Use `transmute_copy` in lieu of `copy_to_nonoverlapping`, as we're going
+          // between two instances of the same static array type so it's definitely fine.
+          core::mem::transmute_copy(&data)
+        }
+      },
+      length: self.length,
     }
-    res
   }
 
   #[inline]
   default fn clone_from(&mut self, rhs: &Self) {
     self.truncate(rhs.length);
-    for i in 0..self.length {
-      // Safety: after the truncate, self.len <= rhs.len, which means that for
-      // every i in self, there is definitely an element at rhs[i].
+    // Safety: after the truncate, `self.len()` <= `rhs.len()`, which means that for
+    // every i in self, there is definitely an element at `rhs[i]`.
+    // As above, we put the clones in a separate array first so that we don't than
+    // need to increment our `self.length` one by one (and don't need to do two loops.)
+    let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit_array();
+    for i in 0..rhs.length {
       unsafe {
-        self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
-      }
-    }
-    for i in self.length..rhs.length {
-      // Safety: i < rhs.length, so rhs.get_unchecked is safe. i starts at
-      // self.length, which is <= rhs.length, so there is always an available
-      // slot at self[i] to write into.
-      unsafe {
-        //Same thing with `push_unchecked` here as for `clone`.
-        self
-          .data
+        data
           .get_unchecked_mut(i)
           .write(rhs.get_unchecked(i).clone());
-        self.length += 1;
       }
     }
+    // `transmute_copy` is the fastest possible way to assign the array to `self`.
+    self.data = unsafe { core::mem::transmute_copy(&data) };
+    self.length = rhs.length;
   }
 }
 
 impl<T: Copy, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline(always)]
   fn clone(&self) -> Self {
-    //If `self.length` is 0, the `copy_to_nonoverlapping` just won't do anything, so this is fine.
-    let mut res = Self::new();
-    unsafe {
-      self.as_ptr().copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
-    }
-    res.length = self.length;
-    res
+    // The code this generates is *way* more efficient than `copy_to_nonoverlapping`,
+    // and safe in this case because we're transmuting between two instances of the same type.
+    unsafe { core::mem::transmute_copy(self) }
   }
 
   #[inline(always)]
   fn clone_from(&mut self, rhs: &Self) {
-    //If `rhs.length` is 0, the `copy_to_nonoverlapping` just won't do anything, so this is fine.
-    unsafe {
-      rhs.as_ptr().copy_to_nonoverlapping(self.as_mut_ptr(), rhs.length);
-    }
-    self.length = rhs.length;
+    // The code this generates is *way* more efficient than `copy_to_nonoverlapping`,
+    // and safe in this case because we're transmuting between two instances of the same type.
+    *self = unsafe { core::mem::transmute_copy(rhs) }
   }
 }
 
@@ -119,7 +112,7 @@ impl<T: Debug, const N: usize> Debug for StaticVec<T, { N }> {
 }
 
 impl<T, const N: usize> Default for StaticVec<T, { N }> {
-  ///Calls `new`.
+  /// Calls `new`.
   #[inline(always)]
   fn default() -> Self {
     Self::new()
@@ -162,8 +155,8 @@ impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, { N }> {
 }
 
 impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, { N }> {
-  ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_slice](crate::StaticVec::new_from_slice) internally.
+  /// Creates a new StaticVec instance from the contents of `values`, using
+  /// [new_from_slice](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &[T]) -> Self {
     Self::new_from_slice(values)
@@ -171,8 +164,8 @@ impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, { N }> {
 }
 
 impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, { N }> {
-  ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_slice](crate::StaticVec::new_from_slice) internally.
+  /// Creates a new StaticVec instance from the contents of `values`, using
+  /// [new_from_slice](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &mut [T]) -> Self {
     Self::new_from_slice(values)
@@ -180,8 +173,8 @@ impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, { N }> {
 }
 
 impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, { N2 }> {
-  ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_array](crate::StaticVec::new_from_array) internally.
+  /// Creates a new StaticVec instance from the contents of `values`, using
+  /// [new_from_array](crate::StaticVec::new_from_array) internally.
   #[inline(always)]
   fn from(values: [T; N1]) -> Self {
     Self::new_from_array(values)
@@ -189,8 +182,8 @@ impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, { N2 }>
 }
 
 impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, { N2 }> {
-  ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_slice](crate::StaticVec::new_from_slice) internally.
+  /// Creates a new StaticVec instance from the contents of `values`, using
+  /// [new_from_slice](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &[T; N1]) -> Self {
     Self::new_from_slice(values)
@@ -198,8 +191,8 @@ impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, 
 }
 
 impl<T: Copy, const N1: usize, const N2: usize> From<&mut [T; N1]> for StaticVec<T, { N2 }> {
-  ///Creates a new StaticVec instance from the contents of `values`, using
-  ///[new_from_slice](crate::StaticVec::new_from_slice) internally.
+  /// Creates a new StaticVec instance from the contents of `values`, using
+  /// [new_from_slice](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &mut [T; N1]) -> Self {
     Self::new_from_slice(values)
@@ -224,7 +217,6 @@ impl<T: Hash, const N: usize> Hash for StaticVec<T, { N }> {
 
 impl<T, I: SliceIndex<[T]>, const N: usize> Index<I> for StaticVec<T, { N }> {
   type Output = I::Output;
-
   #[inline(always)]
   fn index(&self, index: I) -> &Self::Output {
     self.as_slice().index(index)
@@ -241,7 +233,7 @@ impl<T, I: SliceIndex<[T]>, const N: usize> IndexMut<I> for StaticVec<T, { N }> 
 #[cfg(feature = "std")]
 #[doc(cfg(feature = "std"))]
 impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, { N }> {
-  ///Functionally equivalent to [into_vec](crate::StaticVec::into_vec).
+  /// Functionally equivalent to [into_vec](crate::StaticVec::into_vec).
   #[inline(always)]
   fn into(self) -> Vec<T> {
     self.into_vec()
@@ -251,7 +243,7 @@ impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, { N }> {
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
   type IntoIter = StaticVecIterConst<'a, T>;
   type Item = &'a T;
-  ///Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
+  /// Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
     self.iter()
@@ -261,7 +253,7 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
   type IntoIter = StaticVecIterMut<'a, T>;
   type Item = &'a mut T;
-  ///Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
+  /// Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
     self.iter_mut()
@@ -312,8 +304,8 @@ impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, { N }>);
 /// [`Cursor`] or [`[T] as Read`][slice-read] for more efficient
 /// ways to read out of a `StaticVec` without mutating it.
 ///
-/// [`Cursor`]: https://doc.rust-lang.org/stable/std/io/struct.Cursor.html
-/// [slice-read]: https://doc.rust-lang.org/stable/std/primitive.slice.html#impl-Read]
+/// [`Cursor`]: https://doc.rust-lang.org/nightly/std/io/struct.Cursor.html
+/// [slice-read]: https://doc.rust-lang.org/nightly/std/primitive.slice.html#impl-Read]
 #[cfg(feature = "std")]
 impl<const N: usize> Read for StaticVec<u8, { N }> {
   #[inline(always)]

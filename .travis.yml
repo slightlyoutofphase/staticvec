@@ -7,4 +7,4 @@ rust:
 
 script:
   - bash ./ci/run_miri.sh
-  - cargo bench -j16
+  - cargo bench

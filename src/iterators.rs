@@ -13,14 +13,15 @@ use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
 use core::marker::PhantomData;
 
-///Similar to [Iter](core::slice::IterMut), but specifically implemented with StaticVecs in mind.
+/// Similar to [Iter](core::slice::IterMut), but specifically implemented with StaticVecs in mind.
 pub struct StaticVecIterConst<'a, T: 'a> {
   pub(crate) start: *const T,
   pub(crate) end: *const T,
   pub(crate) marker: PhantomData<&'a T>,
 }
 
-///Similar to [IterMut](core::slice::IterMut), but specifically implemented with StaticVecs in mind.
+/// Similar to [IterMut](core::slice::IterMut), but specifically implemented with StaticVecs in
+/// mind.
 pub struct StaticVecIterMut<'a, T: 'a> {
   pub(crate) start: *mut T,
   pub(crate) end: *mut T,
@@ -31,13 +32,13 @@ impl<'a, T: 'a> StaticVecIterConst<'a, T> {
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
-  ///Returns a string displaying the current values of the
-  ///iterator's `start` and `end` elements on two separate lines.
-  ///Locally requires that `T` implements [Debug](core::fmt::Debug)
-  ///to make it possible to pretty-print the elements.
+  /// Returns a string displaying the current values of the
+  /// iterator's `start` and `end` elements on two separate lines.
+  /// Locally requires that `T` implements [Debug](core::fmt::Debug)
+  /// to make it possible to pretty-print the elements.
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
-    //Safety: `start` and `end` are never null.
+    // Safety: `start` and `end` are never null.
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
@@ -110,13 +111,13 @@ impl<'a, T: 'a + Debug> StaticVecIterMut<'a, T> {
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
-  ///Returns a string displaying the current values of the
-  ///iterator's `start` and `end` elements on two separate lines.
-  ///Locally requires that `T` implements [Debug](core::fmt::Debug)
-  ///to make it possible to pretty-print the elements.
+  /// Returns a string displaying the current values of the
+  /// iterator's `start` and `end` elements on two separate lines.
+  /// Locally requires that `T` implements [Debug](core::fmt::Debug)
+  /// to make it possible to pretty-print the elements.
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
-    //Safety: `start` and `end` are never null.
+    // Safety: `start` and `end` are never null.
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",

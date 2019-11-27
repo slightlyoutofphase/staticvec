@@ -3,12 +3,12 @@
 #![feature(test)]
 #![feature(const_generics)]
 
-//SlightlyOutOfPhase, August 2019:
+// SlightlyOutOfPhase, August 2019:
 
-//This is, obviously, a modified version of SmallVec's benchmark suite.
-//The main difference is that while the original was a lot about capacity-increase performance,
-//that's not relevant for StaticVec, and so instead I compare it moreso against Vecs constructed
-//via the `with_capacity` function in order to keep things as equal as possible.
+// This is, obviously, a modified version of SmallVec's benchmark suite.
+// The main difference is that while the original was a lot about capacity-increase performance,
+// that's not relevant for StaticVec, and so instead I compare it moreso against Vecs constructed
+// via the `with_capacity` function in order to keep things as equal as possible.
 
 use staticvec::*;
 
@@ -19,7 +19,7 @@ use test::{black_box, Bencher};
 const VEC_SIZE: usize = 16;
 const SPILLED_SIZE: usize = 100;
 
-//Needed to not crash the insert benchmark since capacity can't change for StaticVec.
+// Needed to not crash the insert benchmark since capacity can't change for StaticVec.
 const SPILLED_SIZE_TWO: usize = 98;
 
 pub trait ExtendFromSlice<T> {
@@ -50,10 +50,10 @@ trait Vector<T>: for<'a> From<&'a [T]> + Extend<T> + ExtendFromSlice<T> {
 
 impl<T: Copy + 'static> Vector<T> for Vec<T> {
   fn new() -> Self {
-    //SlightlyOutOfPhase, August 2019:
+    // SlightlyOutOfPhase, August 2019:
 
-    //StaticVec can't start with a capacity of VEC_SIZE and grow to SPILLED_SIZE,
-    //so I start both normal Vec and StaticVec with a capacity of SPILLED_SIZE.
+    // StaticVec can't start with a capacity of VEC_SIZE and grow to SPILLED_SIZE,
+    // so I start both normal Vec and StaticVec with a capacity of SPILLED_SIZE.
     Self::with_capacity(SPILLED_SIZE)
   }
 
@@ -334,7 +334,7 @@ fn staticvec_bench_clone_from_shorter(b: &mut Bencher) {
     // want to clone it, either, because part of the test includes the
     // allocations into `vec`
     let mut dst: StaticVec<Vec<u32>, { 200 }> = black_box(
-      (0..100)
+      (0..50)
         .map(|i| {
           // ensure we have enough capacity to benefit from clone_from
           let mut vec = Vec::with_capacity(20);
@@ -363,7 +363,7 @@ fn staticvec_bench_clone_from_longer(b: &mut Bencher) {
     // want to clone it, either, because part of the test includes the
     // allocations into `vec`
     let mut dst: StaticVec<Vec<u32>, { 200 }> = black_box(
-      (0..50)
+      (0..100)
         .map(|i| {
           // ensure we have enouch capacity to benefit from clone_from
           let mut vec = Vec::with_capacity(20);
