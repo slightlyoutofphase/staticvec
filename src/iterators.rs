@@ -47,6 +47,7 @@ impl<'a, T: 'a> StaticVecIterConst<'a, T> {
       )
     }
   }
+  
   #[inline(always)]
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` pointers.
@@ -119,7 +120,7 @@ impl<'a, T: 'a> Clone for StaticVecIterConst<'a, T> {
     Self {
       start: self.start,
       end: self.end,
-      _marker: self._marker
+      marker: self.marker
     }
   }
 }
@@ -142,6 +143,7 @@ impl<'a, T: 'a> StaticVecIterMut<'a, T> {
       )
     }
   }
+  
   #[inline(always)]
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` pointers. Though this is a mutable iterator, the slice cannot be mutable
