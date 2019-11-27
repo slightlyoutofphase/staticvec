@@ -15,6 +15,12 @@ struct MyOtherStruct {
   s: &'static str,
 }
 
+impl Clone for MyOtherStruct {
+  fn clone(&self) -> Self {
+    Self { s: self.s }
+  }
+}
+
 impl Drop for MyOtherStruct {
   fn drop(&mut self) {
     println!("Dropping MyOtherStruct with value: {}", self.s)
@@ -371,5 +377,16 @@ fn main() {
   ee.clone_from(&dd);
   for s in &ee.reversed() {
     println!("{}", s);
+  }
+  let clonee = staticvec![
+    Box::new(MyOtherStruct { s: "AAA" }),
+    Box::new(MyOtherStruct { s: "BBB" }),
+    Box::new(MyOtherStruct { s: "CCC" }),
+    Box::new(MyOtherStruct { s: "DDD" }),
+    Box::new(MyOtherStruct { s: "EEE" }),
+  ];
+  let cloned = clonee.clone();
+  for ms in &cloned {
+    println!("{:?}", ms);
   }
 }

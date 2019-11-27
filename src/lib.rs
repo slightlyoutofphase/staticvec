@@ -137,6 +137,36 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     res
   }
 
+  /// Returns a new StaticVec instance filled with the return value of an initializer function.
+  /// Unlike for (filled_with)[crate::StaticVec::filled_with], the initializer function in
+  /// this case must take a single usize variable as an input parameter, which will be called
+  /// with the current index of the `0..N` loop that
+  /// (filled_with_by_index)[crate::StaticVec::filled_with_by_index] is implemented with internally.
+  /// The length field of the newly created StaticVec will be equal to its capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// let mut i = 0;
+  /// let v = StaticVec::<usize, 64>::filled_with_by_index(|i| { i + 1 });
+  /// assert_eq!(v.len(), 64);
+  /// assert_eq!(v[0], 1);
+  /// assert_eq!(v[1], 2);
+  /// assert_eq!(v[2], 3);
+  /// assert_eq!(v[3], 4);
+  /// ```
+  #[inline(always)]
+  pub fn filled_with_by_index<F>(mut initializer: F) -> Self
+  where F: FnMut(usize) -> T {
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res.data.get_unchecked_mut(i).write(initializer(i));
+        res.length += 1;
+      }
+    }
+    res
+  }
+
   /// Returns the current length of the StaticVec.
   /// Just as for a normal [Vec](alloc::vec::Vec), this means the number of elements that
   /// have been added to it with `push`, `insert`, etc. except in the case

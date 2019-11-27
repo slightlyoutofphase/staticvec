@@ -5,7 +5,6 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
 use core::slice::SliceIndex;
@@ -44,49 +43,40 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
 }
 
 impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
-  #[inline]
+  #[inline(always)]
   default fn clone(&self) -> Self {
-    Self {
-      data: {
+    let mut res = Self::new();
+    for i in 0..N {
+      if i < self.length {
         unsafe {
-          let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit_array();
-          for i in 0..self.length {
-            // Put the clones in a separate stack-allocated array first, so we're
-            // not forced to increment `res.length` one by one in order to account
-            // for the possibility of a `clone` call panicking.
-            data
-              .get_unchecked_mut(i)
-              .write(self.get_unchecked(i).clone());
-          }
-          // Use `transmute_copy` in lieu of `copy_to_nonoverlapping`, as we're going
-          // between two instances of the same static array type so it's definitely fine.
-          core::mem::transmute_copy(&data)
-        }
-      },
-      length: self.length,
+          res
+            .data
+            .get_unchecked_mut(i)
+            .write(self.get_unchecked(i).clone());
+          res.length += 1;
+        };
+      }
     }
+    res
   }
 
   #[inline]
   default fn clone_from(&mut self, rhs: &Self) {
     self.truncate(rhs.length);
-    for i in 0..self.length {
-      // Safety: after the truncate, self.len <= rhs.len, which means that for
-      // every i in self, there is definitely an element at rhs[i].
-      unsafe {
-        self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
-      }
-    }
-    for i in self.length..rhs.length {
-      // Safety: i < rhs.length, so rhs.get_unchecked is safe. i starts at
-      // self.length, which is <= rhs.length, so there is always an available
-      // slot at self[i] to write into.
-      unsafe {
-        self
-          .data
-          .get_unchecked_mut(i)
-          .write(rhs.get_unchecked(i).clone());
-        self.length += 1;
+    for i in 0..rhs.length {
+      if i < self.length {
+        // Safety: after the truncate, self.len <= rhs.len, which means that for
+        // every i in self, there is definitely an element at rhs[i]
+        unsafe {
+          self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
+        }
+      } else {
+        // Safety: i < rhs.length, so rhs.get_unchecked is safe. i starts at
+        // self.length, which is <= rhs.length, so there is always an available
+        // slot at self[i] to push into
+        unsafe {
+          self.push_unchecked(rhs.get_unchecked(i).clone());
+        }
       }
     }
   }
@@ -102,8 +92,7 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, { N }> {
 
   #[inline(always)]
   fn clone_from(&mut self, rhs: &Self) {
-    // The code this generates is *way* more efficient than `copy_to_nonoverlapping`,
-    // and safe in this case because we're transmuting between two instances of the same type.
+    // See above comment for safety note.
     *self = unsafe { core::mem::transmute_copy(rhs) }
   }
 }

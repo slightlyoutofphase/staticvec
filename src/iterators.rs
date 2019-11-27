@@ -11,7 +11,7 @@ use alloc::format;
 
 use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
-use core::marker::PhantomData;
+use core::marker::{PhantomData, Send, Sync};
 
 /// Similar to [Iter](core::slice::IterMut), but specifically implemented with StaticVecs in mind.
 pub struct StaticVecIterConst<'a, T: 'a> {
@@ -106,6 +106,8 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {
 
 impl<'a, T: 'a> FusedIterator for StaticVecIterConst<'a, T> {}
 unsafe impl<'a, T: 'a> TrustedLen for StaticVecIterConst<'a, T> {}
+unsafe impl<'a, T: 'a + Sync> Sync for StaticVecIterConst<'a, T> {}
+unsafe impl<'a, T: 'a + Sync> Send for StaticVecIterConst<'a, T> {}
 
 impl<'a, T: 'a + Debug> StaticVecIterMut<'a, T> {
   #[cfg(feature = "std")]
@@ -185,3 +187,5 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {
 
 impl<'a, T: 'a> FusedIterator for StaticVecIterMut<'a, T> {}
 unsafe impl<'a, T: 'a> TrustedLen for StaticVecIterMut<'a, T> {}
+unsafe impl<'a, T: 'a + Sync> Sync for StaticVecIterMut<'a, T> {}
+unsafe impl<'a, T: 'a + Sync> Send for StaticVecIterMut<'a, T> {}

@@ -333,18 +333,16 @@ fn staticvec_bench_clone_from_shorter(b: &mut Bencher) {
     // to make sure dst is in the same state before each bench run. We don't
     // want to clone it, either, because part of the test includes the
     // allocations into `vec`
-    let mut dst: StaticVec<Vec<u32>, { 200 }> = black_box(
-      (0..100)
-        .map(|i| {
-          // ensure we have enough capacity to benefit from clone_from
-          let mut vec = Vec::with_capacity(20);
-          vec.extend(1..1 + (i % 11));
-          vec
-        })
-        .collect(),
-    );
+    let mut dst: StaticVec<Vec<u32>, { 200 }> = (0..100)
+      .map(|i| {
+        // ensure we have enough capacity to benefit from clone_from
+        let mut vec = Vec::with_capacity(20);
+        vec.extend(1..1 + (i % 11));
+        vec
+      })
+      .collect();
 
-    dst.clone_from(&src);
+    black_box(dst.clone_from(&src));
   });
 }
 
@@ -362,17 +360,15 @@ fn staticvec_bench_clone_from_longer(b: &mut Bencher) {
     // to make sure dst is in the same state before each bench run. We don't
     // want to clone it, either, because part of the test includes the
     // allocations into `vec`
-    let mut dst: StaticVec<Vec<u32>, { 200 }> = black_box(
-      (0..50)
-        .map(|i| {
-          // ensure we have enouch capacity to benefit from clone_from
-          let mut vec = Vec::with_capacity(20);
-          vec.extend(1..1 + (i % 11));
-          vec
-        })
-        .collect(),
-    );
+    let mut dst: StaticVec<Vec<u32>, { 200 }> = (0..50)
+      .map(|i| {
+        // ensure we have enouch capacity to benefit from clone_from
+        let mut vec = Vec::with_capacity(20);
+        vec.extend(1..1 + (i % 11));
+        vec
+      })
+      .collect();
 
-    dst.clone_from(&src);
+    black_box(dst.clone_from(&src));
   });
 }

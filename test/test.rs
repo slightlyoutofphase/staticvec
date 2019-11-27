@@ -176,6 +176,16 @@ fn filled_with() {
 }
 
 #[test]
+fn filled_with_by_index() {
+  let v = StaticVec::<usize, 64>::filled_with_by_index(|i| i + 1);
+  assert_eq!(v.len(), 64);
+  assert_eq!(v[0], 1);
+  assert_eq!(v[1], 2);
+  assert_eq!(v[2], 3);
+  assert_eq!(v[3], 4);
+}
+
+#[test]
 fn first() {
   let v = staticvec![1, 2, 3];
   assert_eq!(*v.first().unwrap(), 1);
