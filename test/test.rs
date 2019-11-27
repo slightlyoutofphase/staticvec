@@ -1,8 +1,11 @@
 #![allow(clippy::all)]
+#![allow(dead_code)]
 
 use staticvec::*;
 
 use core::cell;
+
+#[cfg(feature = "std")]
 use std::panic::{self, AssertUnwindSafe};
 
 #[cfg(not(miri))]
@@ -168,6 +171,7 @@ fn clone_from_longer() {
   assert_eq!(dst, src);
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn panicking_clone() {
   // An earlier implementation of clone incorrectly leaked values in the event
