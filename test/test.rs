@@ -207,9 +207,6 @@ fn panicking_clone() {
   let lifespan_tracker = LifespanCounter::default();
   let mut vec1: StaticVec<MaybePanicOnClone, 20> = StaticVec::new();
 
-  // For robustness, we add some non panicking cloners, with a panicking clone
-  // in the middle. This ensures the test is robust even if the clone implementation
-  // does something odd like go in reverse order.
   for _ in 0..5 {
     vec1.push(MaybePanicOnClone::new(&lifespan_tracker, false));
   }
