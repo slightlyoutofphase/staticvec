@@ -12,6 +12,7 @@ use alloc::format;
 use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
 use core::marker::{PhantomData, Send, Sync};
+use core::slice;
 
 /// Similar to [Iter](core::slice::Iter), but specifically implemented with StaticVecs in mind.
 pub struct StaticVecIterConst<'a, T: 'a> {
@@ -28,8 +29,8 @@ pub struct StaticVecIterMut<'a, T: 'a> {
   pub(crate) marker: PhantomData<&'a mut T>,
 }
 
-#[cfg(feature = "std")]
 impl<'a, T: 'a> StaticVecIterConst<'a, T> {
+  #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
   /// Returns a string displaying the current values of the
@@ -45,6 +46,13 @@ impl<'a, T: 'a> StaticVecIterConst<'a, T> {
         *self.start, *self.end
       )
     }
+  }
+  #[inline(always)]
+  /// Returns an immutable slice consisting of the elements in the range between the iterator's
+  /// `start` and `end` pointers.
+  pub fn as_slice(&self) -> &'a [T] {
+    // Safety: `start` is never null. This function will "at worst" return an empty slice.
+    unsafe { slice::from_raw_parts(self.start, self.len()) }
   }
 }
 
@@ -105,8 +113,19 @@ unsafe impl<'a, T: 'a> TrustedLen for StaticVecIterConst<'a, T> {}
 unsafe impl<'a, T: 'a + Sync> Sync for StaticVecIterConst<'a, T> {}
 unsafe impl<'a, T: 'a + Sync> Send for StaticVecIterConst<'a, T> {}
 
-#[cfg(feature = "std")]
-impl<'a, T: 'a + Debug> StaticVecIterMut<'a, T> {
+impl<'a, T: 'a> Clone for StaticVecIterConst<'a, T> {
+  #[inline(always)]
+  fn clone(&self) -> Self {
+    Self {
+      start: self.start,
+      end: self.end,
+      _marker: self._marker
+    }
+  }
+}
+
+impl<'a, T: 'a> StaticVecIterMut<'a, T> {
+  #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
   /// Returns a string displaying the current values of the
@@ -122,6 +141,14 @@ impl<'a, T: 'a + Debug> StaticVecIterMut<'a, T> {
         *self.start, *self.end
       )
     }
+  }
+  #[inline(always)]
+  /// Returns an immutable slice consisting of the elements in the range between the iterator's
+  /// `start` and `end` pointers. Though this is a mutable iterator, the slice cannot be mutable
+  /// as it would lead to aliasiang issues.
+  pub fn as_slice(&self) -> &'a [T] {
+    // Safety: `start` is never null. This function will "at worst" return an empty slice.
+    unsafe { slice::from_raw_parts(self.start, self.len()) }
   }
 }
 
