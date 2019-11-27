@@ -5,7 +5,6 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
 use core::slice::SliceIndex;
@@ -48,7 +47,7 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
 impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   default fn clone(&self) -> Self {
-    let res = Self::new();
+    let mut res = Self::new();
     for i in 0..self.length {
       // Safety: res and self have the same type, so they're guaranteed to
       // have the same capacity, and push_unchecked will never overflow.
