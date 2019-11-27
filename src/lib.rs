@@ -56,7 +56,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   pub fn new() -> Self {
     Self {
       // Sound because data is an array of MaybeUninit<T>, not an array of T.
-      data: unsafe { MaybeUninit::uninit_array() },
+      data: MaybeUninit::uninit_array(),
       length: 0,
     }
   }
