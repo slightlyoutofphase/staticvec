@@ -43,21 +43,25 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
 }
 
 impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
-  #[inline(always)]
+  #[inline]
   default fn clone(&self) -> Self {
-    let mut res = Self::new();
-    for i in 0..N {
-      if i < self.length {
+    Self {
+      data: {
         unsafe {
-          res
-            .data
-            .get_unchecked_mut(i)
-            .write(self.get_unchecked(i).clone());
-          res.length += 1;
-        };
-      }
+          let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit_array();
+          for i in 0..self.length {
+            // Put the clones in a separate stack-allocated array first, so we're
+            // not forced to increment `length` for the result variable one by one in order to
+            // account for the possibility of a `clone` call panicking.
+            data
+              .get_unchecked_mut(i)
+              .write(self.get_unchecked(i).clone());
+          }
+          data
+        }
+      },
+      length: self.length,
     }
-    res
   }
 
   #[inline]
