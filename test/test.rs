@@ -2,9 +2,77 @@
 
 use staticvec::*;
 
+use core::cell;
+use std::panic::{self, AssertUnwindSafe};
+
 #[cfg(not(miri))]
 #[cfg(feature = "std")]
 use cool_asserts::assert_panics;
+
+#[derive(Debug, Eq, PartialEq, Default)]
+struct Counter(cell::Cell<u32>);
+
+impl Counter {
+  fn increment(&self) {
+    self.0.set(self.0.get() + 1);
+  }
+
+  fn get(&self) -> u32 {
+    self.0.get()
+  }
+}
+
+// Helper struct for ensuring things are correctly dropped. Use the `instance`
+// method to create a LifespanCountingInstance, then use the init_count
+// method to see how many such instances were created (either by clone or by
+// `instance`), and the drop_count method to see how many were dropped.
+// TODO: create a more advanced version of this pattern that checks WHICH
+// elements have been dropped; ie, to ensure that the elements at the end of
+// an array are correctly dropped after a truncate
+#[derive(Debug, Default)]
+struct LifespanCounter {
+  // The number of times an instance was created
+  init_count: Counter,
+
+  // The number of times an instance was dropped
+  drop_count: Counter,
+}
+
+impl LifespanCounter {
+  fn instance(&self) -> LifespanCountingInstance {
+    self.init_count.increment();
+    LifespanCountingInstance { counter: self }
+  }
+
+  fn init_count(&self) -> u32 {
+    self.init_count.get()
+  }
+
+  fn drop_count(&self) -> u32 {
+    self.drop_count.get()
+  }
+}
+
+#[derive(Debug)]
+struct LifespanCountingInstance<'a> {
+  counter: &'a LifespanCounter,
+}
+
+impl<'a> Clone for LifespanCountingInstance<'a> {
+  fn clone(&self) -> Self {
+    self.counter.instance()
+  }
+
+  // We deliberately do not provide a clone_from; we'd rather the default
+  // behavior (drop and replace with a fresh instance) is used, so we can
+  // accurately track clones.
+}
+
+impl<'a> Drop for LifespanCountingInstance<'a> {
+  fn drop(&mut self) {
+    self.counter.drop_count.increment()
+  }
+}
 
 #[derive(Debug)]
 struct Struct {
@@ -98,6 +166,76 @@ fn clone_from_longer() {
   let mut dst: StaticVec<u32, { 20 }> = (1..10).collect();
   dst.clone_from(&src);
   assert_eq!(dst, src);
+}
+
+#[test]
+fn panicking_clone() {
+  // An earlier implementation of clone incorrectly leaked values in the event
+  // of a panicking clone. This test ensures that that does not happen.
+
+  // This struct will, if so configured, panic on a clone. Uses
+  // LifespanCountingInstance to track instantiations and deletions, so that
+  // we can ensure the correct number of drops are happening
+  #[derive(Debug)]
+  struct MaybePanicOnClone<'a> {
+    tracker: LifespanCountingInstance<'a>,
+    should_panic: bool,
+  }
+
+  impl<'a> MaybePanicOnClone<'a> {
+    fn new(counter: &'a LifespanCounter, should_panic: bool) -> Self {
+      Self {
+        tracker: counter.instance(),
+        should_panic,
+      }
+    }
+  }
+
+  impl<'a> Clone for MaybePanicOnClone<'a> {
+    fn clone(&self) -> Self {
+      if self.should_panic {
+        panic!("Clone correctly panicked during a test")
+      } else {
+        Self {
+          tracker: self.tracker.clone(),
+          should_panic: self.should_panic,
+        }
+      }
+    }
+  }
+
+  let lifespan_tracker = LifespanCounter::default();
+  let mut vec1: StaticVec<MaybePanicOnClone, 20> = StaticVec::new();
+
+  for _ in 0..5 {
+    vec1.push(MaybePanicOnClone::new(&lifespan_tracker, false));
+  }
+  vec1.push(MaybePanicOnClone::new(&lifespan_tracker, true));
+
+  // Sanity check: we've created 6 instances and dropped none of them
+  assert_eq!(lifespan_tracker.init_count(), 6);
+  assert_eq!(lifespan_tracker.drop_count(), 0);
+
+  // Attempt to clone the staticvec; this will panic. This should result in
+  // 5 successful clones, followed by a panic, followed by 5 drops during
+  // unwinding.
+  let result = panic::catch_unwind(AssertUnwindSafe(|| {
+    let vec2 = vec1.clone();
+    vec2
+  }));
+
+  // Ensure that a panic did occur
+  assert!(result.is_err());
+
+  // At this point, 5 instances should have been created and dropped in the
+  // aborted clone
+  assert_eq!(lifespan_tracker.init_count(), 11);
+  assert_eq!(lifespan_tracker.drop_count(), 5);
+
+  drop(vec1);
+
+  assert_eq!(lifespan_tracker.init_count(), 11);
+  assert_eq!(lifespan_tracker.drop_count(), 11);
 }
 
 #[test]

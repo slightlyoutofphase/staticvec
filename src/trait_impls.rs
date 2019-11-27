@@ -5,7 +5,6 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
 use core::slice::SliceIndex;
@@ -48,23 +47,16 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
 impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   default fn clone(&self) -> Self {
-    Self {
-      data: {
-        unsafe {
-          let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit_array();
-          for i in 0..self.length {
-            // Put the clones in a separate stack-allocated array first, so we're
-            // not forced to increment `length` for the result variable one by one in order to
-            // account for the possibility of a `clone` call panicking.
-            data
-              .get_unchecked_mut(i)
-              .write(self.get_unchecked(i).clone());
-          }
-          data
-        }
-      },
-      length: self.length,
+    let mut res = Self::new();
+    for i in 0..self.length {
+      // Safety: res and self have the same type, so they're guaranteed to
+      // have the same capacity, and push_unchecked will never overflow.
+      // 0 <= i < self.length, so get_unchecked is safe.
+      unsafe {
+        res.push_unchecked(self.get_unchecked(i).clone());
+      }
     }
+    res
   }
 
   #[inline]
