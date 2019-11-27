@@ -1,13 +1,13 @@
 #![allow(clippy::all)]
 
+use staticvec::*;
+
 use core::cell;
 use std::panic::{self, AssertUnwindSafe};
 
 #[cfg(not(miri))]
 #[cfg(feature = "std")]
 use cool_asserts::assert_panics;
-
-use staticvec::*;
 
 #[derive(Debug, Eq, PartialEq, Default)]
 struct Counter(cell::Cell<u32>);
