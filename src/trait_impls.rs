@@ -45,15 +45,12 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
 }
 
 impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
-  #[inline]
+  #[inline(always)]
   default fn clone(&self) -> Self {
     let mut res = Self::new();
-    for i in 0..self.length {
-      // Safety: res and self have the same type, so they're guaranteed to
-      // have the same capacity, and push_unchecked will never overflow.
-      // 0 <= i < self.length, so get_unchecked is safe.
+    for item in self {
       unsafe {
-        res.push_unchecked(self.get_unchecked(i).clone());
+        res.push_unchecked(item.clone());
       }
     }
     res
