@@ -146,7 +146,6 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   ///
   /// Example usage:
   /// ```
-  /// let mut i = 0;
   /// let v = StaticVec::<usize, 64>::filled_with_by_index(|i| { i + 1 });
   /// assert_eq!(v.len(), 64);
   /// assert_eq!(v[0], 1);
