@@ -52,18 +52,16 @@ impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
   type Item = &'a T;
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
-    if (self.start as usize) < (self.end as usize) {
-      unsafe {
+    match distance_between(self.end, self.start) {
+      0 => None,
+      _ => unsafe {
         let res = Some(&*self.start);
-        self.start = if intrinsics::size_of::<T>() == 0 {
-          (self.start as usize + 1) as *const _
-        } else {
-          self.start.offset(1)
+        self.start = match intrinsics::size_of::<T>() {
+          0 => (self.start as usize + 1) as *const _,
+          _ => self.start.offset(1),
         };
         res
-      }
-    } else {
-      None
+      },
     }
   }
 
@@ -77,17 +75,15 @@ impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
 impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
-    if (self.end as usize) > (self.start as usize) {
-      unsafe {
-        self.end = if intrinsics::size_of::<T>() == 0 {
-          (self.end as usize - 1) as *const _
-        } else {
-          self.end.offset(-1)
+    match distance_between(self.end, self.start) {
+      0 => None,
+      _ => unsafe {
+        self.end = match intrinsics::size_of::<T>() {
+          0 => (self.end as usize - 1) as *const _,
+          _ => self.end.offset(-1),
         };
         Some(&*self.end)
-      }
-    } else {
-      None
+      },
     }
   }
 }
@@ -133,18 +129,16 @@ impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
   type Item = &'a mut T;
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
-    if (self.start as usize) < (self.end as usize) {
-      unsafe {
+    match distance_between(self.end, self.start) {
+      0 => None,
+      _ => unsafe {
         let res = Some(&mut *self.start);
-        self.start = if intrinsics::size_of::<T>() == 0 {
-          (self.start as usize + 1) as *mut _
-        } else {
-          self.start.offset(1)
+        self.start = match intrinsics::size_of::<T>() {
+          0 => (self.start as usize + 1) as *mut _,
+          _ => self.start.offset(1),
         };
         res
-      }
-    } else {
-      None
+      },
     }
   }
 
@@ -158,17 +152,15 @@ impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
 impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
-    if (self.end as usize) > (self.start as usize) {
-      unsafe {
-        self.end = if intrinsics::size_of::<T>() == 0 {
-          (self.end as usize - 1) as *mut _
-        } else {
-          self.end.offset(-1)
+    match distance_between(self.end, self.start) {
+      0 => None,
+      _ => unsafe {
+        self.end = match intrinsics::size_of::<T>() {
+          0 => (self.end as usize - 1) as *mut _,
+          _ => self.end.offset(-1),
         };
         Some(&mut *self.end)
-      }
-    } else {
-      None
+      },
     }
   }
 }
