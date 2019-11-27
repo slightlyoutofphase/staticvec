@@ -5,7 +5,7 @@ repository = "https://github.com/slightlyoutofphase/staticvec"
 documentation = "https://docs.rs/staticvec/"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-version = "0.4.6"
+version = "0.4.7"
 authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec", "array", "no_std", "vector", "stack"]
 categories = ["data-structures", "no-std"]
@@ -65,6 +65,7 @@ path = "benchmark/arrayvec_extend_suite.rs"
 [[example]]
 name = "main_demo"
 path = "demo/main_demo.rs"
+required-features = ["std"]
 
 [[example]]
 name = "serde_support_demo"

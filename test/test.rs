@@ -1,9 +1,10 @@
 #![allow(clippy::all)]
 
-#[cfg(not(miri))]
-use cool_asserts::assert_panics;
-
 use staticvec::*;
+
+#[cfg(not(miri))]
+#[cfg(feature = "std")]
+use cool_asserts::assert_panics;
 
 #[derive(Debug)]
 struct Struct {
@@ -45,6 +46,7 @@ fn as_slice() {
   assert_eq!(buffer.as_slice(), &[1, 2, 3, 5, 8]);
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn bounds_to_string() {
   let mut v = staticvec![1, 2, 3, 4];
@@ -236,6 +238,7 @@ fn index() {
   // Because this block includes obviously-violated bounds checks, miri
   // complains about it
   #[cfg(not(miri))]
+  #[cfg(feature = "std")]
   {
     // Check bounds checking
     assert_panics!(vec[10]);
@@ -284,6 +287,7 @@ fn is_not_full() {
   assert!(v.is_not_full());
 }
 
+#[cfg(feature = "std")]
 #[test]
 fn into_vec() {
   let mut v = staticvec![

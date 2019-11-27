@@ -10,7 +10,7 @@
 #![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_uninit_array)]
-#![feature(read_initializer)]
+#![cfg_attr(feature = "std", feature(read_initializer))]
 #![feature(slice_partition_dedup)]
 #![feature(specialization)]
 #![feature(trusted_len)]
@@ -138,10 +138,10 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 
   /// Returns a new StaticVec instance filled with the return value of an initializer function.
-  /// Unlike for (filled_with)[crate::StaticVec::filled_with], the initializer function in
+  /// Unlike for [filled_with](crate::StaticVec::filled_with), the initializer function in
   /// this case must take a single usize variable as an input parameter, which will be called
   /// with the current index of the `0..N` loop that
-  /// (filled_with_by_index)[crate::StaticVec::filled_with_by_index] is implemented with internally.
+  /// [filled_with_by_index](crate::StaticVec::filled_with_by_index) is implemented with internally.
   /// The length field of the newly created StaticVec will be equal to its capacity.
   ///
   /// Example usage:

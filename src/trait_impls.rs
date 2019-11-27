@@ -9,6 +9,8 @@ use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
 use core::slice::SliceIndex;
+
+#[cfg(feature = "std")]
 use core::str;
 
 #[cfg(feature = "std")]
@@ -70,15 +72,15 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
     self.truncate(rhs.length);
     for i in 0..rhs.length {
       if i < self.length {
-        // Safety: after the truncate, self.len <= rhs.len, which means that for
-        // every i in self, there is definitely an element at rhs[i]
+        // Safety: after the truncate, `self.len` <= `rhs.len`, which means that for
+        // every i in self, there is definitely an element at `rhs[i]`.
         unsafe {
           self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
         }
       } else {
-        // Safety: i < rhs.length, so rhs.get_unchecked is safe. i starts at
-        // self.length, which is <= rhs.length, so there is always an available
-        // slot at self[i] to push into
+        // Safety: `i` < `rhs.length`, so `rhs.get_unchecked()` is safe. `i` starts at
+        // `self.length`, which is <= `rhs.length`, so there is always an available
+        // slot at `self[i]` to push into.
         unsafe {
           self.push_unchecked(rhs.get_unchecked(i).clone());
         }
