@@ -46,7 +46,7 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
 }
 
 impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
-  #[inline(always)]
+  #[inline]
   default fn clone(&self) -> Self {
     let mut res = Self::new();
     for item in self {
@@ -389,7 +389,7 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
     // have been written. This means that when we perform the shift at the
     // end, self.length is already correct.
     for buf in bufs {
-      if self.length == 0 {
+      if self.is_empty() {
         break;
       }
 

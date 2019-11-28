@@ -2,9 +2,6 @@
 #![allow(incomplete_features)]
 #![feature(const_fn)]
 #![feature(const_generics)]
-#![feature(const_if_match)]
-#![feature(const_compare_raw_pointers)]
-#![feature(const_raw_ptr_to_usize_cast)]
 #![feature(core_intrinsics)]
 #![feature(doc_cfg)]
 #![feature(exact_size_is_empty)]
@@ -27,7 +24,6 @@ use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds}
 use core::ptr;
 use core::slice;
 
-// Literally just for stable-sort.
 #[cfg(any(feature = "std", rustdoc))]
 extern crate alloc;
 
@@ -158,7 +154,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// assert_eq!(v[2], 3);
   /// assert_eq!(v[3], 4);
   /// ```
-  #[inline(always)]
+  #[inline]
   pub fn filled_with_by_index<F>(mut initializer: F) -> Self
   where F: FnMut(usize) -> T {
     let mut res = Self::new();
@@ -367,7 +363,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// the StaticVec has a current length greater than 0, and returns `None` otherwise.
   #[inline(always)]
   pub fn pop(&mut self) -> Option<T> {
-    if self.length == 0 {
+    if self.is_empty() {
       None
     } else {
       Some(unsafe { self.pop_unchecked() })
@@ -378,7 +374,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// is not empty, or `None` otherwise.
   #[inline(always)]
   pub fn first(&self) -> Option<&T> {
-    if self.length == 0 {
+    if self.is_empty() {
       None
     } else {
       Some(unsafe { self.get_unchecked(0) })
@@ -389,7 +385,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// is not empty, or `None` otherwise.
   #[inline(always)]
   pub fn first_mut(&mut self) -> Option<&mut T> {
-    if self.length == 0 {
+    if self.is_empty() {
       None
     } else {
       Some(unsafe { self.get_unchecked_mut(0) })
@@ -400,7 +396,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// is not empty, or `None` otherwise.
   #[inline(always)]
   pub fn last(&self) -> Option<&T> {
-    if self.length == 0 {
+    if self.is_empty() {
       None
     } else {
       Some(unsafe { self.get_unchecked(self.length - 1) })
@@ -411,7 +407,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// not empty, or `None` otherwise.
   #[inline(always)]
   pub fn last_mut(&mut self) -> Option<&mut T> {
-    if self.length == 0 {
+    if self.is_empty() {
       None
     } else {
       Some(unsafe { self.get_unchecked_mut(self.length - 1) })
@@ -575,16 +571,16 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn reversed(&self) -> Self
   where T: Copy {
-    let mut res = Self::new_data_uninit();
-    unsafe {
-      reverse_copy(
-        self.as_ptr(),
-        self.as_ptr().add(self.length),
-        res.as_mut_ptr() as *mut T,
-      );
-    }
     Self {
-      data: unsafe { res.assume_init() },
+      data: unsafe {
+        let mut res = Self::new_data_uninit();
+        reverse_copy(
+          self.as_ptr(),
+          self.as_ptr().add(self.length),
+          res.as_mut_ptr() as *mut T,
+        );
+        res.assume_init()
+      },
       length: self.length,
     }
   }
