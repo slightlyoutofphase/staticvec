@@ -62,20 +62,20 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   default fn clone_from(&mut self, rhs: &Self) {
     self.truncate(rhs.length);
-    for i in 0..rhs.length {
+    let mut i = 0;
+    loop {
       if i < self.length {
         // Safety: after the truncate, `self.len` <= `rhs.len`, which means that for
         // every i in self, there is definitely an element at `rhs[i]`.
-        unsafe {
-          self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
-        }
-      } else {
-        // Safety: `i` < `rhs.length`, so `rhs.get_unchecked()` is safe. `i` starts at
-        // `self.length`, which is <= `rhs.length`, so there is always an available
-        // slot at `self[i]` to push into.
-        unsafe {
-          self.push_unchecked(rhs.get_unchecked(i).clone());
-        }
+        unsafe { self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i)) };
+      }
+      // Safety: `i` < `rhs.length`, so `rhs.get_unchecked()` is safe. `i` starts at
+      // `self.length`, which is <= `rhs.length`, so there is always an available
+      // slot at `self[i]` to push into.
+      unsafe { self.push_unchecked(rhs.get_unchecked(i).clone()) };
+      i += 1;
+      if i == rhs.length {
+        break;
       }
     }
   }
