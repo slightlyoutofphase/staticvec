@@ -14,7 +14,7 @@ use staticvec::*;
 
 extern crate test;
 
-use test::{black_box, Bencher};
+use test::Bencher;
 
 const VEC_SIZE: usize = 16;
 const SPILLED_SIZE: usize = 100;
