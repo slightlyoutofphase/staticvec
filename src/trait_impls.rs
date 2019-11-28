@@ -68,6 +68,8 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
         // Safety: after the truncate, `self.len` <= `rhs.len`, which means that for
         // every i in self, there is definitely an element at `rhs[i]`.
         unsafe { self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i)) };
+        i += 1;
+        continue;
       }
       // Safety: `i` < `rhs.length`, so `rhs.get_unchecked()` is safe. `i` starts at
       // `self.length`, which is <= `rhs.length`, so there is always an available
