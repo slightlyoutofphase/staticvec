@@ -1,5 +1,5 @@
 language: rust
-sudo: true
+os: linux
 cache: cargo
 
 rust:
