@@ -785,7 +785,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[doc(hidden)]
   #[inline(always)]
   pub(crate) unsafe fn copy_length_to(&self, dest: *mut MaybeUninit<Self>) {
-    // A internal convenience function to copy a usize worth of bytes from
+    // An internal convenience function to copy a usize worth of bytes from
     // `self` to `dest`, representing the space taken up by `self.length` but not necessarily the
     // actual value of `self.length`. This function should *only* be used in conjunction with
     // `copy_items_to`, because they are both written in terms of number of bytes copied as
