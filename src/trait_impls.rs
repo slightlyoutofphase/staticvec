@@ -64,6 +64,9 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
     self.truncate(rhs.length);
     let mut i = 0;
     loop {
+      if i == rhs.length {
+        break;
+      }
       if i < self.length {
         // Safety: after the truncate, `self.len` <= `rhs.len`, which means that for
         // every i in self, there is definitely an element at `rhs[i]`.
@@ -76,9 +79,6 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
       // slot at `self[i]` to push into.
       unsafe { self.push_unchecked(rhs.get_unchecked(i).clone()) };
       i += 1;
-      if i == rhs.length {
-        break;
-      }
     }
   }
 }
