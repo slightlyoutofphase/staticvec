@@ -620,6 +620,29 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     self.length += added_length;
     Ok(())
   }
+  
+  /// Appends `self.remaining_capacity()` (or as many as available) items from
+  /// `other` to `self`. The appended items (if any) will longer exist in `other` afterwards,
+  /// as `other`'s `length` field will be adjusted to indicate. The N2 parameter does
+  /// not need to be provided explicitly, and can be inferred directly from the constant `N`
+  /// contrainst of `other` (which may or may not be the same as the `N` constraint of `self`.)
+  #[inline]
+  pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, { N2 }>) {
+    let item_count = self.remaining_capacity().min(other.length);
+    if item_count > 0 {
+      let other_new_length = other.length - item_count;
+      unsafe {
+        self.as_mut_ptr()
+          .add(self.length)
+          .copy_from_nonoverlapping(other.as_ptr(), item_count);
+        other
+          .as_mut_ptr()
+          .copy_from_nonoverlapping(other.as_ptr().add(item_count), other_new_length);
+      }
+      other.length = other_new_length;
+      self.length += item_count;
+    }
+  }
 
   /// Returns a [Vec](alloc::vec::Vec) containing the contents of the StaticVec instance.
   /// The returned [Vec](alloc::vec::Vec) will initially have the same value for
