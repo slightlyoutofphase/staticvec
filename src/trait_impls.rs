@@ -50,6 +50,8 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   default fn clone(&self) -> Self {
     let mut res = Self::new();
     for item in self {
+      // Safety: res and self have the same type, so they're guaranteed to
+      // have the same capacity, and push_unchecked will never overflow.
       unsafe {
         res.push_unchecked(item.clone());
       }
@@ -90,11 +92,11 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, { N }> {
         // optimization when we call `assume_init` on it later, rather than fully instantiating it
         // now.)
         let mut res = MaybeUninit::<Self>::uninit();
-        // Copy a usize worth of bytes to `res` for `length`, and then `self.length` *
+        // Copy a usize worth of bytes to `res` for `length`, and then `self.length` times
         // `size_of::<T>` bytes to `res` for `data`. Note that the order we do this in does
-        // not actually matter, just that the number of bytes copied is exactly correct
-        // (which we can be confident is true by using the next two functions one after
-        // another.)
+        // not actually matter, it just matters that the total number of bytes copied is exactly
+        // correct (which we can be confident is true by using the next two functions one
+        // after another.)
         unsafe {
           self.copy_length_to(&mut res);
           self.copy_items_to(&mut res);

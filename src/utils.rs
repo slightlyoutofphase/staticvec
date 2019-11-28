@@ -1,7 +1,6 @@
 use crate::StaticVec;
 use core::cmp::{Ordering, PartialOrd};
 use core::intrinsics;
-use core::mem::MaybeUninit;
 
 #[inline(always)]
 pub(crate) fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
@@ -34,11 +33,11 @@ where T: Copy {
   StaticVec::<T, { COUNT }> {
     data: {
       unsafe {
-        let mut data: [MaybeUninit<T>; COUNT] = MaybeUninit::uninit_array();
+        let mut data = StaticVec::<T, { COUNT }>::new_data_uninit();
         for i in 0..COUNT {
-          data.get_unchecked_mut(i).write(value);
+          (data.as_mut_ptr() as *mut T).add(i).write(value);
         }
-        data
+        data.assume_init()
       }
     },
     length: COUNT,

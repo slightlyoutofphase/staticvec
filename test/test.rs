@@ -429,6 +429,24 @@ fn is_not_full() {
   assert!(v.is_not_full());
 }
 
+#[test]
+fn iter() {
+  let v = staticvec![1, 2, 3, 4, 5];
+  let mut i = v.iter();
+  assert_eq!(*i.next().unwrap(), 1);
+  let mut ir = v.iter().rev();
+  assert_eq!(*ir.next().unwrap(), 5);
+}
+
+#[test]
+fn iter_mut() {
+  let mut v = staticvec![1, 2, 3, 4, 5];
+  let mut i = v.iter_mut();
+  assert_eq!(*i.next().unwrap(), 1);
+  let mut ir = v.iter_mut().rev();
+  assert_eq!(*ir.next().unwrap(), 5);
+}
+
 #[cfg(feature = "std")]
 #[test]
 fn into_vec() {

@@ -1,18 +1,15 @@
 use crate::utils::distance_between;
-
-#[cfg(feature = "std")]
-use core::fmt::Debug;
+use core::fmt::{self, Debug, Formatter};
+use core::intrinsics;
+use core::iter::{FusedIterator, TrustedLen};
+use core::marker::{PhantomData, Send, Sync};
+use core::slice;
 
 #[cfg(feature = "std")]
 use alloc::string::String;
 
 #[cfg(feature = "std")]
 use alloc::format;
-
-use core::intrinsics;
-use core::iter::{FusedIterator, TrustedLen};
-use core::marker::{PhantomData, Send, Sync};
-use core::slice;
 
 /// Similar to [Iter](core::slice::Iter), but specifically implemented with StaticVecs in mind.
 pub struct StaticVecIterConst<'a, T: 'a> {
@@ -125,6 +122,13 @@ impl<'a, T: 'a> Clone for StaticVecIterConst<'a, T> {
   }
 }
 
+impl<'a, T: 'a + Debug> Debug for StaticVecIterConst<'a, T> {
+  #[inline(always)]
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    Debug::fmt(self.as_slice(), f)
+  }
+}
+
 impl<'a, T: 'a> StaticVecIterMut<'a, T> {
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
@@ -210,3 +214,10 @@ impl<'a, T: 'a> FusedIterator for StaticVecIterMut<'a, T> {}
 unsafe impl<'a, T: 'a> TrustedLen for StaticVecIterMut<'a, T> {}
 unsafe impl<'a, T: 'a + Sync> Sync for StaticVecIterMut<'a, T> {}
 unsafe impl<'a, T: 'a + Sync> Send for StaticVecIterMut<'a, T> {}
+
+impl<'a, T: 'a + Debug> Debug for StaticVecIterMut<'a, T> {
+  #[inline(always)]
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    Debug::fmt(self.as_slice(), f)
+  }
+}

@@ -45,21 +45,25 @@ macro_rules! impl_from_iterator {
     /// that point are ignored.
     #[inline]
     fn from_iter<I: IntoIterator<Item = $type>>(iter: I) -> Self {
-      let mut res = Self::new();
-      let mut it = iter.into_iter();
       let mut i = 0;
-      while i < N {
-        if let Some($var_a) = it.next() {
-          unsafe {
-            res.data.get_unchecked_mut(i).write($var_b);
+      Self {
+        data: {
+          let mut res = Self::new_data_uninit();
+          let mut it = iter.into_iter();
+          while i < N {
+            if let Some($var_a) = it.next() {
+              unsafe {
+                (res.as_mut_ptr() as *mut T).add(i).write($var_b);
+              }
+            } else {
+              break;
+            }
+            i += 1;
           }
-        } else {
-          break;
-        }
-        i += 1;
+          unsafe { res.assume_init() }
+        },
+        length: i,
       }
-      res.length = i;
-      res
     }
   };
 }

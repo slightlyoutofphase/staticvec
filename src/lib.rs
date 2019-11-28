@@ -3,6 +3,7 @@
 #![feature(const_fn)]
 #![feature(const_generics)]
 #![feature(const_if_match)]
+#![feature(const_compare_raw_pointers)]
 #![feature(const_raw_ptr_to_usize_cast)]
 #![feature(core_intrinsics)]
 #![feature(doc_cfg)]
@@ -15,16 +16,6 @@
 #![feature(specialization)]
 #![feature(trusted_len)]
 
-// Literally just for stable-sort.
-#[cfg(any(feature = "std", rustdoc))]
-extern crate alloc;
-
-#[cfg(feature = "std")]
-extern crate std;
-
-#[cfg(any(feature = "std", rustdoc))]
-use alloc::vec::Vec;
-
 pub use crate::iterators::*;
 pub use crate::trait_impls::*;
 use crate::utils::*;
@@ -35,6 +26,16 @@ use core::mem::{self, MaybeUninit};
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
 use core::ptr;
 use core::slice;
+
+// Literally just for stable-sort.
+#[cfg(any(feature = "std", rustdoc))]
+extern crate alloc;
+
+#[cfg(feature = "std")]
+extern crate std;
+
+#[cfg(any(feature = "std", rustdoc))]
+use alloc::vec::Vec;
 
 mod iterators;
 #[macro_use]
@@ -55,8 +56,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline(always)]
   pub fn new() -> Self {
     Self {
-      // Sound because data is an array of MaybeUninit<T>, not an array of T.
-      data: MaybeUninit::uninit_array(),
+      data: Self::new_data(),
       length: 0,
     }
   }
@@ -69,13 +69,18 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
-    unsafe {
-      let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit_array();
-      let length = values.len().min(N);
-      values
-        .as_ptr()
-        .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
-      Self { data, length }
+    let length = values.len().min(N);
+    Self {
+      data: {
+        let mut data = Self::new_data_uninit();
+        unsafe {
+          values
+            .as_ptr()
+            .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
+          data.assume_init()
+        }
+      },
+      length,
     }
   }
 
@@ -91,14 +96,14 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     Self {
       data: {
         unsafe {
-          let mut data: [MaybeUninit<T>; N] = MaybeUninit::uninit_array();
+          let mut data = Self::new_data_uninit();
           values
             .as_ptr()
             .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, N2.min(N));
           // Drops any extra values left in the source array, then "forgets it".
           ptr::drop_in_place(values.get_unchecked_mut(N2.min(N)..N2));
           mem::forget(values);
-          data
+          data.assume_init()
         }
       },
       length: N2.min(N),
@@ -570,16 +575,18 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[inline]
   pub fn reversed(&self) -> Self
   where T: Copy {
-    let mut res = Self::new();
-    res.length = self.length;
+    let mut res = Self::new_data_uninit();
     unsafe {
       reverse_copy(
         self.as_ptr(),
         self.as_ptr().add(self.length),
-        res.as_mut_ptr(),
+        res.as_mut_ptr() as *mut T,
       );
     }
-    res
+    Self {
+      data: unsafe { res.assume_init() },
+      length: self.length,
+    }
   }
 
   /// Copies and appends all elements, if any, of a slice (which can also be `&mut` as it will
@@ -657,20 +664,23 @@ impl<T, const N: usize> StaticVec<T, { N }> {
       Unbounded => self.length,
     };
     assert!(start <= end && end <= self.length);
-    let mut res = Self::new();
-    res.length = end - start;
+    let res_length = end - start;
+    let mut res = Self::new_data_uninit();
     unsafe {
       self
         .as_ptr()
         .add(start)
-        .copy_to_nonoverlapping(res.as_mut_ptr(), res.length);
+        .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, res_length);
       self
         .as_ptr()
         .add(end)
         .copy_to(self.as_mut_ptr().add(start), self.length - end);
     }
-    self.length -= res.length;
-    res
+    self.length -= res_length;
+    Self {
+      data: unsafe { res.assume_init() },
+      length: res_length,
+    }
   }
 
   /// Removes all elements in the StaticVec for which `filter` returns true and
@@ -729,16 +739,18 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   pub fn split_off(&mut self, at: usize) -> Self {
     assert!(at <= self.length);
     let split_length = self.length - at;
-    let mut split = Self::new();
+    let mut split = Self::new_data_uninit();
+    self.length = at;
     unsafe {
-      self.length = at;
-      split.length = split_length;
       self
         .as_ptr()
         .add(at)
-        .copy_to_nonoverlapping(split.as_mut_ptr(), split_length);
+        .copy_to_nonoverlapping(split.as_mut_ptr() as *mut T, split_length);
     }
-    split
+    Self {
+      data: unsafe { split.assume_init() },
+      length: split_length,
+    }
   }
 
   /// Removes all but the first of consecutive elements in the StaticVec satisfying a given equality
@@ -794,5 +806,20 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     // returned from something or assigned to something.
     ((self as *const Self as *const usize).offset(1) as *const T)
       .copy_to_nonoverlapping((dest as *mut usize).offset(1) as *mut T, self.length);
+  }
+
+  #[doc(hidden)]
+  #[inline(always)]
+  pub(crate) fn new_data() -> [MaybeUninit<T>; N] {
+    // An internal convenience function to get an *initialized* instance of `MaybeUninit[<T>; N]`.
+    MaybeUninit::uninit_array()
+  }
+
+  #[doc(hidden)]
+  #[inline(always)]
+  pub(crate) fn new_data_uninit() -> MaybeUninit<[MaybeUninit<T>; N]> {
+    // An internal convenience function to get an *uninitialized* instance of
+    // `MaybeUninit<MaybeUninit[<T>; N]>`.
+    MaybeUninit::uninit()
   }
 }
