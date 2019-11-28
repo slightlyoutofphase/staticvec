@@ -40,7 +40,7 @@ impl<'a, T: 'a> StaticVecIterConst<'a, T> {
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        *self.start, *self.end
+        *self.start, *self.end.offset(-1)
       )
     }
   }
@@ -143,7 +143,7 @@ impl<'a, T: 'a> StaticVecIterMut<'a, T> {
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        *self.start, *self.end
+        *self.start, *self.end.offset(-1)
       )
     }
   }
