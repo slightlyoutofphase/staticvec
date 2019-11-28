@@ -77,7 +77,7 @@ impl<'a> Drop for LifespanCountingInstance<'a> {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 struct Struct {
   s: &'static str,
 }
