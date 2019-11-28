@@ -94,6 +94,33 @@ impl Drop for Struct {
 use std::io::{IoSlice, Write};
 
 #[test]
+fn append() {
+  let mut a = staticvec![Struct { s: "A" }, Struct { s: "B" }, Struct { s: "C" }];
+  let mut b = staticvec![
+    Struct { s: "D" },
+    Struct { s: "E" },
+    Struct { s: "F" },
+    Struct { s: "G" }
+  ];
+  let mut c = StaticVec::<Struct, 6>::new();
+  c.append(&mut a);
+  c.append(&mut b);
+  assert_eq!(format!("{:?}", a), "[]");
+  assert_eq!(format!("{:?}", b), "[Struct { s: \"G\" }]");
+  assert_eq!(
+    c,
+    staticvec![
+      Struct { s: "A" },
+      Struct { s: "B" },
+      Struct { s: "C" },
+      Struct { s: "D" },
+      Struct { s: "E" },
+      Struct { s: "F" }
+    ]
+  );
+}
+
+#[test]
 fn as_mut_ptr() {
   let mut v = staticvec![1, 2, 3];
   unsafe { assert_eq!(*v.as_mut_ptr(), 1) };
