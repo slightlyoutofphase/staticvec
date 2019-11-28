@@ -773,4 +773,26 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     // Exactly the same as Vec's version.
     self.dedup_by(|a, b| key(a) == key(b))
   }
+
+  #[doc(hidden)]
+  #[inline(always)]
+  pub(crate) unsafe fn copy_length_to(&self, dest: *mut MaybeUninit<Self>) {
+    // A internal convenience function to copy a usize worth of bytes from
+    // `self.length` to `dest`. This function should *only* be used
+    // in conjunction with `copy_items_to`, because they are both written
+    // in terms of number of bytes copied as opposed to actual specific field
+    // accesses.
+    (self as *const Self as *const usize).copy_to_nonoverlapping(dest as *mut usize, 1);
+  }
+
+  #[doc(hidden)]
+  #[inline(always)]
+  pub(crate) unsafe fn copy_items_to(&self, dest: *mut MaybeUninit<Self>) {
+    // Copies `self.length` worth of items to `dest`, in bytes. Like `copy_length_to`, this function
+    // is only concerned with the *amount* of data being written, not field layouts, and so
+    // should never be used except in conjunction with it when initializing a StaticVec to be
+    // returned from something or assigned to something.
+    ((self as *const Self as *const usize).offset(1) as *const T)
+      .copy_to_nonoverlapping((dest as *mut usize).offset(1) as *mut T, self.length);
+  }
 }

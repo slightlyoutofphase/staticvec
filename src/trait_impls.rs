@@ -5,6 +5,7 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
+use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
 use core::slice::SliceIndex;
@@ -81,15 +82,33 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
 impl<T: Copy, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline(always)]
   fn clone(&self) -> Self {
-    // The code this generates is *way* more efficient than `copy_to_nonoverlapping`,
-    // and safe in this case because we're transmuting between two instances of the same type.
-    unsafe { core::mem::transmute_copy(self) }
+    match self.length {
+      // If `self` is empty, just return a new StaticVec.
+      0 => Self::new(),
+      _ => {
+        // Create an uninitialized StaticVec (which allows the compiler to do better return value
+        // optimization when we call `assume_init` on it later, rather than fully instantiating it
+        // now.)
+        let mut res = MaybeUninit::<Self>::uninit();
+        // Copy a usize worth of bytes to `res` for `length`, and then `self.length` *
+        // `size_of::<T>` bytes to `res` for `data`. Note that the order we do this in does
+        // not actually matter, just that the number of bytes copied is exactly correct
+        // (which we can be confident is true by using the next two functions one after
+        // another.)
+        unsafe {
+          self.copy_length_to(&mut res);
+          self.copy_items_to(&mut res);
+          res.assume_init()
+        }
+      }
+    }
   }
 
   #[inline(always)]
   fn clone_from(&mut self, rhs: &Self) {
-    // See above comment for safety note.
-    *self = unsafe { core::mem::transmute_copy(rhs) }
+    // Here we take advantage of the above efficient `clone` implementation,
+    // in reverse.
+    *self = rhs.clone();
   }
 }
 
