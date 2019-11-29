@@ -5,7 +5,6 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::MaybeUninit;
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
 use core::slice::SliceIndex;
@@ -50,8 +49,8 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   default fn clone(&self) -> Self {
     let mut res = Self::new();
     for item in self {
-      // Safety: res and self have the same type, so they're guaranteed to
-      // have the same capacity, and push_unchecked will never overflow.
+      // Safety: `self` has the same capacity of `res`, and `res` is
+      // empty, so all of these pushes are safe.
       unsafe {
         res.push_unchecked(item.clone());
       }
@@ -62,23 +61,20 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   #[inline]
   default fn clone_from(&mut self, rhs: &Self) {
     self.truncate(rhs.length);
-    let mut i = 0;
-    loop {
-      if i == rhs.length {
-        break;
+    for i in 0..self.length {
+      // Safety: after the truncate, `self.len` <= `rhs.len`, which means that for
+      // every `i` in `self`, there is definitely an element at `rhs[i]`.
+      unsafe {
+        self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
       }
-      if i < self.length {
-        // Safety: after the truncate, `self.len` <= `rhs.len`, which means that for
-        // every i in self, there is definitely an element at `rhs[i]`.
-        unsafe { self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i)) };
-        i += 1;
-        continue;
-      }
-      // Safety: `i` < `rhs.length`, so `rhs.get_unchecked()` is safe. `i` starts at
+    }
+    for i in self.length..rhs.length {
+      // Safety: `i` < `rhs.length`, so `rhs.get_unchecked` is safe. `i` starts at
       // `self.length`, which is <= `rhs.length`, so there is always an available
       // slot at `self[i]` to push into.
-      unsafe { self.push_unchecked(rhs.get_unchecked(i).clone()) };
-      i += 1;
+      unsafe {
+        self.push_unchecked(rhs.get_unchecked(i).clone());
+      }
     }
   }
 }
@@ -89,22 +85,18 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, { N }> {
     match self.length {
       // If `self` is empty, just return a new StaticVec.
       0 => Self::new(),
-      _ => {
-        // Create an uninitialized StaticVec (which allows the compiler to do better return value
-        // optimization when we call `assume_init` on it later, rather than fully instantiating it
-        // now.)
-        let mut res = MaybeUninit::<Self>::uninit();
-        // Copy a usize worth of bytes to `res` for `length`, and then `self.length` times
-        // `size_of::<T>` bytes to `res` for `data`. Note that the order we do this in does
-        // not actually matter, it just matters that the total number of bytes copied is exactly
-        // correct (which we can be confident is true by using the next two functions one
-        // after another.)
-        unsafe {
-          self.copy_length_to(&mut res);
-          self.copy_items_to(&mut res);
-          res.assume_init()
-        }
-      }
+      _ => Self {
+        data: {
+          let mut res = Self::new_data_uninit();
+          unsafe {
+            self
+              .as_ptr()
+              .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, self.length);
+            res.assume_init()
+          }
+        },
+        length: self.length,
+      },
     }
   }
 

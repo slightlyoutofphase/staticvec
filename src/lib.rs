@@ -271,16 +271,14 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// ensure that is the case, so this function is marked `unsafe` and should
   /// be used with caution only when performance is absolutely paramount.
   ///
-  /// Note that, unlike [`slice::get_unchecked`], this method only supports
+  /// Note that unlike [slice::get_unchecked](core::slice::get_unchecked), this method only supports
   /// accessing individual elements via `usize`; it cannot also produce
   /// subslices. To unsafely get a subslice without a bounds check, use
-  /// `vec.as_slice().get_unchecked(a..b)`.
+  /// `self.as_slice().get_unchecked(a..b)`.
   ///
   /// # Safety
   ///
   /// It is up to the caller to ensure that `index` is within the appropriate bounds.
-  ///
-  /// [`slice::get_unchecked`]: https://doc.rust-lang.org/nightly/std/primitive.slice.html#method.get_unchecked
   #[inline(always)]
   pub unsafe fn get_unchecked(&self, index: usize) -> &T {
     debug_assert!(
@@ -620,19 +618,20 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     self.length += added_length;
     Ok(())
   }
-  
+
   /// Appends `self.remaining_capacity()` (or as many as available) items from
   /// `other` to `self`. The appended items (if any) will longer exist in `other` afterwards,
-  /// as `other`'s `length` field will be adjusted to indicate. The N2 parameter does
+  /// as `other`'s `length` field will be adjusted to indicate. The `N2` parameter does
   /// not need to be provided explicitly, and can be inferred directly from the constant `N`
-  /// contrainst of `other` (which may or may not be the same as the `N` constraint of `self`.)
+  /// constraint of `other` (which may or may not be the same as the `N` constraint of `self`.)
   #[inline]
   pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, { N2 }>) {
     let item_count = self.remaining_capacity().min(other.length);
     if item_count > 0 {
       let other_new_length = other.length - item_count;
       unsafe {
-        self.as_mut_ptr()
+        self
+          .as_mut_ptr()
           .add(self.length)
           .copy_from_nonoverlapping(other.as_ptr(), item_count);
         other
@@ -684,20 +683,22 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     };
     assert!(start <= end && end <= self.length);
     let res_length = end - start;
-    let mut res = Self::new_data_uninit();
-    unsafe {
-      self
-        .as_ptr()
-        .add(start)
-        .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, res_length);
-      self
-        .as_ptr()
-        .add(end)
-        .copy_to(self.as_mut_ptr().add(start), self.length - end);
-    }
-    self.length -= res_length;
     Self {
-      data: unsafe { res.assume_init() },
+      data: {
+        let mut res = Self::new_data_uninit();
+        unsafe {
+          self
+            .as_ptr()
+            .add(start)
+            .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, res_length);
+          self
+            .as_ptr()
+            .add(end)
+            .copy_to(self.as_mut_ptr().add(start), self.length - end);
+          self.length -= res_length;
+          res.assume_init()
+        }
+      },
       length: res_length,
     }
   }
@@ -743,10 +744,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
       let old_length = self.length;
       self.length = length;
       unsafe {
-        ptr::drop_in_place(
-          &mut *(self.data.get_unchecked_mut(length..old_length) as *mut [MaybeUninit<T>]
-            as *mut [T]),
-        );
+        ptr::drop_in_place(self.as_mut_slice().get_unchecked_mut(length..old_length));
       }
     }
   }
@@ -758,16 +756,16 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   pub fn split_off(&mut self, at: usize) -> Self {
     assert!(at <= self.length);
     let split_length = self.length - at;
-    let mut split = Self::new_data_uninit();
     self.length = at;
-    unsafe {
-      self
-        .as_ptr()
-        .add(at)
-        .copy_to_nonoverlapping(split.as_mut_ptr() as *mut T, split_length);
-    }
     Self {
-      data: unsafe { split.assume_init() },
+      data: unsafe {
+        let mut split = Self::new_data_uninit();
+        self
+          .as_ptr()
+          .add(at)
+          .copy_to_nonoverlapping(split.as_mut_ptr() as *mut T, split_length);
+        split.assume_init()
+      },
       length: split_length,
     }
   }
@@ -803,28 +801,6 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     K: PartialEq<K>, {
     // Exactly the same as Vec's version.
     self.dedup_by(|a, b| key(a) == key(b))
-  }
-
-  #[doc(hidden)]
-  #[inline(always)]
-  pub(crate) unsafe fn copy_length_to(&self, dest: *mut MaybeUninit<Self>) {
-    // An internal convenience function to copy a usize worth of bytes from
-    // `self` to `dest`, representing the space taken up by `self.length` but not necessarily the
-    // actual value of `self.length`. This function should *only* be used in conjunction with
-    // `copy_items_to`, because they are both written in terms of number of bytes copied as
-    // opposed to actual specific field accesses.
-    (self as *const Self as *const usize).copy_to_nonoverlapping(dest as *mut usize, 1);
-  }
-
-  #[doc(hidden)]
-  #[inline(always)]
-  pub(crate) unsafe fn copy_items_to(&self, dest: *mut MaybeUninit<Self>) {
-    // Copies `self.length` worth of items to `dest`, in bytes. Like `copy_length_to`, this function
-    // is only concerned with the *amount* of data being written, not field layouts, and so
-    // should never be used except in conjunction with it when initializing a StaticVec to be
-    // returned from something or assigned to something.
-    ((self as *const Self as *const usize).offset(1) as *const T)
-      .copy_to_nonoverlapping((dest as *mut usize).offset(1) as *mut T, self.length);
   }
 
   #[doc(hidden)]

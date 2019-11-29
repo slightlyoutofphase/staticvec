@@ -118,6 +118,12 @@ fn append() {
       Struct { s: "F" }
     ]
   );
+  let mut d = staticvec![12, 24];
+  let mut e = staticvec![1, 2, 3];
+  d.pop().unwrap();
+  d.append(&mut e);
+  assert_eq!(e, [2, 3]);
+  assert_eq!(d, [12, 1]);
 }
 
 #[test]
