@@ -636,7 +636,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
           .copy_from_nonoverlapping(other.as_ptr(), item_count);
         other
           .as_mut_ptr()
-          .copy_from_nonoverlapping(other.as_ptr().add(item_count), other_new_length);
+          .copy_from(other.as_ptr().add(item_count), other_new_length);
       }
       other.length = other_new_length;
       self.length += item_count;
