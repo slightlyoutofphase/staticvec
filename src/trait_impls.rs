@@ -160,7 +160,7 @@ impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, { N }> {
 
 impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, { N }> {
   /// Creates a new StaticVec instance from the contents of `values`, using
-  /// [new_from_slice](crate::StaticVec::new_from_slice) internally.
+  /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &[T]) -> Self {
     Self::new_from_slice(values)
@@ -169,7 +169,7 @@ impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, { N }> {
 
 impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, { N }> {
   /// Creates a new StaticVec instance from the contents of `values`, using
-  /// [new_from_slice](crate::StaticVec::new_from_slice) internally.
+  /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &mut [T]) -> Self {
     Self::new_from_slice(values)
@@ -178,7 +178,7 @@ impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, { N }> {
 
 impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, { N2 }> {
   /// Creates a new StaticVec instance from the contents of `values`, using
-  /// [new_from_array](crate::StaticVec::new_from_array) internally.
+  /// [`new_from_array`](crate::StaticVec::new_from_array) internally.
   #[inline(always)]
   fn from(values: [T; N1]) -> Self {
     Self::new_from_array(values)
@@ -187,7 +187,7 @@ impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, { N2 }>
 
 impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, { N2 }> {
   /// Creates a new StaticVec instance from the contents of `values`, using
-  /// [new_from_slice](crate::StaticVec::new_from_slice) internally.
+  /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &[T; N1]) -> Self {
     Self::new_from_slice(values)
@@ -196,7 +196,7 @@ impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, 
 
 impl<T: Copy, const N1: usize, const N2: usize> From<&mut [T; N1]> for StaticVec<T, { N2 }> {
   /// Creates a new StaticVec instance from the contents of `values`, using
-  /// [new_from_slice](crate::StaticVec::new_from_slice) internally.
+  /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
   fn from(values: &mut [T; N1]) -> Self {
     Self::new_from_slice(values)
@@ -237,7 +237,7 @@ impl<T, I: SliceIndex<[T]>, const N: usize> IndexMut<I> for StaticVec<T, { N }> 
 #[cfg(feature = "std")]
 #[doc(cfg(feature = "std"))]
 impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, { N }> {
-  /// Functionally equivalent to [into_vec](crate::StaticVec::into_vec).
+  /// Functionally equivalent to [`into_vec`](crate::StaticVec::into_vec).
   #[inline(always)]
   fn into(self) -> Vec<T> {
     self.into_vec()
@@ -247,7 +247,8 @@ impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, { N }> {
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
   type IntoIter = StaticVecIterConst<'a, T>;
   type Item = &'a T;
-  /// Returns a `StaticVecIterConst` over the StaticVec's inhabited area.
+  /// Returns a [`StaticVecIterConst`](crate::iterators::StaticVecIterConst) over the StaticVec's
+  /// inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
     self.iter()
@@ -257,7 +258,8 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
 impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
   type IntoIter = StaticVecIterMut<'a, T>;
   type Item = &'a mut T;
-  /// Returns a `StaticVecIterMut` over the StaticVec's inhabited area.
+  /// Returns a [`StaticVecIterMut`](crate::iterators::StaticVecIterMut) over the StaticVec's
+  /// inhabited area.
   #[inline(always)]
   fn into_iter(self) -> Self::IntoIter {
     self.iter_mut()
@@ -302,11 +304,11 @@ impl_partial_ord_with_as_slice_against_slice!([T1], &mut StaticVec<T2, { N }>);
 impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, { N }>);
 impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, { N }>);
 
-/// Read from a [`StaticVec`]. This implementation reads from the `StaticVec`
+/// Read from a StaticVec. This implementation reads from the StaticVec
 /// by copying bytes into the destination buffers, then shifting the remaining
 /// bytes over. This might be inefficient for your needs; consider using
 /// [`Cursor`] or [`[T] as Read`][slice-read] for more efficient
-/// ways to read out of a `StaticVec` without mutating it.
+/// ways to read out of a StaticVec without mutating it.
 ///
 /// [`Cursor`]: https://doc.rust-lang.org/nightly/std/io/struct.Cursor.html
 /// [slice-read]: https://doc.rust-lang.org/nightly/std/primitive.slice.html#impl-Read]
@@ -373,7 +375,7 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
 
   #[inline]
   fn read_vectored(&mut self, bufs: &mut [IoSliceMut]) -> io::Result<usize> {
-    // Minimize copies: copy to each output buf in sequence, then shfit the
+    // Minimize copies: copy to each output buf in sequence, then shift the
     // internal data only once. This as opposed to calling `read` in a loop,
     // which shifts the inner data each time.
     let mut start_ptr = self.as_ptr();
@@ -387,7 +389,7 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
         break;
       }
 
-      // The number of bytes we'll be reading out of self
+      // The number of bytes we'll be reading out of self.
       let read_length = self.length.min(buf.len());
 
       // Safety: start_ptr is known to point to the array in self, which

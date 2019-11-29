@@ -11,14 +11,14 @@ use alloc::string::String;
 #[cfg(feature = "std")]
 use alloc::format;
 
-/// Similar to [Iter](core::slice::Iter), but specifically implemented with StaticVecs in mind.
+/// Similar to [`Iter`](core::slice::Iter), but specifically implemented with StaticVecs in mind.
 pub struct StaticVecIterConst<'a, T: 'a> {
   pub(crate) start: *const T,
   pub(crate) end: *const T,
   pub(crate) marker: PhantomData<&'a T>,
 }
 
-/// Similar to [IterMut](core::slice::IterMut), but specifically implemented with StaticVecs in
+/// Similar to [`IterMut`](core::slice::IterMut), but specifically implemented with StaticVecs in
 /// mind.
 pub struct StaticVecIterMut<'a, T: 'a> {
   pub(crate) start: *mut T,

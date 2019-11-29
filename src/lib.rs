@@ -40,7 +40,7 @@ mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
 
-/// A [Vec](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
+/// A [`Vec`](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
   data: [MaybeUninit<T>; N],
@@ -61,7 +61,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// which can be either `&mut` or `&` as if it is `&mut` it will implicitly coerce to `&`.
   /// If the slice has a length greater than the StaticVec's declared capacity,
   /// any contents after that point are ignored.
-  /// Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
   #[inline]
   pub fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
@@ -85,8 +85,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// any contents after that point are ignored.
   /// The `N2` parameter does not need to be provided explicitly, and can be inferred from the array
   /// itself. This function does *not* leak memory, as any ignored extra elements in the source
-  /// array are explicitly dropped with [drop_in_place](core::ptr::drop_in_place) before
-  /// [forget](core::mem::forget) is called on it.
+  /// array are explicitly dropped with [`drop_in_place`](core::ptr::drop_in_place) before
+  /// [`forget`](core::mem::forget) is called on it.
   #[inline]
   pub fn new_from_array<const N2: usize>(mut values: [T; N2]) -> Self {
     Self {
@@ -139,11 +139,11 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 
   /// Returns a new StaticVec instance filled with the return value of an initializer function.
-  /// Unlike for [filled_with](crate::StaticVec::filled_with), the initializer function in
+  /// Unlike for [`filled_with`](crate::StaticVec::filled_with), the initializer function in
   /// this case must take a single usize variable as an input parameter, which will be called
   /// with the current index of the `0..N` loop that
-  /// [filled_with_by_index](crate::StaticVec::filled_with_by_index) is implemented with internally.
-  /// The length field of the newly created StaticVec will be equal to its capacity.
+  /// [`filled_with_by_index`](crate::StaticVec::filled_with_by_index) is implemented with
+  /// internally. The length field of the newly created StaticVec will be equal to its capacity.
   ///
   /// Example usage:
   /// ```
@@ -168,9 +168,10 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 
   /// Returns the current length of the StaticVec.
-  /// Just as for a normal [Vec](alloc::vec::Vec), this means the number of elements that
-  /// have been added to it with `push`, `insert`, etc. except in the case
-  /// that it has been set directly with the unsafe `set_len` function.
+  /// Just as for a normal [`Vec`](alloc::vec::Vec), this means the number of elements that
+  /// have been added to it with [`push`](crate::StaticVec::push),
+  /// [`insert`](crate::StaticVec::insert), etc. except in the case that it has been set directly
+  /// with the unsafe [`set_len`](crate::StaticVec::set_len) function.
   #[inline(always)]
   pub const fn len(&self) -> usize {
     self.length
@@ -184,24 +185,24 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     N
   }
 
-  /// Does the same thing as [capacity](crate::StaticVec::capacity), but as an associated
+  /// Does the same thing as [`capacity`](crate::StaticVec::capacity), but as an associated
   /// function rather than a method.
   #[inline(always)]
   pub const fn cap() -> usize {
     N
   }
 
-  /// Serves the same purpose as [capacity](crate::StaticVec::capacity), but as an associated
+  /// Serves the same purpose as [`capacity`](crate::StaticVec::capacity), but as an associated
   /// constant rather than a method.
   pub const CAPACITY: usize = N;
 
-  /// Returns the remaining capacity of the `StaticVec`.
+  /// Returns the remaining capacity of the StaticVec.
   #[inline(always)]
   pub const fn remaining_capacity(&self) -> usize {
     N - self.length
   }
 
-  /// Directly sets the `length` field of the StaticVec to `new_len`. Useful if you intend
+  /// Directly sets the length field of the StaticVec to `new_len`. Useful if you intend
   /// to write to it solely element-wise, but marked unsafe due to how it creates
   /// the potential for reading from unitialized memory later on.
   #[inline(always)]
@@ -271,7 +272,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// ensure that is the case, so this function is marked `unsafe` and should
   /// be used with caution only when performance is absolutely paramount.
   ///
-  /// Note that unlike [slice::get_unchecked](core::slice::get_unchecked), this method only supports
+  /// Note that unlike [`slice::get_unchecked`](https://doc.rust-lang.org/std/primitive.slice.html#method.get_unchecked_mut), this method only supports
   /// accessing individual elements via `usize`; it cannot also produce
   /// subslices. To unsafely get a subslice without a bounds check, use
   /// `self.as_slice().get_unchecked(a..b)`.
@@ -296,7 +297,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// be used with caution only when performance is absolutely paramount.
   ///
   /// The same differences between this method and the slice method of the same name
-  /// apply as do for [get_unchecked](crate::StaticVec::get_unchecked).
+  /// apply as do for [`get_unchecked`](crate::StaticVec::get_unchecked).
   ///
   /// # Safety
   ///
@@ -349,7 +350,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     Err("Insufficient remaining capacity!")
   }
 
-  /// Push a value to the end of this `StaticVec`. Panics if the collection is
+  /// Push a value to the end of this StaticVec. Panics if the collection is
   /// full; that is, if `self.len() == self.capacity()`.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
@@ -509,7 +510,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     self.length = 0;
   }
 
-  /// Returns a [StaticVecIterConst](crate::iterators::StaticVecIterConst) over the StaticVec's
+  /// Returns a [`StaticVecIterConst`](crate::iterators::StaticVecIterConst) over the StaticVec's
   /// inhabited area.
   #[inline(always)]
   pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
@@ -523,7 +524,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     }
   }
 
-  /// Returns a [StaticVecIterMut](crate::iterators::StaticVecIterMut) over the StaticVec's
+  /// Returns a [`StaticVecIterMut`](crate::iterators::StaticVecIterMut) over the StaticVec's
   /// inhabited area.
   #[inline(always)]
   pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
@@ -539,8 +540,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
 
   /// Returns a separate, stable-sorted StaticVec of the contents of the
   /// StaticVec's inhabited area without modifying the original data.
-  /// Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues,
-  /// and [Ord](core::cmp::Ord) to make the sorting possible.
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues,
+  /// and [`Ord`](core::cmp::Ord) to make the sorting possible.
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline]
@@ -553,8 +554,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
 
   /// Returns a separate, unstable-sorted StaticVec of the contents of the
   /// StaticVec's inhabited area without modifying the original data.
-  /// Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues,
-  /// and [Ord](core::cmp::Ord) to make the sorting possible.
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues,
+  /// and [`Ord`](core::cmp::Ord) to make the sorting possible.
   #[inline]
   pub fn sorted_unstable(&self) -> Self
   where T: Copy + Ord {
@@ -565,7 +566,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
 
   /// Returns a separate, reversed StaticVec of the contents of the StaticVec's
   /// inhabited area without modifying the original data.
-  /// Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
   #[inline]
   pub fn reversed(&self) -> Self
   where T: Copy {
@@ -586,7 +587,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// Copies and appends all elements, if any, of a slice (which can also be `&mut` as it will
   /// coerce implicitly to `&`) to the StaticVec. If the slice has a length greater than the
   /// StaticVec's remaining capacity, any contents after that point are ignored.
-  /// Locally requires that `T` implements [Copy](core::marker::Copy) to avoid soundness issues.
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
   #[inline(always)]
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
@@ -643,12 +644,12 @@ impl<T, const N: usize> StaticVec<T, { N }> {
     }
   }
 
-  /// Returns a [Vec](alloc::vec::Vec) containing the contents of the StaticVec instance.
-  /// The returned [Vec](alloc::vec::Vec) will initially have the same value for
-  /// [len](alloc::vec::Vec::len) and [capacity](alloc::vec::Vec::capacity) as the source StaticVec.
-  /// Note that while using this function does *not* consume the source StaticVec in the sense of
-  /// rendering it completely inaccessible / unusable, it *does* empty it (that is, it will have
-  /// no contents and a `length` of 0 afterwards.)
+  /// Returns a [`Vec`](alloc::vec::Vec) containing the contents of the StaticVec instance.
+  /// The returned [`Vec`](alloc::vec::Vec) will initially have the same value for
+  /// [`len`](alloc::vec::Vec::len) and [`capacity`](alloc::vec::Vec::capacity) as the source
+  /// StaticVec. Note that while using this function does *not* consume the source StaticVec in
+  /// the sense of rendering it completely inaccessible / unusable, it *does* empty it (that is,
+  /// it will have no contents and a length of 0 afterwards.)
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
@@ -784,7 +785,7 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 
   /// Removes consecutive repeated elements in the StaticVec according to the
-  /// locally required [PartialEq](core::cmp::PartialEq) trait implementation for `T`.
+  /// locally required [`PartialEq`](core::cmp::PartialEq) trait implementation for `T`.
   #[inline(always)]
   pub fn dedup(&mut self)
   where T: PartialEq {
