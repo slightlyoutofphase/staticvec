@@ -798,12 +798,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn dedup_by<F>(&mut self, same_bucket: F)
   where F: FnMut(&mut T, &mut T) -> bool {
-    // Exactly the same as Vec's version.
-    let len = {
-      let (dedup, _) = self.as_mut_slice().partition_dedup_by(same_bucket);
-      dedup.len()
-    };
-    self.truncate(len);
+    // Mostly the same as Vec's version.
+    let new_length = self.as_mut_slice().partition_dedup_by(same_bucket).0.len();
+    self.truncate(new_length);
   }
 
   /// Removes consecutive repeated elements in the StaticVec according to the

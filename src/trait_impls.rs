@@ -299,6 +299,23 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, N> {
   }
 }
 
+impl<T, const N: usize> IntoIterator for StaticVec<T, N> {
+  type IntoIter = StaticVecIntoIter<T, N>;
+  type Item = T;
+  /// Returns a by-value [`StaticVecIntoIter`](crate::iterators::StaticVecIntoIter) over the
+  /// StaticVec's inhabited area, which consumes the StaticVec.
+  #[inline(always)]
+  fn into_iter(mut self) -> Self::IntoIter {
+    let old_length = self.length;
+    self.length = 0;
+    StaticVecIntoIter {
+      start: 0,
+      end: old_length,
+      data: self,
+    }
+  }
+}
+
 impl<T: Ord, const N: usize> Ord for StaticVec<T, N> {
   #[inline(always)]
   fn cmp(&self, other: &Self) -> Ordering {
