@@ -157,13 +157,18 @@ fn bounds_to_string() {
   let mut v = staticvec![1, 2, 3, 4];
   let it = v.iter();
   assert_eq!(
-    "Current value of element at `start`: 1\nCurrent value of element at `end`: 4",
+    "Current value of element at `start`: Some(1)\nCurrent value of element at `end`: Some(4)",
     it.bounds_to_string()
   );
   let itm = v.iter_mut();
   assert_eq!(
-    "Current value of element at `start`: 1\nCurrent value of element at `end`: 4",
+    "Current value of element at `start`: Some(1)\nCurrent value of element at `end`: Some(4)",
     itm.bounds_to_string()
+  );
+  let itv = v.into_iter();
+  assert_eq!(
+    "Current value of element at `start`: 1\nCurrent value of element at `end`: 4",
+    itv.bounds_to_string()
   );
 }
 
@@ -480,6 +485,14 @@ fn iter_mut() {
   let mut i = v.iter_mut();
   assert_eq!(*i.next().unwrap(), 1);
   assert_eq!(*i.next_back().unwrap(), 5);
+}
+
+#[test]
+fn into_iter() {
+  let v = staticvec![1, 2, 3, 4, 5];
+  let mut i = v.into_iter();
+  assert_eq!(i.next().unwrap(), 1);
+  assert_eq!(i.next_back().unwrap(), 5);
 }
 
 #[cfg(feature = "std")]

@@ -389,4 +389,12 @@ fn main() {
   for ms in &cloned {
     println!("{:?}", ms);
   }
+  let v2 = StaticVec::from([
+    Box::new(MyOtherStruct { s: "XYZ" }),
+    Box::new(MyOtherStruct { s: "ZYX" }),
+    Box::new(MyOtherStruct { s: "XYZ" }),
+  ]);
+  let mut it = v2.into_iter();
+  println!("{:?}", it.next().unwrap());
+  println!("{:?}", it.next().unwrap());
 }
