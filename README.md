@@ -57,7 +57,7 @@ fn main() {
   for f in staticvec![12.0, 14.0, 15.0, 16.0].iter().skip(2) {
     println!("{}", f);
   }
-  for i in &staticvec![
+  for i in staticvec![
     staticvec![14, 12, 10].sorted(),
     staticvec![20, 18, 16].reversed(),
     staticvec![26, 24, 22].sorted(),
@@ -66,7 +66,7 @@ fn main() {
   .iter()
   .flatten()
   .collect::<StaticVec<usize, 12>>()
-  {
+  .iter() {
     println!("{}", i);
   }
 }
