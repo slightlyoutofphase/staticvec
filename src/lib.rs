@@ -93,10 +93,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// // Same input length as the declared capacity.
+  /// // Same input length as the declared capacity:
   /// let v = StaticVec::<i32, 3>::new_from_array([1, 2, 3]);
-  /// assert_eq!(vec, [1, 2, 3]);
-  /// // Truncated to fit the declared capacity.
+  /// assert_eq!(v, [1, 2, 3]);
+  /// // Truncated to fit the declared capacity:
   /// let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
   /// assert_eq!(v2, [1, 2, 3]);
   /// ```

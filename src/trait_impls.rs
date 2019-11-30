@@ -191,7 +191,7 @@ impl<T, const N: usize> From<[T; N]> for StaticVec<T, N> {
   fn from(values: [T; N]) -> Self {
     Self {
       data: unsafe {
-        let res = ptr::read(&values as *const [T; N] as *const [MaybeUninit<T>; N]);
+        let res = (&values as *const [T; N] as *const [MaybeUninit<T>; N]).read();
         mem::forget(values);
         res
       },
@@ -379,7 +379,6 @@ impl<const N: usize> Read for StaticVec<u8, N> {
         .as_mut_ptr()
         .copy_from_nonoverlapping(self.as_ptr(), read_length);
     }
-
     if read_length < self.length {
       // TODO: find out if the optimizer elides the bounds check here. It
       // should be able to, since the only non-const value is read_length,
@@ -430,7 +429,6 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     // which shifts the inner data each time.
     let mut start_ptr = self.as_ptr();
     let original_length = self.length;
-
     // We update self.length inplace in the loop to track how many bytes
     // have been written. This means that when we perform the shift at the
     // end, self.length is already correct.
@@ -438,10 +436,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
       if self.is_empty() {
         break;
       }
-
       // The number of bytes we'll be reading out of self.
       let read_length = self.length.min(buf.len());
-
       // Safety: start_ptr is known to point to the array in self, which
       // is different than `buf`. read_length <= self.length.
       unsafe {
@@ -452,16 +448,13 @@ impl<const N: usize> Read for StaticVec<u8, N> {
         self.length -= read_length;
       }
     }
-
     let total_read = original_length - self.length;
-
     if self.length > 0 {
       // TODO: find out if the optimizer elides the bounds check here. It
       // should be able to, since the only non-const value is total_read,
       // which is known to be <= self.length
       self.as_mut_slice().copy_within(total_read.., 0);
     }
-
     Ok(total_read)
   }
 }
