@@ -374,7 +374,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     Err("Insufficient remaining capacity!")
   }
 
-  /// Push a value to the end of this StaticVec. Panics if the collection is
+  /// Pushes a value to the end of the StaticVec. Panics if the collection is
   /// full; that is, if `self.len() == self.capacity()`.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
@@ -646,9 +646,11 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Appends `self.remaining_capacity()` (or as many as available) items from
   /// `other` to `self`. The appended items (if any) will no longer exist in `other` afterwards,
-  /// as `other`'s `length` field will be adjusted to indicate. The `N2` parameter does
-  /// not need to be provided explicitly, and can be inferred directly from the constant `N2`
-  /// constraint of `other` (which may or may not be the same as the `N` constraint of `self`.)
+  /// as `other`'s `length` field will be adjusted to indicate.
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred directly from
+  /// the constant `N2` constraint of `other` (which may or may not be the same as the `N`
+  /// constraint of `self`.)
   #[inline]
   pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, N2>) {
     let item_count = self.remaining_capacity().min(other.length);

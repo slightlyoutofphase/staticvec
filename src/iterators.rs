@@ -330,7 +330,7 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
       _ => unsafe {
         ptr::drop_in_place(slice::from_raw_parts_mut(
           self.data.as_mut_ptr().add(self.start),
-          self.len(),
+          item_count,
         ))
       },
     }
