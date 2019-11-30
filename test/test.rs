@@ -475,6 +475,12 @@ fn iter() {
   let mut i = v.iter();
   assert_eq!(*i.next().unwrap(), 1);
   assert_eq!(*i.next_back().unwrap(), 5);
+  assert_eq!("[2, 3, 4]", format!("{:?}", i));
+  assert_eq!(*i.next().unwrap(), 2);
+  assert_eq!(*i.next_back().unwrap(), 4);
+  assert_eq!("[3]", format!("{:?}", i));
+  assert_eq!(*i.next().unwrap(), 3);
+  assert_eq!("[]", format!("{:?}", i));
 }
 
 #[test]
@@ -483,6 +489,12 @@ fn iter_mut() {
   let mut i = v.iter_mut();
   assert_eq!(*i.next().unwrap(), 1);
   assert_eq!(*i.next_back().unwrap(), 5);
+  assert_eq!("[2, 3, 4]", format!("{:?}", i));
+  assert_eq!(*i.next().unwrap(), 2);
+  assert_eq!(*i.next_back().unwrap(), 4);
+  assert_eq!("[3]", format!("{:?}", i));
+  assert_eq!(*i.next().unwrap(), 3);
+  assert_eq!("[]", format!("{:?}", i));
 }
 
 #[test]
@@ -491,6 +503,12 @@ fn into_iter() {
   let mut i = v.into_iter();
   assert_eq!(i.next().unwrap(), 1);
   assert_eq!(i.next_back().unwrap(), 5);
+  assert_eq!("[2, 3, 4]", format!("{:?}", i));
+  assert_eq!(i.next().unwrap(), 2);
+  assert_eq!(i.next_back().unwrap(), 4);
+  assert_eq!("[3]", format!("{:?}", i));
+  assert_eq!(i.next().unwrap(), 3);
+  assert_eq!("[]", format!("{:?}", i));
 }
 
 #[cfg(feature = "std")]
