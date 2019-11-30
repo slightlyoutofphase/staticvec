@@ -1,5 +1,6 @@
 #![allow(clippy::all)]
 #![allow(dead_code)]
+#![feature(type_name_of_val)]
 
 use staticvec::*;
 
@@ -385,6 +386,11 @@ fn from() {
   let mut v = staticvec![1];
   v.clear();
   assert_eq!(StaticVec::<i32, 6>::from(v.as_slice()).len(), 0);
+  assert_eq!(StaticVec::from(["A"]), ["A"]);
+  assert_eq!(
+    StaticVec::from([Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]),
+    [Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]
+  );
 }
 
 #[test]
@@ -465,8 +471,7 @@ fn iter() {
   let v = staticvec![1, 2, 3, 4, 5];
   let mut i = v.iter();
   assert_eq!(*i.next().unwrap(), 1);
-  let mut ir = v.iter().rev();
-  assert_eq!(*ir.next().unwrap(), 5);
+  assert_eq!(*i.next_back().unwrap(), 5);
 }
 
 #[test]
@@ -474,8 +479,7 @@ fn iter_mut() {
   let mut v = staticvec![1, 2, 3, 4, 5];
   let mut i = v.iter_mut();
   assert_eq!(*i.next().unwrap(), 1);
-  let mut ir = v.iter_mut().rev();
-  assert_eq!(*ir.next().unwrap(), 5);
+  assert_eq!(*i.next_back().unwrap(), 5);
 }
 
 #[cfg(feature = "std")]
@@ -517,6 +521,14 @@ fn len() {
 }
 
 #[test]
+fn macros() {
+  // The type of the StaticVec on the next line is `StaticVec<Vec<StaticVec<i32, 4>>, 1>`.
+  let _v = staticvec![staticvec![staticvec![1, 2, 3, 4]]];
+  // The type of the StaticVec on the next line is `StaticVec<f32, 64>`.
+  let _v2 = staticvec![12.0; 64];
+}
+
+#[test]
 fn new() {
   let v = StaticVec::<i32, 1>::new();
   assert_eq!(v.capacity(), 1);
@@ -540,6 +552,12 @@ fn new_from_array() {
   assert_eq!(vec2, [1, 1, 1]);
   let vec3 = StaticVec::<i32, 27>::new_from_array([0; 0]);
   assert_eq!(vec3, []);
+  let vec4 = StaticVec::<f32, 1024>::new_from_array([24.0; 512]);
+  assert_eq!(vec4, staticvec![24.0; 512]);
+  let v = StaticVec::<i32, 3>::new_from_array([1, 2, 3]);
+  assert_eq!(v, [1, 2, 3]);
+  let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
+  assert_eq!(v2, [1, 2, 3]);
 }
 
 #[test]

@@ -1,6 +1,7 @@
 #![no_std]
 #![allow(incomplete_features)]
 #![feature(const_fn)]
+#![feature(const_if_match)]
 #![feature(const_generics)]
 #![feature(core_intrinsics)]
 #![feature(doc_cfg)]
@@ -47,7 +48,7 @@ pub struct StaticVec<T, const N: usize> {
   length: usize,
 }
 
-impl<T, const N: usize> StaticVec<T, { N }> {
+impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a new StaticVec instance.
   #[inline(always)]
   pub fn new() -> Self {
@@ -83,26 +84,48 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// Returns a new StaticVec instance filled with the contents, if any, of an array.
   /// If the array has a length greater than the StaticVec's declared capacity,
   /// any contents after that point are ignored.
+  ///
   /// The `N2` parameter does not need to be provided explicitly, and can be inferred from the array
   /// itself. This function does *not* leak memory, as any ignored extra elements in the source
   /// array are explicitly dropped with [`drop_in_place`](core::ptr::drop_in_place) before
   /// [`forget`](core::mem::forget) is called on it.
+  ///
+  /// Example usage:
+  /// ```
+  /// // Same input length as the declared capacity.
+  /// let v = StaticVec::<i32, 3>::new_from_array([1, 2, 3]);
+  /// assert_eq!(vec, [1, 2, 3]);
+  /// // Truncated to fit the declared capacity.
+  /// let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
+  /// assert_eq!(v2, [1, 2, 3]);
+  /// ```
+  /// Note that StaticVec also implements [`From`](std::convert::From) for both slices and static
+  /// arrays, which may prove more ergonomic in some cases as it allows for a greater degree of
+  /// type inference:
+  /// ```
+  /// // The StaticVec on the next line is inferred to be of type `StaticVec<&'static str, 4>`.
+  /// let v = StaticVec::from(["A", "B", "C", "D"]);
+  /// ```
   #[inline]
   pub fn new_from_array<const N2: usize>(mut values: [T; N2]) -> Self {
-    Self {
-      data: {
-        unsafe {
-          let mut data = Self::new_data_uninit();
-          values
-            .as_ptr()
-            .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, N2.min(N));
-          // Drops any extra values left in the source array, then "forgets it".
-          ptr::drop_in_place(values.get_unchecked_mut(N2.min(N)..N2));
-          mem::forget(values);
-          data.assume_init()
-        }
-      },
-      length: N2.min(N),
+    if N == N2 {
+      Self::from(values)
+    } else {
+      Self {
+        data: {
+          unsafe {
+            let mut data = Self::new_data_uninit();
+            values
+              .as_ptr()
+              .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, N2.min(N));
+            // Drops any extra values left in the source array, then "forgets it".
+            ptr::drop_in_place(values.get_unchecked_mut(N2.min(N)..N2));
+            mem::forget(values);
+            data.assume_init()
+          }
+        },
+        length: N2.min(N),
+      }
     }
   }
 
@@ -272,8 +295,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// ensure that is the case, so this function is marked `unsafe` and should
   /// be used with caution only when performance is absolutely paramount.
   ///
-  /// Note that unlike [`slice::get_unchecked`](https://doc.rust-lang.org/std/primitive.slice.html#method.get_unchecked_mut), this method only supports
-  /// accessing individual elements via `usize`; it cannot also produce
+  /// Note that unlike [`slice::get_unchecked`](https://doc.rust-lang.org/nightly/std/primitive.slice.html#method.get_unchecked),
+  /// this method only supports accessing individual elements via `usize`; it cannot also produce
   /// subslices. To unsafely get a subslice without a bounds check, use
   /// `self.as_slice().get_unchecked(a..b)`.
   ///
@@ -513,8 +536,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// Returns a [`StaticVecIterConst`](crate::iterators::StaticVecIterConst) over the StaticVec's
   /// inhabited area.
   #[inline(always)]
-  pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T> {
-    StaticVecIterConst::<'a, T> {
+  pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T, N> {
+    StaticVecIterConst::<'a, T, N> {
       start: self.as_ptr(),
       end: match intrinsics::size_of::<T>() {
         0 => (self.as_ptr() as *const u8).wrapping_add(self.length) as *const T,
@@ -527,8 +550,8 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   /// Returns a [`StaticVecIterMut`](crate::iterators::StaticVecIterMut) over the StaticVec's
   /// inhabited area.
   #[inline(always)]
-  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T> {
-    StaticVecIterMut::<'a, T> {
+  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T, N> {
+    StaticVecIterMut::<'a, T, N> {
       start: self.as_mut_ptr(),
       end: match intrinsics::size_of::<T>() {
         0 => (self.as_mut_ptr() as *mut u8).wrapping_add(self.length) as *mut T,
@@ -621,27 +644,25 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   }
 
   /// Appends `self.remaining_capacity()` (or as many as available) items from
-  /// `other` to `self`. The appended items (if any) will longer exist in `other` afterwards,
+  /// `other` to `self`. The appended items (if any) will no longer exist in `other` afterwards,
   /// as `other`'s `length` field will be adjusted to indicate. The `N2` parameter does
-  /// not need to be provided explicitly, and can be inferred directly from the constant `N`
+  /// not need to be provided explicitly, and can be inferred directly from the constant `N2`
   /// constraint of `other` (which may or may not be the same as the `N` constraint of `self`.)
   #[inline]
-  pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, { N2 }>) {
+  pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, N2>) {
     let item_count = self.remaining_capacity().min(other.length);
-    if item_count > 0 {
-      let other_new_length = other.length - item_count;
-      unsafe {
-        self
-          .as_mut_ptr()
-          .add(self.length)
-          .copy_from_nonoverlapping(other.as_ptr(), item_count);
-        other
-          .as_mut_ptr()
-          .copy_from(other.as_ptr().add(item_count), other_new_length);
-      }
-      other.length = other_new_length;
-      self.length += item_count;
+    let other_new_length = other.length - item_count;
+    unsafe {
+      self
+        .as_mut_ptr()
+        .add(self.length)
+        .copy_from_nonoverlapping(other.as_ptr(), item_count);
+      other
+        .as_mut_ptr()
+        .copy_from(other.as_ptr().add(item_count), other_new_length);
     }
+    other.length = other_new_length;
+    self.length += item_count;
   }
 
   /// Returns a [`Vec`](alloc::vec::Vec) containing the contents of the StaticVec instance.
@@ -807,15 +828,15 @@ impl<T, const N: usize> StaticVec<T, { N }> {
   #[doc(hidden)]
   #[inline(always)]
   pub(crate) fn new_data() -> [MaybeUninit<T>; N] {
-    // An internal convenience function to get an *initialized* instance of `MaybeUninit[<T>; N]`.
+    // An internal convenience function to get an *initialized* instance of `[MaybeUninit<T>; N]`.
     MaybeUninit::uninit_array()
   }
 
   #[doc(hidden)]
   #[inline(always)]
-  pub(crate) fn new_data_uninit() -> MaybeUninit<[MaybeUninit<T>; N]> {
+  pub(crate) const fn new_data_uninit() -> MaybeUninit<[MaybeUninit<T>; N]> {
     // An internal convenience function to get an *uninitialized* instance of
-    // `MaybeUninit<MaybeUninit[<T>; N]>`.
+    // `MaybeUninit<[MaybeUninit<T>; N]>`.
     MaybeUninit::uninit()
   }
 }

@@ -12,7 +12,7 @@ use alloc::string::String;
 use alloc::format;
 
 /// Similar to [`Iter`](core::slice::Iter), but specifically implemented with StaticVecs in mind.
-pub struct StaticVecIterConst<'a, T: 'a> {
+pub struct StaticVecIterConst<'a, T: 'a, const N: usize> {
   pub(crate) start: *const T,
   pub(crate) end: *const T,
   pub(crate) marker: PhantomData<&'a T>,
@@ -20,13 +20,13 @@ pub struct StaticVecIterConst<'a, T: 'a> {
 
 /// Similar to [`IterMut`](core::slice::IterMut), but specifically implemented with StaticVecs in
 /// mind.
-pub struct StaticVecIterMut<'a, T: 'a> {
+pub struct StaticVecIterMut<'a, T: 'a, const N: usize> {
   pub(crate) start: *mut T,
   pub(crate) end: *mut T,
   pub(crate) marker: PhantomData<&'a mut T>,
 }
 
-impl<'a, T: 'a> StaticVecIterConst<'a, T> {
+impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
@@ -55,7 +55,7 @@ impl<'a, T: 'a> StaticVecIterConst<'a, T> {
   }
 }
 
-impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
+impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
   type Item = &'a T;
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
@@ -79,7 +79,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterConst<'a, T> {
   }
 }
 
-impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
+impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
     match distance_between(self.end, self.start) {
@@ -95,7 +95,7 @@ impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterConst<'a, T> {
   }
 }
 
-impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {
+impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
@@ -107,12 +107,12 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterConst<'a, T> {
   }
 }
 
-impl<'a, T: 'a> FusedIterator for StaticVecIterConst<'a, T> {}
-unsafe impl<'a, T: 'a> TrustedLen for StaticVecIterConst<'a, T> {}
-unsafe impl<'a, T: 'a + Sync> Sync for StaticVecIterConst<'a, T> {}
-unsafe impl<'a, T: 'a + Sync> Send for StaticVecIterConst<'a, T> {}
+impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecIterConst<'a, T, N> {}
+unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecIterConst<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecIterConst<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Send for StaticVecIterConst<'a, T, N> {}
 
-impl<'a, T: 'a> Clone for StaticVecIterConst<'a, T> {
+impl<'a, T: 'a, const N: usize> Clone for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     Self {
@@ -123,14 +123,14 @@ impl<'a, T: 'a> Clone for StaticVecIterConst<'a, T> {
   }
 }
 
-impl<'a, T: 'a + Debug> Debug for StaticVecIterConst<'a, T> {
+impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Debug::fmt(self.as_slice(), f)
+    f.debug_list().entries(self.as_slice()).finish()
   }
 }
 
-impl<'a, T: 'a> StaticVecIterMut<'a, T> {
+impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
@@ -160,7 +160,7 @@ impl<'a, T: 'a> StaticVecIterMut<'a, T> {
   }
 }
 
-impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
+impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
   type Item = &'a mut T;
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
@@ -184,7 +184,7 @@ impl<'a, T: 'a> Iterator for StaticVecIterMut<'a, T> {
   }
 }
 
-impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
+impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
     match distance_between(self.end, self.start) {
@@ -200,7 +200,7 @@ impl<'a, T: 'a> DoubleEndedIterator for StaticVecIterMut<'a, T> {
   }
 }
 
-impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {
+impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
@@ -212,14 +212,14 @@ impl<'a, T: 'a> ExactSizeIterator for StaticVecIterMut<'a, T> {
   }
 }
 
-impl<'a, T: 'a> FusedIterator for StaticVecIterMut<'a, T> {}
-unsafe impl<'a, T: 'a> TrustedLen for StaticVecIterMut<'a, T> {}
-unsafe impl<'a, T: 'a + Sync> Sync for StaticVecIterMut<'a, T> {}
-unsafe impl<'a, T: 'a + Sync> Send for StaticVecIterMut<'a, T> {}
+impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecIterMut<'a, T, N> {}
+unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecIterMut<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecIterMut<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Send for StaticVecIterMut<'a, T, N> {}
 
-impl<'a, T: 'a + Debug> Debug for StaticVecIterMut<'a, T> {
+impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Debug::fmt(self.as_slice(), f)
+    f.debug_list().entries(self.as_slice()).finish()
   }
 }

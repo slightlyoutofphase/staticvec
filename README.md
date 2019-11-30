@@ -57,18 +57,17 @@ fn main() {
   for f in staticvec![12.0, 14.0, 15.0, 16.0].iter().skip(2) {
     println!("{}", f);
   }
-  for v in staticvec![
-    staticvec![14, 12].sorted(),
-    staticvec![18, 16].sorted(),
-    staticvec![22, 20].sorted(),
-    staticvec![26, 24].sorted(),
+  for i in &staticvec![
+    staticvec![14, 12, 10].sorted(),
+    staticvec![20, 18, 16].reversed(),
+    staticvec![26, 24, 22].sorted(),
+    staticvec![32, 30, 28].reversed(),
   ]
   .iter()
-  .cloned::<StaticVec<usize, 2>>()
+  .flatten()
+  .collect::<StaticVec<usize, 12>>()
   {
-    for i in &v {
-      println!("{}", i);
-    }
+    println!("{}", i);
   }
 }
 ```

@@ -1,7 +1,16 @@
 /// Creates a new StaticVec from a [`vec!`](https://doc.rust-lang.org/nightly/alloc/macro.vec.html)-style pseudo-slice.
-/// The newly created StaticVec will have a `capacity` and `length` exactly equal to the
-/// number of elements in the slice. The "array-like" `[value; N]` syntax is also supported
-/// for types that implement [`Copy`](core::marker::Copy).
+/// The newly created StaticVec will have a capacity and length exactly equal to the
+/// number of elements in the slice. The "array-like" `[value; N]` syntax is also supported for
+/// types that implement [`Copy`](core::marker::Copy).
+///
+/// Example usage:
+///
+/// ```
+/// // The type of the StaticVec on the next line is `StaticVec<Vec<StaticVec<i32, 4>>, 1>`.
+/// let v = staticvec![vec![staticvec![1, 2, 3, 4]]];
+/// // The type of the StaticVec on the next line is `StaticVec<f32, 64>`.
+/// let v2 = staticvec![12.0; 64];
+/// ```
 #[macro_export]
 macro_rules! staticvec {
   (@put_one $val:expr) => {

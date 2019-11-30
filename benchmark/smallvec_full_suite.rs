@@ -32,9 +32,9 @@ impl<T: Copy> ExtendFromSlice<T> for Vec<T> {
   }
 }
 
-impl<T: Copy, const N: usize> ExtendFromSlice<T> for StaticVec<T, { N }> {
+impl<T: Copy, const N: usize> ExtendFromSlice<T> for StaticVec<T, N> {
   fn extend_from_slice(&mut self, other: &[T]) {
-    StaticVec::<T, { N }>::extend_from_slice(self, other)
+    StaticVec::extend_from_slice(self, other)
   }
 }
 
@@ -82,7 +82,7 @@ impl<T: Copy + 'static> Vector<T> for Vec<T> {
   }
 }
 
-impl<T: Copy + 'static, const N: usize> Vector<T> for StaticVec<T, { N }> {
+impl<T: Copy + 'static, const N: usize> Vector<T> for StaticVec<T, N> {
   fn new() -> Self {
     Self::new()
   }
@@ -113,14 +113,14 @@ impl<T: Copy + 'static, const N: usize> Vector<T> for StaticVec<T, { N }> {
 }
 
 macro_rules! make_benches {
-    ($typ:ty { $($b_name:ident => $g_name:ident($($args:expr),*),)* }) => {
-        $(
-            #[bench]
-            fn $b_name(b: &mut Bencher) {
-                $g_name::<$typ>($($args,)* b)
-            }
-        )*
-    }
+  ($typ:ty { $($b_name:ident => $g_name:ident($($args:expr),*),)* }) => {
+    $(
+      #[bench]
+      fn $b_name(b: &mut Bencher) {
+        $g_name::<$typ>($($args,)* b)
+      }
+    )*
+  }
 }
 
 make_benches! {

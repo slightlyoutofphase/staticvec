@@ -5,6 +5,7 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
+use core::mem::{self, MaybeUninit};
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
 use core::slice::SliceIndex;
@@ -30,21 +31,21 @@ use serde::{
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
-impl<T, const N: usize> AsMut<[T]> for StaticVec<T, { N }> {
+impl<T, const N: usize> AsMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_mut(&mut self) -> &mut [T] {
     self.as_mut_slice()
   }
 }
 
-impl<T, const N: usize> AsRef<[T]> for StaticVec<T, { N }> {
+impl<T, const N: usize> AsRef<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_ref(&self) -> &[T] {
     self.as_slice()
   }
 }
 
-impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
+impl<T: Clone, const N: usize> Clone for StaticVec<T, N> {
   #[inline]
   default fn clone(&self) -> Self {
     let mut res = Self::new();
@@ -79,7 +80,7 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, { N }> {
   }
 }
 
-impl<T: Copy, const N: usize> Clone for StaticVec<T, { N }> {
+impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     match self.length {
@@ -108,14 +109,14 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, { N }> {
   }
 }
 
-impl<T: Debug, const N: usize> Debug for StaticVec<T, { N }> {
+impl<T: Debug, const N: usize> Debug for StaticVec<T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     Debug::fmt(self.as_slice(), f)
   }
 }
 
-impl<T, const N: usize> Default for StaticVec<T, { N }> {
+impl<T, const N: usize> Default for StaticVec<T, N> {
   /// Calls `new`.
   #[inline(always)]
   fn default() -> Self {
@@ -123,7 +124,7 @@ impl<T, const N: usize> Default for StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> Deref for StaticVec<T, { N }> {
+impl<T, const N: usize> Deref for StaticVec<T, N> {
   type Target = [T];
   #[inline(always)]
   fn deref(&self) -> &[T] {
@@ -131,14 +132,14 @@ impl<T, const N: usize> Deref for StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N: usize> DerefMut for StaticVec<T, { N }> {
+impl<T, const N: usize> DerefMut for StaticVec<T, N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut [T] {
     self.as_mut_slice()
   }
 }
 
-impl<T, const N: usize> Drop for StaticVec<T, { N }> {
+impl<T, const N: usize> Drop for StaticVec<T, N> {
   #[inline(always)]
   fn drop(&mut self) {
     unsafe {
@@ -147,18 +148,18 @@ impl<T, const N: usize> Drop for StaticVec<T, { N }> {
   }
 }
 
-impl<T: Eq, const N: usize> Eq for StaticVec<T, { N }> {}
+impl<T: Eq, const N: usize> Eq for StaticVec<T, N> {}
 
-impl<T, const N: usize> Extend<T> for StaticVec<T, { N }> {
+impl<T, const N: usize> Extend<T> for StaticVec<T, N> {
   impl_extend!(val, val, T);
 }
 
 #[allow(unused_parens)]
-impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, { N }> {
+impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, N> {
   impl_extend!(val, (*val), &'a T);
 }
 
-impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, { N }> {
+impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -167,7 +168,7 @@ impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, { N }> {
   }
 }
 
-impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, { N }> {
+impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -176,50 +177,82 @@ impl<T: Copy, const N: usize> From<&mut [T]> for StaticVec<T, { N }> {
   }
 }
 
-impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, { N2 }> {
+impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, N2> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_array`](crate::StaticVec::new_from_array) internally.
   #[inline(always)]
-  fn from(values: [T; N1]) -> Self {
+  default fn from(values: [T; N1]) -> Self {
     Self::new_from_array(values)
   }
 }
 
-impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, { N2 }> {
+impl<T, const N: usize> From<[T; N]> for StaticVec<T, N> {
+  #[inline(always)]
+  fn from(values: [T; N]) -> Self {
+    Self {
+      data: unsafe {
+        let res = ptr::read(&values as *const [T; N] as *const [MaybeUninit<T>; N]);
+        mem::forget(values);
+        res
+      },
+      length: N,
+    }
+  }
+}
+
+impl<T: Copy, const N1: usize, const N2: usize> From<&[T; N1]> for StaticVec<T, N2> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
-  fn from(values: &[T; N1]) -> Self {
+  default fn from(values: &[T; N1]) -> Self {
     Self::new_from_slice(values)
   }
 }
 
-impl<T: Copy, const N1: usize, const N2: usize> From<&mut [T; N1]> for StaticVec<T, { N2 }> {
+impl<T: Copy, const N: usize> From<&[T; N]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
-  fn from(values: &mut [T; N1]) -> Self {
+  fn from(values: &[T; N]) -> Self {
     Self::new_from_slice(values)
   }
 }
 
-impl<T, const N: usize> FromIterator<T> for StaticVec<T, { N }> {
+impl<T: Copy, const N1: usize, const N2: usize> From<&mut [T; N1]> for StaticVec<T, N2> {
+  /// Creates a new StaticVec instance from the contents of `values`, using
+  /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
+  #[inline(always)]
+  default fn from(values: &mut [T; N1]) -> Self {
+    Self::new_from_slice(values)
+  }
+}
+
+impl<T: Copy, const N: usize> From<&mut [T; N]> for StaticVec<T, N> {
+  /// Creates a new StaticVec instance from the contents of `values`, using
+  /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
+  #[inline(always)]
+  fn from(values: &mut [T; N]) -> Self {
+    Self::new_from_slice(values)
+  }
+}
+
+impl<T, const N: usize> FromIterator<T> for StaticVec<T, N> {
   impl_from_iterator!(val, val, T);
 }
 
 #[allow(unused_parens)]
-impl<'a, T: 'a + Copy, const N: usize> FromIterator<&'a T> for StaticVec<T, { N }> {
+impl<'a, T: 'a + Copy, const N: usize> FromIterator<&'a T> for StaticVec<T, N> {
   impl_from_iterator!(val, (*val), &'a T);
 }
 
-impl<T: Hash, const N: usize> Hash for StaticVec<T, { N }> {
+impl<T: Hash, const N: usize> Hash for StaticVec<T, N> {
   #[inline(always)]
   fn hash<H: Hasher>(&self, state: &mut H) {
     self.as_slice().hash(state);
   }
 }
 
-impl<T, I: SliceIndex<[T]>, const N: usize> Index<I> for StaticVec<T, { N }> {
+impl<T, I: SliceIndex<[T]>, const N: usize> Index<I> for StaticVec<T, N> {
   type Output = I::Output;
   #[inline(always)]
   fn index(&self, index: I) -> &Self::Output {
@@ -227,7 +260,7 @@ impl<T, I: SliceIndex<[T]>, const N: usize> Index<I> for StaticVec<T, { N }> {
   }
 }
 
-impl<T, I: SliceIndex<[T]>, const N: usize> IndexMut<I> for StaticVec<T, { N }> {
+impl<T, I: SliceIndex<[T]>, const N: usize> IndexMut<I> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: I) -> &mut Self::Output {
     self.as_mut_slice().index_mut(index)
@@ -236,7 +269,7 @@ impl<T, I: SliceIndex<[T]>, const N: usize> IndexMut<I> for StaticVec<T, { N }> 
 
 #[cfg(feature = "std")]
 #[doc(cfg(feature = "std"))]
-impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, { N }> {
+impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, N> {
   /// Functionally equivalent to [`into_vec`](crate::StaticVec::into_vec).
   #[inline(always)]
   fn into(self) -> Vec<T> {
@@ -244,8 +277,8 @@ impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, { N }> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
-  type IntoIter = StaticVecIterConst<'a, T>;
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, N> {
+  type IntoIter = StaticVecIterConst<'a, T, N>;
   type Item = &'a T;
   /// Returns a [`StaticVecIterConst`](crate::iterators::StaticVecIterConst) over the StaticVec's
   /// inhabited area.
@@ -255,8 +288,8 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a StaticVec<T, { N }> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
-  type IntoIter = StaticVecIterMut<'a, T>;
+impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, N> {
+  type IntoIter = StaticVecIterMut<'a, T, N>;
   type Item = &'a mut T;
   /// Returns a [`StaticVecIterMut`](crate::iterators::StaticVecIterMut) over the StaticVec's
   /// inhabited area.
@@ -266,43 +299,43 @@ impl<'a, T: 'a, const N: usize> IntoIterator for &'a mut StaticVec<T, { N }> {
   }
 }
 
-impl<T: Ord, const N: usize> Ord for StaticVec<T, { N }> {
+impl<T: Ord, const N: usize> Ord for StaticVec<T, N> {
   #[inline(always)]
   fn cmp(&self, other: &Self) -> Ordering {
     Ord::cmp(self.as_slice(), other.as_slice())
   }
 }
 
-impl_partial_eq_with_as_slice!(StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
-impl_partial_eq_with_as_slice!(StaticVec<T1, { N1 }>, &StaticVec<T2, { N2 }>);
-impl_partial_eq_with_as_slice!(StaticVec<T1, { N1 }>, &mut StaticVec<T2, { N2 }>);
-impl_partial_eq_with_as_slice!(&StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
-impl_partial_eq_with_as_slice!(&mut StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
-impl_partial_eq_with_get_unchecked!([T1; N1], StaticVec<T2, { N2 }>);
-impl_partial_eq_with_get_unchecked!([T1; N1], &StaticVec<T2, { N2 }>);
-impl_partial_eq_with_get_unchecked!([T1; N1], &mut StaticVec<T2, { N2 }>);
-impl_partial_eq_with_get_unchecked!(&[T1; N1], StaticVec<T2, { N2 }>);
-impl_partial_eq_with_get_unchecked!(&mut [T1; N1], StaticVec<T2, { N2 }>);
-impl_partial_eq_with_equals_no_deref!([T1], StaticVec<T2, { N }>);
-impl_partial_eq_with_equals_no_deref!([T1], &StaticVec<T2, { N }>);
-impl_partial_eq_with_equals_no_deref!([T1], &mut StaticVec<T2, { N }>);
-impl_partial_eq_with_equals_deref!(&[T1], StaticVec<T2, { N }>);
-impl_partial_eq_with_equals_deref!(&mut [T1], StaticVec<T2, { N }>);
-impl_partial_ord_with_as_slice!(StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
-impl_partial_ord_with_as_slice!(StaticVec<T1, { N1 }>, &StaticVec<T2, { N2 }>);
-impl_partial_ord_with_as_slice!(StaticVec<T1, { N1 }>, &mut StaticVec<T2, { N2 }>);
-impl_partial_ord_with_as_slice!(&StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
-impl_partial_ord_with_as_slice!(&mut StaticVec<T1, { N1 }>, StaticVec<T2, { N2 }>);
-impl_partial_ord_with_get_unchecked!([T1; N1], StaticVec<T2, { N2 }>);
-impl_partial_ord_with_get_unchecked!([T1; N1], &StaticVec<T2, { N2 }>);
-impl_partial_ord_with_get_unchecked!([T1; N1], &mut StaticVec<T2, { N2 }>);
-impl_partial_ord_with_get_unchecked!(&[T1; N1], StaticVec<T2, { N2 }>);
-impl_partial_ord_with_get_unchecked!(&mut [T1; N1], StaticVec<T2, { N2 }>);
-impl_partial_ord_with_as_slice_against_slice!([T1], StaticVec<T2, { N }>);
-impl_partial_ord_with_as_slice_against_slice!([T1], &StaticVec<T2, { N }>);
-impl_partial_ord_with_as_slice_against_slice!([T1], &mut StaticVec<T2, { N }>);
-impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, { N }>);
-impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, { N }>);
+impl_partial_eq_with_as_slice!(StaticVec<T1, N1>, StaticVec<T2, N2>);
+impl_partial_eq_with_as_slice!(StaticVec<T1, N1>, &StaticVec<T2, N2>);
+impl_partial_eq_with_as_slice!(StaticVec<T1, N1>, &mut StaticVec<T2, N2>);
+impl_partial_eq_with_as_slice!(&StaticVec<T1, N1>, StaticVec<T2, N2>);
+impl_partial_eq_with_as_slice!(&mut StaticVec<T1, N1>, StaticVec<T2, N2>);
+impl_partial_eq_with_get_unchecked!([T1; N1], StaticVec<T2, N2>);
+impl_partial_eq_with_get_unchecked!([T1; N1], &StaticVec<T2, N2>);
+impl_partial_eq_with_get_unchecked!([T1; N1], &mut StaticVec<T2, N2>);
+impl_partial_eq_with_get_unchecked!(&[T1; N1], StaticVec<T2, N2>);
+impl_partial_eq_with_get_unchecked!(&mut [T1; N1], StaticVec<T2, N2>);
+impl_partial_eq_with_equals_no_deref!([T1], StaticVec<T2, N>);
+impl_partial_eq_with_equals_no_deref!([T1], &StaticVec<T2, N>);
+impl_partial_eq_with_equals_no_deref!([T1], &mut StaticVec<T2, N>);
+impl_partial_eq_with_equals_deref!(&[T1], StaticVec<T2, N>);
+impl_partial_eq_with_equals_deref!(&mut [T1], StaticVec<T2, N>);
+impl_partial_ord_with_as_slice!(StaticVec<T1, N1>, StaticVec<T2, N2>);
+impl_partial_ord_with_as_slice!(StaticVec<T1, N1>, &StaticVec<T2, N2>);
+impl_partial_ord_with_as_slice!(StaticVec<T1, N1>, &mut StaticVec<T2, N2>);
+impl_partial_ord_with_as_slice!(&StaticVec<T1, N1>, StaticVec<T2, N2>);
+impl_partial_ord_with_as_slice!(&mut StaticVec<T1, N1>, StaticVec<T2, N2>);
+impl_partial_ord_with_get_unchecked!([T1; N1], StaticVec<T2, N2>);
+impl_partial_ord_with_get_unchecked!([T1; N1], &StaticVec<T2, N2>);
+impl_partial_ord_with_get_unchecked!([T1; N1], &mut StaticVec<T2, N2>);
+impl_partial_ord_with_get_unchecked!(&[T1; N1], StaticVec<T2, N2>);
+impl_partial_ord_with_get_unchecked!(&mut [T1; N1], StaticVec<T2, N2>);
+impl_partial_ord_with_as_slice_against_slice!([T1], StaticVec<T2, N>);
+impl_partial_ord_with_as_slice_against_slice!([T1], &StaticVec<T2, N>);
+impl_partial_ord_with_as_slice_against_slice!([T1], &mut StaticVec<T2, N>);
+impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, N>);
+impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, N>);
 
 /// Read from a StaticVec. This implementation reads from the StaticVec
 /// by copying bytes into the destination buffers, then shifting the remaining
@@ -313,7 +346,7 @@ impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, { N }>);
 /// [`Cursor`]: https://doc.rust-lang.org/nightly/std/io/struct.Cursor.html
 /// [slice-read]: https://doc.rust-lang.org/nightly/std/primitive.slice.html#impl-Read]
 #[cfg(feature = "std")]
-impl<const N: usize> Read for StaticVec<u8, { N }> {
+impl<const N: usize> Read for StaticVec<u8, N> {
   #[inline(always)]
   unsafe fn initializer(&self) -> io::Initializer {
     io::Initializer::nop()
@@ -417,7 +450,7 @@ impl<const N: usize> Read for StaticVec<u8, { N }> {
 }
 
 #[cfg(feature = "std")]
-impl<const N: usize> Write for StaticVec<u8, { N }> {
+impl<const N: usize> Write for StaticVec<u8, N> {
   #[inline]
   fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
     let old_length = self.length;
@@ -457,7 +490,7 @@ impl<const N: usize> Write for StaticVec<u8, { N }> {
 }
 
 #[cfg(feature = "serde_support")]
-impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, { N }>
+impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, N>
 where T: Deserialize<'de>
 {
   #[inline]
@@ -465,10 +498,10 @@ where T: Deserialize<'de>
   where D: Deserializer<'de> {
     struct StaticVecVisitor<'de, T, const N: usize>(PhantomData<(&'de (), T)>);
 
-    impl<'de, T, const N: usize> Visitor<'de> for StaticVecVisitor<'de, T, { N }>
+    impl<'de, T, const N: usize> Visitor<'de> for StaticVecVisitor<'de, T, N>
     where T: Deserialize<'de>
     {
-      type Value = StaticVec<T, { N }>;
+      type Value = StaticVec<T, N>;
 
       #[inline(always)]
       fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -491,12 +524,12 @@ where T: Deserialize<'de>
         Ok(res)
       }
     }
-    deserializer.deserialize_seq(StaticVecVisitor::<T, { N }>(PhantomData))
+    deserializer.deserialize_seq(StaticVecVisitor::<T, N>(PhantomData))
   }
 }
 
 #[cfg(feature = "serde_support")]
-impl<T, const N: usize> Serialize for StaticVec<T, { N }>
+impl<T, const N: usize> Serialize for StaticVec<T, N>
 where T: Serialize
 {
   #[inline(always)]
