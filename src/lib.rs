@@ -538,7 +538,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// inhabited area.
   #[inline(always)]
   pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T, N> {
-    StaticVecIterConst::<'a, T, N> {
+    StaticVecIterConst {
       start: self.as_ptr(),
       end: match intrinsics::size_of::<T>() {
         0 => (self.as_ptr() as *const u8).wrapping_add(self.length) as *const T,
@@ -552,7 +552,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// inhabited area.
   #[inline(always)]
   pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T, N> {
-    StaticVecIterMut::<'a, T, N> {
+    StaticVecIterMut {
       start: self.as_mut_ptr(),
       end: match intrinsics::size_of::<T>() {
         0 => (self.as_mut_ptr() as *mut u8).wrapping_add(self.length) as *mut T,
