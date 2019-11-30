@@ -1,6 +1,5 @@
 #![allow(clippy::all)]
 #![allow(dead_code)]
-#![feature(type_name_of_val)]
 
 use staticvec::*;
 
@@ -8,6 +7,9 @@ use core::cell;
 
 #[cfg(feature = "std")]
 use std::panic::{self, AssertUnwindSafe};
+
+#[cfg(feature = "std")]
+use std::io::{IoSlice, Write};
 
 #[cfg(not(miri))]
 #[cfg(feature = "std")]
@@ -90,9 +92,6 @@ impl Drop for Struct {
     println!("Dropping Struct with value: {}", self.s)
   }
 }
-
-#[cfg(feature = "std")]
-use std::io::{IoSlice, Write};
 
 #[test]
 fn append() {
@@ -213,7 +212,6 @@ fn clone_from_longer() {
 fn panicking_clone() {
   // An earlier implementation of clone incorrectly leaked values in the event
   // of a panicking clone. This test ensures that that does not happen.
-
   // This struct will, if so configured, panic on a clone. Uses
   // LifespanCountingInstance to track instantiations and deletions, so that
   // we can ensure the correct number of drops are happening
