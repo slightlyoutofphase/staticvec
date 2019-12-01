@@ -397,4 +397,9 @@ fn main() {
   let mut it = v2.into_iter();
   println!("{:?}", it.next().unwrap());
   println!("{:?}", it.next().unwrap());
+  let mut to_append = staticvec![1, 2, 3];
+  let mut append_to = StaticVec::<i32, 6>::from([4, 5, 6]);
+  append_to.append(&mut to_append);
+  println!("{:?}", to_append);
+  println!("{:?}", append_to);
 }
