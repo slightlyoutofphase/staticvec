@@ -1,11 +1,11 @@
 language: rust
 os: linux
-cache: cargo
 
 rust:
   - nightly
 
 script:
+  - cargo clean
   - bash ./ci/run_miri.sh
   - cargo test --no-default-features
   - cargo bench

@@ -12,18 +12,6 @@ use arrayvec::*;
 use staticvec::*;
 
 #[bench]
-fn arrayvec_extend_from_slice(b: &mut Bencher) {
-  let mut v = ArrayVec::<[u8; 512]>::new();
-  let data = [1; 512];
-  b.iter(|| {
-    v.clear();
-    black_box(v.try_extend_from_slice(&data).ok());
-    v[511]
-  });
-  b.bytes = v.capacity() as u64;
-}
-
-#[bench]
 fn staticvec_extend_from_slice(b: &mut Bencher) {
   let mut v = StaticVec::<u8, 512>::new();
   let data = [1; 512];
@@ -36,13 +24,12 @@ fn staticvec_extend_from_slice(b: &mut Bencher) {
 }
 
 #[bench]
-fn arrayvec_extend_with_constant(b: &mut Bencher) {
+fn arrayvec_extend_from_slice(b: &mut Bencher) {
   let mut v = ArrayVec::<[u8; 512]>::new();
-  let cap = v.capacity();
+  let data = [1; 512];
   b.iter(|| {
     v.clear();
-    let constant = 1;
-    black_box(v.extend((0..cap).map(move |_| constant)));
+    black_box(v.try_extend_from_slice(&data).ok());
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -62,13 +49,13 @@ fn staticvec_extend_with_constant(b: &mut Bencher) {
 }
 
 #[bench]
-fn arrayvec_extend_with_range(b: &mut Bencher) {
-  let mut v = ArrayVec::<[u16; 512]>::new();
+fn arrayvec_extend_with_constant(b: &mut Bencher) {
+  let mut v = ArrayVec::<[u8; 512]>::new();
   let cap = v.capacity();
   b.iter(|| {
     v.clear();
-    let range = 0..cap;
-    black_box(v.extend(range.map(|x| x as u16)));
+    let constant = 1;
+    black_box(v.extend((0..cap).map(move |_| constant)));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -88,13 +75,13 @@ fn staticvec_extend_with_range(b: &mut Bencher) {
 }
 
 #[bench]
-fn arrayvec_extend_with_slice(b: &mut Bencher) {
-  let mut v = ArrayVec::<[u8; 512]>::new();
-  let data = [1; 512];
+fn arrayvec_extend_with_range(b: &mut Bencher) {
+  let mut v = ArrayVec::<[u16; 512]>::new();
+  let cap = v.capacity();
   b.iter(|| {
     v.clear();
-    let iter = data.iter().map(|&x| x);
-    black_box(v.extend(iter));
+    let range = 0..cap;
+    black_box(v.extend(range.map(|x| x as u16)));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -114,12 +101,13 @@ fn staticvec_extend_with_slice(b: &mut Bencher) {
 }
 
 #[bench]
-fn arrayvec_extend_with_write(b: &mut Bencher) {
+fn arrayvec_extend_with_slice(b: &mut Bencher) {
   let mut v = ArrayVec::<[u8; 512]>::new();
   let data = [1; 512];
   b.iter(|| {
     v.clear();
-    black_box(v.write(&data[..]).ok());
+    let iter = data.iter().map(|&x| x);
+    black_box(v.extend(iter));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -138,13 +126,12 @@ fn staticvec_extend_with_write(b: &mut Bencher) {
 }
 
 #[bench]
-fn arrayvec_push_usize(b: &mut Bencher) {
-  let mut v = ArrayVec::<[usize; 512]>::new();
+fn arrayvec_extend_with_write(b: &mut Bencher) {
+  let mut v = ArrayVec::<[u8; 512]>::new();
+  let data = [1; 512];
   b.iter(|| {
     v.clear();
-    for i in 0..v.capacity() {
-      black_box(v.push(i));
-    }
+    black_box(v.write(&data[..]).ok());
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -164,13 +151,14 @@ fn staticvec_push_usize(b: &mut Bencher) {
 }
 
 #[bench]
-fn arrayvec_pop_usize(b: &mut Bencher) {
+fn arrayvec_push_usize(b: &mut Bencher) {
   let mut v = ArrayVec::<[usize; 512]>::new();
   b.iter(|| {
-    v = ArrayVec::from([1; 512]);
-    for _ in 0..v.capacity() {
-      black_box(v.pop().unwrap());
+    v.clear();
+    for i in 0..v.capacity() {
+      black_box(v.push(i));
     }
+    v[511]
   });
   b.bytes = v.capacity() as u64;
 }
@@ -180,6 +168,18 @@ fn staticvec_pop_usize(b: &mut Bencher) {
   let mut v = StaticVec::<usize, 512>::new();
   b.iter(|| {
     v = StaticVec::from([1; 512]);
+    for _ in 0..v.capacity() {
+      black_box(v.pop().unwrap());
+    }
+  });
+  b.bytes = v.capacity() as u64;
+}
+
+#[bench]
+fn arrayvec_pop_usize(b: &mut Bencher) {
+  let mut v = ArrayVec::<[usize; 512]>::new();
+  b.iter(|| {
+    v = ArrayVec::from([1; 512]);
     for _ in 0..v.capacity() {
       black_box(v.pop().unwrap());
     }
