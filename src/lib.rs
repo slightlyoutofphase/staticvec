@@ -10,7 +10,6 @@
 #![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_uninit_array)]
-#![feature(maybe_uninit_slice)]
 #![cfg_attr(feature = "std", feature(read_initializer))]
 #![feature(slice_partition_dedup)]
 #![feature(specialization)]
@@ -354,7 +353,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// function returns a pointer to valid data.
   #[inline(always)]
   pub unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
-    MaybeUninit::first_ptr(&self.data).add(index)
+    self.as_ptr().add(index)
   }
 
   /// Returns a mutable pointer to the element of the StaticVec at `index` without doing any
@@ -367,7 +366,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// function returns a pointer to valid data.
   #[inline(always)]
   pub unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
-    MaybeUninit::first_ptr_mut(&mut self.data).add(index)
+    self.as_mut_ptr().add(index)
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` if `index`
