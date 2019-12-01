@@ -551,10 +551,26 @@ fn len() {
 
 #[test]
 fn macros() {
-  // The type of the StaticVec on the next line is `StaticVec<Vec<StaticVec<i32, 4>>, 1>`.
+  // The type of the StaticVec on the next line is `StaticVec<StaticVec<StaticVec<i32, 4>, 1>, 1>`.
   let _v = staticvec![staticvec![staticvec![1, 2, 3, 4]]];
   // The type of the StaticVec on the next line is `StaticVec<f32, 64>`.
   let _v2 = staticvec![12.0; 64];
+}
+
+#[test]
+fn mut_ptr_at() {
+  let mut v = staticvec![1, 2, 3];
+  unsafe { assert_eq!(*v.mut_ptr_at(0), 1) };
+  unsafe { assert_eq!(*v.mut_ptr_at(1), 2) };
+  unsafe { assert_eq!(*v.mut_ptr_at(2), 3) };
+}
+
+#[test]
+fn mut_ptr_at_unchecked() {
+  let mut v = staticvec![1, 2, 3];
+  unsafe { assert_eq!(*v.mut_ptr_at_unchecked(0), 1) };
+  unsafe { assert_eq!(*v.mut_ptr_at_unchecked(1), 2) };
+  unsafe { assert_eq!(*v.mut_ptr_at_unchecked(2), 3) };
 }
 
 #[test]
@@ -641,6 +657,22 @@ fn pop() {
   let mut vec = staticvec![1, 2, 3];
   assert_eq!(vec.pop(), Some(3));
   assert_eq!(vec, [1, 2]);
+}
+
+#[test]
+fn ptr_at() {
+  let v = staticvec![1, 2, 3];
+  unsafe { assert_eq!(*v.ptr_at(0), 1) };
+  unsafe { assert_eq!(*v.ptr_at(1), 2) };
+  unsafe { assert_eq!(*v.ptr_at(2), 3) };
+}
+
+#[test]
+fn ptr_at_unchecked() {
+  let v = staticvec![1, 2, 3];
+  unsafe { assert_eq!(*v.ptr_at_unchecked(0), 1) };
+  unsafe { assert_eq!(*v.ptr_at_unchecked(1), 2) };
+  unsafe { assert_eq!(*v.ptr_at_unchecked(2), 3) };
 }
 
 #[test]

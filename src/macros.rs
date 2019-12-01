@@ -20,7 +20,7 @@ macro_rules! staticvec {
     $crate::utils::new_from_value::<_, $n>($val)
   };
   ($($val:expr),* $(,)*) => {
-    staticvec::StaticVec::<_, {0$(+staticvec::staticvec!(@put_one $val))*}>::new_from_array([$($val),*])
+    $crate::StaticVec::from([$($val),*])
   };
 }
 

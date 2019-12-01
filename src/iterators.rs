@@ -259,7 +259,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   /// `start` and `end` indices.
   pub fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    unsafe { slice::from_raw_parts(self.data.as_ptr().add(self.start), self.len()) }
+    unsafe { slice::from_raw_parts(self.data.ptr_at_unchecked(self.start), self.len()) }
   }
 }
 
@@ -270,7 +270,7 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     match self.end - self.start {
       0 => None,
       _ => {
-        let res = Some(unsafe { self.data.as_ptr().add(self.start).read() });
+        let res = Some(unsafe { self.data.ptr_at_unchecked(self.start).read() });
         self.start += 1;
         res
       }
@@ -291,7 +291,7 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
       0 => None,
       _ => {
         self.end -= 1;
-        Some(unsafe { self.data.as_ptr().add(self.end).read() })
+        Some(unsafe { self.data.ptr_at_unchecked(self.end).read() })
       }
     }
   }
@@ -329,7 +329,7 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
       0 => (),
       _ => unsafe {
         ptr::drop_in_place(slice::from_raw_parts_mut(
-          self.data.as_mut_ptr().add(self.start),
+          self.data.mut_ptr_at_unchecked(self.start),
           item_count,
         ))
       },

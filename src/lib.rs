@@ -10,6 +10,7 @@
 #![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_uninit_array)]
+#![feature(maybe_uninit_slice)]
 #![cfg_attr(feature = "std", feature(read_initializer))]
 #![feature(slice_partition_dedup)]
 #![feature(specialization)]
@@ -228,12 +229,18 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Directly sets the length field of the StaticVec to `new_len`. Useful if you intend
   /// to write to it solely element-wise, but marked unsafe due to how it creates
-  /// the potential for reading from unitialized memory later on.
+  /// the potential for reading from uninitialized memory later on.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that `new_len` is less than or equal to the StaticVec's
+  /// constant `N` parameter, and that the range of elements covered by a length of `new_len` is
+  /// actually initialized. Failure to do so will almost certainly result in undefined behavior.
   #[inline(always)]
   pub unsafe fn set_len(&mut self, new_len: usize) {
     debug_assert!(
       new_len <= N,
-      "Attempted to unsafely set length to {}; maximum is {}",
+      "Attempted to unsafely set length to {}; maximum is {}!",
       new_len,
       N
     );
@@ -308,7 +315,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub unsafe fn get_unchecked(&self, index: usize) -> &T {
     debug_assert!(
       index < self.length,
-      "Attempted to unsafely get at index {} when length is {}",
+      "Attempted to unsafely get at index {} when length is {}!",
       index,
       self.length
     );
@@ -330,35 +337,101 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
     debug_assert!(
       index < self.length,
-      "Attempted to unsafely get at index {} when length is {}",
+      "Attempted to unsafely get at index {} when length is {}!",
       index,
       self.length
     );
     self.data.get_unchecked_mut(index).get_mut()
   }
 
+  /// Returns a constant pointer to the element of the StaticVec at `index` without doing any
+  /// checking to ensure that `index` is within the range `0..length`. The return value of this
+  /// function is equivalent to what would be returned from `as_ptr().add(index)`.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that `index` is within the appropriate bounds such that the
+  /// function returns a pointer to valid data.
+  #[inline(always)]
+  pub unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
+    MaybeUninit::first_ptr(&self.data).add(index)
+  }
+
+  /// Returns a mutable pointer to the element of the StaticVec at `index` without doing any
+  /// checking to ensure that `index` is within the range `0..length`. The return value of this
+  /// function is equivalent to what would be returned from `as_mut_ptr().add(index)`.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that `index` is within the appropriate bounds such that the
+  /// function returns a pointer to valid data.
+  #[inline(always)]
+  pub unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
+    MaybeUninit::first_ptr_mut(&mut self.data).add(index)
+  }
+
+  /// Returns a constant pointer to the element of the StaticVec at `index` if `index`
+  /// is within the range `0..length`, or panics if it is not. The return value of this function is
+  /// equivalent to what would be returned from `as_ptr().add(index)`.
+  #[inline(always)]
+  pub fn ptr_at(&self, index: usize) -> *const T {
+    assert!(
+      index < self.length,
+      "Provided index {} must be between 0 and {}!",
+      index,
+      self.length
+    );
+    unsafe { self.ptr_at_unchecked(index) }
+  }
+
+  /// Returns a mutable pointer to the element of the StaticVec at `index` if `index`
+  /// is within the range `0..length`, or panics if it is not. The return value of this function is
+  /// equivalent to what would be returned from `as_mut_ptr().add(index)`.
+  #[inline(always)]
+  pub fn mut_ptr_at(&mut self, index: usize) -> *mut T {
+    assert!(
+      index < self.length,
+      "Provided index {} must be between 0 and {}!",
+      index,
+      self.length
+    );
+    unsafe { self.mut_ptr_at_unchecked(index) }
+  }
+
   /// Appends a value to the end of the StaticVec without asserting that
   /// its current length is less than `N`.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that the length of the StaticVec
+  /// prior to using this function is less than `N`. Failure to do so will result
+  /// in writing to an out-of-bounds memory region.
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, value: T) {
     debug_assert!(
       self.is_not_full(),
-      "Attempted to unsafely push to a full StaticVec"
+      "Attempted to unsafely push to a full StaticVec!"
     );
-    self.data.get_unchecked_mut(self.length).write(value);
+    self.mut_ptr_at_unchecked(self.length).write(value);
     self.length += 1;
   }
 
   /// Pops a value from the end of the StaticVec and returns it directly without asserting that
   /// the StaticVec's current length is greater than 0.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that the StaticVec contains at least one
+  /// element prior to using this function. Failure to do so will result in reading
+  /// from uninitialized memory.
   #[inline(always)]
   pub unsafe fn pop_unchecked(&mut self) -> T {
     debug_assert!(
       self.is_not_empty(),
-      "Attempted to unsafely pop from an empty StaticVec"
+      "Attempted to unsafely pop from an empty StaticVec!"
     );
     self.length -= 1;
-    self.data.get_unchecked(self.length).read()
+    self.ptr_at_unchecked(self.length).read()
   }
 
   /// Pushes `value` to the StaticVec if its current length is less than its capacity,
@@ -444,7 +517,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn remove(&mut self, index: usize) -> T {
     assert!(index < self.length);
     unsafe {
-      let p = self.as_mut_ptr().add(index);
+      let p = self.mut_ptr_at_unchecked(index);
       let res = p.read();
       p.offset(1).copy_to(p, self.length - index - 1);
       self.length -= 1;
@@ -473,7 +546,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       unsafe {
         let last_value = self.data.get_unchecked(self.length - 1).read();
         self.length -= 1;
-        Some(self.as_mut_ptr().add(index).replace(last_value))
+        Some(self.mut_ptr_at_unchecked(index).replace(last_value))
       }
     } else {
       None
@@ -489,7 +562,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe {
       let last_value = self.data.get_unchecked(self.length - 1).read();
       self.length -= 1;
-      self.as_mut_ptr().add(index).replace(last_value)
+      self.mut_ptr_at_unchecked(index).replace(last_value)
     }
   }
 
@@ -500,7 +573,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn insert(&mut self, index: usize, value: T) {
     assert!(self.length < N && index <= self.length);
     unsafe {
-      let p = self.as_mut_ptr().add(index);
+      let p = self.mut_ptr_at_unchecked(index);
       p.copy_to(p.offset(1), self.length - index);
       p.write(value);
       self.length += 1;
@@ -514,7 +587,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn try_insert(&mut self, index: usize, value: T) -> Result<(), &'static str> {
     if self.length < N && index <= self.length {
       unsafe {
-        let p = self.as_mut_ptr().add(index);
+        let p = self.mut_ptr_at_unchecked(index);
         p.copy_to(p.offset(1), self.length - index);
         p.write(value);
         self.length += 1;
@@ -542,7 +615,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       start: self.as_ptr(),
       end: match intrinsics::size_of::<T>() {
         0 => (self.as_ptr() as *const u8).wrapping_add(self.length) as *const T,
-        _ => unsafe { self.as_ptr().add(self.length) },
+        _ => unsafe { self.ptr_at_unchecked(self.length) },
       },
       marker: PhantomData,
     }
@@ -556,7 +629,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       start: self.as_mut_ptr(),
       end: match intrinsics::size_of::<T>() {
         0 => (self.as_mut_ptr() as *mut u8).wrapping_add(self.length) as *mut T,
-        _ => unsafe { self.as_mut_ptr().add(self.length) },
+        _ => unsafe { self.mut_ptr_at_unchecked(self.length) },
       },
       marker: PhantomData,
     }
@@ -599,7 +672,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         let mut res = Self::new_data_uninit();
         reverse_copy(
           self.as_ptr(),
-          self.as_ptr().add(self.length),
+          self.ptr_at_unchecked(self.length),
           res.as_mut_ptr() as *mut T,
         );
         res.assume_init()
@@ -620,7 +693,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe {
       other
         .as_ptr()
-        .copy_to_nonoverlapping(self.as_mut_ptr().add(self.length), added_length);
+        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(self.length), added_length);
     }
     self.length += added_length;
   }
@@ -638,7 +711,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe {
       other
         .as_ptr()
-        .copy_to_nonoverlapping(self.as_mut_ptr().add(self.length), added_length);
+        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(self.length), added_length);
     }
     self.length += added_length;
     Ok(())
@@ -657,12 +730,11 @@ impl<T, const N: usize> StaticVec<T, N> {
     let other_new_length = other.length - item_count;
     unsafe {
       self
-        .as_mut_ptr()
-        .add(self.length)
+        .mut_ptr_at_unchecked(self.length)
         .copy_from_nonoverlapping(other.as_ptr(), item_count);
       other
         .as_mut_ptr()
-        .copy_from(other.as_ptr().add(item_count), other_new_length);
+        .copy_from(other.ptr_at_unchecked(item_count), other_new_length);
     }
     other.length = other_new_length;
     self.length += item_count;
@@ -713,13 +785,11 @@ impl<T, const N: usize> StaticVec<T, N> {
         let mut res = Self::new_data_uninit();
         unsafe {
           self
-            .as_ptr()
-            .add(start)
+            .ptr_at_unchecked(start)
             .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, res_length);
           self
-            .as_ptr()
-            .add(end)
-            .copy_to(self.as_mut_ptr().add(start), self.length - end);
+            .ptr_at_unchecked(end)
+            .copy_to(self.mut_ptr_at_unchecked(start), self.length - end);
           self.length -= res_length;
           res.assume_init()
         }
@@ -738,15 +808,14 @@ impl<T, const N: usize> StaticVec<T, N> {
     self.length = 0;
     unsafe {
       for i in 0..old_length {
-        let val = self.as_mut_ptr().add(i);
+        let val = self.mut_ptr_at_unchecked(i);
         if filter(&mut *val) {
           res.data.get_unchecked_mut(res.length).write(val.read());
           res.length += 1;
         } else if res.length > 0 {
           self
-            .as_ptr()
-            .add(i)
-            .copy_to_nonoverlapping(self.as_mut_ptr().add(i - res.length), 1);
+            .ptr_at_unchecked(i)
+            .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(i - res.length), 1);
         }
       }
     }
@@ -786,8 +855,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       data: unsafe {
         let mut split = Self::new_data_uninit();
         self
-          .as_ptr()
-          .add(at)
+          .ptr_at_unchecked(at)
           .copy_to_nonoverlapping(split.as_mut_ptr() as *mut T, split_length);
         split.assume_init()
       },
