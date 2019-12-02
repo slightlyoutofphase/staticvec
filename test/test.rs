@@ -890,9 +890,10 @@ fn try_insert() {
 #[test]
 fn try_push() {
   let mut vec = staticvec![1, 2, 3, 4, 5];
-  assert_eq!(vec.try_push(2), Err("Insufficient remaining capacity!"));
+  let err = vec.try_push(2).unwrap_err();
+  assert_eq!(err.into_value(), 2);
   let mut vec2 = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
-  vec2.push(3);
+  assert_eq!(vec2.try_push(3), Ok(()));
   assert_eq!(vec2, [1, 2, 3, 3]);
 }
 

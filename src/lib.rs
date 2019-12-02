@@ -15,6 +15,7 @@
 #![feature(specialization)]
 #![feature(trusted_len)]
 
+use crate::errors::PushCapacityError;
 pub use crate::iterators::*;
 pub use crate::trait_impls::*;
 use crate::utils::*;
@@ -38,6 +39,7 @@ use alloc::vec::Vec;
 mod iterators;
 #[macro_use]
 mod macros;
+pub mod errors;
 mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
@@ -436,22 +438,22 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Pushes `value` to the StaticVec if its current length is less than its capacity,
   /// or returns an error indicating there's no remaining capacity otherwise.
   #[inline(always)]
-  pub fn try_push(&mut self, value: T) -> Result<(), &'static str> {
+  pub fn try_push(&mut self, value: T) -> Result<(), PushCapacityError<T, N>> {
     if self.length < N {
-      unsafe {
-        self.push_unchecked(value);
-      }
-      return Ok(());
+      unsafe { self.push_unchecked(value) };
+      Ok(())
+    } else {
+      Err(PushCapacityError::new(value))
     }
-    Err("Insufficient remaining capacity!")
   }
 
   /// Pushes a value to the end of the StaticVec. Panics if the collection is
   /// full; that is, if `self.len() == self.capacity()`.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
-    assert!(self.length < N, "Insufficient remaining capacity!");
-    unsafe { self.push_unchecked(value) }
+    self
+      .try_push(value)
+      .expect("Insufficent remaining capactiy for push!")
   }
 
   /// Removes the value at the last position of the StaticVec and returns it in `Some` if
