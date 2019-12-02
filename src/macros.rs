@@ -52,6 +52,7 @@ macro_rules! impl_from_iterator {
     /// Creates a new StaticVec instance from the elements, if any, of `iter`.
     /// If `iter` has a size greater than the StaticVec's capacity, any items after
     /// that point are ignored.
+    #[allow(clippy::eval_order_dependence)]
     #[inline]
     fn from_iter<I: IntoIterator<Item = $type>>(iter: I) -> Self {
       let mut i = 0;
