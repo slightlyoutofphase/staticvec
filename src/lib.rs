@@ -747,6 +747,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// it will have no contents and a length of 0 afterwards.)
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
+  #[allow(clippy::wrong_self_convention)]
   #[inline(always)]
   pub fn into_vec(&mut self) -> Vec<T> {
     let mut res = Vec::with_capacity(N);
