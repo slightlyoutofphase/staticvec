@@ -7,8 +7,8 @@ use core::fmt;
 use std::error;
 
 /// This error indicates that an operation was attempted that increases the
-/// length of a [`StaticVec`], but the `StaticVec` was alrady at its maximum
-/// capactiy, `N`.
+/// length of a [`StaticVec`][crate::StaticVec], but the `StaticVec` was
+/// alrady at its maximum capactiy, `N`.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CapacityError<const N: usize>;
 
@@ -21,9 +21,10 @@ impl<const N: usize> fmt::Display for CapacityError<N> {
 #[cfg(feature = "std")]
 impl<const N: usize> error::Error for CapacityError<N> {}
 
-/// This error indicates that a push was attempted into a [`StaticVec`] that
-/// failed because because the `StaticVec` was already at capactiy. It contains
-/// the value that failed to be pushed so that it can be reused if needed.
+/// This error indicates that a push was attempted into a
+/// [`StaticVec`][crate::StaticVec] that failed because because the
+/// `StaticVec` was already at capactiy. It contains the value that failed
+/// to be pushed so that it can be reused if needed.
 #[derive(Clone, Eq, PartialEq)]
 pub struct PushCapacityError<T, const N: usize>(T);
 
