@@ -609,7 +609,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a [`StaticVecIterConst`](crate::iterators::StaticVecIterConst) over the StaticVec's
   /// inhabited area.
   #[inline(always)]
-  pub fn iter<'a>(&'a self) -> StaticVecIterConst<'a, T, N> {
+  pub fn iter(&self) -> StaticVecIterConst<T, N> {
     StaticVecIterConst {
       start: self.as_ptr(),
       end: match intrinsics::size_of::<T>() {
@@ -623,7 +623,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a [`StaticVecIterMut`](crate::iterators::StaticVecIterMut) over the StaticVec's
   /// inhabited area.
   #[inline(always)]
-  pub fn iter_mut<'a>(&'a mut self) -> StaticVecIterMut<'a, T, N> {
+  pub fn iter_mut(&mut self) -> StaticVecIterMut<T, N> {
     StaticVecIterMut {
       start: self.as_mut_ptr(),
       end: match intrinsics::size_of::<T>() {
