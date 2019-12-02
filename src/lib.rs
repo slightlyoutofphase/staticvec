@@ -453,7 +453,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn push(&mut self, value: T) {
     self
       .try_push(value)
-      .expect("Insufficent remaining capactiy for push!")
+      .expect("Insufficient remaining capacity for push!")
   }
 
   /// Removes the value at the last position of the StaticVec and returns it in `Some` if
