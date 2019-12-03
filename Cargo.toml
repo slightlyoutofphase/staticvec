@@ -17,7 +17,6 @@ status = "actively-developed"
 
 [badges.travis-ci]
 repository = "slightlyoutofphase/staticvec"
-tld = "com"
 
 [lib]
 doctest = false

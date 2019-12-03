@@ -899,7 +899,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a new StaticVec representing the difference of `self` and `other` (that is,
   /// all items present in `self`, but *not* present in `other`.)
   ///
-  /// The `N2` parameter does not need to be provided explicitly, and be be inferred from `other`
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred from `other`
   /// itself.
   ///
   /// Locally requires that `T` implements [`Clone`](core::clone::Clone) to avoid soundness issues
@@ -932,7 +932,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a new StaticVec representing the symmetric difference of `self` and `other` (that is,
   /// all items present in at least one of `self` or `other`, but *not* present in both.)
   ///
-  /// The `N2` parameter does not need to be provided explicitly, and be be inferred from `other`
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred from `other`
   /// itself.
   ///
   /// Locally requires that `T` implements [`Clone`](core::clone::Clone) to avoid soundness issues
