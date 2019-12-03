@@ -930,7 +930,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a new StaticVec representing the symmetric difference of `self` and `other` (that is,
-  /// all items present in at least one of `self` or `other`, but *not* present in both.
+  /// all items present in at least one of `self` or `other`, but *not* present in both.)
   ///
   /// The `N2` parameter does not need to be provided explicitly, and be be inferred from `other`
   /// itself.
