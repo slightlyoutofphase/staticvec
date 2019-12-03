@@ -152,7 +152,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let mut res = Self::new();
     // You might think it would make more sense to use `push_unchecked` here.
     // Originally, I did also! However, as of today (November 19, 2019), doing so
-    // both in this function and several rhss throughout the crate inhibits the ability
+    // both in this function and several others throughout the crate inhibits the ability
     // of `rustc` to fully unroll and autovectorize various constant-bounds loops. If this changes
     // in the future, feel free to open a PR switching out the manual code for `get_unchecked`, if
     // you happen to notice it before I do.
@@ -437,7 +437,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Pushes `value` to the StaticVec if its current length is less than its capacity,
-  /// or returns an error indicating there's no remaining capacity rhswise.
+  /// or returns an error indicating there's no remaining capacity otherwise.
   #[inline(always)]
   pub fn try_push(&mut self, value: T) -> Result<(), PushCapacityError<T, N>> {
     if self.length < N {
@@ -458,7 +458,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Removes the value at the last position of the StaticVec and returns it in `Some` if
-  /// the StaticVec has a current length greater than 0, and returns `None` rhswise.
+  /// the StaticVec has a current length greater than 0, and returns `None` otherwise.
   #[inline(always)]
   pub fn pop(&mut self) -> Option<T> {
     if self.is_empty() {
@@ -469,7 +469,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a constant reference to the first element of the StaticVec in `Some` if the StaticVec
-  /// is not empty, or `None` rhswise.
+  /// is not empty, or `None` otherwise.
   #[inline(always)]
   pub fn first(&self) -> Option<&T> {
     if self.is_empty() {
@@ -480,7 +480,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a mutable reference to the first element of the StaticVec in `Some` if the StaticVec
-  /// is not empty, or `None` rhswise.
+  /// is not empty, or `None` otherwise.
   #[inline(always)]
   pub fn first_mut(&mut self) -> Option<&mut T> {
     if self.is_empty() {
@@ -491,7 +491,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a constant reference to the last element of the StaticVec in `Some` if the StaticVec
-  /// is not empty, or `None` rhswise.
+  /// is not empty, or `None` otherwise.
   #[inline(always)]
   pub fn last(&self) -> Option<&T> {
     if self.is_empty() {
@@ -502,7 +502,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a mutable reference to the last element of the StaticVec in `Some` if the StaticVec is
-  /// not empty, or `None` rhswise.
+  /// not empty, or `None` otherwise.
   #[inline(always)]
   pub fn last_mut(&mut self) -> Option<&mut T> {
     if self.is_empty() {
@@ -540,7 +540,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns `None` if `index` is greater than or equal to the current length of the StaticVec.
-  /// rhswise, removes the value at that position and returns it in `Some`, and then
+  /// otherwise, removes the value at that position and returns it in `Some`, and then
   /// moves the last value in the StaticVec into the empty slot.
   #[inline(always)]
   pub fn swap_pop(&mut self, index: usize) -> Option<T> {
@@ -583,7 +583,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Inserts `value` at `index` if the current length of the StaticVec is less than `N` and `index`
-  /// is less than the length, or returns a error stating one of the two is not the case rhswise.
+  /// is less than the length, or returns a error stating one of the two is not the case otherwise.
   /// Any values that exist in positions after `index` are shifted to the right.
   #[inline]
   pub fn try_insert(&mut self, index: usize, value: T) -> Result<(), &'static str> {
@@ -688,12 +688,12 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// StaticVec's remaining capacity, any contents after that point are ignored.
   /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
   #[inline(always)]
-  pub fn extend_from_slice(&mut self, rhs: &[T])
+  pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
-    let added_length = rhs.len().min(self.remaining_capacity());
-    // Safety: added_length is <= our remaining capacity and rhs.len.
+    let added_length = other.len().min(self.remaining_capacity());
+    // Safety: added_length is <= our remaining capacity and other.len.
     unsafe {
-      rhs
+      other
         .as_ptr()
         .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(self.length), added_length);
     }
@@ -702,16 +702,16 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Copies and appends all elements, if any, of a slice to the StaticVec if the
   /// StaticVec's remaining capacity is greater than the length of the slice, or returns
-  /// an error indicating that's not the case rhswise.
+  /// an error indicating that's not the case otherwise.
   #[inline(always)]
-  pub fn try_extend_from_slice(&mut self, rhs: &[T]) -> Result<(), &'static str>
+  pub fn try_extend_from_slice(&mut self, other: &[T]) -> Result<(), &'static str>
   where T: Copy {
-    let added_length = rhs.len();
+    let added_length = other.len();
     if self.remaining_capacity() < added_length {
       return Err("Insufficient remaining capacity!");
     }
     unsafe {
-      rhs
+      other
         .as_ptr()
         .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(self.length), added_length);
     }
@@ -720,25 +720,25 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Appends `self.remaining_capacity()` (or as many as available) items from
-  /// `rhs` to `self`. The appended items (if any) will no longer exist in `rhs` afterwards,
-  /// as `rhs`'s `length` field will be adjusted to indicate.
+  /// `other` to `self`. The appended items (if any) will no longer exist in `other` afterwards,
+  /// as `other`'s `length` field will be adjusted to indicate.
   ///
   /// The `N2` parameter does not need to be provided explicitly, and can be inferred directly from
-  /// the constant `N2` constraint of `rhs` (which may or may not be the same as the `N`
+  /// the constant `N2` constraint of `other` (which may or may not be the same as the `N`
   /// constraint of `self`.)
   #[inline]
-  pub fn append<const N2: usize>(&mut self, rhs: &mut StaticVec<T, N2>) {
-    let item_count = self.remaining_capacity().min(rhs.length);
-    let rhs_new_length = rhs.length - item_count;
+  pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, N2>) {
+    let item_count = self.remaining_capacity().min(other.length);
+    let other_new_length = other.length - item_count;
     unsafe {
       self
         .mut_ptr_at_unchecked(self.length)
-        .copy_from_nonoverlapping(rhs.as_ptr(), item_count);
-      rhs
+        .copy_from_nonoverlapping(other.as_ptr(), item_count);
+      other
         .as_mut_ptr()
-        .copy_from(rhs.ptr_at_unchecked(item_count), rhs_new_length);
+        .copy_from(other.ptr_at_unchecked(item_count), other_new_length);
     }
-    rhs.length = rhs_new_length;
+    other.length = other_new_length;
     self.length += item_count;
   }
 
