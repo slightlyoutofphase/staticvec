@@ -837,6 +837,7 @@ fn split_off() {
   assert_eq!(vec2, [2, 3]);
 }
 
+#[cfg(not(miri))]
 #[test]
 fn symmetric_difference() {
   assert_eq!(
