@@ -916,14 +916,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn difference<const N2: usize>(&self, other: &StaticVec<T, N2>) -> Self
   where T: Clone + PartialEq {
-    let min_length = self.length.min(other.length);
-    let right = other.as_slice();
     let mut res = Self::new();
-    for i in 0..min_length {
-      let current = unsafe { self.get_unchecked(i) };
-      match right.iter().find(|&item| item == current).is_some() {
+    for item in self {
+      match other.iter().find(|&current| current == item).is_some() {
         true => (),
-        false => unsafe { res.push_unchecked((*current).clone()) },
+        false => unsafe { res.push_unchecked((*item).clone()) },
       }
     }
     res
@@ -954,20 +951,17 @@ impl<T, const N: usize> StaticVec<T, N> {
   where
     T: Clone + PartialEq,
   {
-    let min_length = self.length.min(other.length);
-    let left = self.as_slice();
-    let right = other.as_slice();
     let mut res = StaticVec::new();
-    for i in 0..min_length {
-      let (current_left, current_right) =
-        unsafe { (self.get_unchecked(i), other.get_unchecked(i)) };
-      match right.iter().find(|&item| item == current_left).is_some() {
+    for item in self {
+      match other.iter().find(|&current| current == item).is_some() {
         true => (),
-        false => unsafe { res.push_unchecked((*current_left).clone()) },
+        false => unsafe { res.push_unchecked((*item).clone()) },
       }
-      match left.iter().find(|&item| item == current_right).is_some() {
+    }
+    for item in other {
+      match self.iter().find(|&current| current == item).is_some() {
         true => (),
-        false => unsafe { res.push_unchecked((*current_right).clone()) },
+        false => unsafe { res.push_unchecked((*item).clone()) },
       }
     }
     res
