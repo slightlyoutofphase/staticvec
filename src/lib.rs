@@ -946,7 +946,6 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///   [1, 2, 4, 5]
   /// );
   /// ```
-  #[cfg(not(miri))]
   #[inline]
   pub fn symmetric_difference<const N2: usize>(
     &self,
