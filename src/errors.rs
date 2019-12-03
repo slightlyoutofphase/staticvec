@@ -20,9 +20,9 @@ impl<const N: usize> fmt::Display for CapacityError<N> {
 impl<const N: usize> error::Error for CapacityError<N> {}
 
 /// This error indicates that a push was attempted into a
-/// [`StaticVec`](crate::StaticVec) that failed because because the
-/// [`StaticVec`](crate::StaticVec) was already at maximum capacity. It contains the value that
-/// failed to be pushed so that it can be reused if needed.
+/// [`StaticVec`](crate::StaticVec) which failed because the
+/// [`StaticVec`](crate::StaticVec) was already at maximum capacity. It contains the value
+/// that failed to be pushed so that it can be reused if needed.
 #[derive(Clone, Eq, PartialEq)]
 pub struct PushCapacityError<T, const N: usize>(T);
 
