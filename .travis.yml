@@ -1,5 +1,6 @@
 language: rust
 os: linux
+cache: cargo
 
 rust:
   - nightly
@@ -8,7 +9,6 @@ script:
   # miri is temporarily disabled until it stops
   # icing on the new `symmetric_difference` function
   # - bash ./ci/run_miri.sh
-  - cargo clean
   - cargo test
   - cargo test --no-default-features
   - cargo bench
