@@ -45,6 +45,14 @@ mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
 
+#[doc(hidden)]
+// Temporary fix for the return type of `symmetric_difference`.
+pub(crate) struct Adder<const A: usize, const B: usize> {}
+
+impl<const A: usize, const B: usize> Adder<A, B> {
+  const RESULT: usize = A + B;
+}
+
 /// A [`Vec`](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
@@ -929,7 +937,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     res
   }
 
-  /*
   /// Returns a new StaticVec representing the symmetric difference of `self` and `other` (that is,
   /// all items present in at least one of `self` or `other`, but *not* present in both.
   ///
@@ -951,7 +958,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn symmetric_difference<const N2: usize>(
     &self,
     other: &StaticVec<T, N2>,
-  ) -> StaticVec<T, { N + N2 }>
+  ) -> StaticVec<T, { Adder::<N, N2>::RESULT }>
   where
     T: Clone + PartialEq,
   {
@@ -973,7 +980,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     res
   }
-  */
 
   #[doc(hidden)]
   #[inline(always)]
