@@ -928,7 +928,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     res
   }
-
+  /*
   /// Returns a new StaticVec representing the symmetric difference of `self` and `other` (that is,
   /// all items present in at least one of `self` or `other`, but *not* present in both.
   ///
@@ -972,6 +972,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     res
   }
+  */
 
   #[doc(hidden)]
   #[inline(always)]

@@ -837,6 +837,7 @@ fn split_off() {
   assert_eq!(vec2, [2, 3]);
 }
 
+/*
 #[test]
 fn symmetric_difference() {
   assert_eq!(
@@ -848,6 +849,7 @@ fn symmetric_difference() {
     [501, 505]
   );
 }
+*/
 
 #[test]
 fn swap_pop() {
