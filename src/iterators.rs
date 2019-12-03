@@ -37,13 +37,13 @@ pub struct StaticVecIntoIter<T, const N: usize> {
 }
 
 impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
-  #[cfg(feature = "std")]
-  #[doc(cfg(feature = "std"))]
-  #[inline(always)]
   /// Returns a string displaying the current values of the
   /// iterator's `start` and `end` elements on two separate lines.
   /// Locally requires that `T` implements [Debug](core::fmt::Debug)
   /// to make it possible to pretty-print the elements.
+  #[cfg(feature = "std")]
+  #[doc(cfg(feature = "std"))]
+  #[inline(always)]
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
     // Safety: `start` and `end` are never null.
@@ -56,9 +56,9 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
     }
   }
 
-  #[inline(always)]
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` pointers.
+  #[inline(always)]
   pub fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     unsafe { slice::from_raw_parts(self.start, self.len()) }
@@ -141,13 +141,13 @@ impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterConst<'a, T, N> {
 }
 
 impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
-  #[cfg(feature = "std")]
-  #[doc(cfg(feature = "std"))]
-  #[inline(always)]
   /// Returns a string displaying the current values of the
   /// iterator's `start` and `end` elements on two separate lines.
   /// Locally requires that `T` implements [Debug](core::fmt::Debug)
   /// to make it possible to pretty-print the elements.
+  #[cfg(feature = "std")]
+  #[doc(cfg(feature = "std"))]
+  #[inline(always)]
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
     // Safety: `start` and `end` are never null.
@@ -160,10 +160,10 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
     }
   }
 
-  #[inline(always)]
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` pointers. Though this is a mutable iterator, the slice cannot be mutable
   /// as it would lead to aliasing issues.
+  #[inline(always)]
   pub fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     unsafe { slice::from_raw_parts(self.start, self.len()) }
@@ -235,13 +235,13 @@ impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterMut<'a, T, N> {
 }
 
 impl<T, const N: usize> StaticVecIntoIter<T, N> {
-  #[cfg(feature = "std")]
-  #[doc(cfg(feature = "std"))]
-  #[inline(always)]
   /// Returns a string displaying the current values of the
   /// iterator's `start` and `end` elements on two separate lines.
   /// Locally requires that `T` implements [Debug](core::fmt::Debug)
   /// to make it possible to pretty-print the elements.
+  #[cfg(feature = "std")]
+  #[doc(cfg(feature = "std"))]
+  #[inline(always)]
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
     // Safety: `start` and `end` are never out of bounds.
@@ -254,9 +254,9 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
     }
   }
 
-  #[inline(always)]
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` indices.
+  #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     unsafe { slice::from_raw_parts(self.data.ptr_at_unchecked(self.start), self.len()) }

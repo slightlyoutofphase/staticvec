@@ -1,6 +1,6 @@
 #![allow(clippy::all)]
 
-use staticvec::*;
+use staticvec::{staticvec, StaticVec};
 
 #[derive(Copy, Clone, Debug)]
 struct ZST {}

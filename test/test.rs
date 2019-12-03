@@ -299,6 +299,15 @@ fn dedup_by_key() {
 }
 
 #[test]
+fn difference() {
+  assert_eq!(
+    staticvec![4, 5, 6, 7].difference(&staticvec![1, 2, 3, 7]),
+    [4, 5, 6]
+  );
+  assert_eq!(staticvec![1, 2, 3].difference(&staticvec![3, 4, 5]), [1, 2]);
+}
+
+#[test]
 fn drain() {
   let mut v = staticvec![1, 2, 3];
   let u = v.drain(1..);
@@ -826,6 +835,18 @@ fn split_off() {
   let vec2 = vec.split_off(1);
   assert_eq!(vec, [1]);
   assert_eq!(vec2, [2, 3]);
+}
+
+#[test]
+fn symmetric_difference() {
+  assert_eq!(
+    staticvec![1, 2, 3].symmetric_difference(&staticvec![3, 4, 5]),
+    [1, 2, 4, 5]
+  );
+  assert_eq!(
+    staticvec![501, 502, 503, 504].symmetric_difference(&staticvec![502, 503, 504, 505]),
+    [501, 505]
+  );
 }
 
 #[test]
