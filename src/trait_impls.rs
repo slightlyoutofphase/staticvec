@@ -307,12 +307,25 @@ impl<T, const N: usize> IntoIterator for StaticVec<T, N> {
   #[inline(always)]
   fn into_iter(mut self) -> Self::IntoIter {
     let old_length = self.length;
+
+    // This prevents the values from being dropped locally, now that they've
+    // been copied into the iterator
     self.length = 0;
-    StaticVecIntoIter {
+
+    let mut iter = StaticVecIntoIter {
       start: 0,
       end: old_length,
-      data: self,
+      data: MaybeUninit::uninit_array(),
+    };
+
+    // Copy the inhabited part of self into the iterator
+    unsafe {
+      self
+        .as_ptr()
+        .copy_to_nonoverlapping(iter.data[0].as_mut_ptr(), old_length)
     }
+
+    iter
   }
 }
 

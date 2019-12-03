@@ -1,9 +1,10 @@
 use crate::utils::distance_between;
-use crate::StaticVec;
+
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
 use core::marker::{PhantomData, Send, Sync};
+use core::mem::MaybeUninit;
 use core::ptr;
 use core::slice;
 
@@ -33,7 +34,7 @@ pub struct StaticVecIterMut<'a, T: 'a, const N: usize> {
 pub struct StaticVecIntoIter<T, const N: usize> {
   pub(crate) start: usize,
   pub(crate) end: usize,
-  pub(crate) data: StaticVec<T, N>,
+  pub(crate) data: [MaybeUninit<T>; N],
 }
 
 impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
@@ -248,8 +249,8 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        self.data.data.get_unchecked(self.start).get_ref(),
-        self.data.data.get_unchecked(self.end - 1).get_ref()
+        self.data.get_unchecked(self.start).get_ref(),
+        self.data.get_unchecked(self.end - 1).get_ref()
       )
     }
   }
@@ -259,7 +260,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   /// `start` and `end` indices.
   pub fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    unsafe { slice::from_raw_parts(self.data.ptr_at_unchecked(self.start), self.len()) }
+    unsafe { slice::from_raw_parts(self.data.get_unchecked(self.start).as_ptr(), self.len()) }
   }
 }
 
@@ -270,7 +271,7 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     match self.end - self.start {
       0 => None,
       _ => {
-        let res = Some(unsafe { self.data.ptr_at_unchecked(self.start).read() });
+        let res = Some(unsafe { self.data.get_unchecked(self.start).read() });
         self.start += 1;
         res
       }
@@ -291,7 +292,7 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
       0 => None,
       _ => {
         self.end -= 1;
-        Some(unsafe { self.data.ptr_at_unchecked(self.end).read() })
+        Some(unsafe { self.data.get_unchecked(self.end).read() })
       }
     }
   }
@@ -329,7 +330,7 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
       0 => (),
       _ => unsafe {
         ptr::drop_in_place(slice::from_raw_parts_mut(
-          self.data.mut_ptr_at_unchecked(self.start),
+          self.data.get_unchecked_mut(self.start).as_mut_ptr(),
           item_count,
         ))
       },
