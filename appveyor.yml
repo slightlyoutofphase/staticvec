@@ -14,7 +14,6 @@ branches:
 install:
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - if defined MSYS2 cmd: set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
-  - rustup default nightly-%target%
   - rustup update --force
   - rustc -vV
   - cargo -vV
@@ -22,6 +21,6 @@ cache:
   - '%USERPROFILE%\.cargo'
 build: false
 test_script:
-  - cargo test --features="std"
-  - cargo test --no-default-features
-  - cargo bench
+  - cargo test --features="std" --target=%target%
+  - cargo test --no-default-features --target=%target%
+  - cargo bench --target=%target%
