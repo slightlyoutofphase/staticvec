@@ -19,6 +19,7 @@
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
 pub use crate::trait_impls::*;
+use crate::utils::reverse_copy;
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 use core::marker::PhantomData;
@@ -297,13 +298,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a constant pointer to the first element of the StaticVec's internal array.
   #[inline(always)]
   pub const fn as_ptr(&self) -> *const T {
+    // Written like this so it can be `const fn`.
     &self.data as *const _ as *const T
   }
 
   /// Returns a mutable pointer to the first element of the StaticVec's internal array.
   #[inline(always)]
   pub fn as_mut_ptr(&mut self) -> *mut T {
-    &mut self.data as *mut _ as *mut T
+    self.data.as_mut_ptr() as *mut T
   }
 
   /// Returns a constant reference to a slice of the StaticVec's inhabited area.
@@ -687,18 +689,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a separate, reversed StaticVec of the contents of the StaticVec's
   /// inhabited area without modifying the original data.
   /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
-  #[inline]
+  #[inline(always)]
   pub fn reversed(&self) -> Self
   where T: Copy {
     Self {
-      data: unsafe {
-        let mut res = Self::new_data_uninit();
-        self
-          .as_ptr()
-          .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, self.length);
-        res.get_mut().get_unchecked_mut(0..self.length).reverse();
-        res
-      },
+      data: reverse_copy(&self.data),
       length: self.length,
     }
   }
