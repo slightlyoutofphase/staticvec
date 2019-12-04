@@ -19,13 +19,13 @@ branches:
   only:
     - master
 install:
-  - if %APPVEYOR_BUILD_WORKER_IMAGE%=="Visual Studio 2019 Preview"
-      (appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2019 Preview"
+      (appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe &&
        rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal)
     else
-      (appveyor DownloadFile https://sh.rustup.rs/ -FileName rustup-init.sh
+      (appveyor DownloadFile https://sh.rustup.rs/ -FileName rustup-init.sh &&
        bash rustup-init.sh -yv --default-toolchain %channel% --default-host %target% --profile minimal)
-  - if %APPVEYOR_BUILD_WORKER_IMAGE%=="Visual Studio 2019 Preview"
+  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2019 Preview"
       (set PATH=%PATH%;C:\Users\appveyor\.cargo\bin)
     else
       (export PATH=$PATH:~%USERPROFILE%/.cargo/bin)
