@@ -15,6 +15,22 @@ pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usi
   }
 }
 
+#[inline]
+pub(crate) fn reverse_copy<T, const N: usize>(this: &MaybeUninit<[T; N]>) -> MaybeUninit<[T; N]>
+where T: Copy {
+  let mut res: MaybeUninit<[T; N]> = MaybeUninit::uninit();
+  let mut dest = res.as_mut_ptr() as *mut T;
+  let mut i = N;
+  while i > 0 {
+    unsafe {
+      dest.copy_from_nonoverlapping((this.as_ptr() as *const T).add(i - 1), 1);
+      dest = dest.offset(1);
+      i -= 1;
+    }
+  }
+  res
+}
+
 #[inline(always)]
 pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, COUNT>
 where T: Copy {
