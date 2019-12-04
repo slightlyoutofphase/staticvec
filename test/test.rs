@@ -609,6 +609,7 @@ fn new_from_array() {
     Box::new(Struct { s: "BBB" }),
     Box::new(Struct { s: "CCC" }),
   ]);
+  #[cfg(not(miri))]
   assert_eq!(v5, [Box::new(Struct { s: "AAA" })]);
 }
 
