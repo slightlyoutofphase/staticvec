@@ -7,6 +7,7 @@
 #![feature(core_intrinsics)]
 #![feature(doc_cfg)]
 #![feature(exact_size_is_empty)]
+#![feature(forget_unsized)]
 #![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_uninit_array)]
@@ -21,7 +22,7 @@ pub use crate::trait_impls::*;
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 use core::marker::PhantomData;
-use core::mem::MaybeUninit;
+use core::mem::{self, MaybeUninit};
 use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
 use core::ptr;
 use core::slice;
@@ -123,7 +124,7 @@ impl<T, const N: usize> StaticVec<T, N> {
               .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, N2.min(N));
             // Drops any extra values left in the source array, then "forgets it".
             ptr::drop_in_place(values.get_unchecked_mut(N2.min(N)..N2));
-            let _ = MaybeUninit::new(values);
+            mem::forget_unsized(values);
             data
           }
         },

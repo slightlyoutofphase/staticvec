@@ -1,7 +1,7 @@
 /// Creates a new StaticVec from a [`vec!`](https://doc.rust-lang.org/nightly/alloc/macro.vec.html)-style pseudo-slice.
 /// The newly created StaticVec will have a capacity and length exactly equal to the
-/// number of elements in the slice. The "array-like" `[value; N]` syntax is also supported for
-/// types that implement [`Copy`](core::marker::Copy).
+/// number of elements in the slice. The "array-like" `[value; N]` syntax is also supported,
+/// and both forms can be used in const contexts.
 ///
 /// Example usage:
 ///
@@ -10,6 +10,10 @@
 /// let v = staticvec![vec![staticvec![1, 2, 3, 4]]];
 /// // The type of the StaticVec on the next line is `StaticVec<f32, 64>`.
 /// let v2 = staticvec![12.0; 64];
+/// const V3: StaticVec<i32, 4> = staticvec![1, 2, 3, 4];
+/// assert_eq!(V3, [1, 2, 3, 4]);
+/// const V4: StaticVec<i32, 128> = staticvec![27; 128];
+/// assert!(V4 == [27; 128]);
 /// ```
 #[macro_export]
 macro_rules! staticvec {
@@ -17,7 +21,7 @@ macro_rules! staticvec {
     1
   };
   ($val:expr; $n:expr) => {
-    $crate::utils::new_from_value::<_, $n>($val)
+    $crate::StaticVec::new_from_const_array([$val; $n])
   };
   ($($val:expr),* $(,)*) => {
     $crate::StaticVec::new_from_const_array([$($val),*])
