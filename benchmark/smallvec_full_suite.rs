@@ -103,8 +103,8 @@ impl<T: Copy + 'static, const N: usize> Vector<T> for StaticVec<T, N> {
     self.insert(n, val)
   }
 
-  fn from_elem(val: T, _n: usize) -> Self {
-    staticvec![val; {N}]
+  fn from_elem(val: T, n: usize) -> Self {
+    staticvec![val; n]
   }
 
   fn from_elems(val: &[T]) -> Self {
