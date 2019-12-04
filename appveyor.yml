@@ -14,9 +14,9 @@ branches:
 install:
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - if defined MSYS2 cmd: set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
-  - rustup component uninstall clippy
-  - rustup component uninstall rustfmt
-  - rustup component uninstall rust-docs
+  - rustup component remove clippy
+  - rustup component remove rustfmt
+  - rustup component remove rust-docs
   - rustup toolchain install %channel%-%target%
   - rustup update --force
   - rustc -vV
