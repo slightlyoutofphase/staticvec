@@ -12,10 +12,9 @@ branches:
   only:
     - master
 install:
-  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - rustup-init -yv --default-toolchain %channel% --default-host %target%
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - if defined MSYS2 cmd: set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
+  - rustup default nightly-%target%
   - rustup update
   - rustc -vV
   - cargo -vV
