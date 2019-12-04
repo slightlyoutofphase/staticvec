@@ -954,7 +954,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     res
   }
-  /*
+
   /// Returns a new StaticVec representing the symmetric difference of `self` and `other` (that is,
   /// all items present in at least one of `self` or `other`, but *not* present in both.)
   ///
@@ -972,7 +972,6 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///   [1, 2, 4, 5]
   /// );
   /// ```
-
   #[inline]
   pub fn symmetric_difference<const N2: usize>(
     &self,
@@ -1014,12 +1013,12 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     res
   }
-  */
+
   #[doc(hidden)]
   #[inline(always)]
   pub(crate) const fn new_data_uninit() -> MaybeUninit<[T; N]> {
     // An internal convenience function to get an *uninitialized* instance of
-    // `MaybeUninit<[MaybeUninit<T>; N]>`.
+    // `MaybeUninit<[T; N]>`.
     MaybeUninit::uninit()
   }
 }
