@@ -21,7 +21,8 @@ install:
   - cargo -vV
 cache:
   - '%USERPROFILE%\.cargo'
-build:
+build: false
+test_script:
   - cargo test --features="std"
   - cargo test --no-default-features
   - cargo bench
