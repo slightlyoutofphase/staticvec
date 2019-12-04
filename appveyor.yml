@@ -1,31 +1,27 @@
-image: Visual Studio 2017
+image: Visual Studio 2019
 skip_tags: true
 environment:
   matrix:
     - channel: nightly
       target: x86_64-pc-windows-msvc
     - channel: nightly
-      target: i686-pc-windows-msvc
+      target: x86_64-pc-windows-gnu
+      bits: 64
+      msys2: 1
 branches:
   only:
     - master
 install:
   - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - rustup-init -yv --default-toolchain %channel% --default-host %target%
-  - cmd: set PATH=%PATH%;%USERPROFILE%\.cargo\bin
+  - rustup-init.exe -y --default-host %TARGET%
+  - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - if defined MSYS2 cmd: set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
   - rustup update
   - rustc -vV
   - cargo -vV
-  - rustup component add rust-src
-  - for /f %%i in ('rustc --print sysroot') do set RUST_SRC_PATH=%%i\lib\rustlib\src\rust\src
-  - cmd: set RUST_BACKTRACE=1
-  - cmd: set RUSTFLAGS=-C target-feature=+crt-static
-  - git submodule update --init --recursive
 cache:
   - '%USERPROFILE%\.cargo'
-build_script:
-  - cargo build --all --release
 test_script:
-  - cargo test --features="std" %cargoflags%
-  - cargo test --no-default-features %cargoflags%
+  - cargo test --features="std"
+  - cargo test --no-default-features
   - cargo bench
