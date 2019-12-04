@@ -602,6 +602,8 @@ fn new_from_array() {
   assert_eq!(v, [1, 2, 3]);
   let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
   assert_eq!(v2, [1, 2, 3]);
+  // Miri gives a false positive "dangling reference" for this.
+  #[cfg(not(miri))]
   let v5 = StaticVec::<Box<Struct>, 1>::new_from_array([
     Box::new(Struct { s: "AAA" }),
     Box::new(Struct { s: "BBB" }),
