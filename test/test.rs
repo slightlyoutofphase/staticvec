@@ -849,6 +849,18 @@ fn reversed() {
 }
 
 #[test]
+fn size_of_bytes() {
+  let x = StaticVec::<u8, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(x.size_in_bytes(), 8);
+  let y = StaticVec::<u16, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(y.size_in_bytes(), 16);
+  let z = StaticVec::<u32, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(z.size_in_bytes(), 32);
+  let w = StaticVec::<u64, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(w.size_in_bytes(), 64);
+}
+
+#[test]
 fn set_len() {
   let mut v = staticvec![1, 2, 3];
   assert_eq!(v.len(), 3);
