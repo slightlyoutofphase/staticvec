@@ -272,7 +272,7 @@ fn main() {
   for s in &strings {
     println!("{}", s);
   }
-  let mut structs = staticvec![
+  const STRUCTS: StaticVec<MyOtherStruct, 6> = staticvec![
     MyOtherStruct { s: "a" },
     MyOtherStruct { s: "b" },
     MyOtherStruct { s: "c" },
@@ -280,8 +280,8 @@ fn main() {
     MyOtherStruct { s: "e" },
     MyOtherStruct { s: "f" },
   ];
-  let mut newstructs = structs.drain_filter(|s| s.s < "d");
-  for s in &structs {
+  let mut newstructs = STRUCTS.drain_filter(|s| s.s < "d");
+  for s in &STRUCTS {
     println!("{}", s.s);
   }
   for s in &newstructs {
