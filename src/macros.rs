@@ -1,6 +1,6 @@
-/// Creates a new StaticVec from a [`vec!`](https://doc.rust-lang.org/nightly/alloc/macro.vec.html)-style pseudo-slice.
-/// The newly created StaticVec will have a capacity and length exactly equal to the
-/// number of elements in the slice. The "array-like" `[value; N]` syntax is also supported,
+/// Creates a new [`StaticVec`](crate::StaticVec) from a [`vec!`](https://doc.rust-lang.org/nightly/alloc/macro.vec.html)-style pseudo-slice.
+/// The newly created [`StaticVec`](crate::StaticVec) will have a capacity and length exactly equal
+/// to the number of elements in the slice. The "array-like" `[value; N]` syntax is also supported,
 /// and both forms can be used in const contexts.
 ///
 /// Example usage:

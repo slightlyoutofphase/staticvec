@@ -560,10 +560,14 @@ fn len() {
 
 #[test]
 fn macros() {
-  // The type of the StaticVec on the next line is `StaticVec<StaticVec<StaticVec<i32, 4>, 1>, 1>`.
-  let _v = staticvec![staticvec![staticvec![1, 2, 3, 4]]];
-  // The type of the StaticVec on the next line is `StaticVec<f32, 64>`.
-  let _v2 = staticvec![12.0; 64];
+  let v = staticvec![staticvec![staticvec![1, 2, 3, 4]]];
+  assert_eq!(v[0][0], [1, 2, 3, 4]);
+  let v2 = staticvec![12.0; 64];
+  assert!(v2 == [12.0; 64]);
+  const V3: StaticVec<i32, 4> = staticvec![1, 2, 3, 4];
+  assert_eq!(V3, [1, 2, 3, 4]);
+  const V4: StaticVec<i32, 128> = staticvec![27; 128];
+  assert!(V4 == [27; 128]);
 }
 
 #[test]
@@ -625,6 +629,19 @@ fn new_from_const_array() {
   assert_eq!(V.reversed(), ["C", "B", "A"]);
   const V2: StaticVec<u8, 6> = StaticVec::new_from_const_array([1, 2, 3, 4, 5, 6]);
   assert_eq!(V2, [1, 2, 3, 4, 5, 6]);
+  const V6: StaticVec<Struct, 3> = StaticVec::new_from_const_array([
+    Struct { s: "AAA" },
+    Struct { s: "BBB" },
+    Struct { s: "CCC" },
+  ]);
+  assert_eq!(
+    V6,
+    [
+      Struct { s: "AAA" },
+      Struct { s: "BBB" },
+      Struct { s: "CCC" },
+    ]
+  );
 }
 
 #[test]

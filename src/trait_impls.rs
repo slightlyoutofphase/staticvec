@@ -5,7 +5,6 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::{self, MaybeUninit};
 use core::ops::{Deref, DerefMut, Index, IndexMut};
 use core::ptr;
 use core::slice::SliceIndex;
@@ -189,14 +188,7 @@ impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, N2> {
 impl<T, const N: usize> From<[T; N]> for StaticVec<T, N> {
   #[inline(always)]
   fn from(values: [T; N]) -> Self {
-    Self {
-      data: unsafe {
-        let res = (&values as *const [T; N] as *const MaybeUninit<[T; N]>).read();
-        mem::forget(values);
-        res
-      },
-      length: N,
-    }
+    Self::new_from_const_array(values)
   }
 }
 

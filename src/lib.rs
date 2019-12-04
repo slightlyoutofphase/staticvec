@@ -140,7 +140,12 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Being `const` necessitates that this function can only accept arrays with a length
   /// exactly equivalent to the declared capacity of the resulting StaticVec, so if you do need
   /// flexibility with regards to input lengths it's recommended that you use
-  /// [`new_from_array`](crate::StaticVec::new_from_array) instead.
+  /// [`new_from_array`](crate::StaticVec::new_from_array) or the [`From`](std::convert::From)
+  /// implementations instead.
+  ///
+  /// Note that both forms of the [`staticvec!`] macro are implemented using
+  /// [`new_from_const_array`](crate::StaticVec::new_from_const_array), so you may also prefer
+  /// to use them instead of it directly.
   #[inline(always)]
   pub const fn new_from_const_array(values: [T; N]) -> Self {
     Self {
