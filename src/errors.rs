@@ -12,7 +12,7 @@ pub struct CapacityError<const N: usize>;
 impl<const N: usize> fmt::Display for CapacityError<N> {
   #[inline(always)]
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "Insufficient remaining capacity (limit is {})", N)
+    write!(f, "Insufficient remaining capacity (limit is {})!", N)
   }
 }
 

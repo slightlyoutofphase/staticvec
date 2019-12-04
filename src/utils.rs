@@ -16,18 +16,6 @@ pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usi
 }
 
 #[inline(always)]
-pub(crate) fn reverse_copy<T>(first: *const T, mut last: *const T, mut result: *mut T)
-where T: Copy {
-  while first != last {
-    unsafe {
-      last = last.offset(-1);
-      *result = *last;
-      result = result.offset(1);
-    }
-  }
-}
-
-#[inline(always)]
 pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, COUNT>
 where T: Copy {
   StaticVec {
@@ -37,7 +25,7 @@ where T: Copy {
         for i in 0..COUNT {
           (data.as_mut_ptr() as *mut T).add(i).write(value);
         }
-        data.assume_init()
+        data
       }
     },
     length: COUNT,

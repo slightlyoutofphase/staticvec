@@ -156,12 +156,12 @@ fn bounds_to_string() {
   let mut v = staticvec![1, 2, 3, 4];
   let it = v.iter();
   assert_eq!(
-    "Current value of element at `start`: Some(1)\nCurrent value of element at `end`: Some(4)",
+    "Current value of element at `start`: 1\nCurrent value of element at `end`: 4",
     it.bounds_to_string()
   );
   let itm = v.iter_mut();
   assert_eq!(
-    "Current value of element at `start`: Some(1)\nCurrent value of element at `end`: Some(4)",
+    "Current value of element at `start`: 1\nCurrent value of element at `end`: 4",
     itm.bounds_to_string()
   );
   let itv = v.into_iter();
@@ -589,16 +589,6 @@ fn new() {
 }
 
 #[test]
-fn new_from_slice() {
-  let vec = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3]);
-  assert_eq!(vec, [1, 2, 3]);
-  let vec2 = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3, 4, 5, 6]);
-  assert_eq!(vec2, [1, 2, 3]);
-  let vec3 = StaticVec::<i32, 27>::new_from_slice(&[]);
-  assert_eq!(vec3, []);
-}
-
-#[test]
 fn new_from_array() {
   let vec = StaticVec::<i32, 3>::new_from_array([1; 3]);
   assert_eq!(vec, [1, 1, 1]);
@@ -612,6 +602,36 @@ fn new_from_array() {
   assert_eq!(v, [1, 2, 3]);
   let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
   assert_eq!(v2, [1, 2, 3]);
+  let v5 = StaticVec::<Box<Struct>, 1>::new_from_array([
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" }),
+  ]);
+  assert_eq!(v5, [Box::new(Struct { s: "AAA" })]);
+}
+
+#[test]
+fn new_from_const_array() {
+  const VEC2: StaticVec<i32, 6> = StaticVec::new_from_const_array([1; 6]);
+  assert_eq!(VEC2, [1, 1, 1, 1, 1, 1]);
+  const VEC3: StaticVec<i32, 0> = StaticVec::new_from_const_array([0; 0]);
+  assert_eq!(VEC3, []);
+  const VEC4: StaticVec<f32, 512> = StaticVec::new_from_const_array([24.0; 512]);
+  assert_eq!(VEC4, staticvec![24.0; 512]);
+  const V: StaticVec<&'static str, 3> = StaticVec::new_from_const_array(["A", "B", "C"]);
+  assert_eq!(V.reversed(), ["C", "B", "A"]);
+  const V2: StaticVec<u8, 6> = StaticVec::new_from_const_array([1, 2, 3, 4, 5, 6]);
+  assert_eq!(V2, [1, 2, 3, 4, 5, 6]);
+}
+
+#[test]
+fn new_from_slice() {
+  let vec = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3]);
+  assert_eq!(vec, [1, 2, 3]);
+  let vec2 = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3, 4, 5, 6]);
+  assert_eq!(vec2, [1, 2, 3]);
+  let vec3 = StaticVec::<i32, 27>::new_from_slice(&[]);
+  assert_eq!(vec3, []);
 }
 
 #[test]
@@ -837,6 +857,7 @@ fn split_off() {
   assert_eq!(vec2, [2, 3]);
 }
 
+/*
 #[test]
 fn symmetric_difference() {
   assert_eq!(
@@ -848,6 +869,7 @@ fn symmetric_difference() {
     [501, 505]
   );
 }
+*/
 
 #[test]
 fn swap_pop() {
@@ -887,10 +909,7 @@ fn truncate() {
 #[test]
 fn try_extend_from_slice() {
   let mut v = StaticVec::<i32, 3>::from([1, 2, 3]);
-  assert_eq!(
-    v.try_extend_from_slice(&[2, 3]),
-    Err("Insufficient remaining capacity!")
-  );
+  assert_eq!(v.try_extend_from_slice(&[2, 3]), Err(CapacityError::<3> {}));
   let mut w = StaticVec::<i32, 4>::from([1, 2, 3]);
   assert_eq!(w.try_extend_from_slice(&[2]), Ok(()));
 }
@@ -899,10 +918,7 @@ fn try_extend_from_slice() {
 #[test]
 fn try_insert() {
   let mut vec = staticvec![1, 2, 3, 4, 5];
-  assert_eq!(
-    vec.try_insert(2, 0),
-    Err("One of `self.length < N` or `index <= self.length` is false!")
-  );
+  assert_eq!(vec.try_insert(2, 0), Err(CapacityError::<5> {}));
   let mut vec2 = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
   vec2.try_insert(2, 3);
   assert_eq!(vec2, [1, 2, 3, 3]);

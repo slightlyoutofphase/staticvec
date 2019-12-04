@@ -93,7 +93,7 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
             self
               .as_ptr()
               .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, self.length);
-            res.assume_init()
+            res
           }
         },
         length: self.length,
@@ -191,7 +191,7 @@ impl<T, const N: usize> From<[T; N]> for StaticVec<T, N> {
   fn from(values: [T; N]) -> Self {
     Self {
       data: unsafe {
-        let res = (&values as *const [T; N] as *const [MaybeUninit<T>; N]).read();
+        let res = (&values as *const [T; N] as *const MaybeUninit<[T; N]>).read();
         mem::forget(values);
         res
       },

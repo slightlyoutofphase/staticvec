@@ -50,8 +50,8 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        self.start.as_ref(),
-        self.end.offset(-1).as_ref()
+        &*self.start,
+        &*self.end.offset(-1)
       )
     }
   }
@@ -154,8 +154,8 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        self.start.as_ref(),
-        self.end.offset(-1).as_ref()
+        &*self.start,
+        &*self.end.offset(-1)
       )
     }
   }
@@ -248,8 +248,8 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        self.data.data.get_unchecked(self.start).get_ref(),
-        self.data.data.get_unchecked(self.end - 1).get_ref()
+        &*self.data.ptr_at_unchecked(self.start),
+        &*self.data.ptr_at_unchecked(self.end - 1)
       )
     }
   }

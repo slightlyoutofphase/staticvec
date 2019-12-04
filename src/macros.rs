@@ -20,7 +20,7 @@ macro_rules! staticvec {
     $crate::utils::new_from_value::<_, $n>($val)
   };
   ($($val:expr),* $(,)*) => {
-    $crate::StaticVec::from([$($val),*])
+    $crate::StaticVec::new_from_const_array([$($val),*])
   };
 }
 
@@ -35,7 +35,7 @@ macro_rules! impl_extend {
       while i < N {
         if let Some($var_a) = it.next() {
           unsafe {
-            self.data.get_unchecked_mut(i).write($var_b);
+            self.mut_ptr_at_unchecked(i).write($var_b);
           }
         } else {
           break;
@@ -70,7 +70,7 @@ macro_rules! impl_from_iterator {
             }
             i += 1;
           }
-          unsafe { res.assume_init() }
+          res
         },
         length: i,
       }
