@@ -921,6 +921,21 @@ fn swap_remove() {
 }
 
 #[test]
+fn triple() {
+  static V: StaticVec<usize, 4> = staticvec![4, 5, 6, 7];
+  assert_eq!(V.triple(), (V.as_ptr(), 4, 4));
+}
+
+#[test]
+fn triple_mut() {
+  let mut v = staticvec![4, 5, 6, 7];
+  let t = v.triple_mut();
+  assert_eq!(t, (v.as_mut_ptr(), 4, 4));
+  unsafe { *t.0 = 8 };
+  assert_eq!(v, [8, 5, 6, 7]);
+}
+
+#[test]
 fn truncate() {
   let mut vec = staticvec![1, 2, 3, 4, 5];
   vec.truncate(2);

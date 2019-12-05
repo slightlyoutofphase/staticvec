@@ -155,67 +155,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
-  /// Returns a new StaticVec instance filled with the return value of an initializer function.
-  /// The length field of the newly created StaticVec will be equal to its capacity.
-  ///
-  /// Example usage:
-  /// ```
-  /// let mut i = 0;
-  /// let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
-  /// assert_eq!(v.len(), 64);
-  /// assert_eq!(v[0], 1);
-  /// assert_eq!(v[1], 2);
-  /// assert_eq!(v[2], 3);
-  /// assert_eq!(v[3], 4);
-  /// ```
-  #[inline]
-  pub fn filled_with<F>(mut initializer: F) -> Self
-  where F: FnMut() -> T {
-    let mut res = Self::new();
-    // You might think it would make more sense to use `push_unchecked` here.
-    // Originally, I did also! However, as of today (November 19, 2019), doing so
-    // both in this function and several others throughout the crate inhibits the ability
-    // of `rustc` to fully unroll and autovectorize various constant-bounds loops. If this changes
-    // in the future, feel free to open a PR switching out the manual code for `get_unchecked`, if
-    // you happen to notice it before I do.
-    for i in 0..N {
-      unsafe {
-        res.mut_ptr_at_unchecked(i).write(initializer());
-        res.length += 1;
-      }
-    }
-    res
-  }
-
-  /// Returns a new StaticVec instance filled with the return value of an initializer function.
-  /// Unlike for [`filled_with`](crate::StaticVec::filled_with), the initializer function in
-  /// this case must take a single usize variable as an input parameter, which will be called
-  /// with the current index of the `0..N` loop that
-  /// [`filled_with_by_index`](crate::StaticVec::filled_with_by_index) is implemented with
-  /// internally. The length field of the newly created StaticVec will be equal to its capacity.
-  ///
-  /// Example usage:
-  /// ```
-  /// let v = StaticVec::<usize, 64>::filled_with_by_index(|i| { i + 1 });
-  /// assert_eq!(v.len(), 64);
-  /// assert_eq!(v[0], 1);
-  /// assert_eq!(v[1], 2);
-  /// assert_eq!(v[2], 3);
-  /// assert_eq!(v[3], 4);
-  /// ```
-  #[inline]
-  pub fn filled_with_by_index<F>(mut initializer: F) -> Self
-  where F: FnMut(usize) -> T {
-    let mut res = Self::new();
-    for i in 0..N {
-      unsafe {
-        res.mut_ptr_at_unchecked(i).write(initializer(i));
-        res.length += 1;
-      }
-    }
-    res
-  }
-
   /// Returns the current length of the StaticVec.
   /// Just as for a normal [`Vec`](alloc::vec::Vec), this means the number of elements that
   /// have been added to it with [`push`](crate::StaticVec::push),
@@ -706,6 +645,61 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
+  /// Returns a new StaticVec instance filled with the return value of an initializer function.
+  /// The length field of the newly created StaticVec will be equal to its capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// let mut i = 0;
+  /// let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
+  /// assert_eq!(v.len(), 64);
+  /// assert_eq!(v[0], 1);
+  /// assert_eq!(v[1], 2);
+  /// assert_eq!(v[2], 3);
+  /// assert_eq!(v[3], 4);
+  /// ```
+  #[inline]
+  pub fn filled_with<F>(mut initializer: F) -> Self
+  where F: FnMut() -> T {
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res.mut_ptr_at_unchecked(i).write(initializer());
+        res.length += 1;
+      }
+    }
+    res
+  }
+
+  /// Returns a new StaticVec instance filled with the return value of an initializer function.
+  /// Unlike for [`filled_with`](crate::StaticVec::filled_with), the initializer function in
+  /// this case must take a single usize variable as an input parameter, which will be called
+  /// with the current index of the `0..N` loop that
+  /// [`filled_with_by_index`](crate::StaticVec::filled_with_by_index) is implemented with
+  /// internally. The length field of the newly created StaticVec will be equal to its capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// let v = StaticVec::<usize, 64>::filled_with_by_index(|i| { i + 1 });
+  /// assert_eq!(v.len(), 64);
+  /// assert_eq!(v[0], 1);
+  /// assert_eq!(v[1], 2);
+  /// assert_eq!(v[2], 3);
+  /// assert_eq!(v[3], 4);
+  /// ```
+  #[inline]
+  pub fn filled_with_by_index<F>(mut initializer: F) -> Self
+  where F: FnMut(usize) -> T {
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res.mut_ptr_at_unchecked(i).write(initializer(i));
+        res.length += 1;
+      }
+    }
+    res
+  }
+
   /// Copies and appends all elements, if any, of a slice (which can also be `&mut` as it will
   /// coerce implicitly to `&`) to the StaticVec. If the slice has a length greater than the
   /// StaticVec's remaining capacity, any contents after that point are ignored.
@@ -1015,6 +1009,22 @@ impl<T, const N: usize> StaticVec<T, N> {
       }
     }
     res
+  }
+
+  /// A concept borrowed from the widely-used [`SmallVec`] crate, this function
+  /// returns a tuple consisting of a constant pointer to the first element of the StaticVec,
+  /// the length of the StaticVec, and the capacity of the StaticVec.
+  #[inline(always)]
+  pub const fn triple(&self) -> (*const T, usize, usize) {
+    (self.as_ptr(), self.length, N)
+  }
+
+  /// A mutable version of [`triple`](crate::StaticVec::triple). This implementation differs from
+  /// the one found in [`SmallVec`] in that it only provides the first element of the StaticVec as
+  /// a mutable pointer, not also the length as a mutable reference.
+  #[inline(always)]
+  pub fn triple_mut(&mut self) -> (*mut T, usize, usize) {
+    (self.as_mut_ptr(), self.length, N)
   }
 
   #[doc(hidden)]
