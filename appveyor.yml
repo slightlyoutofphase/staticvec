@@ -14,7 +14,7 @@ branches:
 install:
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - if defined MSYS2 cmd: set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
-  - rustup default %channel-%target%
+  - rustup default %channel%-%target%
   - rustup update --force
 cache:
   - '%USERPROFILE%\.cargo'
