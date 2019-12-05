@@ -849,7 +849,7 @@ fn reversed() {
 }
 
 #[test]
-fn size_of_bytes() {
+fn size_in_bytes() {
   let x = StaticVec::<u8, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
   assert_eq!(x.size_in_bytes(), 8);
   let y = StaticVec::<u16, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
