@@ -4,50 +4,46 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 Preview
       channel: nightly
       target: x86_64-pc-windows-msvc
+      install:
+        - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+        - rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal
+        - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
+        - if defined MSYS2 set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
+        - rustup update --force
+      cache:
+        - '%USERPROFILE%\.cargo'
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 Preview
       channel: nightly
       target: x86_64-pc-windows-gnu
       bits: 64
       msys2: 1
+      install:
+        - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+        - rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal
+        - set PATH=%USERPROFILE%\.cargo\bin;C:\msys64\mingw%BITS%\bin;%PATH%
+        - rustup update --force
+      cache:
+        - '%USERPROFILE%\.cargo'
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       channel: nightly
       target: x86_64-unknown-linux-gnu
+      install:
+        - appveyor DownloadFile https://sh.rustup.rs/ -FileName rustup-init.sh
+        - bash rustup-init.sh -yv --default-toolchain %channel% --default-host %target% --profile minimal
+        - export PATH=$PATH:~$HOME/.cargo/bin
+        - rustup update --force
+     cache:
+        - '$HOME/.cargo'
     - APPVEYOR_BUILD_WORKER_IMAGE: macOS
       channel: nightly
       target: x86_64-apple-darwin
-branches:
-  only:
-    - master
-for:
--
-    only:
-      - image: Visual Studio 2019 Preview
-    install:
-      - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-      - rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal
-      - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
-      - if defined MSYS2 set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
-      - rustup update --force
--
-    only:
-      - image: Ubuntu
-      - image: macOS
-    install:
-      - appveyor DownloadFile https://sh.rustup.rs/ -FileName rustup-init.sh &&
-      - bash rustup-init.sh -yv --default-toolchain %channel% --default-host %target% --profile minimal &&
-      - export PATH=$PATH:~%USERPROFILE%/.cargo/bin
-      - rustup update --force
--
-    only:
-      - image: Visual Studio 2019 Preview
-    cache:
-      - '%USERPROFILE%\.cargo'
--
-    only:
-      - image: Ubuntu
-      - image: macOS
-    cache:
-      - '%USERPROFILE%/.cargo'
+      install:
+        - appveyor DownloadFile https://sh.rustup.rs/ -FileName rustup-init.sh
+        - bash rustup-init.sh -yv --default-toolchain %channel% --default-host %target% --profile minimal
+        - export PATH=$PATH:~$HOME/.cargo/bin
+        - rustup update --force
+      cache:
+        - '$HOME/.cargo'
 build: false
 test_script:
   - cargo test --features="std" --target=%target%
