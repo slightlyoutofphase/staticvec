@@ -21,14 +21,12 @@ branches:
 install:
   - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2019 Preview"
       (appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe &&
-       rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal)
+       rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal &&
+       set PATH=%PATH%;%USERPROFILE%\.cargo\bin)
     else
       (appveyor DownloadFile https://sh.rustup.rs/ -FileName rustup-init.sh &&
-       bash rustup-init.sh -yv --default-toolchain %channel% --default-host %target% --profile minimal)
-  - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2019 Preview"
-      (set PATH=%PATH%;%USERPROFILE%\.cargo\bin)
-    else
-      (export PATH=$PATH:~%USERPROFILE%/.cargo/bin)
+       bash rustup-init.sh -yv --default-toolchain %channel% --default-host %target% --profile minimal &&
+       export PATH=$PATH:~%USERPROFILE%/.cargo/bin)
   - if defined MSYS2 set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
   - rustup update --force
 cache:
