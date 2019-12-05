@@ -583,6 +583,16 @@ fn macros() {
 }
 
 #[test]
+fn math_functions() {
+  static A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  static B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  assert_eq!(A.added(&B), [6.0, 8.0, 10.0, 12.0]);
+  assert_eq!(A.subtracted(&B), [2.0, 2.0, 2.0, 2.0]);
+  assert_eq!(A.multiplied(&B), [8.0, 15.0, 24.0, 35.0]);
+  assert_eq!(A.divided(&B), [2.0, 1.6666666666666667, 1.5, 1.4]);
+}
+
+#[test]
 fn mut_ptr_at() {
   let mut v = staticvec![1, 2, 3];
   unsafe { assert_eq!(*v.mut_ptr_at(0), 1) };
