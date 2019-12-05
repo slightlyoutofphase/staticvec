@@ -32,7 +32,7 @@ environment:
         - bash rustup-init.sh -yv --default-toolchain %channel% --default-host %target% --profile minimal
         - export PATH=$PATH:~$HOME/.cargo/bin
         - rustup update --force
-     cache:
+      cache:
         - '$HOME/.cargo'
     - APPVEYOR_BUILD_WORKER_IMAGE: macOS
       channel: nightly
