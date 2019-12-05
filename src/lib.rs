@@ -25,7 +25,9 @@ use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 use core::marker::PhantomData;
 use core::mem::{self, MaybeUninit};
-use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
+use core::ops::{
+  Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub
+};
 use core::ptr;
 
 #[cfg(any(feature = "std", rustdoc))]
@@ -1062,6 +1064,138 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn triple_mut(&mut self) -> (*mut T, usize, usize) {
     (self.as_mut_ptr(), self.length, N)
+  }
+
+  /// Linearly adds (in a mathematical sense) the contents of two same-capacity
+  /// StaticVecs and returns the results in a new one of equal capacity.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::Marker::Copy) to allow
+  /// for an efficient implementation, and [`Add`](core::Ops::Add) to make it possible
+  /// to add the elements.
+  ///
+  /// For both performance and safety reasons, this function requires that both `self`
+  /// and `other` are at full capacity, and will panic if that is not the case (that is,
+  /// if `self.is_full() && other.is_full()` is not equal to `true`.)
+  ///
+  /// Example usage:
+  /// ```
+  /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  /// assert_eq!(A.added(&B), [6.0, 8.0, 10.0, 12.0]);
+  /// ```
+  #[inline(always)]
+  pub fn added(&self, other: &Self) -> Self
+  where T: Copy + Add<Output = T> {
+    assert!(self.is_full() && other.is_full());
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res
+          .mut_ptr_at_unchecked(i)
+          .write(*self.get_unchecked(i) + *other.get_unchecked(i));
+      }
+    }
+    res.length = N;
+    res
+  }
+
+  /// Linearly subtracts (in a mathematical sense) the contents of two same-capacity
+  /// StaticVecs and returns the results in a new one of equal capacity.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::Marker::Copy) to allow
+  /// for an efficient implementation, and [`Sub`](core::Ops::Sub) to make it possible
+  /// to subtract the elements.
+  ///
+  /// For both performance and safety reasons, this function requires that both `self`
+  /// and `other` are at full capacity, and will panic if that is not the case (that is,
+  /// if `self.is_full() && other.is_full()` is not equal to `true`.)
+  ///
+  /// Example usage:
+  /// ```
+  /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  /// assert_eq!(A.subtracted(&B), [2.0, 2.0, 2.0, 2.0]);
+  /// ```
+  #[inline(always)]
+  pub fn subtracted(&self, other: &Self) -> Self
+  where T: Copy + Sub<Output = T> {
+    assert!(self.is_full() && other.is_full());
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res
+          .mut_ptr_at_unchecked(i)
+          .write(*self.get_unchecked(i) - *other.get_unchecked(i));
+      }
+    }
+    res.length = N;
+    res
+  }
+
+  /// Linearly multiplies (in a mathematical sense) the contents of two same-capacity
+  /// StaticVecs and returns the results in a new one of equal capacity.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::Marker::Copy) to allow
+  /// for an efficient implementation, and [`Mul`](core::Ops::Mul) to make it possible
+  /// to multiply the elements.
+  ///
+  /// For both performance and safety reasons, this function requires that both `self`
+  /// and `other` are at full capacity, and will panic if that is not the case (that is,
+  /// if `self.is_full() && other.is_full()` is not equal to `true`.)
+  ///
+  /// Example usage:
+  /// ```
+  /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  /// assert_eq!(A.multiplied(&B), [8.0, 15.0, 24.0, 35.0]);
+  /// ```
+  #[inline(always)]
+  pub fn multiplied(&self, other: &Self) -> Self
+  where T: Copy + Mul<Output = T> {
+    assert!(self.is_full() && other.is_full());
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res
+          .mut_ptr_at_unchecked(i)
+          .write(*self.get_unchecked(i) * *other.get_unchecked(i));
+      }
+    }
+    res.length = N;
+    res
+  }
+
+  /// Linearly divides (in a mathematical sense) the contents of two same-capacity
+  /// StaticVecs and returns the results in a new one of equal capacity.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::Marker::Copy) to allow
+  /// for an efficient implementation, and [`Div`](core::Ops::Div) to make it possible
+  /// to divide the elements.
+  ///
+  /// For both performance and safety reasons, this function requires that both `self`
+  /// and `other` are at full capacity, and will panic if that is not the case (that is,
+  /// if `self.is_full() && other.is_full()` is not equal to `true`.)
+  ///
+  /// Example usage:
+  /// ```
+  /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  /// assert_eq!(A.divided(&B), [2.0, 1.6666666666666667, 1.5, 1.4]);
+  /// ```
+  #[inline(always)]
+  pub fn divided(&self, other: &Self) -> Self
+  where T: Copy + Div<Output = T> {
+    assert!(self.is_full() && other.is_full());
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res
+          .mut_ptr_at_unchecked(i)
+          .write(*self.get_unchecked(i) / *other.get_unchecked(i));
+      }
+    }
+    res.length = N;
+    res
   }
 
   #[doc(hidden)]
