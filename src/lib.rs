@@ -46,7 +46,8 @@ mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
 
-/// A [`Vec`](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
+/// A [`Vec`](https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html)-like struct
+/// (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
   data: MaybeUninit<[T; N]>,
@@ -104,9 +105,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
   /// assert_eq!(v2, [1, 2, 3]);
   /// ```
-  /// Note that StaticVec also implements [`From`](std::convert::From) for both slices and static
-  /// arrays, which may prove more ergonomic in some cases as it allows for a greater degree of
-  /// type inference:
+  /// Note that StaticVec also implements [`From`](https://doc.rust-lang.org/nightly/std/convert/trait.From.html)
+  /// for both slices and static arrays, which may prove more ergonomic in some cases as it allows
+  /// for a greater degree of type inference:
   /// ```
   /// // The StaticVec on the next line is inferred to be of type `StaticVec<&'static str, 4>`.
   /// let v = StaticVec::from(["A", "B", "C", "D"]);
@@ -139,10 +140,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// as well.)
   ///
   /// Being `const` necessitates that this function can only accept arrays with a length
-  /// exactly equivalent to the declared capacity of the resulting StaticVec, so if you do need
+  /// exactly equal to the declared capacity of the resulting StaticVec, so if you do need
   /// flexibility with regards to input lengths it's recommended that you use
-  /// [`new_from_array`](crate::StaticVec::new_from_array) or the [`From`](std::convert::From)
-  /// implementations instead.
+  /// [`new_from_array`](crate::StaticVec::new_from_array) or the
+  /// [`From`](https://doc.rust-lang.org/nightly/std/convert/trait.From.html) implementations instead.
   ///
   /// Note that both forms of the [`staticvec!`] macro are implemented using
   /// [`new_from_const_array`](crate::StaticVec::new_from_const_array), so you may also prefer
@@ -156,10 +157,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns the current length of the StaticVec.
-  /// Just as for a normal [`Vec`](alloc::vec::Vec), this means the number of elements that
-  /// have been added to it with [`push`](crate::StaticVec::push),
-  /// [`insert`](crate::StaticVec::insert), etc. except in the case that it has been set directly
-  /// with the unsafe [`set_len`](crate::StaticVec::set_len) function.
+  /// Just as for a normal [`Vec`](https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html),
+  /// this means the number of elements that have been added to it with
+  /// [`push`](crate::StaticVec::push), [`insert`](crate::StaticVec::insert), etc. except in the
+  /// case that it has been set directly with the unsafe [`set_len`](crate::StaticVec::set_len)
+  /// function.
   #[inline(always)]
   pub const fn len(&self) -> usize {
     self.length
@@ -191,8 +193,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns the total size of the inhabited part of StaticVec (which may be zero if it has a
-  /// length of zero) in bytes. Specifically, the return value of this function amounts to
-  /// a calculation of `size_of::<T>() * self.length`.
+  /// length of zero or contains ZSTs) in bytes. Specifically, the return value of this function
+  /// amounts to a calculation of `size_of::<T>() * self.length`.
   #[inline(always)]
   pub const fn size_in_bytes(&self) -> usize {
     intrinsics::size_of::<T>() * self.length
@@ -1011,7 +1013,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     res
   }
 
-  /// A concept borrowed from the widely-used [`SmallVec`] crate, this function
+  /// A concept borrowed from the widely-used `SmallVec` crate, this function
   /// returns a tuple consisting of a constant pointer to the first element of the StaticVec,
   /// the length of the StaticVec, and the capacity of the StaticVec.
   #[inline(always)]
@@ -1020,7 +1022,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// A mutable version of [`triple`](crate::StaticVec::triple). This implementation differs from
-  /// the one found in [`SmallVec`] in that it only provides the first element of the StaticVec as
+  /// the one found in `SmallVec` in that it only provides the first element of the StaticVec as
   /// a mutable pointer, not also the length as a mutable reference.
   #[inline(always)]
   pub fn triple_mut(&mut self) -> (*mut T, usize, usize) {

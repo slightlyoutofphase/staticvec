@@ -60,7 +60,7 @@ impl<T, const N: usize> fmt::Display for PushCapacityError<T, N> {
     // print it.
     write!(
       f,
-      "Insufficient remaining capacity for push (limit is {})",
+      "Insufficient remaining capacity for push (limit is {})!",
       N
     )
   }

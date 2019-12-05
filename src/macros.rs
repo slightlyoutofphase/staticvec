@@ -8,7 +8,7 @@
 /// ```
 /// // The type of the StaticVec on the next line is `StaticVec<Vec<StaticVec<i32, 4>>, 1>`.
 /// let v = staticvec![vec![staticvec![1, 2, 3, 4]]];
-/// // The type of the StaticVec on the next line is `StaticVec<f32, 64>`.
+/// // The type of the StaticVec on the next line is `StaticVec<f64, 64>`.
 /// let v2 = staticvec![12.0; 64];
 /// const V3: StaticVec<i32, 4> = staticvec![1, 2, 3, 4];
 /// assert_eq!(V3, [1, 2, 3, 4]);
