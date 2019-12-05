@@ -760,6 +760,41 @@ impl<T, const N: usize> StaticVec<T, N> {
     other.length = other_new_length;
     self.length += item_count;
   }
+  
+  /// Returns a new StaticVec consisting of the elements of `self` and `other` concatenated in
+  /// linear fashion such that the first element of `other` comes immediately after the last
+  /// element of `self`.
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred directly from
+  /// the constant `N2` constraint of `other` (which may or may not be the same as the `N`
+  /// constraint of `self`.)
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to
+  /// avoid soundness issues and also allow for a more efficient implementation than would otherwise
+  /// be possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///  staticvec!["A, B"].concat(&staticvec!["C", "D", "E", "F"]),
+  ///  ["A, B", "C", "D", "E", "F"]
+  /// );
+  /// ```
+  #[inline]
+  pub fn concat<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
+  where T: Copy {
+    let mut res = StaticVec::new();
+    unsafe {
+      self
+        .as_ptr()
+        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
+      other
+        .as_ptr()
+        .copy_to_nonoverlapping(res.as_mut_ptr().add(self.length), other.length);
+    }
+    res.length = self.length + other.length;
+    res
+  }
 
   /// Returns a [`Vec`](alloc::vec::Vec) containing the contents of the StaticVec instance.
   /// The returned [`Vec`](alloc::vec::Vec) will initially have the same value for
