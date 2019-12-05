@@ -6,7 +6,7 @@ use core::mem::MaybeUninit;
 #[inline(always)]
 pub(crate) fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
   match intrinsics::size_of::<T>() {
-    0 => unsafe { (dest as usize).wrapping_sub(origin as usize) },
+    0 => (dest as usize).wrapping_sub(origin as usize),
     _ => unsafe {
       intrinsics::exact_div(
         (dest as usize).wrapping_sub(origin as usize),
