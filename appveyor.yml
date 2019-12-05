@@ -31,8 +31,6 @@ install:
       (export PATH=$PATH:~%USERPROFILE%/.cargo/bin)
   - if defined MSYS2 set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
   - rustup update --force
-  - rustc -vV
-  - cargo -vV
 cache:
   - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2019 Preview"
       ('%USERPROFILE%\.cargo')
