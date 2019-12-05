@@ -262,14 +262,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn as_slice(&self) -> &[T] {
     // Safety: `self.as_ptr()` is a pointer to an array for which the first `length`
     // elements are guaranteed to be initialized. Therefore this is a valid slice.
-    ptr::slice_from_raw_parts(self.as_ptr(), self.length)
+    unsafe { &*ptr::slice_from_raw_parts(self.as_ptr(), self.length) }
   }
 
   /// Returns a mutable reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_mut_slice(&mut self) -> &mut [T] {
     // Safety: See as_slice.
-    ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.length)
+    unsafe { &mut *ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.length) }
   }
 
   /// Returns a constant reference to the element of the StaticVec at `index`,
