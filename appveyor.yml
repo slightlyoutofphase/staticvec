@@ -29,6 +29,8 @@ for:
       - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
       - if defined MSYS2 set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
       - rustup update --force
+for:
+-
   matrix:
     only:
       - image: Ubuntu
@@ -45,6 +47,8 @@ for:
       - image: Visual Studio 2019 Preview
     cache:
       - '%USERPROFILE%\.cargo'
+for:
+-
   matrix:
     only:
       - image: Ubuntu
