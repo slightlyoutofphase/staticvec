@@ -250,9 +250,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub const fn remaining_capacity(&self) -> usize {
     N - self.length
   }
-  
+
   /// Returns the total size of the inhabited part of StaticVec (which may be zero if it has a
-  /// length of zero) in bytes. Specifically, the return value of this function amounts to 
+  /// length of zero) in bytes. Specifically, the return value of this function amounts to
   /// a calculation of `size_of::<T>() * self.length`.
   #[inline(always)]
   pub const fn size_in_bytes(&self) -> usize {
