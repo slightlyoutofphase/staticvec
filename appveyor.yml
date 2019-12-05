@@ -26,9 +26,9 @@ install:
       (appveyor DownloadFile https://sh.rustup.rs/ -FileName rustup-init.sh &&
        bash rustup-init.sh -yv --default-toolchain %channel% --default-host %target% --profile minimal)
   - if "%APPVEYOR_BUILD_WORKER_IMAGE%"=="Visual Studio 2019 Preview"
-      (cmd: set PATH=%PATH%;%USERPROFILE%\.cargo\bin)
+      cmd: set PATH=%PATH%;%USERPROFILE%\.cargo\bin
     else
-      (export PATH=$PATH:~%USERPROFILE%/.cargo/bin)
+      export PATH=$PATH:~%USERPROFILE%/.cargo/bin
   - if defined MSYS2 set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
   - rustup update --force
   - rustc -vV
