@@ -362,15 +362,10 @@ fn main() {
   ];
   println!("{} {}", v.capacity(), v.len());
   let vv = v.into_vec();
-  println!("{} {}", v.capacity(), v.len());
   println!("{} {}", vv.capacity(), vv.len());
   for s in vv {
     println!("{:?}", s);
   }
-  v.push(Box::new(MyOtherStruct { s: "AAA" }));
-  v.push(Box::new(MyOtherStruct { s: "BBB" }));
-  v.push(Box::new(MyOtherStruct { s: "CCC" }));
-  println!("{} {}", v.capacity(), v.len());
   let cc = staticvec!["AAA", "BBB"];
   let dd = cc.clone();
   let mut ee = StaticVec::new();
