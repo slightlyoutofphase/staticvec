@@ -17,9 +17,6 @@
 /// ```
 #[macro_export]
 macro_rules! staticvec {
-  (@put_one $val:expr) => {
-    1
-  };
   ($val:expr; $n:expr) => {
     $crate::StaticVec::new_from_const_array([$val; $n])
   };
