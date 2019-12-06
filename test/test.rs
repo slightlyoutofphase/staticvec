@@ -475,6 +475,9 @@ fn index() {
   assert_eq!(vec[1..4], [1, 2, 3]);
   assert_eq!(vec[1..=1], [1]);
   assert_eq!(vec[1..3], [1, 2]);
+  assert_eq!(vec[..3], [0, 1, 2]);
+  assert_eq!(vec[..=3], [0, 1, 2, 3]);
+  assert_eq!(vec[1..], [1, 2, 3, 4]);
   assert_eq!(vec[1..=3], [1, 2, 3]);
   assert_eq!(vec[..], [0, 1, 2, 3, 4]);
   // Because this block includes obviously-violated bounds checks, miri
