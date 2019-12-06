@@ -430,7 +430,7 @@ impl<T, const N: usize> IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
 
 #[cfg(feature = "std")]
 #[doc(cfg(feature = "std"))]
-impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, N> {
+impl<T, const N: usize> Into<Vec<T>> for StaticVec<T, N> {
   /// Functionally equivalent to [`into_vec`](crate::StaticVec::into_vec).
   #[inline(always)]
   fn into(self) -> Vec<T> {
