@@ -355,7 +355,7 @@ fn main() {
   }
   println!("{:?}", zsts.iter().size_hint());
   println!("{}", zsts.iter().len());
-  let mut v = staticvec![
+  let v = staticvec![
     Box::new(MyOtherStruct { s: "AAA" }),
     Box::new(MyOtherStruct { s: "BBB" }),
     Box::new(MyOtherStruct { s: "CCC" })
