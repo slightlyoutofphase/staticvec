@@ -826,14 +826,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a [`Vec`](alloc::vec::Vec) containing the contents of the StaticVec instance.
   /// The returned [`Vec`](alloc::vec::Vec) will initially have the same value for
   /// [`len`](alloc::vec::Vec::len) and [`capacity`](alloc::vec::Vec::capacity) as the source
-  /// StaticVec. Note that while using this function does *not* consume the source StaticVec in
-  /// the sense of rendering it completely inaccessible / unusable, it *does* empty it (that is,
-  /// it will have no contents and a length of 0 afterwards.)
+  /// StaticVec. Note that using this function consumes the source StaticVec.
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
-  #[allow(clippy::wrong_self_convention)]
   #[inline(always)]
-  pub fn into_vec(&mut self) -> Vec<T> {
+  pub fn into_vec(self) -> Vec<T> {
     let mut res = Vec::with_capacity(N);
     unsafe {
       self
