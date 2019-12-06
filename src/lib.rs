@@ -804,6 +804,25 @@ impl<T, const N: usize> StaticVec<T, N> {
     res
   }
 
+  /// A version of [`concat`](crate::StaticVec::concat) for scenarios where `T` does not
+  /// derive [`Copy`](core::marker::Copy) but does derive or implement [`Clone`](core::clone::Clone).
+  ///
+  /// Due to needing to call `clone()` through each individual element of `self` and `other`, this
+  /// function is less efficient than [`concat`](crate::StaticVec::concat), so
+  /// [`concat`](crate::StaticVec::concat) should be preferred whenever possible.
+  #[inline]
+  pub fn concat_clone<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
+  where T: Clone {
+    let mut res = StaticVec::new();
+    for i in 0..self.length {
+      unsafe { res.push_unchecked(self.get_unchecked(i).clone()) };
+    }
+    for i in 0..other.length {
+      unsafe { res.push_unchecked(other.get_unchecked(i).clone()) };
+    }
+    res
+  }
+
   /// Returns a [`Vec`](alloc::vec::Vec) containing the contents of the StaticVec instance.
   /// The returned [`Vec`](alloc::vec::Vec) will initially have the same value for
   /// [`len`](alloc::vec::Vec::len) and [`capacity`](alloc::vec::Vec::capacity) as the source
