@@ -336,7 +336,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// function returns a pointer to valid data.
   #[inline(always)]
   pub unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
-    self.as_ptr().add(index)
+    #[allow(overflowing_literals)]
+    match N {
+      0..=255 => self.as_ptr().add((index as u8) as usize),
+      256..=65535 => self.as_ptr().add((index as u16) as usize),
+      65536..=4294967295 => self.as_ptr().add((index as u32) as usize),
+      _ => self.as_ptr().add((index as u64) as usize),
+    }
   }
 
   /// Returns a mutable pointer to the element of the StaticVec at `index` without doing any
@@ -349,7 +355,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// function returns a pointer to valid data.
   #[inline(always)]
   pub unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
-    self.as_mut_ptr().add(index)
+    #[allow(overflowing_literals)]
+    match N {
+      0..=255 => self.as_mut_ptr().add((index as u8) as usize),
+      256..=65535 => self.as_mut_ptr().add((index as u16) as usize),
+      65536..=4294967295 => self.as_mut_ptr().add((index as u32) as usize),
+      _ => self.as_mut_ptr().add((index as u64) as usize),
+    }
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` if `index`
