@@ -33,16 +33,12 @@ macro_rules! impl_extend {
     fn extend<I: IntoIterator<Item = $type>>(&mut self, iter: I) {
       let mut it = iter.into_iter();
       let mut i = self.length;
+      let mut p = self.as_mut_ptr().add(i);
       while i < N {
         if let Some($var_a) = it.next() {
           unsafe {
-            #[allow(overflowing_literals)]
-            match N {
-              0..=255 => self.as_mut_ptr().add((i as u8) as usize).write($var_b),
-              256..=65535 => self.as_mut_ptr().add((i as u16) as usize).write($var_b),
-              65536..=4294967295 => self.as_mut_ptr().add((i as u32) as usize).write($var_b),
-              _ => self.as_mut_ptr().add((i as u64) as usize).write($var_b),
-            };
+            p.write($var_b);
+            p = p.offset(1);
           }
         } else {
           break;
