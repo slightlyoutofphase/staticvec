@@ -96,7 +96,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// any contents after that point are ignored.
   ///
   /// The `N2` parameter does not need to be provided explicitly, and can be inferred from the array
-  /// itself. This function does *not* leak memory, as any ignored extra elements in the source
+  /// itself.
+  ///
+  /// This function does *not* leak memory, as any ignored extra elements in the source
   /// array are explicitly dropped with [`drop_in_place`](core::ptr::drop_in_place) after it is
   /// first wrapped in an instance of [`MaybeUninit`](core::mem::MaybeUninit) to inhibit the
   /// automatic calling of any destructors its contents may have.
@@ -796,7 +798,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
       other
         .as_ptr()
-        .copy_to_nonoverlapping(res.as_mut_ptr().add(self.length), other.length);
+        .copy_to_nonoverlapping(res.mut_ptr_at_unchecked(self.length), other.length);
     }
     res.length = self.length + other.length;
     res
