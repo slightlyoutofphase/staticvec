@@ -1,4 +1,6 @@
 #![no_std]
+#![allow(clippy::inline_always)]
+#![allow(clippy::doc_markdown)]
 #![allow(incomplete_features)]
 #![feature(const_fn)]
 #![feature(const_generics)]
@@ -24,7 +26,7 @@ use crate::utils::reverse_copy;
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 use core::marker::PhantomData;
-use core::mem::{self, MaybeUninit};
+use core::mem::MaybeUninit;
 use core::ops::{
   Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub,
 };
@@ -95,8 +97,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// The `N2` parameter does not need to be provided explicitly, and can be inferred from the array
   /// itself. This function does *not* leak memory, as any ignored extra elements in the source
-  /// array are explicitly dropped with [`drop_in_place`](core::ptr::drop_in_place) before
-  /// [`forget`](core::mem::forget) is called on it.
+  /// array are explicitly dropped with [`drop_in_place`](core::ptr::drop_in_place) after it is
+  /// first wrapped in an instance of [`MaybeUninit`](core::mem::MaybeUninit) to inhibit the
+  /// automatic calling of any destructors its contents may have.
   ///
   /// Example usage:
   /// ```
@@ -115,7 +118,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// let v = StaticVec::from(["A", "B", "C", "D"]);
   /// ```
   #[inline]
-  pub fn new_from_array<const N2: usize>(mut values: [T; N2]) -> Self {
+  pub fn new_from_array<const N2: usize>(values: [T; N2]) -> Self {
     if N == N2 {
       Self::from(values)
     } else {
@@ -126,9 +129,10 @@ impl<T, const N: usize> StaticVec<T, N> {
             values
               .as_ptr()
               .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, N2.min(N));
-            // Drops any extra values left in the source array, then "forgets it".
-            ptr::drop_in_place(values.get_unchecked_mut(N2.min(N)..N2));
-            mem::forget_unsized(values);
+            // Wrap the values in a MaybeUninit to inhibit their destructors (if any),
+            // then manually drop any excess ones.
+            let mut forgotten = MaybeUninit::new(values);
+            ptr::drop_in_place(forgotten.get_mut().get_unchecked_mut(N2.min(N)..N2));
             data
           }
         },
@@ -976,12 +980,9 @@ impl<T, const N: usize> StaticVec<T, N> {
     for left in self {
       let mut found = false;
       for right in other {
-        match left == right {
-          false => (),
-          true => {
-            found = true;
-            break;
-          }
+        if left == right {
+          found = true;
+          break;
         }
       }
       if !found {
@@ -1020,12 +1021,9 @@ impl<T, const N: usize> StaticVec<T, N> {
     for left in self {
       let mut found = false;
       for right in other {
-        match left == right {
-          false => (),
-          true => {
-            found = true;
-            break;
-          }
+        if left == right {
+          found = true;
+          break;
         }
       }
       if !found {
@@ -1035,12 +1033,9 @@ impl<T, const N: usize> StaticVec<T, N> {
     for right in other {
       let mut found = false;
       for left in self {
-        match right == left {
-          false => (),
-          true => {
-            found = true;
-            break;
-          }
+        if right == left {
+          found = true;
+          break;
         }
       }
       if !found {
