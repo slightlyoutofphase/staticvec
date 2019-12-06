@@ -830,7 +830,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline(always)]
-  pub fn into_vec(self) -> Vec<T> {
+  pub fn into_vec(mut self) -> Vec<T> {
     let mut res = Vec::with_capacity(N);
     unsafe {
       self
