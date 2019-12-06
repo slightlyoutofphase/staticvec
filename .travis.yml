@@ -1,5 +1,7 @@
 language: rust
-os: linux
+os: 
+  - linux
+  - osx
 
 rust:
   - nightly
