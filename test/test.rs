@@ -292,6 +292,43 @@ fn concat() {
 }
 
 #[test]
+fn concat_clone() {
+  assert_eq!(
+    staticvec![Box::new("A, B")].concat_clone(&staticvec![
+      Box::new("C"),
+      Box::new("D"),
+      Box::new("E"),
+      Box::new("F")
+    ]),
+    [
+      Box::new("A, B"),
+      Box::new("C"),
+      Box::new("D"),
+      Box::new("E"),
+      Box::new("F")
+    ]
+  );
+  let v = StaticVec::<i32, 0>::from([]).concat_clone(&StaticVec::<i32, 0>::from([]));
+  assert_eq!(v, []);
+  let v2 = staticvec![Box::new(4), Box::new(5), Box::new(6)].concat_clone(&staticvec![
+    Box::new(1),
+    Box::new(2),
+    Box::new(3)
+  ]);
+  assert_eq!(
+    v2,
+    [
+      Box::new(4),
+      Box::new(5),
+      Box::new(6),
+      Box::new(1),
+      Box::new(2),
+      Box::new(3)
+    ]
+  );
+}
+
+#[test]
 fn dedup() {
   let mut vec = staticvec![1, 2, 2, 3, 2];
   vec.dedup();
