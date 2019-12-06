@@ -585,13 +585,6 @@ fn into_vec() {
   let vv = v.into_vec();
   assert_eq!(vv.capacity(), 3);
   assert_eq!(vv.len(), 3);
-  assert_eq!(v.capacity(), 3);
-  assert_eq!(v.len(), 0);
-  v.push(Box::new(Struct { s: "AAA" }));
-  v.push(Box::new(Struct { s: "BBB" }));
-  v.push(Box::new(Struct { s: "CCC" }));
-  assert_eq!(v.capacity(), 3);
-  assert_eq!(v.len(), 3);
 }
 
 #[test]
