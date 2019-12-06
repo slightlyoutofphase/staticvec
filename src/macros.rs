@@ -33,7 +33,7 @@ macro_rules! impl_extend {
     fn extend<I: IntoIterator<Item = $type>>(&mut self, iter: I) {
       let mut it = iter.into_iter();
       let mut i = self.length;
-      let mut p = self.as_mut_ptr().add(i);
+      let mut p = unsafe { self.as_mut_ptr().add(i) };
       while i < N {
         if let Some($var_a) = it.next() {
           unsafe {
