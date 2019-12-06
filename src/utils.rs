@@ -4,15 +4,12 @@ use core::intrinsics;
 use core::mem::MaybeUninit;
 
 #[inline(always)]
-pub(crate) fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
+pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
   match intrinsics::size_of::<T>() {
-    0 => (dest as usize).wrapping_sub(origin as usize),
-    _ => unsafe {
-      intrinsics::exact_div(
-        (dest as usize).wrapping_sub(origin as usize),
-        intrinsics::size_of::<T>(),
-      )
-    },
+    0 => unsafe { (dest as usize).wrapping_sub(origin as usize) },
+    // Safety: this function is used strictly with linear inputs
+    // where dest is known to come after origin.
+    _ => unsafe { intrinsics::ptr_offset_from(dest, origin) as usize },
   }
 }
 
@@ -20,11 +17,12 @@ pub(crate) fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
 pub(crate) fn reverse_copy<T, const N: usize>(this: &MaybeUninit<[T; N]>) -> MaybeUninit<[T; N]>
 where T: Copy {
   let mut res: MaybeUninit<[T; N]> = MaybeUninit::uninit();
+  let src = this.as_ptr() as *const T;
   let mut dest = res.as_mut_ptr() as *mut T;
   let mut i = N;
   while i > 0 {
     unsafe {
-      dest.copy_from_nonoverlapping((this.as_ptr() as *const T).add(i - 1), 1);
+      src.add(i - 1).copy_to_nonoverlapping(dest, 1);
       dest = dest.offset(1);
       i -= 1;
     }

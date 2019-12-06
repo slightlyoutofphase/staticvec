@@ -26,7 +26,7 @@ use core::intrinsics;
 use core::marker::PhantomData;
 use core::mem::{self, MaybeUninit};
 use core::ops::{
-  Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub
+  Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub,
 };
 use core::ptr;
 
@@ -762,7 +762,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     other.length = other_new_length;
     self.length += item_count;
   }
-  
+
   /// Returns a new StaticVec consisting of the elements of `self` and `other` concatenated in
   /// linear fashion such that the first element of `other` comes immediately after the last
   /// element of `self`.
@@ -1069,8 +1069,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Linearly adds (in a mathematical sense) the contents of two same-capacity
   /// StaticVecs and returns the results in a new one of equal capacity.
   ///
-  /// Locally requires that `T` implements [`Copy`](core::Marker::Copy) to allow
-  /// for an efficient implementation, and [`Add`](core::Ops::Add) to make it possible
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to allow
+  /// for an efficient implementation, and [`Add`](core::ops::Add) to make it possible
   /// to add the elements.
   ///
   /// For both performance and safety reasons, this function requires that both `self`
@@ -1102,8 +1102,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Linearly subtracts (in a mathematical sense) the contents of two same-capacity
   /// StaticVecs and returns the results in a new one of equal capacity.
   ///
-  /// Locally requires that `T` implements [`Copy`](core::Marker::Copy) to allow
-  /// for an efficient implementation, and [`Sub`](core::Ops::Sub) to make it possible
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to allow
+  /// for an efficient implementation, and [`Sub`](core::ops::Sub) to make it possible
   /// to subtract the elements.
   ///
   /// For both performance and safety reasons, this function requires that both `self`
@@ -1135,8 +1135,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Linearly multiplies (in a mathematical sense) the contents of two same-capacity
   /// StaticVecs and returns the results in a new one of equal capacity.
   ///
-  /// Locally requires that `T` implements [`Copy`](core::Marker::Copy) to allow
-  /// for an efficient implementation, and [`Mul`](core::Ops::Mul) to make it possible
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to allow
+  /// for an efficient implementation, and [`Mul`](core::ops::Mul) to make it possible
   /// to multiply the elements.
   ///
   /// For both performance and safety reasons, this function requires that both `self`
@@ -1168,8 +1168,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Linearly divides (in a mathematical sense) the contents of two same-capacity
   /// StaticVecs and returns the results in a new one of equal capacity.
   ///
-  /// Locally requires that `T` implements [`Copy`](core::Marker::Copy) to allow
-  /// for an efficient implementation, and [`Div`](core::Ops::Div) to make it possible
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to allow
+  /// for an efficient implementation, and [`Div`](core::ops::Div) to make it possible
   /// to divide the elements.
   ///
   /// For both performance and safety reasons, this function requires that both `self`

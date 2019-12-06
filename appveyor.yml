@@ -12,12 +12,12 @@ branches:
   only:
     - master
 install:
-  - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-  - if defined MSYS2 cmd: set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
-  - rustup default %channel%-%target%
+  - cmd: set CARGO_HOME=C:\Users\appveyor\rust && set RUSTUP_HOME=C:\Users\appveyor\rust && set RUST_SYSROOT=C:\Users\appveyor\rust && set PATH=%PATH%;C:\Users\appveyor\rust\bin
+  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe && rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal
   - rustup update --force
+  - if defined MSYS2 cmd: set PATH=%PATH%;C:\msys64\mingw%BITS%\bin
 cache:
-  - '%USERPROFILE%\.cargo'
+  - 'C:\Users\appveyor\rust'
 build: false
 test_script:
   - cargo test --features="std" --target=%target%
