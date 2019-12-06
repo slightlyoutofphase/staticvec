@@ -577,7 +577,7 @@ fn into_iter() {
 #[cfg(feature = "std")]
 #[test]
 fn into_vec() {
-  let mut v = staticvec![
+  let v = staticvec![
     Box::new(Struct { s: "AAA" }),
     Box::new(Struct { s: "BBB" }),
     Box::new(Struct { s: "CCC" })
