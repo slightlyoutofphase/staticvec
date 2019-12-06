@@ -10,13 +10,14 @@ branches:
   only:
     - master
 install:
-  - cmd: mkdir C:\projects\staticvec\rust
-  - cmd: mkdir C:\projects\staticvec\rust\bin
-  - cmd: set CARGO_HOME=C:\projects\staticvec\rust && set RUSTUP_HOME=C:\projects\staticvec\rust && set RUST_SYSROOT=C:\projects\staticvec\rust && set PATH=%PATH%;C:\projects\staticvec\rust\bin
-  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe && rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal
+  - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - if defined MSYS2 cmd: set PATH=C:\msys64\mingw%BITS%\bin;%PATH%
+  - rustup toolchain uninstall %channel%-%target%
+  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+  - rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal
   - rustup update --force
 cache:
-  - 'C:\projects\staticvec\rust'
+  - '%USERPROFILE%\.cargo'
 build: false
 test_script:
   - cargo test --features="std" --target=%target%
