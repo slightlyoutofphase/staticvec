@@ -503,6 +503,53 @@ fn insert() {
   assert_eq!(vec, [1, 4, 2, 3, 5]);
 }
 
+// The next few tests for `insert_many` are adapted from the SmallVec testsuite.
+
+#[test]
+fn insert_many() {
+  let mut v: StaticVec<u8, 8> = StaticVec::new();
+  for x in 0..4 {
+    v.push(x);
+  }
+  assert_eq!(v.len(), 4);
+  v.insert_many(1, [5, 6].iter().cloned());
+  assert_eq!(
+    &v.iter().map(|v| *v).collect::<StaticVec<_, 8>>(),
+    &[0, 5, 6, 1, 2, 3]
+  );
+  v.clear();
+  for x in 0..4 {
+    v.push(x);
+  }
+  assert_eq!(v.len(), 4);
+  v.insert_many(1, [5, 6].iter().cloned());
+  assert_eq!(
+    &v.iter().map(|v| *v).collect::<StaticVec<_, 8>>(),
+    &[0, 5, 6, 1, 2, 3]
+  );
+  v.clear();
+  for i in 0..6 {
+    v.push(i + 1);
+  }
+  v.insert_many(6, [1].iter().cloned());
+  assert_eq!(
+    &v.iter().map(|v| *v).collect::<StaticVec<_, 8>>(),
+    &[1, 2, 3, 4, 5, 6, 1]
+  );
+}
+
+#[test]
+#[should_panic]
+fn insert_many_asserts() {
+  let mut v: StaticVec<u8, 8> = StaticVec::new();
+  for i in 0..7 {
+    v.push(i + 1);
+  }
+  v.insert_many(0, [1, 2, 3, 4].iter().cloned());
+  let mut v2: StaticVec<u8, 0> = StaticVec::new();
+  v2.insert_many(27, [1, 2, 3, 4].iter().cloned());
+}
+
 #[test]
 fn is_empty() {
   let mut v = StaticVec::<i32, 1>::new();

@@ -562,6 +562,45 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
+  /// Functionally equivalent to [`insert`](crate::StaticVec::insert), except with multiple
+  /// items provided by an iterator as opposed to just one. This function will return immediately
+  /// if / when the StaticVec reaches maximum capacity, regardless of whether the iterator still has
+  /// more items to yield. For safety reasons, as StaticVec cannot increase in capacity, the
+  /// iterator is required to implement [`ExactSizeIterator`](core::iter::ExactSizeIterator)
+  /// rather than just [`Iterator`](core::iter::Iterator).
+  #[inline]
+  pub fn insert_many<I: ExactSizeIterator<Item = T>>(&mut self, index: usize, iter: I) {
+    assert!(self.length < N && index <= self.length);
+    let mut it = iter.into_iter();
+    if index == self.length {
+      return self.extend(it);
+    }
+    let iter_size = it.len();
+    assert!(index + iter_size >= index && (self.length - index) + iter_size < N);
+    unsafe {
+      let old_length = self.length;
+      let mut this = self.mut_ptr_at_unchecked(index);
+      this.copy_to(this.add(iter_size), old_length - index);
+      self.length = index;
+      let mut item_count = 0;
+      while item_count < N {
+        if let Some(element) = it.next() {
+          let mut current = this.add(item_count);
+          if item_count >= iter_size {
+            this = self.mut_ptr_at_unchecked(index);
+            current = this.add(item_count);
+            current.copy_to(current.offset(1), old_length - index);
+          }
+          current.write(element);
+          item_count += 1;
+        } else {
+          break;
+        }
+      }
+      self.length = old_length + item_count;
+    }
+  }
+
   /// Inserts `value` at `index` if the current length of the StaticVec is less than `N` and `index`
   /// is less than the length, or returns a [`CapacityError`](crate::errors::CapacityError)
   /// otherwise. Any values that exist in positions after `index` are shifted to the right.

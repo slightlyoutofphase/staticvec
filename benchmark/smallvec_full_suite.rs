@@ -278,6 +278,27 @@ fn gen_from_elem<V: Vector<u64>>(n: usize, b: &mut Bencher) {
 }
 
 #[bench]
+fn bench_insert_many(b: &mut Bencher) {
+  #[inline(never)]
+  fn insert_many_noinline<I: ExactSizeIterator<Item = isize>>(
+    vec: &mut StaticVec<isize, SPILLED_SIZE>,
+    index: usize,
+    iterable: I,
+  )
+  {
+    vec.insert_many(index, iterable)
+  }
+
+  b.iter(|| {
+    let mut vec = StaticVec::<isize, SPILLED_SIZE>::new();
+    insert_many_noinline(&mut vec, 0, 0..VEC_SIZE as _);
+    vec.clear();
+    insert_many_noinline(&mut vec, 0, 0..SPILLED_SIZE as _);
+    vec
+  });
+}
+
+#[bench]
 fn staticvec_bench_macro_from_list(b: &mut Bencher) {
   b.iter(|| {
     let vec = staticvec![
