@@ -569,17 +569,25 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// For safety reasons, as StaticVec cannot increase in capacity, the
   /// iterator is required to implement [`ExactSizeIterator`](core::iter::ExactSizeIterator)
-  /// rather than just [`Iterator`](core::iter::Iterator).
+  /// rather than just [`Iterator`](core::iter::Iterator) (though this function still does
+  /// the appropriate checking internally to avoid dangerous outcomes in the event of a blatantly
+  /// incorrect [`ExactSizeIterator`](core::iter::ExactSizeIterator) implementation.)
   #[inline]
   pub fn insert_many<I: IntoIterator<Item = T>>(&mut self, index: usize, iter: I)
   where I::IntoIter: ExactSizeIterator<Item = T> {
-    assert!(self.length < N && index <= self.length);
+    assert!(
+      self.length < N && index <= self.length,
+      "Insufficient remaining capacity / out of bounds!"
+    );
     let mut it = iter.into_iter();
     if index == self.length {
       return self.extend(it);
     }
     let iter_size = it.len();
-    assert!(index + iter_size >= index && (self.length - index) + iter_size < N);
+    assert!(
+      index + iter_size >= index && (self.length - index) + iter_size < N,
+      "Insufficient remaining capacity / out of bounds!"
+    );
     unsafe {
       let old_length = self.length;
       let mut this = self.mut_ptr_at_unchecked(index);
@@ -868,6 +876,39 @@ impl<T, const N: usize> StaticVec<T, N> {
       unsafe { res.push_unchecked(other.get_unchecked(i).clone()) };
     }
     res
+  }
+
+  /// Returns a StaticVec containing the contents of a [`Vec`](alloc::vec::Vec) instance.
+  /// If the [`Vec`](alloc::vec::Vec) has a length greater than the declared capacity of the
+  /// resulting StaticVec, any contents after that point are ignored. Note that using this function
+  /// consumes the source [`Vec`](alloc::vec::Vec).
+  #[cfg(feature = "std")]
+  #[doc(cfg(feature = "std"))]
+  #[inline]
+  pub fn from_vec(vec: Vec<T>) -> Self {
+    let vec_len = vec.len();
+    let item_count = vec_len.min(N);
+    Self {
+      data: {
+        let mut data = Self::new_data_uninit();
+        unsafe {
+          vec
+            .as_ptr()
+            .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, item_count);
+          // Wrap the vec in a MaybeUninit to inhibit its destructor, then manually
+          // drop any excess values to avoid undesirable memory leaks.
+          let mut forgotten = MaybeUninit::new(vec);
+          if vec_len > item_count {
+            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
+              forgotten.get_mut().as_mut_ptr().add(item_count),
+              vec_len - item_count,
+            ));
+          }
+          data
+        }
+      },
+      length: item_count,
+    }
   }
 
   /// Returns a [`Vec`](alloc::vec::Vec) containing the contents of the StaticVec instance.

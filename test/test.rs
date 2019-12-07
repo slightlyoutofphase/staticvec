@@ -456,6 +456,23 @@ fn from() {
   );
 }
 
+#[cfg(feature = "std")]
+#[test]
+fn from_vec() {
+  let v = vec![
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" }),
+  ];
+  let vv = StaticVec::<Box<Struct>, 2>::from_vec(v);
+  assert_eq!(vv.capacity(), 2);
+  assert_eq!(vv.len(), 2);
+  assert_eq!(
+    vv,
+    [Box::new(Struct { s: "AAA" }), Box::new(Struct { s: "BBB" })]
+  );
+}
+
 #[test]
 fn get_unchecked() {
   let v = staticvec!["a", "b", "c"];
@@ -538,8 +555,9 @@ fn insert_many() {
   );
 }
 
+#[cfg(not(miri))]
 #[test]
-#[should_panic]
+#[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
 fn insert_many_asserts() {
   let mut v: StaticVec<u8, 8> = StaticVec::new();
   for i in 0..7 {

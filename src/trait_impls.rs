@@ -230,6 +230,16 @@ impl<T: Copy, const N: usize> From<&mut [T; N]> for StaticVec<T, N> {
   }
 }
 
+#[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
+impl<T, const N: usize> From<Vec<T>> for StaticVec<T, N> {
+  /// Functionally equivalent to [`from_vec`](crate::StaticVec::from_vec).
+  #[inline(always)]
+  fn from(vec: Vec<T>) -> Self {
+    Self::from_vec(vec)
+  }
+}
+
 impl<T, const N: usize> FromIterator<T> for StaticVec<T, N> {
   impl_from_iterator!(val, val, T);
 }
