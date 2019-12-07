@@ -9,7 +9,6 @@
 #![feature(core_intrinsics)]
 #![feature(doc_cfg)]
 #![feature(exact_size_is_empty)]
-#![feature(forget_unsized)]
 #![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_uninit_array)]
@@ -280,6 +279,60 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe { &mut *ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.length) }
   }
 
+  /// Returns a constant pointer to the element of the StaticVec at `index` without doing any
+  /// checking to ensure that `index` is within the range `0..length`. The return value of this
+  /// function is equivalent to what would be returned from `as_ptr().add(index)`.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that `index` is within the appropriate bounds such that the
+  /// function returns a pointer to valid data.
+  #[inline(always)]
+  pub unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
+    self.as_ptr().add(index)
+  }
+
+  /// Returns a mutable pointer to the element of the StaticVec at `index` without doing any
+  /// checking to ensure that `index` is within the range `0..length`. The return value of this
+  /// function is equivalent to what would be returned from `as_mut_ptr().add(index)`.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that `index` is within the appropriate bounds such that the
+  /// function returns a pointer to valid data.
+  #[inline(always)]
+  pub unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
+    self.as_mut_ptr().add(index)
+  }
+
+  /// Returns a constant pointer to the element of the StaticVec at `index` if `index`
+  /// is within the range `0..length`, or panics if it is not. The return value of this function is
+  /// equivalent to what would be returned from `as_ptr().add(index)`.
+  #[inline(always)]
+  pub fn ptr_at(&self, index: usize) -> *const T {
+    assert!(
+      index < self.length,
+      "Provided index {} must be between 0 and {}!",
+      index,
+      self.length
+    );
+    unsafe { self.ptr_at_unchecked(index) }
+  }
+
+  /// Returns a mutable pointer to the element of the StaticVec at `index` if `index`
+  /// is within the range `0..length`, or panics if it is not. The return value of this function is
+  /// equivalent to what would be returned from `as_mut_ptr().add(index)`.
+  #[inline(always)]
+  pub fn mut_ptr_at(&mut self, index: usize) -> *mut T {
+    assert!(
+      index < self.length,
+      "Provided index {} must be between 0 and {}!",
+      index,
+      self.length
+    );
+    unsafe { self.mut_ptr_at_unchecked(index) }
+  }
+
   /// Returns a constant reference to the element of the StaticVec at `index`,
   /// if `index` is within the range `0..length`. No checks are performed to
   /// ensure that is the case, so this function is marked `unsafe` and should
@@ -326,72 +379,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     &mut *self.mut_ptr_at_unchecked(index)
   }
 
-  /// Returns a constant pointer to the element of the StaticVec at `index` without doing any
-  /// checking to ensure that `index` is within the range `0..length`. The return value of this
-  /// function is equivalent to what would be returned from `as_ptr().add(index)`.
-  ///
-  /// # Safety
-  ///
-  /// It is up to the caller to ensure that `index` is within the appropriate bounds such that the
-  /// function returns a pointer to valid data.
-  #[inline(always)]
-  pub unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
-    #[allow(overflowing_literals)]
-    match N {
-      0..=255 => self.as_ptr().add((index as u8) as usize),
-      256..=65535 => self.as_ptr().add((index as u16) as usize),
-      65536..=4294967295 => self.as_ptr().add((index as u32) as usize),
-      _ => self.as_ptr().add((index as u64) as usize),
-    }
-  }
-
-  /// Returns a mutable pointer to the element of the StaticVec at `index` without doing any
-  /// checking to ensure that `index` is within the range `0..length`. The return value of this
-  /// function is equivalent to what would be returned from `as_mut_ptr().add(index)`.
-  ///
-  /// # Safety
-  ///
-  /// It is up to the caller to ensure that `index` is within the appropriate bounds such that the
-  /// function returns a pointer to valid data.
-  #[inline(always)]
-  pub unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
-    #[allow(overflowing_literals)]
-    match N {
-      0..=255 => self.as_mut_ptr().add((index as u8) as usize),
-      256..=65535 => self.as_mut_ptr().add((index as u16) as usize),
-      65536..=4294967295 => self.as_mut_ptr().add((index as u32) as usize),
-      _ => self.as_mut_ptr().add((index as u64) as usize),
-    }
-  }
-
-  /// Returns a constant pointer to the element of the StaticVec at `index` if `index`
-  /// is within the range `0..length`, or panics if it is not. The return value of this function is
-  /// equivalent to what would be returned from `as_ptr().add(index)`.
-  #[inline(always)]
-  pub fn ptr_at(&self, index: usize) -> *const T {
-    assert!(
-      index < self.length,
-      "Provided index {} must be between 0 and {}!",
-      index,
-      self.length
-    );
-    unsafe { self.ptr_at_unchecked(index) }
-  }
-
-  /// Returns a mutable pointer to the element of the StaticVec at `index` if `index`
-  /// is within the range `0..length`, or panics if it is not. The return value of this function is
-  /// equivalent to what would be returned from `as_mut_ptr().add(index)`.
-  #[inline(always)]
-  pub fn mut_ptr_at(&mut self, index: usize) -> *mut T {
-    assert!(
-      index < self.length,
-      "Provided index {} must be between 0 and {}!",
-      index,
-      self.length
-    );
-    unsafe { self.mut_ptr_at_unchecked(index) }
-  }
-
   /// Appends a value to the end of the StaticVec without asserting that
   /// its current length is less than `N`.
   ///
@@ -433,7 +420,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn try_push(&mut self, value: T) -> Result<(), PushCapacityError<T, N>> {
     if self.length < N {
-      unsafe { self.push_unchecked(value) };
+      unsafe {
+        self.push_unchecked(value);
+      };
       Ok(())
     } else {
       Err(PushCapacityError::new(value))
@@ -444,9 +433,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// full; that is, if `self.len() == self.capacity()`.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
-    self
-      .try_push(value)
-      .expect("Insufficient remaining capacity for push!")
+    assert!(self.length < N);
+    unsafe { self.push_unchecked(value) };
   }
 
   /// Removes the value at the last position of the StaticVec and returns it in `Some` if
@@ -817,14 +805,20 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// A version of [`concat`](crate::StaticVec::concat) for scenarios where `T` does not
-  /// derive [`Copy`](core::marker::Copy) but does derive or implement [`Clone`](core::clone::Clone).
+  /// derive [`Copy`](core::marker::Copy) but does derive or implement
+  /// [`Clone`](core::clone::Clone).
   ///
   /// Due to needing to call `clone()` through each individual element of `self` and `other`, this
   /// function is less efficient than [`concat`](crate::StaticVec::concat), so
   /// [`concat`](crate::StaticVec::concat) should be preferred whenever possible.
   #[inline]
-  pub fn concat_clone<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
-  where T: Clone {
+  pub fn concat_clone<const N2: usize>(
+    &self,
+    other: &StaticVec<T, N2>,
+  ) -> StaticVec<T, { N + N2 }>
+  where
+    T: Clone,
+  {
     let mut res = StaticVec::new();
     for i in 0..self.length {
       unsafe { res.push_unchecked(self.get_unchecked(i).clone()) };
