@@ -885,13 +885,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline]
-  pub fn from_vec(vec: Vec<T>) -> Self {
+  pub fn from_vec(mut vec: Vec<T>) -> Self {
     let vec_len = vec.len();
     let item_count = vec_len.min(N);
     Self {
       data: {
         let mut data = Self::new_data_uninit();
         unsafe {
+          vec.set_len(0);
           vec
             .as_ptr()
             .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, item_count);
