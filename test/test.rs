@@ -467,6 +467,10 @@ fn from_vec() {
   let vv = StaticVec::<Box<Struct>, 2>::from_vec(v);
   assert_eq!(vv.capacity(), 2);
   assert_eq!(vv.len(), 2);
+  assert_eq!(
+    vv,
+    [Box::new(Struct { s: "AAA" }), Box::new(Struct { s: "BBB" })]
+  );
 }
 
 #[test]
