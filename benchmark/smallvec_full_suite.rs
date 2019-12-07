@@ -278,7 +278,7 @@ fn gen_from_elem<V: Vector<u64>>(n: usize, b: &mut Bencher) {
 }
 
 #[bench]
-fn bench_insert_many(b: &mut Bencher) {
+fn staticvec_bench_insert_many(b: &mut Bencher) {
   #[inline(never)]
   fn insert_many_noinline<I: ExactSizeIterator<Item = isize>>(
     vec: &mut StaticVec<isize, SPILLED_SIZE>,

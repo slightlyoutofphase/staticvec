@@ -896,11 +896,13 @@ impl<T, const N: usize> StaticVec<T, N> {
           vec
             .as_ptr()
             .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, item_count);
-          // Wrap the vec in a MaybeUninit to inhibit its destructor, then manually
-          // drop any excess values to avoid undesirable memory leaks.
-          let mut forgotten = MaybeUninit::new(vec);
-          ptr::drop_in_place(forgotten.get_mut().get_unchecked_mut(item_count..vec_len));
-          forgotten.assume_init();
+          // Manually drop any excess values in the source vec to avoid undesirable memory leaks.
+          if vec_len > item_count {
+            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
+              vec.as_mut_ptr().add(item_count),
+              vec_len - item_count,
+            ));
+          }
           data
         }
       },
