@@ -1160,7 +1160,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a new StaticVec representing the intersection of `self` and `other` (that is,
-  /// all items present in both `self` and `other.)
+  /// all items present in both `self` and `other`.)
   ///
   /// The `N2` parameter does not need to be provided explicitly, and can be inferred from `other`
   /// itself.
