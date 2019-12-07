@@ -456,6 +456,7 @@ fn from() {
   );
 }
 
+#[cfg(not(miri))]
 #[cfg(feature = "std")]
 #[test]
 fn from_vec() {
@@ -555,6 +556,7 @@ fn insert_many() {
   );
 }
 
+#[cfg(not(miri))]
 #[test]
 #[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
 fn insert_many_asserts() {
