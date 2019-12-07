@@ -95,7 +95,7 @@ serde_json_support = ["serde_json"]
 # This is used in the test suite.
 cool_asserts = "1.0.0"
 # This is here so we can compare against it in one of the benchmarks.
-arrayvec = "0.5.1"
+arrayvec = { version = "0.5.1", features = ["array-sizes-33-128", "array-sizes-129-255"] }
 
 [dependencies]
 serde = { optional = true, version = "1.0", features = ["derive"] }
