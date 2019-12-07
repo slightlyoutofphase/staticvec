@@ -5,12 +5,10 @@ rust:
 
 jobs:
   include:
-    os:
-      - linux
-        dist: bionic
-    os:
-      - osx
-      
+  - os: linux
+    dist: bionic
+  - os: osx
+
 script:
   - bash ./ci/run_miri.sh
   - cargo test --no-default-features
