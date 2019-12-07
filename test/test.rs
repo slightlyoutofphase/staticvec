@@ -555,7 +555,6 @@ fn insert_many() {
   );
 }
 
-#[cfg(not(miri))]
 #[test]
 #[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
 fn insert_many_asserts() {

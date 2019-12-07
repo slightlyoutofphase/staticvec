@@ -898,12 +898,12 @@ impl<T, const N: usize> StaticVec<T, N> {
           // Wrap the vec in a MaybeUninit to inhibit its destructor, then manually
           // drop any excess values to avoid undesirable memory leaks.
           let mut forgotten = MaybeUninit::new(vec);
-          if vec_len > item_count {
+          //if vec_len > item_count {
             ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
               forgotten.get_mut().as_mut_ptr().add(item_count),
               vec_len - item_count,
             ));
-          }
+          //}
           data
         }
       },
