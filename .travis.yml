@@ -7,7 +7,6 @@ rust:
   - nightly
 
 script:
-  - rustup component add miri
-  - yes | cargo miri test --features="std"
+  - bash ./ci/run_miri.sh
   - cargo test --no-default-features
   - cargo bench
