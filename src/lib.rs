@@ -565,11 +565,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Functionally equivalent to [`insert`](crate::StaticVec::insert), except with multiple
   /// items provided by an iterator as opposed to just one. This function will return immediately
   /// if / when the StaticVec reaches maximum capacity, regardless of whether the iterator still has
-  /// more items to yield. For safety reasons, as StaticVec cannot increase in capacity, the
+  /// more items to yield.
+  ///
+  /// For safety reasons, as StaticVec cannot increase in capacity, the
   /// iterator is required to implement [`ExactSizeIterator`](core::iter::ExactSizeIterator)
   /// rather than just [`Iterator`](core::iter::Iterator).
   #[inline]
-  pub fn insert_many<I: ExactSizeIterator<Item = T>>(&mut self, index: usize, iter: I) {
+  pub fn insert_many<I: IntoIterator<Item = T>>(&mut self, index: usize, iter: I)
+  where I::IntoIter: ExactSizeIterator<Item = T> {
     assert!(self.length < N && index <= self.length);
     let mut it = iter.into_iter();
     if index == self.length {
@@ -844,8 +847,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// A version of [`concat`](crate::StaticVec::concat) for scenarios where `T` does not
-  /// derive [`Copy`](core::marker::Copy) but does derive or implement
-  /// [`Clone`](core::clone::Clone).
+  /// derive [`Copy`](core::marker::Copy) but does implement [`Clone`](core::clone::Clone).
   ///
   /// Due to needing to call `clone()` through each individual element of `self` and `other`, this
   /// function is less efficient than [`concat`](crate::StaticVec::concat), so
