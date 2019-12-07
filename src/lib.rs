@@ -630,6 +630,15 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
+  /// Returns `true` if `value` is present in the StaticVec.
+  /// Locally requires that `T` implements [`PartialEq`](core::cmp::PartialEq)
+  /// to make it possible to compare the elements of the StaticVec with `value`.
+  #[inline(always)]
+  pub fn contains(&self, value: &T) -> bool
+  where T: PartialEq {
+    self.iter().any(|current| current == value)
+  }
+
   /// Removes all contents from the StaticVec and sets its length back to 0.
   #[inline(always)]
   pub fn clear(&mut self) {
@@ -1145,6 +1154,42 @@ impl<T, const N: usize> StaticVec<T, N> {
       }
       if !found {
         unsafe { res.push_unchecked(right.clone()) }
+      }
+    }
+    res
+  }
+
+  /// Returns a new StaticVec representing the intersection of `self` and `other` (that is,
+  /// all items present in both `self` and `other.)
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred from `other`
+  /// itself.
+  ///
+  /// Locally requires that `T` implements [`Clone`](core::clone::Clone) to avoid soundness issues
+  /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
+  /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///   staticvec![4, 5, 6, 7].intersection(&staticvec![1, 2, 3, 7, 4]),
+  ///   [4, 7],
+  /// );
+  /// ```
+  #[inline]
+  pub fn intersection<const N2: usize>(&self, other: &StaticVec<T, N2>) -> Self
+  where T: Clone + PartialEq {
+    let mut res = Self::new();
+    for left in self {
+      let mut found = false;
+      for right in other {
+        if left == right {
+          found = true;
+          break;
+        }
+      }
+      if found && !res.contains(left) {
+        unsafe { res.push_unchecked(left.clone()) }
       }
     }
     res

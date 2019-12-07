@@ -329,6 +329,12 @@ fn concat_clone() {
 }
 
 #[test]
+fn contains() {
+  assert_eq!(staticvec![1, 2, 3].contains(&2), true);
+  assert_eq!(staticvec![1, 2, 3].contains(&4), false);
+}
+
+#[test]
 fn dedup() {
   let mut vec = staticvec![1, 2, 2, 3, 2];
   vec.dedup();
@@ -565,6 +571,14 @@ fn insert_many_asserts() {
   v.insert_many(0, [1, 2, 3, 4].iter().cloned());
   let mut v2: StaticVec<u8, 0> = StaticVec::new();
   v2.insert_many(27, [1, 2, 3, 4].iter().cloned());
+}
+
+#[test]
+fn intersection() {
+  assert_eq!(
+    staticvec![4, 5, 6, 7].intersection(&staticvec![1, 2, 3, 7, 4]),
+    [4, 7],
+  );
 }
 
 #[test]
