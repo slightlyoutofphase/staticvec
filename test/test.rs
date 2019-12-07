@@ -477,6 +477,9 @@ fn from_vec() {
     vv,
     [Box::new(Struct { s: "AAA" }), Box::new(Struct { s: "BBB" })]
   );
+  let x = Vec::<Box<Struct>>::new();
+  let y = StaticVec::<Box<Struct>, 1>::from_vec(x);
+  assert_eq!(y, []);
 }
 
 #[test]
