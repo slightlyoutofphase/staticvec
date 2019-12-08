@@ -199,7 +199,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     N - self.length
   }
 
-  /// Returns the total size of the inhabited part of StaticVec (which may be zero if it has a
+  /// Returns the total size of the inhabited part of the StaticVec (which may be zero if it has a
   /// length of zero or contains ZSTs) in bytes. Specifically, the return value of this function
   /// amounts to a calculation of `size_of::<T>() * self.length`.
   #[inline(always)]
