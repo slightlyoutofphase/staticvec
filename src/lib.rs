@@ -49,7 +49,7 @@ mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
 
-/// A [`Vec`](https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html)-like struct
+/// A [`Vec`](alloc::vec::Vec)-like struct
 /// (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
