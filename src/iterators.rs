@@ -5,7 +5,6 @@ use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
 use core::marker::{PhantomData, Send, Sync};
 use core::ptr;
-use core::slice;
 
 #[cfg(feature = "std")]
 use alloc::string::String;
@@ -61,7 +60,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   pub fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    unsafe { slice::from_raw_parts(self.start, self.len()) }
+    unsafe { &*ptr::slice_from_raw_parts(self.start, self.len()) }
   }
 }
 
@@ -166,7 +165,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   pub fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    unsafe { slice::from_raw_parts(self.start, self.len()) }
+    unsafe { &*ptr::slice_from_raw_parts(self.start, self.len()) }
   }
 }
 
@@ -259,7 +258,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    unsafe { slice::from_raw_parts(self.data.ptr_at_unchecked(self.start), self.len()) }
+    unsafe { &*ptr::slice_from_raw_parts(self.data.ptr_at_unchecked(self.start), self.len()) }
   }
 }
 
@@ -328,7 +327,7 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
     match item_count {
       0 => (),
       _ => unsafe {
-        ptr::drop_in_place(slice::from_raw_parts_mut(
+        ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
           self.data.mut_ptr_at_unchecked(self.start),
           item_count,
         ))

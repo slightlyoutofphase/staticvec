@@ -49,9 +49,9 @@ mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
 
-/// A [`Vec`](alloc::vec::Vec)-like struct
-/// (mostly directly API-compatible where it can be)
+/// A [`Vec`](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
+#[cfg_attr(feature = "repr_c", repr(C))]
 pub struct StaticVec<T, const N: usize> {
   data: MaybeUninit<[T; N]>,
   length: usize,
@@ -111,8 +111,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
   /// assert_eq!(v2, [1, 2, 3]);
   /// ```
-  /// Note that StaticVec also implements [`From`](https://doc.rust-lang.org/nightly/std/convert/trait.From.html)
-  /// for both slices and static arrays, which may prove more ergonomic in some cases as it allows
+  /// Note that StaticVec also implements [`From`](core::convert::From) for both slices
+  /// and static arrays, which may prove more ergonomic in some cases as it allows
   /// for a greater degree of type inference:
   /// ```
   /// // The StaticVec on the next line is inferred to be of type `StaticVec<&'static str, 4>`.
@@ -149,8 +149,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Being `const` necessitates that this function can only accept arrays with a length
   /// exactly equal to the declared capacity of the resulting StaticVec, so if you do need
   /// flexibility with regards to input lengths it's recommended that you use
-  /// [`new_from_array`](crate::StaticVec::new_from_array) or the
-  /// [`From`](https://doc.rust-lang.org/nightly/std/convert/trait.From.html) implementations instead.
+  /// [`new_from_array`](crate::StaticVec::new_from_array) or the [`From`](core::convert::From)
+  /// implementations instead.
   ///
   /// Note that both forms of the [`staticvec!`] macro are implemented using
   /// [`new_from_const_array`](crate::StaticVec::new_from_const_array), so you may also prefer
@@ -163,8 +163,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
-  /// Returns the current length of the StaticVec.
-  /// Just as for a normal [`Vec`](https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html),
+  /// Returns the current length of the StaticVec. Just as for a normal [`Vec`](alloc::vec::Vec),
   /// this means the number of elements that have been added to it with
   /// [`push`](crate::StaticVec::push), [`insert`](crate::StaticVec::insert), etc. except in the
   /// case that it has been set directly with the unsafe [`set_len`](crate::StaticVec::set_len)
