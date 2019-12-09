@@ -1,9 +1,9 @@
 [![Latest Version]][crates.io] ![Rustc Version nightly]
 
-[Latest Version]: https://img.shields.io/crates/v/staticvec.svg  
-[crates.io]: https://crates.io/crates/staticvec  
-[Rustc Version nightly]: https://img.shields.io/badge/rustc-nightly-lightgray.svg  
-[![Build Status](https://travis-ci.com/slightlyoutofphase/staticvec.svg?branch=master)](https://travis-ci.com/slightlyoutofphase/staticvec)  
+[Latest Version]: https://img.shields.io/crates/v/staticvec.svg
+[crates.io]: https://crates.io/crates/staticvec
+[Rustc Version nightly]: https://img.shields.io/badge/rustc-nightly-lightgray.svg
+[![Build Status](https://travis-ci.com/slightlyoutofphase/staticvec.svg?branch=master)](https://travis-ci.com/slightlyoutofphase/staticvec)
 [![Build status](https://ci.appveyor.com/api/projects/status/qb40my4v3rr63st2/branch/master?svg=true)](https://ci.appveyor.com/project/slightlyoutofphase/staticvec/branch/master)
 
 Implements a fixed-capacity stack-allocated Vec alternative backed by an array, using const generics.
@@ -25,6 +25,11 @@ where `[T]` is expected.
 Contributions/suggestions/etc. very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
+
+**General note on the versioning of this crate:** all new releases of `StaticVec`, be they major, minor, or patch, can and
+should at all be times assumed as simply better in some way than the previous version and thus completely safe to upgrade to.
+In the not-especially-likely-due-to-the-nature-of-the-crate event of an actual "breaking change", the change in question will
+be very explicitly noted and described in this readme.
 
 A basic usage example:
 

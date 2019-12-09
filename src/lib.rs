@@ -886,6 +886,71 @@ impl<T, const N: usize> StaticVec<T, N> {
     res
   }
 
+  /// Returns a new StaticVec consisting of the elements of `self` in linear order, interspersed
+  /// with a copy of `separator` between each one.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to
+  /// avoid soundness issues and also allow for a more efficient implementation than would otherwise
+  /// be possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///  staticvec!["A", "B", "C", "D"].intersperse("Z"),
+  ///  ["A, "Z", B", "Z", "C", "Z", "D"]
+  /// );
+  /// ```
+  #[inline]
+  pub fn intersperse(&self, separator: T) -> StaticVec<T, { N * 2 }>
+  where T: Copy {
+    if self.is_empty() {
+      return StaticVec::new();
+    }
+    let mut res = StaticVec::new();
+    // The `as *mut T` cast here is necessary to make the type
+    // inference work properly (at the moment at least.) `rustc` still gets
+    // a bit confused by math operations done on const generic values
+    // in return types it seems.
+    let mut res_ptr = res.as_mut_ptr() as *mut T;
+    let mut self_ptr = self.as_ptr();
+    for _ in 0..self.length - 1 {
+      unsafe {
+        res_ptr.write(self_ptr.read());
+        res_ptr = res_ptr.offset(1);
+        res_ptr.write(separator);
+        res_ptr = res_ptr.offset(1);
+        self_ptr = self_ptr.offset(1);
+      }
+    }
+    unsafe { res_ptr.write(self_ptr.read()) };
+    res.length = (self.length * 2) - 1;
+    res
+  }
+
+  /// A version of [`intersperse`](crate::StaticVec::intersperse) for scenarios where `T` does not
+  /// derive [`Copy`](core::marker::Copy) but does implement [`Clone`](core::clone::Clone).
+  ///
+  /// Due to needing to call `clone()` through each individual element of `self` and also on
+  /// `separator`, this function is less efficient than
+  /// [`intersperse`](crate::StaticVec::intersperse), so
+  /// [`intersperse`](crate::StaticVec::intersperse) should be preferred whenever possible.
+  #[inline]
+  pub fn intersperse_clone(&self, separator: T) -> StaticVec<T, { N * 2 }>
+  where T: Clone {
+    if self.is_empty() {
+      return StaticVec::new();
+    }
+    let mut res = StaticVec::new();
+    unsafe {
+      for item in self.as_slice().get_unchecked(0..self.length - 1) {
+        res.push_unchecked(item.clone());
+        res.push_unchecked(separator.clone());
+      }
+      res.push_unchecked(self.get_unchecked(self.length - 1).clone());
+    }
+    res
+  }
+
   /// Returns a StaticVec containing the contents of a [`Vec`](alloc::vec::Vec) instance.
   /// If the [`Vec`](alloc::vec::Vec) has a length greater than the declared capacity of the
   /// resulting StaticVec, any contents after that point are ignored. Note that using this function

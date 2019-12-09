@@ -585,6 +585,26 @@ fn intersection() {
 }
 
 #[test]
+fn intersperse() {
+  assert_eq!(
+    staticvec!["A", "B", "C", "D"].intersperse("Z"),
+    ["A", "Z", "B", "Z", "C", "Z", "D"]
+  );
+  assert_eq!(staticvec![""].intersperse("B"), [""]);
+  assert_eq!(staticvec!["A"].intersperse("B"), ["A"]);
+}
+
+#[test]
+fn intersperse_clone() {
+  assert_eq!(
+    staticvec!["A", "B", "C", "D"].intersperse_clone("Z"),
+    ["A", "Z", "B", "Z", "C", "Z", "D"]
+  );
+  assert_eq!(staticvec![""].intersperse_clone("B"), [""]);
+  assert_eq!(staticvec!["A"].intersperse_clone("B"), ["A"]);
+}
+
+#[test]
 fn is_empty() {
   let mut v = StaticVec::<i32, 1>::new();
   assert!(v.is_empty());
