@@ -27,8 +27,7 @@ Contributions/suggestions/etc. very welcome!
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
 
 **General note on the versioning of this crate:** all new releases of `StaticVec`, be they major, minor, or patch, can and
-should at all be times assumed as simply being better in some way than the previous version and thus completely safe to upgrade to.
-
+should at all times be assumed to simply be better in some way than the previous version and thus completely safe to upgrade to.
 In the not-especially-likely-due-to-the-nature-of-the-crate event of an actual "breaking change", the change in question will
 be very explicitly noted and described in this readme.
 
