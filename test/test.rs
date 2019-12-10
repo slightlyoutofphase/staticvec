@@ -683,6 +683,14 @@ fn into_iter() {
   assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "BBB" }));
   assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "CCC" }));
   assert_eq!("[]", format!("{:?}", i2));
+  let v3 = staticvec![
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" })
+  ];
+  let mut i3 = v3.into_iter();
+  // We do this so Miri can make sure it drops the remaining values properly.
+  i3.next();
 }
 
 #[cfg(feature = "std")]
