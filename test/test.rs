@@ -1139,6 +1139,14 @@ fn try_push() {
   assert_eq!(vec2, [1, 2, 3, 3]);
 }
 
+#[test]
+fn union() {
+  assert_eq!(
+    staticvec![1, 2, 3].union(&staticvec![4, 2, 3, 4]),
+    [1, 2, 3, 4],
+  );
+}
+
 #[cfg(feature = "std")]
 #[test]
 fn write() {

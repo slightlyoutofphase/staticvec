@@ -24,6 +24,7 @@ pub use crate::trait_impls::*;
 use crate::utils::reverse_copy;
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
+use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{
@@ -1256,6 +1257,37 @@ impl<T, const N: usize> StaticVec<T, N> {
       }
     }
     res
+  }
+
+  /// Returns a new StaticVec representing the union of `self` and `other` (that is, the full
+  /// contents of both `self` and `other`, minus any duplicates.)
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred from `other`
+  /// itself.
+  ///
+  /// Locally requires that `T` implements [`Clone`](core::clone::Clone) to avoid soundness issues
+  /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
+  /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///   staticvec![1, 2, 3].union(&staticvec![4, 2, 3, 4]),
+  ///   [1, 2, 3, 4],
+  /// );
+  /// ```
+  #[inline]
+  pub fn union<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
+  where T: Clone + PartialEq {
+    if self.length <= other.length {
+      let mut res = StaticVec::from_iter(self.iter().chain(other.difference(self).iter()).cloned());
+      res.dedup();
+      res
+    } else {
+      let mut res = StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
+      res.dedup();
+      res
+    }
   }
 
   /// A concept borrowed from the widely-used `SmallVec` crate, this function
