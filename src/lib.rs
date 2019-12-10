@@ -389,12 +389,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// in writing to an out-of-bounds memory region.
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, value: T) {
+    let length = self.length;
     debug_assert!(
-      self.is_not_full(),
+      length < N,
       "Attempted to unsafely push to a full StaticVec!"
     );
-    self.mut_ptr_at_unchecked(self.length).write(value);
-    self.length += 1;
+    self.mut_ptr_at_unchecked(length).write(value);
+    self.set_len(length + 1);
   }
 
   /// Pops a value from the end of the StaticVec and returns it directly without asserting that
