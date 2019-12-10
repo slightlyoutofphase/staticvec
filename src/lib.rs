@@ -799,7 +799,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn try_extend_from_slice(&mut self, other: &[T]) -> Result<(), CapacityError<N>>
   where T: Copy {
     let old_length = self.length;
-    let added_length = other.length;
+    let added_length = other.len();
     if self.remaining_capacity() < added_length {
       return Err(CapacityError {});
     }
