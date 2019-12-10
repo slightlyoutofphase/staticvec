@@ -421,7 +421,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// or returns a [`PushCapacityError`](crate::errors::PushCapacityError) otherwise.
   #[inline(always)]
   pub fn try_push(&mut self, value: T) -> Result<(), PushCapacityError<T, N>> {
-    if self.length < N {
+    if self.is_not_full() {
       unsafe {
         self.push_unchecked(value);
       };
@@ -435,7 +435,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// full; that is, if `self.len() == self.capacity()`.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
-    assert!(self.length < N);
+    assert!(self.is_not_full());
     unsafe { self.push_unchecked(value) };
   }
 
@@ -499,15 +499,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// that exist in later positions are shifted to the left.
   #[inline]
   pub fn remove(&mut self, index: usize) -> T {
-    let length = self.length;
-    assert!(index < length);
-    unsafe {
-      let p = self.mut_ptr_at_unchecked(index);
-      let res = p.read();
-      p.offset(1).copy_to(p, length - index - 1);
-      self.set_len(length - 1);
-      res
-    }
+    assert!(index < self.length);
+    unsafe{ self.drain(index..=index).as_ptr().read() }
   }
 
   /// Removes the first instance of `item` from the StaticVec if the item exists.
@@ -558,13 +551,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Any values that exist in positions after `index` are shifted to the right.
   #[inline]
   pub fn insert(&mut self, index: usize, value: T) {
-    let length = self.length;
-    assert!(length < N && index <= length);
+    let old_length = self.length;
+    assert!(old_length < N && index <= old_length);
     unsafe {
       let p = self.mut_ptr_at_unchecked(index);
-      p.copy_to(p.offset(1), length - index);
+      p.copy_to(p.offset(1), old_length - index);
       p.write(value);
-      self.set_len(length + 1);
+      self.set_len(old_length + 1);
     }
   }
 
@@ -581,24 +574,24 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn insert_many<I: IntoIterator<Item = T>>(&mut self, index: usize, iter: I)
   where I::IntoIter: ExactSizeIterator<Item = T> {
+    let old_length = self.length;
     assert!(
-      self.length < N && index <= self.length,
+      old_length < N && index <= old_length,
       "Insufficient remaining capacity / out of bounds!"
     );
     let mut it = iter.into_iter();
-    if index == self.length {
+    if index == old_length {
       return self.extend(it);
     }
     let iter_size = it.len();
     assert!(
-      index + iter_size >= index && (self.length - index) + iter_size < N,
+      index + iter_size >= index && (old_length - index) + iter_size < N,
       "Insufficient remaining capacity / out of bounds!"
     );
     unsafe {
-      let old_length = self.length;
       let mut this = self.mut_ptr_at_unchecked(index);
       this.copy_to(this.add(iter_size), old_length - index);
-      self.length = index;
+      self.set_len(index);
       let mut item_count = 0;
       while item_count < N {
         if let Some(element) = it.next() {
@@ -614,7 +607,7 @@ impl<T, const N: usize> StaticVec<T, N> {
           break;
         }
       }
-      self.length = old_length + item_count;
+      self.set_len(old_length + item_count);
     }
   }
 
@@ -623,12 +616,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// otherwise. Any values that exist in positions after `index` are shifted to the right.
   #[inline]
   pub fn try_insert(&mut self, index: usize, value: T) -> Result<(), CapacityError<N>> {
-    if self.length < N && index <= self.length {
+    let old_length = self.length;
+    if old_length < N && index <= old_length {
       unsafe {
         let p = self.mut_ptr_at_unchecked(index);
-        p.copy_to(p.offset(1), self.length - index);
+        p.copy_to(p.offset(1), old_length - index);
         p.write(value);
-        self.length += 1;
+        self.set_len(old_length + 1);
         Ok(())
       }
     } else {
@@ -782,14 +776,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
-    let added_length = other.len().min(self.remaining_capacity());
+    let old_length = self.length;
+    let added_length = other.len().min(N - old_length);
     // Safety: added_length is <= our remaining capacity and other.len.
     unsafe {
       other
         .as_ptr()
-        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(self.length), added_length);
+        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
+      self.set_len(old_length + added_length);
     }
-    self.length += added_length;
   }
 
   /// Copies and appends all elements, if any, of a slice to the StaticVec if the
@@ -800,7 +795,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   where T: Copy {
     let old_length = self.length;
     let added_length = other.len();
-    if self.remaining_capacity() < added_length {
+    if N - old_length < added_length {
       return Err(CapacityError {});
     }
     unsafe {
