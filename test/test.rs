@@ -673,6 +673,16 @@ fn into_iter() {
   assert_eq!("[3]", format!("{:?}", i));
   assert_eq!(i.next().unwrap(), 3);
   assert_eq!("[]", format!("{:?}", i));
+  let v2 = staticvec![
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" })
+  ];
+  let mut i2 = v2.into_iter();
+  assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "AAA" }));
+  assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "BBB" }));
+  assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "CCC" }));
+  assert_eq!("[]", format!("{:?}", i2));
 }
 
 #[cfg(feature = "std")]
