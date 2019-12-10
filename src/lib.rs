@@ -807,8 +807,8 @@ impl<T, const N: usize> StaticVec<T, N> {
       other
         .as_ptr()
         .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
+      self.set_len(old_length + added_length);
     }
-    self.set_len(old_length + added_length);
     Ok(())
   }
 
