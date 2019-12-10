@@ -1,6 +1,6 @@
 #![allow(clippy::all)]
 
-use staticvec::*;
+use staticvec::{staticvec, StaticVec};
 
 #[derive(Copy, Clone, Debug)]
 struct ZST {}
@@ -272,7 +272,7 @@ fn main() {
   for s in &strings {
     println!("{}", s);
   }
-  let mut structs = staticvec![
+  const STRUCTS: StaticVec<MyOtherStruct, 6> = staticvec![
     MyOtherStruct { s: "a" },
     MyOtherStruct { s: "b" },
     MyOtherStruct { s: "c" },
@@ -280,8 +280,8 @@ fn main() {
     MyOtherStruct { s: "e" },
     MyOtherStruct { s: "f" },
   ];
-  let mut newstructs = structs.drain_filter(|s| s.s < "d");
-  for s in &structs {
+  let mut newstructs = STRUCTS.drain_filter(|s| s.s < "d");
+  for s in &STRUCTS {
     println!("{}", s.s);
   }
   for s in &newstructs {
@@ -355,22 +355,17 @@ fn main() {
   }
   println!("{:?}", zsts.iter().size_hint());
   println!("{}", zsts.iter().len());
-  let mut v = staticvec![
+  let v = staticvec![
     Box::new(MyOtherStruct { s: "AAA" }),
     Box::new(MyOtherStruct { s: "BBB" }),
     Box::new(MyOtherStruct { s: "CCC" })
   ];
   println!("{} {}", v.capacity(), v.len());
   let vv = v.into_vec();
-  println!("{} {}", v.capacity(), v.len());
   println!("{} {}", vv.capacity(), vv.len());
   for s in vv {
     println!("{:?}", s);
   }
-  v.push(Box::new(MyOtherStruct { s: "AAA" }));
-  v.push(Box::new(MyOtherStruct { s: "BBB" }));
-  v.push(Box::new(MyOtherStruct { s: "CCC" }));
-  println!("{} {}", v.capacity(), v.len());
   let cc = staticvec!["AAA", "BBB"];
   let dd = cc.clone();
   let mut ee = StaticVec::new();

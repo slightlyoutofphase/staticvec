@@ -5,6 +5,7 @@ use staticvec::*;
 
 use core::cell;
 
+#[cfg(not(miri))]
 #[cfg(feature = "std")]
 use std::panic::{self, AssertUnwindSafe};
 
@@ -156,12 +157,12 @@ fn bounds_to_string() {
   let mut v = staticvec![1, 2, 3, 4];
   let it = v.iter();
   assert_eq!(
-    "Current value of element at `start`: Some(1)\nCurrent value of element at `end`: Some(4)",
+    "Current value of element at `start`: 1\nCurrent value of element at `end`: 4",
     it.bounds_to_string()
   );
   let itm = v.iter_mut();
   assert_eq!(
-    "Current value of element at `start`: Some(1)\nCurrent value of element at `end`: Some(4)",
+    "Current value of element at `start`: 1\nCurrent value of element at `end`: 4",
     itm.bounds_to_string()
   );
   let itv = v.into_iter();
@@ -207,6 +208,7 @@ fn clone_from_longer() {
   assert_eq!(dst, src);
 }
 
+#[cfg(not(miri))]
 #[cfg(feature = "std")]
 #[test]
 fn panicking_clone() {
@@ -278,6 +280,61 @@ fn panicking_clone() {
 }
 
 #[test]
+fn concat() {
+  assert_eq!(
+    staticvec!["A, B"].concat(&staticvec!["C", "D", "E", "F"]),
+    ["A, B", "C", "D", "E", "F"]
+  );
+  let v = StaticVec::<i32, 0>::from([]).concat(&StaticVec::<i32, 0>::from([]));
+  assert_eq!(v, []);
+  let v2 = staticvec![4, 5, 6].concat(&staticvec![1, 2, 3]);
+  assert_eq!(v2, [4, 5, 6, 1, 2, 3]);
+}
+
+#[test]
+fn concat_clone() {
+  assert_eq!(
+    staticvec![Box::new("A, B")].concat_clone(&staticvec![
+      Box::new("C"),
+      Box::new("D"),
+      Box::new("E"),
+      Box::new("F")
+    ]),
+    [
+      Box::new("A, B"),
+      Box::new("C"),
+      Box::new("D"),
+      Box::new("E"),
+      Box::new("F")
+    ]
+  );
+  let v = StaticVec::<i32, 0>::from([]).concat_clone(&StaticVec::<i32, 0>::from([]));
+  assert_eq!(v, []);
+  let v2 = staticvec![Box::new(4), Box::new(5), Box::new(6)].concat_clone(&staticvec![
+    Box::new(1),
+    Box::new(2),
+    Box::new(3)
+  ]);
+  assert_eq!(
+    v2,
+    [
+      Box::new(4),
+      Box::new(5),
+      Box::new(6),
+      Box::new(1),
+      Box::new(2),
+      Box::new(3)
+    ]
+  );
+}
+
+#[test]
+fn contains() {
+  assert_eq!(staticvec![1, 2, 3].contains(&2), true);
+  assert_eq!(staticvec![1, 2, 3].contains(&4), false);
+}
+
+#[test]
 fn dedup() {
   let mut vec = staticvec![1, 2, 2, 3, 2];
   vec.dedup();
@@ -296,6 +353,15 @@ fn dedup_by_key() {
   let mut vec = staticvec![10, 20, 21, 30, 20];
   vec.dedup_by_key(|i| *i / 10);
   assert_eq!(vec, [10, 20, 30, 20]);
+}
+
+#[test]
+fn difference() {
+  assert_eq!(
+    staticvec![4, 5, 6, 7].difference(&staticvec![1, 2, 3, 7]),
+    [4, 5, 6]
+  );
+  assert_eq!(staticvec![1, 2, 3].difference(&staticvec![3, 4, 5]), [1, 2]);
 }
 
 #[test]
@@ -396,6 +462,26 @@ fn from() {
   );
 }
 
+#[cfg(feature = "std")]
+#[test]
+fn from_vec() {
+  let v = vec![
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" }),
+  ];
+  let vv = StaticVec::<Box<Struct>, 2>::from_vec(v);
+  assert_eq!(vv.capacity(), 2);
+  assert_eq!(vv.len(), 2);
+  assert_eq!(
+    vv,
+    [Box::new(Struct { s: "AAA" }), Box::new(Struct { s: "BBB" })]
+  );
+  let x = Vec::<Box<Struct>>::new();
+  let y = StaticVec::<Box<Struct>, 1>::from_vec(x);
+  assert_eq!(y, []);
+}
+
 #[test]
 fn get_unchecked() {
   let v = staticvec!["a", "b", "c"];
@@ -415,6 +501,9 @@ fn index() {
   assert_eq!(vec[1..4], [1, 2, 3]);
   assert_eq!(vec[1..=1], [1]);
   assert_eq!(vec[1..3], [1, 2]);
+  assert_eq!(vec[..3], [0, 1, 2]);
+  assert_eq!(vec[..=3], [0, 1, 2, 3]);
+  assert_eq!(vec[1..], [1, 2, 3, 4]);
   assert_eq!(vec[1..=3], [1, 2, 3]);
   assert_eq!(vec[..], [0, 1, 2, 3, 4]);
   // Because this block includes obviously-violated bounds checks, miri
@@ -438,6 +527,81 @@ fn insert() {
   assert_eq!(vec, [1, 4, 2, 3]);
   vec.insert(4, 5);
   assert_eq!(vec, [1, 4, 2, 3, 5]);
+}
+
+// The next few tests for `insert_many` are adapted from the SmallVec testsuite.
+
+#[test]
+fn insert_many() {
+  let mut v: StaticVec<u8, 8> = StaticVec::new();
+  for x in 0..4 {
+    v.push(x);
+  }
+  assert_eq!(v.len(), 4);
+  v.insert_many(1, [5, 6].iter().cloned());
+  assert_eq!(
+    &v.iter().map(|v| *v).collect::<StaticVec<_, 8>>(),
+    &[0, 5, 6, 1, 2, 3]
+  );
+  v.clear();
+  for x in 0..4 {
+    v.push(x);
+  }
+  assert_eq!(v.len(), 4);
+  v.insert_many(1, [5, 6].iter().cloned());
+  assert_eq!(
+    &v.iter().map(|v| *v).collect::<StaticVec<_, 8>>(),
+    &[0, 5, 6, 1, 2, 3]
+  );
+  v.clear();
+  for i in 0..6 {
+    v.push(i + 1);
+  }
+  v.insert_many(6, [1].iter().cloned());
+  assert_eq!(
+    &v.iter().map(|v| *v).collect::<StaticVec<_, 8>>(),
+    &[1, 2, 3, 4, 5, 6, 1]
+  );
+}
+
+#[test]
+#[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
+fn insert_many_asserts() {
+  let mut v: StaticVec<u8, 8> = StaticVec::new();
+  for i in 0..7 {
+    v.push(i + 1);
+  }
+  v.insert_many(0, [1, 2, 3, 4].iter().cloned());
+  let mut v2: StaticVec<u8, 0> = StaticVec::new();
+  v2.insert_many(27, [1, 2, 3, 4].iter().cloned());
+}
+
+#[test]
+fn intersection() {
+  assert_eq!(
+    staticvec![4, 5, 6, 7].intersection(&staticvec![1, 2, 3, 7, 4]),
+    [4, 7],
+  );
+}
+
+#[test]
+fn intersperse() {
+  assert_eq!(
+    staticvec!["A", "B", "C", "D"].intersperse("Z"),
+    ["A", "Z", "B", "Z", "C", "Z", "D"]
+  );
+  assert_eq!(staticvec![""].intersperse("B"), [""]);
+  assert_eq!(staticvec!["A"].intersperse("B"), ["A"]);
+}
+
+#[test]
+fn intersperse_clone() {
+  assert_eq!(
+    staticvec!["A", "B", "C", "D"].intersperse_clone("Z"),
+    ["A", "Z", "B", "Z", "C", "Z", "D"]
+  );
+  assert_eq!(staticvec![""].intersperse_clone("B"), [""]);
+  assert_eq!(staticvec!["A"].intersperse_clone("B"), ["A"]);
 }
 
 #[test]
@@ -514,7 +678,7 @@ fn into_iter() {
 #[cfg(feature = "std")]
 #[test]
 fn into_vec() {
-  let mut v = staticvec![
+  let v = staticvec![
     Box::new(Struct { s: "AAA" }),
     Box::new(Struct { s: "BBB" }),
     Box::new(Struct { s: "CCC" })
@@ -522,13 +686,6 @@ fn into_vec() {
   let vv = v.into_vec();
   assert_eq!(vv.capacity(), 3);
   assert_eq!(vv.len(), 3);
-  assert_eq!(v.capacity(), 3);
-  assert_eq!(v.len(), 0);
-  v.push(Box::new(Struct { s: "AAA" }));
-  v.push(Box::new(Struct { s: "BBB" }));
-  v.push(Box::new(Struct { s: "CCC" }));
-  assert_eq!(v.capacity(), 3);
-  assert_eq!(v.len(), 3);
 }
 
 #[test]
@@ -551,10 +708,24 @@ fn len() {
 
 #[test]
 fn macros() {
-  // The type of the StaticVec on the next line is `StaticVec<StaticVec<StaticVec<i32, 4>, 1>, 1>`.
-  let _v = staticvec![staticvec![staticvec![1, 2, 3, 4]]];
-  // The type of the StaticVec on the next line is `StaticVec<f32, 64>`.
-  let _v2 = staticvec![12.0; 64];
+  let v = staticvec![staticvec![staticvec![1, 2, 3, 4]]];
+  assert_eq!(v[0][0], [1, 2, 3, 4]);
+  let v2 = staticvec![12.0; 64];
+  assert!(v2 == [12.0; 64]);
+  const V3: StaticVec<i32, 4> = staticvec![1, 2, 3, 4];
+  assert_eq!(V3, [1, 2, 3, 4]);
+  const V4: StaticVec<i32, 128> = staticvec![27; 128];
+  assert!(V4 == [27; 128]);
+}
+
+#[test]
+fn math_functions() {
+  static A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  static B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  assert_eq!(A.added(&B), [6.0, 8.0, 10.0, 12.0]);
+  assert_eq!(A.subtracted(&B), [2.0, 2.0, 2.0, 2.0]);
+  assert_eq!(A.multiplied(&B), [8.0, 15.0, 24.0, 35.0]);
+  assert_eq!(A.divided(&B), [2.0, 1.6666666666666667, 1.5, 1.4]);
 }
 
 #[test]
@@ -580,16 +751,6 @@ fn new() {
 }
 
 #[test]
-fn new_from_slice() {
-  let vec = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3]);
-  assert_eq!(vec, [1, 2, 3]);
-  let vec2 = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3, 4, 5, 6]);
-  assert_eq!(vec2, [1, 2, 3]);
-  let vec3 = StaticVec::<i32, 27>::new_from_slice(&[]);
-  assert_eq!(vec3, []);
-}
-
-#[test]
 fn new_from_array() {
   let vec = StaticVec::<i32, 3>::new_from_array([1; 3]);
   assert_eq!(vec, [1, 1, 1]);
@@ -603,6 +764,54 @@ fn new_from_array() {
   assert_eq!(v, [1, 2, 3]);
   let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
   assert_eq!(v2, [1, 2, 3]);
+  let v5 = StaticVec::<Box<Struct>, 2>::new_from_array([
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" }),
+    Box::new(Struct { s: "DDD" }),
+    Box::new(Struct { s: "EEE" }),
+  ]);
+  assert_eq!(
+    v5,
+    [Box::new(Struct { s: "AAA" }), Box::new(Struct { s: "BBB" })]
+  );
+}
+
+#[test]
+fn new_from_const_array() {
+  const VEC2: StaticVec<i32, 6> = StaticVec::new_from_const_array([1; 6]);
+  assert_eq!(VEC2, [1, 1, 1, 1, 1, 1]);
+  const VEC3: StaticVec<i32, 0> = StaticVec::new_from_const_array([0; 0]);
+  assert_eq!(VEC3, []);
+  const VEC4: StaticVec<f32, 512> = StaticVec::new_from_const_array([24.0; 512]);
+  assert_eq!(VEC4, staticvec![24.0; 512]);
+  const V: StaticVec<&'static str, 3> = StaticVec::new_from_const_array(["A", "B", "C"]);
+  assert_eq!(V.reversed(), ["C", "B", "A"]);
+  const V2: StaticVec<u8, 6> = StaticVec::new_from_const_array([1, 2, 3, 4, 5, 6]);
+  assert_eq!(V2, [1, 2, 3, 4, 5, 6]);
+  const V6: StaticVec<Struct, 3> = StaticVec::new_from_const_array([
+    Struct { s: "AAA" },
+    Struct { s: "BBB" },
+    Struct { s: "CCC" },
+  ]);
+  assert_eq!(
+    V6,
+    [
+      Struct { s: "AAA" },
+      Struct { s: "BBB" },
+      Struct { s: "CCC" },
+    ]
+  );
+}
+
+#[test]
+fn new_from_slice() {
+  let vec = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3]);
+  assert_eq!(vec, [1, 2, 3]);
+  let vec2 = StaticVec::<i32, 3>::new_from_slice(&[1, 2, 3, 4, 5, 6]);
+  assert_eq!(vec2, [1, 2, 3]);
+  let vec3 = StaticVec::<i32, 27>::new_from_slice(&[]);
+  assert_eq!(vec3, []);
 }
 
 #[test]
@@ -800,6 +1009,18 @@ fn reversed() {
 }
 
 #[test]
+fn size_in_bytes() {
+  let x = StaticVec::<u8, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(x.size_in_bytes(), 8);
+  let y = StaticVec::<u16, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(y.size_in_bytes(), 16);
+  let z = StaticVec::<u32, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(z.size_in_bytes(), 32);
+  let w = StaticVec::<u64, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(w.size_in_bytes(), 64);
+}
+
+#[test]
 fn set_len() {
   let mut v = staticvec![1, 2, 3];
   assert_eq!(v.len(), 3);
@@ -829,6 +1050,18 @@ fn split_off() {
 }
 
 #[test]
+fn symmetric_difference() {
+  assert_eq!(
+    staticvec![1, 2, 3].symmetric_difference(&staticvec![3, 4, 5]),
+    [1, 2, 4, 5]
+  );
+  assert_eq!(
+    staticvec![501, 502, 503, 504].symmetric_difference(&staticvec![502, 503, 504, 505]),
+    [501, 505]
+  );
+}
+
+#[test]
 fn swap_pop() {
   let mut v = staticvec!["foo", "bar", "baz", "qux"];
   assert_eq!(v.swap_pop(1).unwrap(), "bar");
@@ -845,6 +1078,21 @@ fn swap_remove() {
   assert_eq!(v, ["foo", "qux", "baz"]);
   assert_eq!(v.swap_remove(0), "foo");
   assert_eq!(v, ["baz", "qux"]);
+}
+
+#[test]
+fn triple() {
+  static V: StaticVec<usize, 4> = staticvec![4, 5, 6, 7];
+  assert_eq!(V.triple(), (V.as_ptr(), 4, 4));
+}
+
+#[test]
+fn triple_mut() {
+  let mut v = staticvec![4, 5, 6, 7];
+  let t = v.triple_mut();
+  assert_eq!(t, (v.as_mut_ptr(), 4, 4));
+  unsafe { *t.0 = 8 };
+  assert_eq!(v, [8, 5, 6, 7]);
 }
 
 #[test]
@@ -866,10 +1114,7 @@ fn truncate() {
 #[test]
 fn try_extend_from_slice() {
   let mut v = StaticVec::<i32, 3>::from([1, 2, 3]);
-  assert_eq!(
-    v.try_extend_from_slice(&[2, 3]),
-    Err("Insufficient remaining capacity!")
-  );
+  assert_eq!(v.try_extend_from_slice(&[2, 3]), Err(CapacityError::<3> {}));
   let mut w = StaticVec::<i32, 4>::from([1, 2, 3]);
   assert_eq!(w.try_extend_from_slice(&[2]), Ok(()));
 }
@@ -878,10 +1123,7 @@ fn try_extend_from_slice() {
 #[test]
 fn try_insert() {
   let mut vec = staticvec![1, 2, 3, 4, 5];
-  assert_eq!(
-    vec.try_insert(2, 0),
-    Err("One of `self.length < N` or `index <= self.length` is false!")
-  );
+  assert_eq!(vec.try_insert(2, 0), Err(CapacityError::<5> {}));
   let mut vec2 = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
   vec2.try_insert(2, 3);
   assert_eq!(vec2, [1, 2, 3, 3]);
@@ -895,6 +1137,14 @@ fn try_push() {
   let mut vec2 = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
   assert_eq!(vec2.try_push(3), Ok(()));
   assert_eq!(vec2, [1, 2, 3, 3]);
+}
+
+#[test]
+fn union() {
+  assert_eq!(
+    staticvec![1, 2, 3].union(&staticvec![4, 2, 3, 4]),
+    [1, 2, 3, 4],
+  );
 }
 
 #[cfg(feature = "std")]

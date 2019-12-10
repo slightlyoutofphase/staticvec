@@ -104,7 +104,7 @@ impl<T: Copy + 'static, const N: usize> Vector<T> for StaticVec<T, N> {
   }
 
   fn from_elem(val: T, _n: usize) -> Self {
-    staticvec![val; {N}]
+    staticvec::utils::new_from_value(val)
   }
 
   fn from_elems(val: &[T]) -> Self {
@@ -273,6 +273,27 @@ fn gen_pushpop<V: Vector<u64>>(b: &mut Bencher) {
 fn gen_from_elem<V: Vector<u64>>(n: usize, b: &mut Bencher) {
   b.iter(|| {
     let vec = V::from_elem(42, n);
+    vec
+  });
+}
+
+#[bench]
+fn staticvec_bench_insert_many(b: &mut Bencher) {
+  #[inline(never)]
+  fn insert_many_noinline<I: ExactSizeIterator<Item = isize>>(
+    vec: &mut StaticVec<isize, SPILLED_SIZE>,
+    index: usize,
+    iterable: I,
+  )
+  {
+    vec.insert_many(index, iterable)
+  }
+
+  b.iter(|| {
+    let mut vec = StaticVec::<isize, SPILLED_SIZE>::new();
+    insert_many_noinline(&mut vec, 0, 0..VEC_SIZE as _);
+    vec.clear();
+    insert_many_noinline(&mut vec, 0, 0..SPILLED_SIZE as _);
     vec
   });
 }

@@ -5,10 +5,11 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::{self, MaybeUninit};
-use core::ops::{Deref, DerefMut, Index, IndexMut};
+use core::ops::{
+  Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo,
+  RangeToInclusive,
+};
 use core::ptr;
-use core::slice::SliceIndex;
 
 #[cfg(feature = "std")]
 use core::str;
@@ -93,7 +94,7 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
             self
               .as_ptr()
               .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, self.length);
-            res.assume_init()
+            res
           }
         },
         length: self.length,
@@ -189,14 +190,7 @@ impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, N2> {
 impl<T, const N: usize> From<[T; N]> for StaticVec<T, N> {
   #[inline(always)]
   fn from(values: [T; N]) -> Self {
-    Self {
-      data: unsafe {
-        let res = (&values as *const [T; N] as *const [MaybeUninit<T>; N]).read();
-        mem::forget(values);
-        res
-      },
-      length: N,
-    }
+    Self::new_from_const_array(values)
   }
 }
 
@@ -236,6 +230,16 @@ impl<T: Copy, const N: usize> From<&mut [T; N]> for StaticVec<T, N> {
   }
 }
 
+#[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
+impl<T, const N: usize> From<Vec<T>> for StaticVec<T, N> {
+  /// Functionally equivalent to [`from_vec`](crate::StaticVec::from_vec).
+  #[inline(always)]
+  fn from(vec: Vec<T>) -> Self {
+    Self::from_vec(vec)
+  }
+}
+
 impl<T, const N: usize> FromIterator<T> for StaticVec<T, N> {
   impl_from_iterator!(val, val, T);
 }
@@ -252,24 +256,195 @@ impl<T: Hash, const N: usize> Hash for StaticVec<T, N> {
   }
 }
 
-impl<T, I: SliceIndex<[T]>, const N: usize> Index<I> for StaticVec<T, N> {
-  type Output = I::Output;
+// We implement the various forms of `Index` directly, as after trying out
+// deferring to `SliceIndex` for it for a while it proved to to be somewhat
+// less performant due to the added indirection.
+
+impl<T, const N: usize> Index<usize> for StaticVec<T, N> {
+  type Output = T;
+  /// Asserts that `index` is less than the current length of the StaticVec,
+  /// and if so returns the value at that position as a constant reference.
   #[inline(always)]
-  fn index(&self, index: I) -> &Self::Output {
-    self.as_slice().index(index)
+  fn index(&self, index: usize) -> &Self::Output {
+    assert!(index < self.length);
+    unsafe { self.get_unchecked(index) }
   }
 }
 
-impl<T, I: SliceIndex<[T]>, const N: usize> IndexMut<I> for StaticVec<T, N> {
+impl<T, const N: usize> IndexMut<usize> for StaticVec<T, N> {
+  /// Asserts that `index` is less than the current length of the StaticVec,
+  /// and if so returns the value at that position as a mutable reference.
   #[inline(always)]
-  fn index_mut(&mut self, index: I) -> &mut Self::Output {
-    self.as_mut_slice().index_mut(index)
+  fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+    assert!(index < self.length);
+    unsafe { self.get_unchecked_mut(index) }
+  }
+}
+
+impl<T, const N: usize> Index<Range<usize>> for StaticVec<T, N> {
+  type Output = [T];
+  /// Asserts that the lower bound of `index` is less than its upper bound,
+  /// and that its upper bound is less than or equal to the current length of the StaticVec,
+  /// and if so returns a constant reference to a slice of elements `index.start..index.end`.
+  #[inline(always)]
+  fn index(&self, index: Range<usize>) -> &Self::Output {
+    assert!(index.start < index.end && index.end <= self.length);
+    unsafe {
+      &*ptr::slice_from_raw_parts(self.ptr_at_unchecked(index.start), index.end - index.start)
+    }
+  }
+}
+
+impl<T, const N: usize> IndexMut<Range<usize>> for StaticVec<T, N> {
+  /// Asserts that the lower bound of `index` is less than its upper bound,
+  /// and that its upper bound is less than or equal to the current length of the StaticVec,
+  /// and if so returns a mutable reference to a slice of elements `index.start..index.end`.
+  #[inline(always)]
+  fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
+    assert!(index.start < index.end && index.end <= self.length);
+    unsafe {
+      &mut *ptr::slice_from_raw_parts_mut(
+        self.mut_ptr_at_unchecked(index.start),
+        index.end - index.start,
+      )
+    }
+  }
+}
+
+impl<T, const N: usize> Index<RangeFrom<usize>> for StaticVec<T, N> {
+  type Output = [T];
+  /// Asserts that the lower bound of `index` is less than or equal to the
+  /// current length of the StaticVec, and if so returns a constant reference
+  /// to a slice of elements `index.start()..self.length`.
+  #[inline(always)]
+  fn index(&self, index: RangeFrom<usize>) -> &Self::Output {
+    assert!(index.start <= self.length);
+    unsafe {
+      &*ptr::slice_from_raw_parts(
+        self.ptr_at_unchecked(index.start),
+        self.length - index.start,
+      )
+    }
+  }
+}
+
+impl<T, const N: usize> IndexMut<RangeFrom<usize>> for StaticVec<T, N> {
+  /// Asserts that the lower bound of `index` is less than or equal to the
+  /// current length of the StaticVec, and if so returns a mutable reference
+  /// to a slice of elements `index.start()..self.length`.
+  #[inline(always)]
+  fn index_mut(&mut self, index: RangeFrom<usize>) -> &mut Self::Output {
+    assert!(index.start <= self.length);
+    unsafe {
+      &mut *ptr::slice_from_raw_parts_mut(
+        self.mut_ptr_at_unchecked(index.start),
+        self.length - index.start,
+      )
+    }
+  }
+}
+
+impl<T, const N: usize> Index<RangeFull> for StaticVec<T, N> {
+  type Output = [T];
+  /// Returns a constant reference to a slice consisting of `0..self.length`
+  /// elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
+  #[inline(always)]
+  fn index(&self, _index: RangeFull) -> &Self::Output {
+    self.as_slice()
+  }
+}
+
+impl<T, const N: usize> IndexMut<RangeFull> for StaticVec<T, N> {
+  /// Returns a mutable reference to a slice consisting of `0..self.length`
+  /// elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
+  #[inline(always)]
+  fn index_mut(&mut self, _index: RangeFull) -> &mut Self::Output {
+    self.as_mut_slice()
+  }
+}
+
+impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, N> {
+  type Output = [T];
+  /// Asserts that the lower bound of `index` is less than or equal to its upper bound,
+  /// and that its upper bound is less than the current length of the StaticVec,
+  /// and if so returns a constant reference to a slice of elements `index.start()..=index.end()`.
+  #[inline(always)]
+  fn index(&self, index: RangeInclusive<usize>) -> &Self::Output {
+    assert!(index.start() <= index.end() && *index.end() < self.length);
+    unsafe {
+      &*ptr::slice_from_raw_parts(
+        self.ptr_at_unchecked(*index.start()),
+        (index.end() + 1) - index.start(),
+      )
+    }
+  }
+}
+
+impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, N> {
+  /// Asserts that the lower bound of `index` is less than or equal to its upper bound,
+  /// and that its upper bound is less than the current length of the StaticVec,
+  /// and if so returns a mutable reference to a slice of elements `index.start()..=index.end()`.
+  #[inline(always)]
+  fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
+    assert!(index.start() <= index.end() && *index.end() < self.length);
+    unsafe {
+      &mut *ptr::slice_from_raw_parts_mut(
+        self.mut_ptr_at_unchecked(*index.start()),
+        (index.end() + 1) - index.start(),
+      )
+    }
+  }
+}
+
+impl<T, const N: usize> Index<RangeTo<usize>> for StaticVec<T, N> {
+  type Output = [T];
+  /// Asserts that the upper bound of `index` is less than or equal to the
+  /// current length of the StaticVec, and if so returns a constant reference
+  /// to a slice of elements `0..index.end`.
+  #[inline(always)]
+  fn index(&self, index: RangeTo<usize>) -> &Self::Output {
+    assert!(index.end <= self.length);
+    unsafe { &*ptr::slice_from_raw_parts(self.as_ptr(), index.end) }
+  }
+}
+
+impl<T, const N: usize> IndexMut<RangeTo<usize>> for StaticVec<T, N> {
+  /// Asserts that the upper bound of `index` is less than or equal to the
+  /// current length of the StaticVec, and if so returns a constant reference
+  /// to a slice of elements `0..index.end`.
+  #[inline(always)]
+  fn index_mut(&mut self, index: RangeTo<usize>) -> &mut Self::Output {
+    assert!(index.end <= self.length);
+    unsafe { &mut *ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), index.end) }
+  }
+}
+
+impl<T, const N: usize> Index<RangeToInclusive<usize>> for StaticVec<T, N> {
+  type Output = [T];
+  /// Asserts that the upper bound of `index` is less than the
+  /// current length of the StaticVec, and if so returns a constant reference
+  /// to a slice of elements `0..=index.end`.
+  #[inline(always)]
+  fn index(&self, index: RangeToInclusive<usize>) -> &Self::Output {
+    assert!(index.end < self.length);
+    unsafe { &*ptr::slice_from_raw_parts(self.as_ptr(), index.end + 1) }
+  }
+}
+
+impl<T, const N: usize> IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
+  /// Asserts that the upper bound of `index` is less than the
+  /// current length of the StaticVec, and if so returns a constant reference
+  /// to a slice of elements `0..=index.end`.
+  #[inline(always)]
+  fn index_mut(&mut self, index: RangeToInclusive<usize>) -> &mut Self::Output {
+    assert!(index.end < self.length);
+    unsafe { &mut *ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), index.end + 1) }
   }
 }
 
 #[cfg(feature = "std")]
 #[doc(cfg(feature = "std"))]
-impl<T, const N: usize> Into<Vec<T>> for &mut StaticVec<T, N> {
+impl<T, const N: usize> Into<Vec<T>> for StaticVec<T, N> {
   /// Functionally equivalent to [`into_vec`](crate::StaticVec::into_vec).
   #[inline(always)]
   fn into(self) -> Vec<T> {

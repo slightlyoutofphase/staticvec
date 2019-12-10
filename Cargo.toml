@@ -5,22 +5,24 @@ repository = "https://github.com/slightlyoutofphase/staticvec"
 documentation = "https://docs.rs/staticvec/"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-version = "0.5.1"
+version = "0.6.1"
 authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec", "array", "no_std", "vector", "stack"]
 categories = ["data-structures", "no-std"]
 edition = "2018"
 include = ["Cargo.toml", "rustfmt.toml", "src/**/*.rs", "demo/**/*.rs", "benchmark/**/*.rs", "test/**/*.rs", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
 
+[lib]
+doctest = false
+
 [badges.maintenance]
 status = "actively-developed"
 
 [badges.travis-ci]
 repository = "slightlyoutofphase/staticvec"
-tld = "com"
 
-[lib]
-doctest = false
+[badges.appveyor]
+repository = "slightlyoutofphase/staticvec"
 
 [profile.release]
 opt-level = 3
@@ -57,6 +59,13 @@ overflow-checks = false
 [profile.test]
 incremental = false
 
+[features]
+std = []
+repr_c = []
+serde_support = ["serde"]
+serde_json_support = ["serde_json"]
+default = ["std"]
+
 [[test]]
 name = "test"
 path = "test/test.rs"
@@ -83,18 +92,12 @@ name = "serde_support_demo"
 path = "demo/serde_support_demo.rs"
 required-features = ["serde_support", "serde_json_support"]
 
-[features]
-std = []
-default = ["std"]
-serde_support = ["serde"]
-serde_json_support = ["serde_json"]
+[dependencies]
+serde = { optional = true, version = "1.0", features = ["derive"] }
+serde_json = { optional = true, version = "1.0" }
 
 [dev-dependencies]
 # This is used in the test suite.
 cool_asserts = "1.0.0"
 # This is here so we can compare against it in one of the benchmarks.
-arrayvec = "0.5.1"
-
-[dependencies]
-serde = { optional = true, version = "1.0", features = ["derive"] }
-serde_json = { optional = true, version = "1.0" }
+arrayvec = { version = "0.5.1", features = ["array-sizes-33-128", "array-sizes-129-255"] }

@@ -1,30 +1,34 @@
 use crate::StaticVec;
 use core::cmp::{Ordering, PartialOrd};
 use core::intrinsics;
+use core::mem::MaybeUninit;
 
 #[inline(always)]
 pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
   match intrinsics::size_of::<T>() {
     0 => unsafe { (dest as usize).wrapping_sub(origin as usize) },
-    _ => unsafe {
-      intrinsics::exact_div(
-        (dest as usize).wrapping_sub(origin as usize),
-        intrinsics::size_of::<T>(),
-      )
-    },
+    // Safety: this function is used strictly with linear inputs
+    // where dest is known to come after origin.
+    #[allow(clippy::cast_sign_loss)]
+    _ => unsafe { intrinsics::ptr_offset_from(dest, origin) as usize },
   }
 }
 
-#[inline(always)]
-pub(crate) fn reverse_copy<T>(first: *const T, mut last: *const T, mut result: *mut T)
+#[inline]
+pub(crate) fn reverse_copy<T, const N: usize>(this: &MaybeUninit<[T; N]>) -> MaybeUninit<[T; N]>
 where T: Copy {
-  while first != last {
+  let mut res: MaybeUninit<[T; N]> = MaybeUninit::uninit();
+  let src = this.as_ptr() as *const T;
+  let mut dest = res.as_mut_ptr() as *mut T;
+  let mut i = N;
+  while i > 0 {
     unsafe {
-      last = last.offset(-1);
-      *result = *last;
-      result = result.offset(1);
+      src.add(i - 1).copy_to_nonoverlapping(dest, 1);
+      dest = dest.offset(1);
+      i -= 1;
     }
   }
+  res
 }
 
 #[inline(always)]
@@ -37,7 +41,7 @@ where T: Copy {
         for i in 0..COUNT {
           (data.as_mut_ptr() as *mut T).add(i).write(value);
         }
-        data.assume_init()
+        data
       }
     },
     length: COUNT,

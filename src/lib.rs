@@ -1,4 +1,6 @@
 #![no_std]
+#![allow(clippy::inline_always)]
+#![allow(clippy::doc_markdown)]
 #![allow(incomplete_features)]
 #![feature(const_fn)]
 #![feature(const_generics)]
@@ -11,21 +13,24 @@
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_uninit_array)]
 #![cfg_attr(feature = "std", feature(read_initializer))]
+#![feature(slice_from_raw_parts)]
 #![feature(slice_partition_dedup)]
 #![feature(specialization)]
 #![feature(trusted_len)]
 
-use crate::errors::PushCapacityError;
+pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
 pub use crate::trait_impls::*;
-use crate::utils::*;
+use crate::utils::reverse_copy;
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
+use core::iter::FromIterator;
 use core::marker::PhantomData;
-use core::mem::{self, MaybeUninit};
-use core::ops::{Bound::Excluded, Bound::Included, Bound::Unbounded, RangeBounds};
+use core::mem::MaybeUninit;
+use core::ops::{
+  Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub,
+};
 use core::ptr;
-use core::slice;
 
 #[cfg(any(feature = "std", rustdoc))]
 extern crate alloc;
@@ -39,24 +44,26 @@ use alloc::vec::Vec;
 mod iterators;
 #[macro_use]
 mod macros;
-pub mod errors;
+#[doc(hidden)]
+mod errors;
 mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
 
 /// A [`Vec`](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
+#[cfg_attr(feature = "repr_c", repr(C))]
 pub struct StaticVec<T, const N: usize> {
-  data: [MaybeUninit<T>; N],
+  data: MaybeUninit<[T; N]>,
   length: usize,
 }
 
 impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a new StaticVec instance.
   #[inline(always)]
-  pub fn new() -> Self {
+  pub const fn new() -> Self {
     Self {
-      data: Self::new_data(),
+      data: Self::new_data_uninit(),
       length: 0,
     }
   }
@@ -77,7 +84,7 @@ impl<T, const N: usize> StaticVec<T, N> {
           values
             .as_ptr()
             .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
-          data.assume_init()
+          data
         }
       },
       length,
@@ -89,9 +96,12 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// any contents after that point are ignored.
   ///
   /// The `N2` parameter does not need to be provided explicitly, and can be inferred from the array
-  /// itself. This function does *not* leak memory, as any ignored extra elements in the source
-  /// array are explicitly dropped with [`drop_in_place`](core::ptr::drop_in_place) before
-  /// [`forget`](core::mem::forget) is called on it.
+  /// itself.
+  ///
+  /// This function does *not* leak memory, as any ignored extra elements in the source
+  /// array are explicitly dropped with [`drop_in_place`](core::ptr::drop_in_place) after it is
+  /// first wrapped in an instance of [`MaybeUninit`](core::mem::MaybeUninit) to inhibit the
+  /// automatic calling of any destructors its contents may have.
   ///
   /// Example usage:
   /// ```
@@ -102,15 +112,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
   /// assert_eq!(v2, [1, 2, 3]);
   /// ```
-  /// Note that StaticVec also implements [`From`](std::convert::From) for both slices and static
-  /// arrays, which may prove more ergonomic in some cases as it allows for a greater degree of
-  /// type inference:
+  /// Note that StaticVec also implements [`From`](core::convert::From) for both slices
+  /// and static arrays, which may prove more ergonomic in some cases as it allows
+  /// for a greater degree of type inference:
   /// ```
   /// // The StaticVec on the next line is inferred to be of type `StaticVec<&'static str, 4>`.
   /// let v = StaticVec::from(["A", "B", "C", "D"]);
   /// ```
   #[inline]
-  pub fn new_from_array<const N2: usize>(mut values: [T; N2]) -> Self {
+  pub fn new_from_array<const N2: usize>(values: [T; N2]) -> Self {
     if N == N2 {
       Self::from(values)
     } else {
@@ -121,10 +131,11 @@ impl<T, const N: usize> StaticVec<T, N> {
             values
               .as_ptr()
               .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, N2.min(N));
-            // Drops any extra values left in the source array, then "forgets it".
-            ptr::drop_in_place(values.get_unchecked_mut(N2.min(N)..N2));
-            mem::forget(values);
-            data.assume_init()
+            // Wrap the values in a MaybeUninit to inhibit their destructors (if any),
+            // then manually drop any excess ones.
+            let mut forgotten = MaybeUninit::new(values);
+            ptr::drop_in_place(forgotten.get_mut().get_unchecked_mut(N2.min(N)..N2));
+            data
           }
         },
         length: N2.min(N),
@@ -132,72 +143,32 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
-  /// Returns a new StaticVec instance filled with the return value of an initializer function.
-  /// The length field of the newly created StaticVec will be equal to its capacity.
+  /// A version of [`new_from_array`](crate::StaticVec::new_from_array) specifically designed
+  /// for use as a `const fn` constructor (although it can of course be used in non-const contexts
+  /// as well.)
   ///
-  /// Example usage:
-  /// ```
-  /// let mut i = 0;
-  /// let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
-  /// assert_eq!(v.len(), 64);
-  /// assert_eq!(v[0], 1);
-  /// assert_eq!(v[1], 2);
-  /// assert_eq!(v[2], 3);
-  /// assert_eq!(v[3], 4);
-  /// ```
-  #[inline]
-  pub fn filled_with<F>(mut initializer: F) -> Self
-  where F: FnMut() -> T {
-    let mut res = Self::new();
-    // You might think it would make more sense to use `push_unchecked` here.
-    // Originally, I did also! However, as of today (November 19, 2019), doing so
-    // both in this function and several others throughout the crate inhibits the ability
-    // of `rustc` to fully unroll and autovectorize various constant-bounds loops. If this changes
-    // in the future, feel free to open a PR switching out the manual code for `get_unchecked`, if
-    // you happen to notice it before I do.
-    for i in 0..N {
-      unsafe {
-        res.data.get_unchecked_mut(i).write(initializer());
-        res.length += 1;
-      }
+  /// Being `const` necessitates that this function can only accept arrays with a length
+  /// exactly equal to the declared capacity of the resulting StaticVec, so if you do need
+  /// flexibility with regards to input lengths it's recommended that you use
+  /// [`new_from_array`](crate::StaticVec::new_from_array) or the [`From`](core::convert::From)
+  /// implementations instead.
+  ///
+  /// Note that both forms of the [`staticvec!`] macro are implemented using
+  /// [`new_from_const_array`](crate::StaticVec::new_from_const_array), so you may also prefer
+  /// to use them instead of it directly.
+  #[inline(always)]
+  pub const fn new_from_const_array(values: [T; N]) -> Self {
+    Self {
+      data: MaybeUninit::new(values),
+      length: N,
     }
-    res
   }
 
-  /// Returns a new StaticVec instance filled with the return value of an initializer function.
-  /// Unlike for [`filled_with`](crate::StaticVec::filled_with), the initializer function in
-  /// this case must take a single usize variable as an input parameter, which will be called
-  /// with the current index of the `0..N` loop that
-  /// [`filled_with_by_index`](crate::StaticVec::filled_with_by_index) is implemented with
-  /// internally. The length field of the newly created StaticVec will be equal to its capacity.
-  ///
-  /// Example usage:
-  /// ```
-  /// let v = StaticVec::<usize, 64>::filled_with_by_index(|i| { i + 1 });
-  /// assert_eq!(v.len(), 64);
-  /// assert_eq!(v[0], 1);
-  /// assert_eq!(v[1], 2);
-  /// assert_eq!(v[2], 3);
-  /// assert_eq!(v[3], 4);
-  /// ```
-  #[inline]
-  pub fn filled_with_by_index<F>(mut initializer: F) -> Self
-  where F: FnMut(usize) -> T {
-    let mut res = Self::new();
-    for i in 0..N {
-      unsafe {
-        res.data.get_unchecked_mut(i).write(initializer(i));
-        res.length += 1;
-      }
-    }
-    res
-  }
-
-  /// Returns the current length of the StaticVec.
-  /// Just as for a normal [`Vec`](alloc::vec::Vec), this means the number of elements that
-  /// have been added to it with [`push`](crate::StaticVec::push),
-  /// [`insert`](crate::StaticVec::insert), etc. except in the case that it has been set directly
-  /// with the unsafe [`set_len`](crate::StaticVec::set_len) function.
+  /// Returns the current length of the StaticVec. Just as for a normal [`Vec`](alloc::vec::Vec),
+  /// this means the number of elements that have been added to it with
+  /// [`push`](crate::StaticVec::push), [`insert`](crate::StaticVec::insert), etc. except in the
+  /// case that it has been set directly with the unsafe [`set_len`](crate::StaticVec::set_len)
+  /// function.
   #[inline(always)]
   pub const fn len(&self) -> usize {
     self.length
@@ -226,6 +197,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub const fn remaining_capacity(&self) -> usize {
     N - self.length
+  }
+
+  /// Returns the total size of the inhabited part of the StaticVec (which may be zero if it has a
+  /// length of zero or contains ZSTs) in bytes. Specifically, the return value of this function
+  /// amounts to a calculation of `size_of::<T>() * self.length`.
+  #[inline(always)]
+  pub const fn size_in_bytes(&self) -> usize {
+    intrinsics::size_of::<T>() * self.length
   }
 
   /// Directly sets the length field of the StaticVec to `new_len`. Useful if you intend
@@ -274,8 +253,9 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns a constant pointer to the first element of the StaticVec's internal array.
   #[inline(always)]
-  pub fn as_ptr(&self) -> *const T {
-    self.data.as_ptr() as *const T
+  pub const fn as_ptr(&self) -> *const T {
+    // Written like this so it can be `const fn`.
+    &self.data as *const _ as *const T
   }
 
   /// Returns a mutable pointer to the first element of the StaticVec's internal array.
@@ -289,60 +269,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn as_slice(&self) -> &[T] {
     // Safety: `self.as_ptr()` is a pointer to an array for which the first `length`
     // elements are guaranteed to be initialized. Therefore this is a valid slice.
-    unsafe { slice::from_raw_parts(self.as_ptr(), self.length) }
+    unsafe { &*ptr::slice_from_raw_parts(self.as_ptr(), self.length) }
   }
 
   /// Returns a mutable reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_mut_slice(&mut self) -> &mut [T] {
     // Safety: See as_slice.
-    unsafe { slice::from_raw_parts_mut(self.as_mut_ptr(), self.length) }
-  }
-
-  /// Returns a constant reference to the element of the StaticVec at `index`,
-  /// if `index` is within the range `0..length`. No checks are performed to
-  /// ensure that is the case, so this function is marked `unsafe` and should
-  /// be used with caution only when performance is absolutely paramount.
-  ///
-  /// Note that unlike [`slice::get_unchecked`](https://doc.rust-lang.org/nightly/std/primitive.slice.html#method.get_unchecked),
-  /// this method only supports accessing individual elements via `usize`; it cannot also produce
-  /// subslices. To unsafely get a subslice without a bounds check, use
-  /// `self.as_slice().get_unchecked(a..b)`.
-  ///
-  /// # Safety
-  ///
-  /// It is up to the caller to ensure that `index` is within the appropriate bounds.
-  #[inline(always)]
-  pub unsafe fn get_unchecked(&self, index: usize) -> &T {
-    debug_assert!(
-      index < self.length,
-      "Attempted to unsafely get at index {} when length is {}!",
-      index,
-      self.length
-    );
-    self.data.get_unchecked(index).get_ref()
-  }
-
-  /// Returns a mutable reference to the element of the StaticVec at `index`,
-  /// if `index` is within the range `0..length`. No checks are performed to
-  /// ensure that is the case, so this function is marked `unsafe` and should
-  /// be used with caution only when performance is absolutely paramount.
-  ///
-  /// The same differences between this method and the slice method of the same name
-  /// apply as do for [`get_unchecked`](crate::StaticVec::get_unchecked).
-  ///
-  /// # Safety
-  ///
-  /// It is up to the caller to ensure that `index` is within the appropriate bounds.
-  #[inline(always)]
-  pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
-    debug_assert!(
-      index < self.length,
-      "Attempted to unsafely get at index {} when length is {}!",
-      index,
-      self.length
-    );
-    self.data.get_unchecked_mut(index).get_mut()
+    unsafe { &mut *ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.length) }
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` without doing any
@@ -399,6 +333,52 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe { self.mut_ptr_at_unchecked(index) }
   }
 
+  /// Returns a constant reference to the element of the StaticVec at `index`,
+  /// if `index` is within the range `0..length`. No checks are performed to
+  /// ensure that is the case, so this function is marked `unsafe` and should
+  /// be used with caution only when performance is absolutely paramount.
+  ///
+  /// Note that unlike [`slice::get_unchecked`](https://doc.rust-lang.org/nightly/std/primitive.slice.html#method.get_unchecked),
+  /// this method only supports accessing individual elements via `usize`; it cannot also produce
+  /// subslices. To unsafely get a subslice without a bounds check, use
+  /// `self.as_slice().get_unchecked(a..b)`.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that `index` is within the appropriate bounds.
+  #[inline(always)]
+  pub unsafe fn get_unchecked(&self, index: usize) -> &T {
+    debug_assert!(
+      index < self.length,
+      "Attempted to unsafely get at index {} when length is {}!",
+      index,
+      self.length
+    );
+    &*self.ptr_at_unchecked(index)
+  }
+
+  /// Returns a mutable reference to the element of the StaticVec at `index`,
+  /// if `index` is within the range `0..length`. No checks are performed to
+  /// ensure that is the case, so this function is marked `unsafe` and should
+  /// be used with caution only when performance is absolutely paramount.
+  ///
+  /// The same differences between this method and the slice method of the same name
+  /// apply as do for [`get_unchecked`](crate::StaticVec::get_unchecked).
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that `index` is within the appropriate bounds.
+  #[inline(always)]
+  pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+    debug_assert!(
+      index < self.length,
+      "Attempted to unsafely get at index {} when length is {}!",
+      index,
+      self.length
+    );
+    &mut *self.mut_ptr_at_unchecked(index)
+  }
+
   /// Appends a value to the end of the StaticVec without asserting that
   /// its current length is less than `N`.
   ///
@@ -436,11 +416,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Pushes `value` to the StaticVec if its current length is less than its capacity,
-  /// or returns an error indicating there's no remaining capacity otherwise.
+  /// or returns a [`PushCapacityError`](crate::errors::PushCapacityError) otherwise.
   #[inline(always)]
   pub fn try_push(&mut self, value: T) -> Result<(), PushCapacityError<T, N>> {
     if self.length < N {
-      unsafe { self.push_unchecked(value) };
+      unsafe {
+        self.push_unchecked(value);
+      };
       Ok(())
     } else {
       Err(PushCapacityError::new(value))
@@ -451,9 +433,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// full; that is, if `self.len() == self.capacity()`.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
-    self
-      .try_push(value)
-      .expect("Insufficient remaining capacity for push!")
+    assert!(self.length < N);
+    unsafe { self.push_unchecked(value) };
   }
 
   /// Removes the value at the last position of the StaticVec and returns it in `Some` if
@@ -539,13 +520,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns `None` if `index` is greater than or equal to the current length of the StaticVec.
-  /// Otherwise, removes the value at that position and returns it in `Some`, and then
+  /// otherwise, removes the value at that position and returns it in `Some`, and then
   /// moves the last value in the StaticVec into the empty slot.
   #[inline(always)]
   pub fn swap_pop(&mut self, index: usize) -> Option<T> {
     if index < self.length {
       unsafe {
-        let last_value = self.data.get_unchecked(self.length - 1).read();
+        let last_value = self.ptr_at_unchecked(self.length - 1).read();
         self.length -= 1;
         Some(self.mut_ptr_at_unchecked(index).replace(last_value))
       }
@@ -561,7 +542,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn swap_remove(&mut self, index: usize) -> T {
     assert!(index < self.length);
     unsafe {
-      let last_value = self.data.get_unchecked(self.length - 1).read();
+      let last_value = self.ptr_at_unchecked(self.length - 1).read();
       self.length -= 1;
       self.mut_ptr_at_unchecked(index).replace(last_value)
     }
@@ -581,11 +562,61 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
-  /// Inserts `value` at `index` if the current length of the StaticVec is less than `N` and `index`
-  /// is less than the length, or returns a error stating one of the two is not the case otherwise.
-  /// Any values that exist in positions after `index` are shifted to the right.
+  /// Functionally equivalent to [`insert`](crate::StaticVec::insert), except with multiple
+  /// items provided by an iterator as opposed to just one. This function will return immediately
+  /// if / when the StaticVec reaches maximum capacity, regardless of whether the iterator still has
+  /// more items to yield.
+  ///
+  /// For safety reasons, as StaticVec cannot increase in capacity, the
+  /// iterator is required to implement [`ExactSizeIterator`](core::iter::ExactSizeIterator)
+  /// rather than just [`Iterator`](core::iter::Iterator) (though this function still does
+  /// the appropriate checking internally to avoid dangerous outcomes in the event of a blatantly
+  /// incorrect [`ExactSizeIterator`](core::iter::ExactSizeIterator) implementation.)
   #[inline]
-  pub fn try_insert(&mut self, index: usize, value: T) -> Result<(), &'static str> {
+  pub fn insert_many<I: IntoIterator<Item = T>>(&mut self, index: usize, iter: I)
+  where I::IntoIter: ExactSizeIterator<Item = T> {
+    assert!(
+      self.length < N && index <= self.length,
+      "Insufficient remaining capacity / out of bounds!"
+    );
+    let mut it = iter.into_iter();
+    if index == self.length {
+      return self.extend(it);
+    }
+    let iter_size = it.len();
+    assert!(
+      index + iter_size >= index && (self.length - index) + iter_size < N,
+      "Insufficient remaining capacity / out of bounds!"
+    );
+    unsafe {
+      let old_length = self.length;
+      let mut this = self.mut_ptr_at_unchecked(index);
+      this.copy_to(this.add(iter_size), old_length - index);
+      self.length = index;
+      let mut item_count = 0;
+      while item_count < N {
+        if let Some(element) = it.next() {
+          let mut current = this.add(item_count);
+          if item_count >= iter_size {
+            this = self.mut_ptr_at_unchecked(index);
+            current = this.add(item_count);
+            current.copy_to(current.offset(1), old_length - index);
+          }
+          current.write(element);
+          item_count += 1;
+        } else {
+          break;
+        }
+      }
+      self.length = old_length + item_count;
+    }
+  }
+
+  /// Inserts `value` at `index` if the current length of the StaticVec is less than `N` and `index`
+  /// is less than the length, or returns a [`CapacityError`](crate::errors::CapacityError)
+  /// otherwise. Any values that exist in positions after `index` are shifted to the right.
+  #[inline]
+  pub fn try_insert(&mut self, index: usize, value: T) -> Result<(), CapacityError<N>> {
     if self.length < N && index <= self.length {
       unsafe {
         let p = self.mut_ptr_at_unchecked(index);
@@ -595,8 +626,17 @@ impl<T, const N: usize> StaticVec<T, N> {
         Ok(())
       }
     } else {
-      Err("One of `self.length < N` or `index <= self.length` is false!")
+      Err(CapacityError {})
     }
+  }
+
+  /// Returns `true` if `value` is present in the StaticVec.
+  /// Locally requires that `T` implements [`PartialEq`](core::cmp::PartialEq)
+  /// to make it possible to compare the elements of the StaticVec with `value`.
+  #[inline(always)]
+  pub fn contains(&self, value: &T) -> bool
+  where T: PartialEq {
+    self.iter().any(|current| current == value)
   }
 
   /// Removes all contents from the StaticVec and sets its length back to 0.
@@ -665,21 +705,68 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a separate, reversed StaticVec of the contents of the StaticVec's
   /// inhabited area without modifying the original data.
   /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
-  #[inline]
+  #[inline(always)]
   pub fn reversed(&self) -> Self
   where T: Copy {
     Self {
-      data: unsafe {
-        let mut res = Self::new_data_uninit();
-        reverse_copy(
-          self.as_ptr(),
-          self.ptr_at_unchecked(self.length),
-          res.as_mut_ptr() as *mut T,
-        );
-        res.assume_init()
-      },
+      data: reverse_copy(&self.data),
       length: self.length,
     }
+  }
+
+  /// Returns a new StaticVec instance filled with the return value of an initializer function.
+  /// The length field of the newly created StaticVec will be equal to its capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// let mut i = 0;
+  /// let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
+  /// assert_eq!(v.len(), 64);
+  /// assert_eq!(v[0], 1);
+  /// assert_eq!(v[1], 2);
+  /// assert_eq!(v[2], 3);
+  /// assert_eq!(v[3], 4);
+  /// ```
+  #[inline]
+  pub fn filled_with<F>(mut initializer: F) -> Self
+  where F: FnMut() -> T {
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res.mut_ptr_at_unchecked(i).write(initializer());
+        res.length += 1;
+      }
+    }
+    res
+  }
+
+  /// Returns a new StaticVec instance filled with the return value of an initializer function.
+  /// Unlike for [`filled_with`](crate::StaticVec::filled_with), the initializer function in
+  /// this case must take a single usize variable as an input parameter, which will be called
+  /// with the current index of the `0..N` loop that
+  /// [`filled_with_by_index`](crate::StaticVec::filled_with_by_index) is implemented with
+  /// internally. The length field of the newly created StaticVec will be equal to its capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// let v = StaticVec::<usize, 64>::filled_with_by_index(|i| { i + 1 });
+  /// assert_eq!(v.len(), 64);
+  /// assert_eq!(v[0], 1);
+  /// assert_eq!(v[1], 2);
+  /// assert_eq!(v[2], 3);
+  /// assert_eq!(v[3], 4);
+  /// ```
+  #[inline]
+  pub fn filled_with_by_index<F>(mut initializer: F) -> Self
+  where F: FnMut(usize) -> T {
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res.mut_ptr_at_unchecked(i).write(initializer(i));
+        res.length += 1;
+      }
+    }
+    res
   }
 
   /// Copies and appends all elements, if any, of a slice (which can also be `&mut` as it will
@@ -701,13 +788,13 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Copies and appends all elements, if any, of a slice to the StaticVec if the
   /// StaticVec's remaining capacity is greater than the length of the slice, or returns
-  /// an error indicating that's not the case otherwise.
+  /// a [`CapacityError`](crate::errors::CapacityError) otherwise.
   #[inline(always)]
-  pub fn try_extend_from_slice(&mut self, other: &[T]) -> Result<(), &'static str>
+  pub fn try_extend_from_slice(&mut self, other: &[T]) -> Result<(), CapacityError<N>>
   where T: Copy {
     let added_length = other.len();
     if self.remaining_capacity() < added_length {
-      return Err("Insufficient remaining capacity!");
+      return Err(CapacityError {});
     }
     unsafe {
       other
@@ -741,17 +828,169 @@ impl<T, const N: usize> StaticVec<T, N> {
     self.length += item_count;
   }
 
+  /// Returns a new StaticVec consisting of the elements of `self` and `other` concatenated in
+  /// linear fashion such that the first element of `other` comes immediately after the last
+  /// element of `self`.
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred directly from
+  /// the constant `N2` constraint of `other` (which may or may not be the same as the `N`
+  /// constraint of `self`.)
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to
+  /// avoid soundness issues and also allow for a more efficient implementation than would otherwise
+  /// be possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///  staticvec!["A, B"].concat(&staticvec!["C", "D", "E", "F"]),
+  ///  ["A, B", "C", "D", "E", "F"]
+  /// );
+  /// ```
+  #[inline]
+  pub fn concat<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
+  where T: Copy {
+    let mut res = StaticVec::new();
+    unsafe {
+      self
+        .as_ptr()
+        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
+      other
+        .as_ptr()
+        .copy_to_nonoverlapping(res.mut_ptr_at_unchecked(self.length), other.length);
+    }
+    res.length = self.length + other.length;
+    res
+  }
+
+  /// A version of [`concat`](crate::StaticVec::concat) for scenarios where `T` does not
+  /// derive [`Copy`](core::marker::Copy) but does implement [`Clone`](core::clone::Clone).
+  ///
+  /// Due to needing to call `clone()` through each individual element of `self` and `other`, this
+  /// function is less efficient than [`concat`](crate::StaticVec::concat), so
+  /// [`concat`](crate::StaticVec::concat) should be preferred whenever possible.
+  #[inline]
+  pub fn concat_clone<const N2: usize>(
+    &self,
+    other: &StaticVec<T, N2>,
+  ) -> StaticVec<T, { N + N2 }>
+  where
+    T: Clone,
+  {
+    let mut res = StaticVec::new();
+    for i in 0..self.length {
+      unsafe { res.push_unchecked(self.get_unchecked(i).clone()) };
+    }
+    for i in 0..other.length {
+      unsafe { res.push_unchecked(other.get_unchecked(i).clone()) };
+    }
+    res
+  }
+
+  /// Returns a new StaticVec consisting of the elements of `self` in linear order, interspersed
+  /// with a copy of `separator` between each one.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to
+  /// avoid soundness issues and also allow for a more efficient implementation than would otherwise
+  /// be possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///  staticvec!["A", "B", "C", "D"].intersperse("Z"),
+  ///  ["A, "Z", B", "Z", "C", "Z", "D"]
+  /// );
+  /// ```
+  #[inline]
+  pub fn intersperse(&self, separator: T) -> StaticVec<T, { N * 2 }>
+  where T: Copy {
+    if self.is_empty() {
+      return StaticVec::new();
+    }
+    let mut res = StaticVec::new();
+    // The `as *mut T` cast here is necessary to make the type
+    // inference work properly (at the moment at least.) `rustc` still gets
+    // a bit confused by math operations done on const generic values
+    // in return types it seems.
+    let mut res_ptr = res.as_mut_ptr() as *mut T;
+    let mut i = 0;
+    while i < self.length - 1 {
+      unsafe {
+        res_ptr.write(self.ptr_at_unchecked(i).read());
+        res_ptr.offset(1).write(separator);
+        res_ptr = res_ptr.offset(2);
+        i += 1
+      }
+    }
+    unsafe { res_ptr.write(self.ptr_at_unchecked(i).read()) };
+    res.length = (self.length * 2) - 1;
+    res
+  }
+
+  /// A version of [`intersperse`](crate::StaticVec::intersperse) for scenarios where `T` does not
+  /// derive [`Copy`](core::marker::Copy) but does implement [`Clone`](core::clone::Clone).
+  ///
+  /// Due to needing to call `clone()` through each individual element of `self` and also on
+  /// `separator`, this function is less efficient than
+  /// [`intersperse`](crate::StaticVec::intersperse), so
+  /// [`intersperse`](crate::StaticVec::intersperse) should be preferred whenever possible.
+  #[inline]
+  pub fn intersperse_clone(&self, separator: T) -> StaticVec<T, { N * 2 }>
+  where T: Clone {
+    if self.is_empty() {
+      return StaticVec::new();
+    }
+    let mut res = StaticVec::new();
+    unsafe {
+      for item in self.as_slice().get_unchecked(0..self.length - 1) {
+        res.push_unchecked(item.clone());
+        res.push_unchecked(separator.clone());
+      }
+      res.push_unchecked(self.get_unchecked(self.length - 1).clone());
+    }
+    res
+  }
+
+  /// Returns a StaticVec containing the contents of a [`Vec`](alloc::vec::Vec) instance.
+  /// If the [`Vec`](alloc::vec::Vec) has a length greater than the declared capacity of the
+  /// resulting StaticVec, any contents after that point are ignored. Note that using this function
+  /// consumes the source [`Vec`](alloc::vec::Vec).
+  #[cfg(feature = "std")]
+  #[doc(cfg(feature = "std"))]
+  #[inline]
+  pub fn from_vec(mut vec: Vec<T>) -> Self {
+    let vec_len = vec.len();
+    let item_count = vec_len.min(N);
+    Self {
+      data: {
+        unsafe { vec.set_len(0) };
+        let mut data = Self::new_data_uninit();
+        unsafe {
+          vec
+            .as_ptr()
+            .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, item_count);
+          // Manually drop any excess values in the source vec to avoid undesirable memory leaks.
+          if vec_len > item_count {
+            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
+              vec.as_mut_ptr().add(item_count),
+              vec_len - item_count,
+            ));
+          }
+          data
+        }
+      },
+      length: item_count,
+    }
+  }
+
   /// Returns a [`Vec`](alloc::vec::Vec) containing the contents of the StaticVec instance.
   /// The returned [`Vec`](alloc::vec::Vec) will initially have the same value for
   /// [`len`](alloc::vec::Vec::len) and [`capacity`](alloc::vec::Vec::capacity) as the source
-  /// StaticVec. Note that while using this function does *not* consume the source StaticVec in
-  /// the sense of rendering it completely inaccessible / unusable, it *does* empty it (that is,
-  /// it will have no contents and a length of 0 afterwards.)
+  /// StaticVec. Note that using this function consumes the source StaticVec.
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
-  #[allow(clippy::wrong_self_convention)]
   #[inline(always)]
-  pub fn into_vec(&mut self) -> Vec<T> {
+  pub fn into_vec(mut self) -> Vec<T> {
     let mut res = Vec::with_capacity(N);
     unsafe {
       self
@@ -793,7 +1032,7 @@ impl<T, const N: usize> StaticVec<T, N> {
             .ptr_at_unchecked(end)
             .copy_to(self.mut_ptr_at_unchecked(start), self.length - end);
           self.length -= res_length;
-          res.assume_init()
+          res
         }
       },
       length: res_length,
@@ -812,7 +1051,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       for i in 0..old_length {
         let val = self.mut_ptr_at_unchecked(i);
         if filter(&mut *val) {
-          res.data.get_unchecked_mut(res.length).write(val.read());
+          res.mut_ptr_at_unchecked(res.length).write(val.read());
           res.length += 1;
         } else if res.length > 0 {
           self
@@ -859,7 +1098,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         self
           .ptr_at_unchecked(at)
           .copy_to_nonoverlapping(split.as_mut_ptr() as *mut T, split_length);
-        split.assume_init()
+        split
       },
       length: split_length,
     }
@@ -895,18 +1134,315 @@ impl<T, const N: usize> StaticVec<T, N> {
     self.dedup_by(|a, b| key(a) == key(b))
   }
 
-  #[doc(hidden)]
+  /// Returns a new StaticVec representing the difference of `self` and `other` (that is,
+  /// all items present in `self`, but *not* present in `other`.)
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred from `other`
+  /// itself.
+  ///
+  /// Locally requires that `T` implements [`Clone`](core::clone::Clone) to avoid soundness issues
+  /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
+  /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///   staticvec![4, 5, 6, 7].difference(&staticvec![1, 2, 3, 7]),
+  ///   [4, 5, 6]
+  /// );
+  /// ```
+  #[inline]
+  pub fn difference<const N2: usize>(&self, other: &StaticVec<T, N2>) -> Self
+  where T: Clone + PartialEq {
+    let mut res = Self::new();
+    for left in self {
+      let mut found = false;
+      for right in other {
+        if left == right {
+          found = true;
+          break;
+        }
+      }
+      if !found {
+        unsafe { res.push_unchecked(left.clone()) }
+      }
+    }
+    res
+  }
+
+  /// Returns a new StaticVec representing the symmetric difference of `self` and `other` (that is,
+  /// all items present in at least one of `self` or `other`, but *not* present in both.)
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred from `other`
+  /// itself.
+  ///
+  /// Locally requires that `T` implements [`Clone`](core::clone::Clone) to avoid soundness issues
+  /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
+  /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///   staticvec![1, 2, 3].symmetric_difference(&staticvec![3, 4, 5]),
+  ///   [1, 2, 4, 5]
+  /// );
+  /// ```
+  #[inline]
+  pub fn symmetric_difference<const N2: usize>(
+    &self,
+    other: &StaticVec<T, N2>,
+  ) -> StaticVec<T, { N + N2 }>
+  where
+    T: Clone + PartialEq,
+  {
+    let mut res = StaticVec::new();
+    for left in self {
+      let mut found = false;
+      for right in other {
+        if left == right {
+          found = true;
+          break;
+        }
+      }
+      if !found {
+        unsafe { res.push_unchecked(left.clone()) }
+      }
+    }
+    for right in other {
+      let mut found = false;
+      for left in self {
+        if right == left {
+          found = true;
+          break;
+        }
+      }
+      if !found {
+        unsafe { res.push_unchecked(right.clone()) }
+      }
+    }
+    res
+  }
+
+  /// Returns a new StaticVec representing the intersection of `self` and `other` (that is,
+  /// all items present in both `self` and `other`.)
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred from `other`
+  /// itself.
+  ///
+  /// Locally requires that `T` implements [`Clone`](core::clone::Clone) to avoid soundness issues
+  /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
+  /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///   staticvec![4, 5, 6, 7].intersection(&staticvec![1, 2, 3, 7, 4]),
+  ///   [4, 7],
+  /// );
+  /// ```
+  #[inline]
+  pub fn intersection<const N2: usize>(&self, other: &StaticVec<T, N2>) -> Self
+  where T: Clone + PartialEq {
+    let mut res = Self::new();
+    for left in self {
+      let mut found = false;
+      for right in other {
+        if left == right {
+          found = true;
+          break;
+        }
+      }
+      if found && !res.contains(left) {
+        unsafe { res.push_unchecked(left.clone()) }
+      }
+    }
+    res
+  }
+
+  /// Returns a new StaticVec representing the union of `self` and `other` (that is, the full
+  /// contents of both `self` and `other`, minus any duplicates.)
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred from `other`
+  /// itself.
+  ///
+  /// Locally requires that `T` implements [`Clone`](core::clone::Clone) to avoid soundness issues
+  /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
+  /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// assert_eq!(
+  ///   staticvec![1, 2, 3].union(&staticvec![4, 2, 3, 4]),
+  ///   [1, 2, 3, 4],
+  /// );
+  /// ```
+  #[inline]
+  pub fn union<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
+  where T: Clone + PartialEq {
+    if self.length <= other.length {
+      let mut res = StaticVec::from_iter(self.iter().chain(other.difference(self).iter()).cloned());
+      res.dedup();
+      res
+    } else {
+      let mut res = StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
+      res.dedup();
+      res
+    }
+  }
+
+  /// A concept borrowed from the widely-used `SmallVec` crate, this function
+  /// returns a tuple consisting of a constant pointer to the first element of the StaticVec,
+  /// the length of the StaticVec, and the capacity of the StaticVec.
   #[inline(always)]
-  pub(crate) fn new_data() -> [MaybeUninit<T>; N] {
-    // An internal convenience function to get an *initialized* instance of `[MaybeUninit<T>; N]`.
-    MaybeUninit::uninit_array()
+  pub const fn triple(&self) -> (*const T, usize, usize) {
+    (self.as_ptr(), self.length, N)
+  }
+
+  /// A mutable version of [`triple`](crate::StaticVec::triple). This implementation differs from
+  /// the one found in `SmallVec` in that it only provides the first element of the StaticVec as
+  /// a mutable pointer, not also the length as a mutable reference.
+  #[inline(always)]
+  pub fn triple_mut(&mut self) -> (*mut T, usize, usize) {
+    (self.as_mut_ptr(), self.length, N)
+  }
+
+  /// Linearly adds (in a mathematical sense) the contents of two same-capacity
+  /// StaticVecs and returns the results in a new one of equal capacity.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to allow
+  /// for an efficient implementation, and [`Add`](core::ops::Add) to make it possible
+  /// to add the elements.
+  ///
+  /// For both performance and safety reasons, this function requires that both `self`
+  /// and `other` are at full capacity, and will panic if that is not the case (that is,
+  /// if `self.is_full() && other.is_full()` is not equal to `true`.)
+  ///
+  /// Example usage:
+  /// ```
+  /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  /// assert_eq!(A.added(&B), [6.0, 8.0, 10.0, 12.0]);
+  /// ```
+  #[inline(always)]
+  pub fn added(&self, other: &Self) -> Self
+  where T: Copy + Add<Output = T> {
+    assert!(self.is_full() && other.is_full());
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res
+          .mut_ptr_at_unchecked(i)
+          .write(*self.get_unchecked(i) + *other.get_unchecked(i));
+      }
+    }
+    res.length = N;
+    res
+  }
+
+  /// Linearly subtracts (in a mathematical sense) the contents of two same-capacity
+  /// StaticVecs and returns the results in a new one of equal capacity.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to allow
+  /// for an efficient implementation, and [`Sub`](core::ops::Sub) to make it possible
+  /// to subtract the elements.
+  ///
+  /// For both performance and safety reasons, this function requires that both `self`
+  /// and `other` are at full capacity, and will panic if that is not the case (that is,
+  /// if `self.is_full() && other.is_full()` is not equal to `true`.)
+  ///
+  /// Example usage:
+  /// ```
+  /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  /// assert_eq!(A.subtracted(&B), [2.0, 2.0, 2.0, 2.0]);
+  /// ```
+  #[inline(always)]
+  pub fn subtracted(&self, other: &Self) -> Self
+  where T: Copy + Sub<Output = T> {
+    assert!(self.is_full() && other.is_full());
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res
+          .mut_ptr_at_unchecked(i)
+          .write(*self.get_unchecked(i) - *other.get_unchecked(i));
+      }
+    }
+    res.length = N;
+    res
+  }
+
+  /// Linearly multiplies (in a mathematical sense) the contents of two same-capacity
+  /// StaticVecs and returns the results in a new one of equal capacity.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to allow
+  /// for an efficient implementation, and [`Mul`](core::ops::Mul) to make it possible
+  /// to multiply the elements.
+  ///
+  /// For both performance and safety reasons, this function requires that both `self`
+  /// and `other` are at full capacity, and will panic if that is not the case (that is,
+  /// if `self.is_full() && other.is_full()` is not equal to `true`.)
+  ///
+  /// Example usage:
+  /// ```
+  /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  /// assert_eq!(A.multiplied(&B), [8.0, 15.0, 24.0, 35.0]);
+  /// ```
+  #[inline(always)]
+  pub fn multiplied(&self, other: &Self) -> Self
+  where T: Copy + Mul<Output = T> {
+    assert!(self.is_full() && other.is_full());
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res
+          .mut_ptr_at_unchecked(i)
+          .write(*self.get_unchecked(i) * *other.get_unchecked(i));
+      }
+    }
+    res.length = N;
+    res
+  }
+
+  /// Linearly divides (in a mathematical sense) the contents of two same-capacity
+  /// StaticVecs and returns the results in a new one of equal capacity.
+  ///
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to allow
+  /// for an efficient implementation, and [`Div`](core::ops::Div) to make it possible
+  /// to divide the elements.
+  ///
+  /// For both performance and safety reasons, this function requires that both `self`
+  /// and `other` are at full capacity, and will panic if that is not the case (that is,
+  /// if `self.is_full() && other.is_full()` is not equal to `true`.)
+  ///
+  /// Example usage:
+  /// ```
+  /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
+  /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
+  /// assert_eq!(A.divided(&B), [2.0, 1.6666666666666667, 1.5, 1.4]);
+  /// ```
+  #[inline(always)]
+  pub fn divided(&self, other: &Self) -> Self
+  where T: Copy + Div<Output = T> {
+    assert!(self.is_full() && other.is_full());
+    let mut res = Self::new();
+    for i in 0..N {
+      unsafe {
+        res
+          .mut_ptr_at_unchecked(i)
+          .write(*self.get_unchecked(i) / *other.get_unchecked(i));
+      }
+    }
+    res.length = N;
+    res
   }
 
   #[doc(hidden)]
   #[inline(always)]
-  pub(crate) const fn new_data_uninit() -> MaybeUninit<[MaybeUninit<T>; N]> {
+  pub(crate) const fn new_data_uninit() -> MaybeUninit<[T; N]> {
     // An internal convenience function to get an *uninitialized* instance of
-    // `MaybeUninit<[MaybeUninit<T>; N]>`.
+    // `MaybeUninit<[T; N]>`.
     MaybeUninit::uninit()
   }
 }
