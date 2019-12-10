@@ -412,8 +412,9 @@ impl<T, const N: usize> StaticVec<T, N> {
       self.is_not_empty(),
       "Attempted to unsafely pop from an empty StaticVec!"
     );
-    self.length -= 1;
-    self.ptr_at_unchecked(self.length).read()
+    let new_length = self.length - 1;
+    self.set_len(new_length);
+    self.ptr_at_unchecked(new_length).read()
   }
 
   /// Pushes `value` to the StaticVec if its current length is less than its capacity,
@@ -498,12 +499,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// that exist in later positions are shifted to the left.
   #[inline]
   pub fn remove(&mut self, index: usize) -> T {
-    assert!(index < self.length);
+    let length = self.length;
+    assert!(index < length);
     unsafe {
       let p = self.mut_ptr_at_unchecked(index);
       let res = p.read();
-      p.offset(1).copy_to(p, self.length - index - 1);
-      self.length -= 1;
+      p.offset(1).copy_to(p, length - index - 1);
+      self.set_len(length - 1);
       res
     }
   }
@@ -527,8 +529,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn swap_pop(&mut self, index: usize) -> Option<T> {
     if index < self.length {
       unsafe {
-        let last_value = self.ptr_at_unchecked(self.length - 1).read();
-        self.length -= 1;
+        let new_length = self.length - 1;
+        let last_value = self.ptr_at_unchecked(new_length).read();
+        self.set_len(new_length);
         Some(self.mut_ptr_at_unchecked(index).replace(last_value))
       }
     } else {
@@ -543,8 +546,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn swap_remove(&mut self, index: usize) -> T {
     assert!(index < self.length);
     unsafe {
-      let last_value = self.ptr_at_unchecked(self.length - 1).read();
-      self.length -= 1;
+      let new_length = self.length - 1;
+      let last_value = self.ptr_at_unchecked(new_length).read();
+      self.set_len(new_length);
       self.mut_ptr_at_unchecked(index).replace(last_value)
     }
   }
@@ -554,12 +558,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Any values that exist in positions after `index` are shifted to the right.
   #[inline]
   pub fn insert(&mut self, index: usize, value: T) {
-    assert!(self.length < N && index <= self.length);
+    let length = self.length;
+    assert!(length < N && index <= length);
     unsafe {
       let p = self.mut_ptr_at_unchecked(index);
-      p.copy_to(p.offset(1), self.length - index);
+      p.copy_to(p.offset(1), length - index);
       p.write(value);
-      self.length += 1;
+      self.set_len(length + 1);
     }
   }
 
