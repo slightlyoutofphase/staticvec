@@ -912,17 +912,16 @@ impl<T, const N: usize> StaticVec<T, N> {
     // a bit confused by math operations done on const generic values
     // in return types it seems.
     let mut res_ptr = res.as_mut_ptr() as *mut T;
-    let mut self_ptr = self.as_ptr();
-    for _ in 0..self.length - 1 {
+    let mut i = 0;
+    while i < self.length - 1 {
       unsafe {
-        res_ptr.write(self_ptr.read());
-        res_ptr = res_ptr.offset(1);
-        res_ptr.write(separator);
-        res_ptr = res_ptr.offset(1);
-        self_ptr = self_ptr.offset(1);
+        res_ptr.write(self.ptr_at_unchecked(i).read());
+        res_ptr.offset(1).write(separator);
+        res_ptr = res_ptr.offset(2);
+        i += 1
       }
     }
-    unsafe { res_ptr.write(self_ptr.read()) };
+    unsafe { res_ptr.write(self.ptr_at_unchecked(i).read()) };
     res.length = (self.length * 2) - 1;
     res
   }

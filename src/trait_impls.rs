@@ -256,6 +256,10 @@ impl<T: Hash, const N: usize> Hash for StaticVec<T, N> {
   }
 }
 
+// We implement the various forms of `Index` directly, as after trying out
+// deferring to `SliceIndex` for it for a while it proved to to be somewhat
+// less performant due to the added indirection.
+
 impl<T, const N: usize> Index<usize> for StaticVec<T, N> {
   type Output = T;
   /// Asserts that `index` is less than the current length of the StaticVec,
