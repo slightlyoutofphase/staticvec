@@ -270,7 +270,7 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     match self.end - self.start {
       0 => None,
       _ => {
-        let res = Some(unsafe { self.data.get_unchecked(self.start).read() });
+        let res = Some(unsafe { (self.data.as_ptr() as *const T).add(self.start).read() });
         self.start += 1;
         res
       }
@@ -291,7 +291,7 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
       0 => None,
       _ => {
         self.end -= 1;
-        Some(unsafe { self.data.get_unchecked(self.end).read() })
+        Some(unsafe { (self.data.as_ptr() as *const T).add(self.end).read() })
       }
     }
   }
