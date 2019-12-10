@@ -591,7 +591,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe {
       let mut this = self.mut_ptr_at_unchecked(index);
       this.copy_to(this.add(iter_size), old_length - index);
-      self.set_len(index);
+      self.length = index;
       let mut item_count = 0;
       while item_count < N {
         if let Some(element) = it.next() {
@@ -607,7 +607,7 @@ impl<T, const N: usize> StaticVec<T, N> {
           break;
         }
       }
-      self.set_len(old_length + item_count);
+      self.length = old_length + item_count;
     }
   }
 
