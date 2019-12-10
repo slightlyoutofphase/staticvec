@@ -248,8 +248,8 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        (self.data.as_ptr() as *const T).add(self.start),
-        (self.data.as_ptr() as *const T).add(self.end - 1)
+        &*(self.data.as_ptr() as *const T).add(self.start),
+        &*(self.data.as_ptr() as *const T).add(self.end - 1)
       )
     }
   }
