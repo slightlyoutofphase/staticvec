@@ -490,14 +490,14 @@ impl<T, const N: usize> IntoIterator for StaticVec<T, N> {
     let mut iter = StaticVecIntoIter {
       start: 0,
       end: old_length,
-      data: MaybeUninit::uninit_array(),
+      data: Self::new_data_uninit(),
     };
 
     // Copy the inhabited part of self into the iterator
     unsafe {
       self
         .as_ptr()
-        .copy_to_nonoverlapping(iter.data[0].as_mut_ptr(), old_length)
+        .copy_to_nonoverlapping(iter.data.as_mut_ptr() as *mut T, old_length)
     }
 
     iter
