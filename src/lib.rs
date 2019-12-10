@@ -798,16 +798,17 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn try_extend_from_slice(&mut self, other: &[T]) -> Result<(), CapacityError<N>>
   where T: Copy {
-    let added_length = other.len();
+    let old_length = self.length;
+    let added_length = other.length;
     if self.remaining_capacity() < added_length {
       return Err(CapacityError {});
     }
     unsafe {
       other
         .as_ptr()
-        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(self.length), added_length);
+        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
     }
-    self.length += added_length;
+    self.set_len(old_length + added_length);
     Ok(())
   }
 
