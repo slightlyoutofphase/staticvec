@@ -1,4 +1,5 @@
 use crate::utils::distance_between;
+use crate::StaticVec;
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
@@ -35,6 +36,18 @@ pub struct StaticVecIntoIter<T, const N: usize> {
   pub(crate) data: MaybeUninit<[T; N]>,
 }
 
+/// A "draining" iterator, analogous to [`vec::Drain`](alloc::vec::Drain).
+/// Instances of [`StaticVecDrain`](crate::iterators::StaticVecDrain) are created
+/// by the [`drain_iter`](crate::StaticVec::drain_iter) method on [`StaticVec`](crate::StaticVec),
+/// as while the [`drain`](crate::StaticVec::drain) method does have a similar purpose, it works by
+/// immediately returning a new [`StaticVec`](crate::StaticVec) as opposed to an iterator.
+pub struct StaticVecDrain<'a, T: 'a, const N: usize> {
+  pub(crate) start: usize,
+  pub(crate) length: usize,
+  pub(crate) iter: StaticVecIterConst<'a, T, N>,
+  pub(crate) vec: *mut StaticVec<T, N>,
+}
+
 impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   /// Returns a string displaying the current values of the
   /// iterator's `start` and `end` elements on two separate lines.
@@ -66,6 +79,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
 
 impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
   type Item = &'a T;
+
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
     match distance_between(self.end, self.start) {
@@ -171,6 +185,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
 
 impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
   type Item = &'a mut T;
+
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
     match distance_between(self.end, self.start) {
@@ -266,6 +281,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
 
 impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
   type Item = T;
+
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
     match self.end - self.start {
@@ -334,6 +350,100 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
           item_count,
         ))
       },
+    }
+  }
+}
+
+impl<'a, T: 'a, const N: usize> StaticVecDrain<'a, T, N> {
+  /// Returns a string displaying the current values of the
+  /// iterator's `start` and `end` elements on two separate lines.
+  /// Locally requires that `T` implements [Debug](core::fmt::Debug)
+  /// to make it possible to pretty-print the elements.
+  #[cfg(feature = "std")]
+  #[doc(cfg(feature = "std"))]
+  #[inline(always)]
+  pub fn bounds_to_string(&self) -> String
+  where T: Debug {
+    self.iter.bounds_to_string()
+  }
+
+  /// Returns an immutable slice consisting of the current range of elements the iterator has a view
+  /// over.
+  #[inline(always)]
+  pub fn as_slice(&self) -> &[T] {
+    self.iter.as_slice()
+  }
+}
+
+impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
+  type Item = T;
+
+  #[inline(always)]
+  fn next(&mut self) -> Option<T> {
+    self
+      .iter
+      .next()
+      .map(|val| unsafe { (val as *const T).read() })
+  }
+
+  #[inline(always)]
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    self.iter.size_hint()
+  }
+}
+
+impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecDrain<'a, T, N> {
+  #[inline(always)]
+  fn next_back(&mut self) -> Option<T> {
+    self
+      .iter
+      .next_back()
+      .map(|val| unsafe { (val as *const T).read() })
+  }
+}
+
+impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecDrain<'a, T, N> {
+  #[inline(always)]
+  fn len(&self) -> usize {
+    self.iter.len()
+  }
+
+  #[inline(always)]
+  fn is_empty(&self) -> bool {
+    self.iter.is_empty()
+  }
+}
+
+impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecDrain<'a, T, N> {}
+unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecDrain<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecDrain<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Send for StaticVecDrain<'a, T, N> {}
+
+impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecDrain<'a, T, N> {
+  #[inline(always)]
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    f.debug_tuple("StaticVecDrain")
+      .field(&self.iter.as_slice())
+      .finish()
+  }
+}
+
+impl<'a, T: 'a, const N: usize> Drop for StaticVecDrain<'a, T, N> {
+  #[inline]
+  fn drop(&mut self) {
+    // Read out any remaining contents first.
+    while let Some(_) = self.next() {}
+    if self.length > 0 {
+      unsafe {
+        let vec_ref = &mut *self.vec;
+        let start = vec_ref.length;
+        let tail = self.start;
+        vec_ref
+          .as_ptr()
+          .add(tail)
+          .copy_to(vec_ref.as_mut_ptr().add(start), self.length);
+        vec_ref.set_len(start + self.length);
+      }
     }
   }
 }

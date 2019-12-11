@@ -855,16 +855,18 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn concat<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
   where T: Copy {
+    let length = self.length;
+    let other_length = other.length;
     let mut res = StaticVec::new();
     unsafe {
       self
         .as_ptr()
-        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
+        .copy_to_nonoverlapping(res.as_mut_ptr(), length);
       other
         .as_ptr()
-        .copy_to_nonoverlapping(res.mut_ptr_at_unchecked(self.length), other.length);
+        .copy_to_nonoverlapping(res.mut_ptr_at_unchecked(length), other_length);
+      res.set_len(length + other_length);
     }
-    res.length = self.length + other.length;
     res
   }
 
@@ -919,7 +921,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     // in return types it seems.
     let mut res_ptr = res.as_mut_ptr() as *mut T;
     let mut i = 0;
-    while i < self.length - 1 {
+    let length = self.length;
+    while i < length - 1 {
       unsafe {
         res_ptr.write(self.ptr_at_unchecked(i).read());
         res_ptr.offset(1).write(separator);
@@ -927,8 +930,11 @@ impl<T, const N: usize> StaticVec<T, N> {
         i += 1
       }
     }
-    unsafe { res_ptr.write(self.ptr_at_unchecked(i).read()) };
-    res.length = (self.length * 2) - 1;
+    unsafe {
+      res_ptr.write(self.ptr_at_unchecked(i).read());
+      res.set_len((length * 2) - 1);
+    }
+
     res
   }
 
@@ -946,12 +952,13 @@ impl<T, const N: usize> StaticVec<T, N> {
       return StaticVec::new();
     }
     let mut res = StaticVec::new();
+    let length = self.length;
     unsafe {
-      for item in self.as_slice().get_unchecked(0..self.length - 1) {
+      for item in self.as_slice().get_unchecked(0..length - 1) {
         res.push_unchecked(item.clone());
         res.push_unchecked(separator.clone());
       }
-      res.push_unchecked(self.get_unchecked(self.length - 1).clone());
+      res.push_unchecked(self.get_unchecked(length - 1).clone());
     }
     res
   }
@@ -997,12 +1004,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn into_vec(mut self) -> Vec<T> {
     let mut res = Vec::with_capacity(N);
+    let length = self.length;
     unsafe {
       self
         .as_ptr()
-        .copy_to_nonoverlapping(res.as_mut_ptr(), self.length);
-      res.set_len(self.length);
-      self.length = 0;
+        .copy_to_nonoverlapping(res.as_mut_ptr(), length);
+      res.set_len(length);
+      self.set_len(0);
       res
     }
   }
@@ -1014,6 +1022,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   // question.
   where R: RangeBounds<usize> {
     // Borrowed this part from normal Vec's implementation.
+    let current_length = self.length;
     let start = match range.start_bound() {
       Included(&idx) => idx,
       Excluded(&idx) => idx + 1,
@@ -1022,9 +1031,9 @@ impl<T, const N: usize> StaticVec<T, N> {
     let end = match range.end_bound() {
       Included(&idx) => idx + 1,
       Excluded(&idx) => idx,
-      Unbounded => self.length,
+      Unbounded => current_length,
     };
-    assert!(start <= end && end <= self.length);
+    assert!(start <= end && end <= current_length);
     let res_length = end - start;
     Self {
       data: {
@@ -1035,12 +1044,48 @@ impl<T, const N: usize> StaticVec<T, N> {
             .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, res_length);
           self
             .ptr_at_unchecked(end)
-            .copy_to(self.mut_ptr_at_unchecked(start), self.length - end);
-          self.length -= res_length;
+            .copy_to(self.mut_ptr_at_unchecked(start), current_length - end);
+          self.set_len(current_length - res_length);
           res
         }
       },
       length: res_length,
+    }
+  }
+
+  /// Removes the specified range of elements from the StaticVec and returns them in a
+  /// [`StaticVecDrain`](crate::iterators::StaticVecDrain).
+  #[inline]
+  pub fn drain_iter<R>(&mut self, range: R) -> StaticVecDrain<T, N>
+  where R: RangeBounds<usize> {
+    // Borrowed this part from normal Vec's implementation.
+    let length = self.length;
+    let start = match range.start_bound() {
+      Included(&idx) => idx,
+      Excluded(&idx) => idx + 1,
+      Unbounded => 0,
+    };
+    let end = match range.end_bound() {
+      Included(&idx) => idx + 1,
+      Excluded(&idx) => idx,
+      Unbounded => length,
+    };
+    assert!(start <= end && end <= length);
+    unsafe {
+      // Set the length to 0 to avoid memory issues if anything goes wrong with
+      // the Drain.
+      self.set_len(start);
+      // Create the StaticVecDrain from the specified range.
+      StaticVecDrain {
+        start: end,
+        length: length - end,
+        iter: StaticVecIterConst {
+          start: self.mut_ptr_at_unchecked(start),
+          end: self.mut_ptr_at_unchecked(end),
+          marker: PhantomData,
+        },
+        vec: self,
+      }
     }
   }
 
@@ -1082,8 +1127,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn truncate(&mut self, length: usize) {
     if length < self.length {
       let old_length = self.length;
-      self.length = length;
       unsafe {
+        self.set_len(length);
         ptr::drop_in_place(self.as_mut_slice().get_unchecked_mut(length..old_length));
       }
     }
@@ -1094,11 +1139,12 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// and the new one will contain elements `at..length`.
   #[inline]
   pub fn split_off(&mut self, at: usize) -> Self {
-    assert!(at <= self.length);
-    let split_length = self.length - at;
-    self.length = at;
+    let length = self.length;
+    assert!(at <= length);
+    let split_length = length - at;
     Self {
       data: unsafe {
+        self.set_len(at);
         let mut split = Self::new_data_uninit();
         self
           .ptr_at_unchecked(at)

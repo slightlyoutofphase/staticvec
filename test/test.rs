@@ -375,6 +375,53 @@ fn drain() {
 }
 
 #[test]
+fn drain_iter() {
+  let mut v = StaticVec::from([0; 8]);
+  v.pop();
+  v.drain_iter(0..7);
+  assert_eq!(&v[..], &[]);
+  v.extend(0..);
+  v.drain_iter(1..4);
+  assert_eq!(&v[..], &[0, 4, 5, 6, 7]);
+  let u: StaticVec<_, 3> = v.drain_iter(1..4).rev().collect();
+  assert_eq!(&u[..], &[6, 5, 4]);
+  assert_eq!(&v[..], &[0, 7]);
+  v.drain_iter(..);
+  assert_eq!(&v[..], &[]);
+  let mut v2 = StaticVec::from([0; 8]);
+  v2.drain_iter(0..=7);
+  assert_eq!(&v2[..], &[]);
+  v2.extend(0..);
+  v2.drain_iter(1..=4);
+  assert_eq!(&v2[..], &[0, 5, 6, 7]);
+  let u: StaticVec<_, 3> = v2.drain_iter(1..=2).rev().collect();
+  assert_eq!(&u[..], &[6, 5]);
+  assert_eq!(&v2[..], &[0, 7]);
+  v2.drain_iter(..);
+  assert_eq!(&v2[..], &[]);
+  let mut v3 = staticvec![
+    Box::new(12),
+    Box::new(12),
+    Box::new(12),
+    Box::new(12),
+    Box::new(12),
+    Box::new(12),
+    Box::new(12),
+    Box::new(12)
+  ];
+  v3.pop();
+  v3.drain_iter(0..7);
+  assert_eq!(&v3[..], &[]);
+}
+
+#[test]
+#[should_panic]
+fn drain_iter_panic() {
+  let mut v3 = StaticVec::from([0; 0]);
+  v3.drain_iter(0..=0);
+}
+
+#[test]
 fn drain_filter() {
   let mut numbers = staticvec![1, 2, 3, 4, 5, 6, 8, 9, 11, 13, 14, 15];
   let evens = numbers.drain_filter(|x| *x % 2 == 0);
