@@ -1081,7 +1081,10 @@ impl<T, const N: usize> StaticVec<T, N> {
         length: length - end,
         iter: StaticVecIterConst {
           start: self.mut_ptr_at_unchecked(start),
-          end: self.mut_ptr_at_unchecked(end),
+          end: match intrinsics::size_of::<T>() {
+            0 => (self.as_mut_ptr() as *mut u8).wrapping_add(end) as *mut T,
+            _ => self.mut_ptr_at_unchecked(end),
+          },
           marker: PhantomData,
         },
         vec: self,
