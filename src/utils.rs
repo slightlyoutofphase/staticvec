@@ -9,18 +9,22 @@ pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usi
     0 => unsafe { (dest as usize).wrapping_sub(origin as usize) },
     // Safety: this function is used strictly with linear inputs
     // where dest is known to come after origin.
-    #[allow(clippy::cast_sign_loss)]
     _ => unsafe { intrinsics::ptr_offset_from(dest, origin) as usize },
   }
 }
 
 #[inline]
-pub(crate) fn reverse_copy<T, const N: usize>(this: &MaybeUninit<[T; N]>) -> MaybeUninit<[T; N]>
-where T: Copy {
+pub(crate) fn reverse_copy<T, const N: usize>(
+  length: usize,
+  this: *const MaybeUninit<[T; N]>,
+) -> MaybeUninit<[T; N]>
+where
+  T: Copy,
+{
   let mut res: MaybeUninit<[T; N]> = MaybeUninit::uninit();
-  let src = this.as_ptr() as *const T;
+  let src = this as *const T;
   let mut dest = res.as_mut_ptr() as *mut T;
-  let mut i = N;
+  let mut i = length;
   while i > 0 {
     unsafe {
       src.add(i - 1).copy_to_nonoverlapping(dest, 1);

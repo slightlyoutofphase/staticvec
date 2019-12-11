@@ -500,7 +500,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn remove(&mut self, index: usize) -> T {
     assert!(index < self.length);
-    unsafe{ self.drain(index..=index).as_ptr().read() }
+    unsafe { self.drain(index..=index).as_ptr().read() }
   }
 
   /// Removes the first instance of `item` from the StaticVec if the item exists.
@@ -685,6 +685,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn sorted(&self) -> Self
   where T: Copy + Ord {
+    // StaticVec uses specialization to have an optimized version of `Clone` for copy types.
     let mut res = self.clone();
     res.sort();
     res
@@ -697,6 +698,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn sorted_unstable(&self) -> Self
   where T: Copy + Ord {
+    // StaticVec uses specialization to have an optimized version of `Clone` for copy types.
     let mut res = self.clone();
     res.sort_unstable();
     res
@@ -709,7 +711,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn reversed(&self) -> Self
   where T: Copy {
     Self {
-      data: reverse_copy(&self.data),
+      data: reverse_copy(self.length, &self.data),
       length: self.length,
     }
   }
@@ -816,18 +818,19 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// constraint of `self`.)
   #[inline]
   pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, N2>) {
-    let item_count = self.remaining_capacity().min(other.length);
+    let old_length = self.length;
+    let item_count = (N - old_length).min(other.length);
     let other_new_length = other.length - item_count;
     unsafe {
       self
-        .mut_ptr_at_unchecked(self.length)
+        .mut_ptr_at_unchecked(old_length)
         .copy_from_nonoverlapping(other.as_ptr(), item_count);
       other
         .as_mut_ptr()
         .copy_from(other.ptr_at_unchecked(item_count), other_new_length);
+      other.set_len(other_new_length);
+      self.set_len(old_length + item_count);
     }
-    other.length = other_new_length;
-    self.length += item_count;
   }
 
   /// Returns a new StaticVec consisting of the elements of `self` and `other` concatenated in
@@ -1286,7 +1289,8 @@ impl<T, const N: usize> StaticVec<T, N> {
       res.dedup();
       res
     } else {
-      let mut res = StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
+      let mut res =
+        StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
       res.dedup();
       res
     }

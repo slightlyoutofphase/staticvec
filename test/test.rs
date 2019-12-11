@@ -1024,6 +1024,17 @@ fn retain() {
 fn reversed() {
   let v = staticvec![1, 2, 3].reversed();
   assert!(v == [3, 2, 1]);
+  let mut x = StaticVec::<f64, 24>::new();
+  let mut y = StaticVec::<f64, 12>::new();
+  for _ in 0..12 {
+    y.push(12.0);
+  }
+  x.append(&mut y);
+  assert_eq!(x.reversed().len(), 12);
+  assert_eq!(
+    x.reversed(),
+    [12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0]
+  );
 }
 
 #[test]

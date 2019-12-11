@@ -12,4 +12,3 @@ jobs:
 script:
   - bash ./ci/run_miri.sh
   - cargo test --no-default-features
-  - cargo bench

@@ -1,5 +1,4 @@
 use crate::utils::distance_between;
-
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
@@ -259,7 +258,9 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    unsafe { &*ptr::slice_from_raw_parts((self.data.as_ptr() as *const T).add(self.start), self.len()) }
+    unsafe {
+      &*ptr::slice_from_raw_parts((self.data.as_ptr() as *const T).add(self.start), self.len())
+    }
   }
 }
 
