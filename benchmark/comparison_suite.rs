@@ -251,7 +251,7 @@ fn u64_2048_arrayvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_4096_arrayvec_push(b: &mut Bencher) {
+fn u64_4096_staticvec_push(b: &mut Bencher) {
   let mut v = StaticVec::<u64, 4096>::new();
   b.iter(|| {
     v.clear();
