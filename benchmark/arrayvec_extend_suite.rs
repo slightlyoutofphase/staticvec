@@ -6,21 +6,10 @@
 extern crate test;
 
 use std::io::Write;
-use test::{Bencher};
+use test::{black_box, Bencher};
 
 use arrayvec::ArrayVec;
 use staticvec::StaticVec;
-
-#[inline]
-pub fn black_box<F, R>(f: F) -> R
-where F: FnOnce() -> R {
-  unsafe {
-    let dummy = f();
-    let ret = core::ptr::read_volatile(&dummy);
-    core::mem::forget(dummy);
-    ret
-  }
-}
 
 #[bench]
 fn staticvec_extend_from_slice(b: &mut Bencher) {
@@ -28,7 +17,7 @@ fn staticvec_extend_from_slice(b: &mut Bencher) {
   let data = [1; 512];
   b.iter(|| {
     v.clear();
-    black_box(|| v.try_extend_from_slice(&data).ok());
+    v.try_extend_from_slice(black_box(&data[..]))
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -40,7 +29,7 @@ fn arrayvec_extend_from_slice(b: &mut Bencher) {
   let data = [1; 512];
   b.iter(|| {
     v.clear();
-    black_box(|| v.try_extend_from_slice(&data).ok());
+    v.try_extend_from_slice(black_box(&data[..]))
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -53,7 +42,7 @@ fn staticvec_extend_with_constant(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let constant = 1;
-    black_box(|| v.extend((0..cap).map(move |_| constant)));
+    black_box(v.extend((0..cap).map(move |_| constant)));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -66,7 +55,7 @@ fn arrayvec_extend_with_constant(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let constant = 1;
-    black_box(|| v.extend((0..cap).map(move |_| constant)));
+    black_box(v.extend((0..cap).map(move |_| constant)));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -79,7 +68,7 @@ fn staticvec_extend_with_range(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let range = 0..cap;
-    black_box(|| v.extend(range.map(|x| x as u16)));
+    black_box(v.extend(range.map(|x| x as u16)));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -92,7 +81,7 @@ fn arrayvec_extend_with_range(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let range = 0..cap;
-    black_box(|| v.extend(range.map(|x| x as u16)));
+    black_box(v.extend(range.map(|x| x as u16)));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -105,7 +94,7 @@ fn staticvec_extend_with_slice(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let iter = data.iter().map(|&x| x);
-    black_box(|| v.extend(iter));
+    black_box(v.extend(iter));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -118,7 +107,7 @@ fn arrayvec_extend_with_slice(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let iter = data.iter().map(|&x| x);
-    black_box(|| v.extend(iter));
+    black_box(v.extend(iter));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -130,7 +119,7 @@ fn staticvec_extend_with_write(b: &mut Bencher) {
   let data = [1; 512];
   b.iter(|| {
     v.clear();
-    black_box(|| v.write(&data[..]).ok());
+    black_box(v.write(&data[..]).ok());
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -142,7 +131,7 @@ fn arrayvec_extend_with_write(b: &mut Bencher) {
   let data = [1; 512];
   b.iter(|| {
     v.clear();
-    black_box(|| v.write(&data[..]).ok());
+    black_box(v.write(&data[..]).ok());
     v[511]
   });
   b.bytes = v.capacity() as u64;
