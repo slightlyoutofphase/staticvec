@@ -7,8 +7,8 @@ extern crate test;
 
 use test::{black_box, Bencher};
 
-use arrayvec::*;
-use staticvec::*;
+use arrayvec::ArrayVec;
+use staticvec::StaticVec;
 
 #[bench]
 fn staticvec_push_u32_255(b: &mut Bencher) {

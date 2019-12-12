@@ -261,7 +261,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a mutable pointer to the first element of the StaticVec's internal array.
   #[inline(always)]
   pub fn as_mut_ptr(&mut self) -> *mut T {
-    ptr_mut(&mut self.data)
+    &mut self.data as *mut _ as *mut T
   }
 
   /// Returns a constant reference to a slice of the StaticVec's inhabited area.

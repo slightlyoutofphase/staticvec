@@ -6,12 +6,12 @@ use core::ptr;
 
 #[inline(always)]
 pub(crate) fn ptr_const<T, const N: usize>(this: &MaybeUninit<[T; N]>) -> *const T {
-  this.as_ptr() as *const T
+  this as *const _ as *const T
 }
 
 #[inline(always)]
 pub(crate) fn ptr_mut<T, const N: usize>(this: &mut MaybeUninit<[T; N]>) -> *mut T {
-  this.as_mut_ptr() as *mut T
+  this as *mut _ as *mut T
 }
 
 #[inline(always)]

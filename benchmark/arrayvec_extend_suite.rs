@@ -8,8 +8,8 @@ extern crate test;
 use std::io::Write;
 use test::{black_box, Bencher};
 
-use arrayvec::*;
-use staticvec::*;
+use arrayvec::ArrayVec;
+use staticvec::StaticVec;
 
 #[bench]
 fn staticvec_extend_from_slice(b: &mut Bencher) {

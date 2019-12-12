@@ -10,7 +10,7 @@
 // that's not relevant for StaticVec, and so instead I compare it moreso against Vecs constructed
 // via the `with_capacity` function in order to keep things as equal as possible.
 
-use staticvec::*;
+use staticvec::{staticvec, StaticVec};
 
 extern crate test;
 

@@ -3,7 +3,7 @@
 #![feature(test)]
 #![feature(const_generics)]
 
-use staticvec::*;
+use staticvec::StaticVec;
 
 extern crate test;
 
