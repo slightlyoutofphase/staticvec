@@ -63,9 +63,9 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, N> {
 
   #[inline]
   default fn clone_from(&mut self, other: &Self) {
-    let self_length = self.length;
     let other_length = other.length;
     self.truncate(other_length);
+    let self_length = self.length;
     for i in 0..self_length {
       // Safety: after the truncate, `self.len` <= `other.len`, which means that for
       // every `i` in `self`, there is definitely an element at `other[i]`.
