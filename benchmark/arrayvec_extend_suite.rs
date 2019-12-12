@@ -17,7 +17,7 @@ fn staticvec_extend_from_slice(b: &mut Bencher) {
   let data = [1; 512];
   b.iter(|| {
     v.clear();
-    black_box(v.try_extend_from_slice(&data).ok());
+    v.try_extend_from_slice(black_box(&data[..])).ok();
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -29,7 +29,7 @@ fn arrayvec_extend_from_slice(b: &mut Bencher) {
   let data = [1; 512];
   b.iter(|| {
     v.clear();
-    black_box(v.try_extend_from_slice(&data).ok());
+    v.try_extend_from_slice(black_box(&data[..])).ok();
     v[511]
   });
   b.bytes = v.capacity() as u64;

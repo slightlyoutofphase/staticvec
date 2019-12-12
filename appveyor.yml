@@ -19,3 +19,4 @@ build: false
 test_script:
   - cargo test --features="std" --target=%target%
   - cargo test --no-default-features --target=%target%
+  - cargo bench --target=%target%
