@@ -2,6 +2,17 @@ use crate::StaticVec;
 use core::cmp::{Ordering, PartialOrd};
 use core::intrinsics;
 use core::mem::MaybeUninit;
+use core::ptr;
+
+#[inline(always)]
+pub(crate) fn ptr_const<T, const N: usize>(this: &MaybeUninit<[T; N]>) -> *const T {
+  this.as_ptr() as *const T
+}
+
+#[inline(always)]
+pub(crate) fn ptr_mut<T, const N: usize>(this: &mut MaybeUninit<[T; N]>) -> *mut T {
+  this.as_mut_ptr() as *mut T
+}
 
 #[inline(always)]
 pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
@@ -23,7 +34,7 @@ where
 {
   let mut res: MaybeUninit<[T; N]> = MaybeUninit::uninit();
   let src = this as *const T;
-  let mut dest = res.as_mut_ptr() as *mut T;
+  let mut dest = ptr_mut(&mut res);
   let mut i = length;
   while i > 0 {
     unsafe {
@@ -43,6 +54,8 @@ where T: Copy {
       unsafe {
         let mut data = StaticVec::new_data_uninit();
         for i in 0..COUNT {
+          // Can't use ptr_mut() here as the type inference doesn't work
+          // in this context for some reason.
           (data.as_mut_ptr() as *mut T).add(i).write(value);
         }
         data
@@ -70,4 +83,16 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
     }
   }
   this.len().partial_cmp(&other.len())
+}
+
+#[inline(always)]
+// Local inline-always version of slice::from_raw_parts.
+pub(crate) fn make_const_slice<'a, T>(data: *const T, length: usize) -> &'a [T] {
+  unsafe { &*ptr::slice_from_raw_parts(data, length) }
+}
+
+#[inline(always)]
+// Local inline-always version of slice::from_raw_parts_mut.
+pub(crate) fn make_mut_slice<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
+  unsafe { &mut *ptr::slice_from_raw_parts_mut(data, length) }
 }

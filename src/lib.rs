@@ -21,7 +21,7 @@
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
 pub use crate::trait_impls::*;
-use crate::utils::reverse_copy;
+use crate::utils::{make_const_slice, make_mut_slice, ptr_mut, reverse_copy};
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 use core::iter::FromIterator;
@@ -83,7 +83,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         unsafe {
           values
             .as_ptr()
-            .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, length);
+            .copy_to_nonoverlapping(ptr_mut(&mut data), length);
           data
         }
       },
@@ -130,7 +130,7 @@ impl<T, const N: usize> StaticVec<T, N> {
             let mut data = Self::new_data_uninit();
             values
               .as_ptr()
-              .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, N2.min(N));
+              .copy_to_nonoverlapping(ptr_mut(&mut data), N2.min(N));
             // Wrap the values in a MaybeUninit to inhibit their destructors (if any),
             // then manually drop any excess ones.
             let mut forgotten = MaybeUninit::new(values);
@@ -261,7 +261,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a mutable pointer to the first element of the StaticVec's internal array.
   #[inline(always)]
   pub fn as_mut_ptr(&mut self) -> *mut T {
-    self.data.as_mut_ptr() as *mut T
+    ptr_mut(&mut self.data)
   }
 
   /// Returns a constant reference to a slice of the StaticVec's inhabited area.
@@ -269,14 +269,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn as_slice(&self) -> &[T] {
     // Safety: `self.as_ptr()` is a pointer to an array for which the first `length`
     // elements are guaranteed to be initialized. Therefore this is a valid slice.
-    unsafe { &*ptr::slice_from_raw_parts(self.as_ptr(), self.length) }
+    make_const_slice(self.as_ptr(), self.length)
   }
 
   /// Returns a mutable reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
   pub fn as_mut_slice(&mut self) -> &mut [T] {
     // Safety: See as_slice.
-    unsafe { &mut *ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), self.length) }
+    make_mut_slice(self.as_mut_ptr(), self.length)
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` without doing any
@@ -980,7 +980,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         unsafe {
           vec
             .as_ptr()
-            .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, item_count);
+            .copy_to_nonoverlapping(ptr_mut(&mut data), item_count);
           // Manually drop any excess values in the source vec to avoid undesirable memory leaks.
           if vec_len > item_count {
             ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
@@ -1041,7 +1041,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         unsafe {
           self
             .ptr_at_unchecked(start)
-            .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, res_length);
+            .copy_to_nonoverlapping(ptr_mut(&mut res), res_length);
           self
             .ptr_at_unchecked(end)
             .copy_to(self.mut_ptr_at_unchecked(start), current_length - end);
@@ -1151,7 +1151,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         let mut split = Self::new_data_uninit();
         self
           .ptr_at_unchecked(at)
-          .copy_to_nonoverlapping(split.as_mut_ptr() as *mut T, split_length);
+          .copy_to_nonoverlapping(ptr_mut(&mut split), split_length);
         split
       },
       length: split_length,

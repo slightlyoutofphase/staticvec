@@ -64,7 +64,7 @@ macro_rules! impl_from_iterator {
           while i < N {
             if let Some($var_a) = it.next() {
               unsafe {
-                (res.as_mut_ptr() as *mut T).add(i).write($var_b);
+                ptr_mut(&mut res).add(i).write($var_b);
               }
             } else {
               break;

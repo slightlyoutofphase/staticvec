@@ -1,5 +1,6 @@
 use crate::iterators::*;
 use crate::utils::partial_compare;
+use crate::utils::{make_const_slice, make_mut_slice, ptr_mut};
 use crate::StaticVec;
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
@@ -61,21 +62,23 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, N> {
   }
 
   #[inline]
-  default fn clone_from(&mut self, rhs: &Self) {
-    self.truncate(rhs.length);
-    for i in 0..self.length {
-      // Safety: after the truncate, `self.len` <= `rhs.len`, which means that for
-      // every `i` in `self`, there is definitely an element at `rhs[i]`.
+  default fn clone_from(&mut self, other: &Self) {
+    let self_length = self.length;
+    let other_length = other.length;
+    self.truncate(other_length);
+    for i in 0..self_length {
+      // Safety: after the truncate, `self.len` <= `other.len`, which means that for
+      // every `i` in `self`, there is definitely an element at `other[i]`.
       unsafe {
-        self.get_unchecked_mut(i).clone_from(rhs.get_unchecked(i));
+        self.get_unchecked_mut(i).clone_from(other.get_unchecked(i));
       }
     }
-    for i in self.length..rhs.length {
-      // Safety: `i` < `rhs.length`, so `rhs.get_unchecked` is safe. `i` starts at
-      // `self.length`, which is <= `rhs.length`, so there is always an available
+    for i in self_length..other_length {
+      // Safety: `i` < `other.length`, so `other.get_unchecked` is safe. `i` starts at
+      // `self.length`, which is <= `other.length`, so there is always an available
       // slot at `self[i]` to push into.
       unsafe {
-        self.push_unchecked(rhs.get_unchecked(i).clone());
+        self.push_unchecked(other.get_unchecked(i).clone());
       }
     }
   }
@@ -93,7 +96,7 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
           unsafe {
             self
               .as_ptr()
-              .copy_to_nonoverlapping(res.as_mut_ptr() as *mut T, self.length);
+              .copy_to_nonoverlapping(ptr_mut(&mut res), self.length);
             res
           }
         },
@@ -113,7 +116,7 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
 impl<T: Debug, const N: usize> Debug for StaticVec<T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    Debug::fmt(self.as_slice(), f)
+    f.debug_list().entries(self.as_slice()).finish()
   }
 }
 
@@ -289,9 +292,10 @@ impl<T, const N: usize> Index<Range<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: Range<usize>) -> &Self::Output {
     assert!(index.start < index.end && index.end <= self.length);
-    unsafe {
-      &*ptr::slice_from_raw_parts(self.ptr_at_unchecked(index.start), index.end - index.start)
-    }
+    make_const_slice(
+      unsafe { self.ptr_at_unchecked(index.start) },
+      index.end - index.start,
+    )
   }
 }
 
@@ -302,12 +306,10 @@ impl<T, const N: usize> IndexMut<Range<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
     assert!(index.start < index.end && index.end <= self.length);
-    unsafe {
-      &mut *ptr::slice_from_raw_parts_mut(
-        self.mut_ptr_at_unchecked(index.start),
-        index.end - index.start,
-      )
-    }
+    make_mut_slice(
+      unsafe { self.mut_ptr_at_unchecked(index.start) },
+      index.end - index.start,
+    )
   }
 }
 
@@ -319,12 +321,10 @@ impl<T, const N: usize> Index<RangeFrom<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeFrom<usize>) -> &Self::Output {
     assert!(index.start <= self.length);
-    unsafe {
-      &*ptr::slice_from_raw_parts(
-        self.ptr_at_unchecked(index.start),
-        self.length - index.start,
-      )
-    }
+    make_const_slice(
+      unsafe { self.ptr_at_unchecked(index.start) },
+      self.length - index.start,
+    )
   }
 }
 
@@ -335,12 +335,10 @@ impl<T, const N: usize> IndexMut<RangeFrom<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeFrom<usize>) -> &mut Self::Output {
     assert!(index.start <= self.length);
-    unsafe {
-      &mut *ptr::slice_from_raw_parts_mut(
-        self.mut_ptr_at_unchecked(index.start),
-        self.length - index.start,
-      )
-    }
+    make_mut_slice(
+      unsafe { self.mut_ptr_at_unchecked(index.start) },
+      self.length - index.start,
+    )
   }
 }
 
@@ -371,12 +369,11 @@ impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeInclusive<usize>) -> &Self::Output {
     assert!(index.start() <= index.end() && *index.end() < self.length);
-    unsafe {
-      &*ptr::slice_from_raw_parts(
-        self.ptr_at_unchecked(*index.start()),
-        (index.end() + 1) - index.start(),
-      )
-    }
+
+    make_const_slice(
+      unsafe { self.ptr_at_unchecked(*index.start()) },
+      (index.end() + 1) - index.start(),
+    )
   }
 }
 
@@ -387,12 +384,11 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
     assert!(index.start() <= index.end() && *index.end() < self.length);
-    unsafe {
-      &mut *ptr::slice_from_raw_parts_mut(
-        self.mut_ptr_at_unchecked(*index.start()),
-        (index.end() + 1) - index.start(),
-      )
-    }
+
+    make_mut_slice(
+      unsafe { self.mut_ptr_at_unchecked(*index.start()) },
+      (index.end() + 1) - index.start(),
+    )
   }
 }
 
@@ -404,7 +400,7 @@ impl<T, const N: usize> Index<RangeTo<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeTo<usize>) -> &Self::Output {
     assert!(index.end <= self.length);
-    unsafe { &*ptr::slice_from_raw_parts(self.as_ptr(), index.end) }
+    make_const_slice(self.as_ptr(), index.end)
   }
 }
 
@@ -415,7 +411,7 @@ impl<T, const N: usize> IndexMut<RangeTo<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeTo<usize>) -> &mut Self::Output {
     assert!(index.end <= self.length);
-    unsafe { &mut *ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), index.end) }
+    make_mut_slice(self.as_mut_ptr(), index.end)
   }
 }
 
@@ -427,7 +423,7 @@ impl<T, const N: usize> Index<RangeToInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeToInclusive<usize>) -> &Self::Output {
     assert!(index.end < self.length);
-    unsafe { &*ptr::slice_from_raw_parts(self.as_ptr(), index.end + 1) }
+    make_const_slice(self.as_ptr(), index.end + 1)
   }
 }
 
@@ -438,7 +434,7 @@ impl<T, const N: usize> IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeToInclusive<usize>) -> &mut Self::Output {
     assert!(index.end < self.length);
-    unsafe { &mut *ptr::slice_from_raw_parts_mut(self.as_mut_ptr(), index.end + 1) }
+    make_mut_slice(self.as_mut_ptr(), index.end + 1)
   }
 }
 
@@ -496,7 +492,7 @@ impl<T, const N: usize> IntoIterator for StaticVec<T, N> {
         unsafe {
           self
             .as_ptr()
-            .copy_to_nonoverlapping(data.as_mut_ptr() as *mut T, old_length)
+            .copy_to_nonoverlapping(ptr_mut(&mut data), old_length)
         };
         data
       },

@@ -1,4 +1,5 @@
 use crate::utils::distance_between;
+use crate::utils::{make_const_slice, ptr_const, ptr_mut};
 use crate::StaticVec;
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics;
@@ -73,7 +74,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   pub fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    unsafe { &*ptr::slice_from_raw_parts(self.start, self.len()) }
+    make_const_slice(self.start, self.len())
   }
 }
 
@@ -179,7 +180,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   pub fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    unsafe { &*ptr::slice_from_raw_parts(self.start, self.len()) }
+    make_const_slice(self.start, self.len())
   }
 }
 
@@ -262,8 +263,8 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        &*(self.data.as_ptr() as *const T).add(self.start),
-        &*(self.data.as_ptr() as *const T).add(self.end - 1)
+        &*ptr_const(&self.data).add(self.start),
+        &*ptr_const(&self.data).add(self.end - 1)
       )
     }
   }
@@ -273,9 +274,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    unsafe {
-      &*ptr::slice_from_raw_parts((self.data.as_ptr() as *const T).add(self.start), self.len())
-    }
+    make_const_slice(unsafe { ptr_const(&self.data).add(self.start) }, self.len())
   }
 }
 
@@ -287,7 +286,7 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     match self.end - self.start {
       0 => None,
       _ => {
-        let res = Some(unsafe { (self.data.as_ptr() as *const T).add(self.start).read() });
+        let res = Some(unsafe { ptr_const(&self.data).add(self.start).read() });
         self.start += 1;
         res
       }
@@ -308,7 +307,7 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
       0 => None,
       _ => {
         self.end -= 1;
-        Some(unsafe { (self.data.as_ptr() as *const T).add(self.end).read() })
+        Some(unsafe { ptr_const(&self.data).add(self.end).read() })
       }
     }
   }
@@ -346,7 +345,7 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
       0 => (),
       _ => unsafe {
         ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
-          (self.data.as_mut_ptr() as *mut T).add(self.start),
+          ptr_mut(&mut self.data).add(self.start),
           item_count,
         ))
       },
