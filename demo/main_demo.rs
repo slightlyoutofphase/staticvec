@@ -1,7 +1,8 @@
+// So we don't get "function complexity" lints and such since it's a demo.
 #![allow(clippy::all)]
 
-use staticvec::{staticvec, StaticVec};
-use std::iter::FromIterator;
+use staticvec::*;
+
 #[derive(Copy, Clone, Debug)]
 struct ZST {}
 
