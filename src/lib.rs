@@ -24,7 +24,7 @@ pub use crate::trait_impls::*;
 use crate::utils::{make_const_slice, make_mut_slice, ptr_mut, reverse_copy};
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
-use core::iter::FromIterator;
+pub use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{
