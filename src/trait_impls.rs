@@ -1,6 +1,5 @@
 use crate::iterators::*;
-use crate::utils::partial_compare;
-use crate::utils::{make_const_slice, make_mut_slice, ptr_mut};
+use crate::utils::{make_const_slice, make_mut_slice, partial_compare, ptr_mut};
 use crate::StaticVec;
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
