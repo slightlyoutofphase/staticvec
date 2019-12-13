@@ -509,6 +509,30 @@ fn from() {
   );
 }
 
+#[test]
+fn from_iter() {
+  assert_eq!(
+    StaticVec::<u8, 12>::from_iter(&[1, 2, 3, 4, 5, 6]),
+    [1, 2, 3, 4, 5, 6]
+  );
+  assert_eq!(
+    StaticVec::<u8, 12>::from_iter([1, 2, 3, 4, 5, 6].iter()),
+    [1, 2, 3, 4, 5, 6]
+  );
+  assert_eq!(
+    StaticVec::<u8, 12>::from_iter(staticvec![1, 2, 3, 4, 5, 6].iter()),
+    [1, 2, 3, 4, 5, 6]
+  );
+  assert_eq!(
+    StaticVec::<u8, 0>::from_iter(&[1, 2, 3, 4, 5, 6]),
+    []
+  );
+  assert_eq!(
+    StaticVec::<Box<Struct>, 2>::from_iter([Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })].iter()),
+    [Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]
+  );
+}
+
 #[cfg(feature = "std")]
 #[test]
 fn from_vec() {
