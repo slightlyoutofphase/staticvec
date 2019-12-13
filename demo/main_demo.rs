@@ -53,12 +53,12 @@ fn main() {
   for f in &v {
     println!("{}", f);
   }
-  let mut va = StaticVec::<usize, 32768>::new();
+  let mut va = StaticVec::<usize, 8192>::new();
   for i in 0..va.capacity() {
     va.push(i);
   }
-  let ia = va.remove_item(&16384).unwrap();
-  let ib = va.remove_item(&16383).unwrap();
+  let ia = va.remove_item(&4096).unwrap();
+  let ib = va.remove_item(&4095).unwrap();
   println!("{}", ia);
   println!("{}", ib);
   va.remove(10);
