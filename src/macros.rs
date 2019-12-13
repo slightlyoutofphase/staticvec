@@ -54,28 +54,24 @@ macro_rules! impl_from_iter_ex {
     /// Creates a new StaticVec instance from the elements, if any, of `iter`.
     /// If `iter` has a size greater than the StaticVec's capacity, any items after
     /// that point are ignored.
-    #[allow(clippy::eval_order_dependence)]
     #[allow(unused_parens)]
     #[inline]
     default fn from_iter_ex(iter: I) -> Self {
+      let mut res = Self::new_data_uninit();
+      let mut it = iter.into_iter();
       let mut i = 0;
-      Self {
-        data: {
-          let mut res = Self::new_data_uninit();
-          let res_ref = &mut res;
-          let mut it = iter.into_iter();
-          while i < N {
-            if let Some($var_a) = it.next() {
-              unsafe {
-                ptr_mut(res_ref).add(i).write($var_b);
-              }
-            } else {
-              break;
-            }
-            i += 1;
+      while i < N {
+        if let Some($var_a) = it.next() {
+          unsafe {
+            ptr_mut(&mut res).add(i).write($var_b);
           }
-          res
-        },
+        } else {
+          break;
+        }
+        i += 1;
+      }
+      Self {
+        data: res,
         length: i,
       }
     }
