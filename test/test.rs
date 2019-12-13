@@ -528,7 +528,9 @@ fn from_iter() {
     []
   );
   assert_eq!(
-    StaticVec::<Box<Struct>, 2>::from_iter([Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })].iter()),
+    StaticVec::<Box<Struct>, 2>::from_iter(
+      staticvec![Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })].into_iter()
+    ),
     [Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]
   );
 }
