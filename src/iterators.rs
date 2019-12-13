@@ -1,5 +1,4 @@
-use crate::utils::distance_between;
-use crate::utils::{make_const_slice, ptr_const, ptr_mut};
+use crate::utils::{distance_between, make_const_slice, ptr_const, ptr_mut};
 use crate::StaticVec;
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics;
