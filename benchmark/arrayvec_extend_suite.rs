@@ -41,8 +41,8 @@ fn staticvec_extend_with_constant(b: &mut Bencher) {
   let cap = v.capacity();
   b.iter(|| {
     v.clear();
-    let constant = 1;
-    black_box(v.extend((0..cap).map(move |_| constant)));
+    const CONSTANT: u8 = 1;
+    v.extend((0..cap).map(move |_| black_box(CONSTANT)));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -54,8 +54,8 @@ fn arrayvec_extend_with_constant(b: &mut Bencher) {
   let cap = v.capacity();
   b.iter(|| {
     v.clear();
-    let constant = 1;
-    black_box(v.extend((0..cap).map(move |_| constant)));
+    const CONSTANT: u8 = 1;
+    v.extend((0..cap).map(move |_| black_box(CONSTANT)));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -68,7 +68,7 @@ fn staticvec_extend_with_range(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let range = 0..cap;
-    black_box(v.extend(range.map(|x| x as u16)));
+    v.extend(black_box(range).map(|x| x as u16));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -81,7 +81,7 @@ fn arrayvec_extend_with_range(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let range = 0..cap;
-    black_box(v.extend(range.map(|x| x as u16)));
+    v.extend(black_box(range).map(|x| x as u16));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -94,7 +94,7 @@ fn staticvec_extend_with_slice(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let iter = data.iter().map(|&x| x);
-    black_box(v.extend(iter));
+    v.extend(black_box(iter));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -107,7 +107,7 @@ fn arrayvec_extend_with_slice(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let iter = data.iter().map(|&x| x);
-    black_box(v.extend(iter));
+    v.extend(black_box(iter));
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -119,7 +119,7 @@ fn staticvec_extend_with_write(b: &mut Bencher) {
   let data = [1; 512];
   b.iter(|| {
     v.clear();
-    black_box(v.write(&data[..]).ok());
+    v.write(black_box(&data[..])).ok();
     v[511]
   });
   b.bytes = v.capacity() as u64;
@@ -131,7 +131,7 @@ fn arrayvec_extend_with_write(b: &mut Bencher) {
   let data = [1; 512];
   b.iter(|| {
     v.clear();
-    black_box(v.write(&data[..]).ok());
+    v.write(black_box(&data[..])).ok();
     v[511]
   });
   b.bytes = v.capacity() as u64;

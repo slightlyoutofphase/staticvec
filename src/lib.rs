@@ -52,7 +52,6 @@ pub mod utils;
 
 /// A [`Vec`](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
-#[cfg_attr(feature = "repr_c", repr(C))]
 pub struct StaticVec<T, const N: usize> {
   data: MaybeUninit<[T; N]>,
   length: usize,
@@ -1338,8 +1337,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       res.dedup();
       res
     } else {
-      let mut res =
-        StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
+      let mut res = StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
       res.dedup();
       res
     }

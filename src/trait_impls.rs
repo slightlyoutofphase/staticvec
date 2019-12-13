@@ -33,6 +33,79 @@ use serde::{
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
+/// A Helper trait for specialization-based implementations of [`Extend`](core::iter::Extend) and
+/// ['FromIterator`](core::iter::FromIterator).
+trait ExtendEx<T, I> {
+  fn extend_ex(&mut self, iter: I);
+  fn from_iter_ex(iter: I) -> Self;
+}
+
+impl<T, I: IntoIterator<Item = T>, const N: usize> ExtendEx<T, I> for StaticVec<T, N> {
+  impl_extend_ex!(val, val);
+  impl_from_iter_ex!(val, val);
+}
+
+impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&'a T, I>
+  for StaticVec<T, N>
+{
+  impl_extend_ex!(val, (*val));
+  impl_from_iter_ex!(val, (*val));
+}
+
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N>>
+  for StaticVec<T, N>
+{
+  #[inline(always)]
+  default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N>) {
+    self.extend_from_slice(iter.as_slice());
+  }
+
+  #[inline(always)]
+  default fn from_iter_ex(iter: StaticVecIterConst<'a, T, N>) -> Self {
+    Self::new_from_slice(iter.as_slice())
+  }
+}
+
+impl<'a, T: 'a + Copy, const N1: usize, const N2: usize>
+  ExtendEx<&'a T, StaticVecIterConst<'a, T, N2>> for StaticVec<T, N1>
+{
+  #[inline(always)]
+  default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N2>) {
+    self.extend_from_slice(iter.as_slice());
+  }
+
+  #[inline(always)]
+  default fn from_iter_ex(iter: StaticVecIterConst<'a, T, N2>) -> Self {
+    Self::new_from_slice(iter.as_slice())
+  }
+}
+
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, core::slice::Iter<'a, T>>
+  for StaticVec<T, N>
+{
+  #[inline(always)]
+  fn extend_ex(&mut self, iter: core::slice::Iter<'a, T>) {
+    self.extend_from_slice(iter.as_slice());
+  }
+
+  #[inline(always)]
+  fn from_iter_ex(iter: core::slice::Iter<'a, T>) -> Self {
+    Self::new_from_slice(iter.as_slice())
+  }
+}
+
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, &'a [T]> for StaticVec<T, N> {
+  #[inline(always)]
+  fn extend_ex(&mut self, iter: &'a [T]) {
+    self.extend_from_slice(iter);
+  }
+
+  #[inline(always)]
+  fn from_iter_ex(iter: &'a [T]) -> Self {
+    Self::new_from_slice(iter)
+  }
+}
+
 impl<T, const N: usize> AsMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_mut(&mut self) -> &mut [T] {
@@ -155,12 +228,17 @@ impl<T, const N: usize> Drop for StaticVec<T, N> {
 impl<T: Eq, const N: usize> Eq for StaticVec<T, N> {}
 
 impl<T, const N: usize> Extend<T> for StaticVec<T, N> {
-  impl_extend!(val, val, T);
+  #[inline(always)]
+  fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+    <Self as ExtendEx<T, I>>::extend_ex(self, iter);
+  }
 }
 
-#[allow(unused_parens)]
 impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, N> {
-  impl_extend!(val, (*val), &'a T);
+  #[inline(always)]
+  fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
+    <Self as ExtendEx<&'a T, I>>::extend_ex(self, iter);
+  }
 }
 
 impl<T: Copy, const N: usize> From<&[T]> for StaticVec<T, N> {
@@ -244,12 +322,17 @@ impl<T, const N: usize> From<Vec<T>> for StaticVec<T, N> {
 }
 
 impl<T, const N: usize> FromIterator<T> for StaticVec<T, N> {
-  impl_from_iterator!(val, val, T);
+  #[inline(always)]
+  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+    <Self as ExtendEx<T, I>>::from_iter_ex(iter)
+  }
 }
 
-#[allow(unused_parens)]
 impl<'a, T: 'a + Copy, const N: usize> FromIterator<&'a T> for StaticVec<T, N> {
-  impl_from_iterator!(val, (*val), &'a T);
+  #[inline(always)]
+  fn from_iter<I: IntoIterator<Item = &'a T>>(iter: I) -> Self {
+    <Self as ExtendEx<&'a T, I>>::from_iter_ex(iter)
+  }
 }
 
 impl<T: Hash, const N: usize> Hash for StaticVec<T, N> {
@@ -369,7 +452,6 @@ impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeInclusive<usize>) -> &Self::Output {
     assert!(index.start() <= index.end() && *index.end() < self.length);
-
     make_const_slice(
       unsafe { self.ptr_at_unchecked(*index.start()) },
       (index.end() + 1) - index.start(),
@@ -384,7 +466,6 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
     assert!(index.start() <= index.end() && *index.end() < self.length);
-
     make_mut_slice(
       unsafe { self.mut_ptr_at_unchecked(*index.start()) },
       (index.end() + 1) - index.start(),
@@ -478,11 +559,9 @@ impl<T, const N: usize> IntoIterator for StaticVec<T, N> {
   #[inline(always)]
   fn into_iter(mut self) -> Self::IntoIter {
     let old_length = self.length;
-
     // This prevents the values from being dropped locally, since they're
     // being copied into the iterator.
     self.length = 0;
-
     StaticVecIntoIter {
       start: 0,
       end: old_length,

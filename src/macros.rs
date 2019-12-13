@@ -25,12 +25,13 @@ macro_rules! staticvec {
   };
 }
 
-macro_rules! impl_extend {
-  ($var_a:tt, $var_b:tt, $type:ty) => {
+macro_rules! impl_extend_ex {
+  ($var_a:tt, $var_b:tt) => {
     /// Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than
     /// the StaticVec's capacity, any items after that point are ignored.
+    #[allow(unused_parens)]
     #[inline]
-    fn extend<I: IntoIterator<Item = $type>>(&mut self, iter: I) {
+    default fn extend_ex(&mut self, iter: I) {
       let mut it = iter.into_iter();
       let mut i = self.length;
       while i < N {
@@ -48,23 +49,25 @@ macro_rules! impl_extend {
   };
 }
 
-macro_rules! impl_from_iterator {
-  ($var_a:tt, $var_b:tt, $type:ty) => {
+macro_rules! impl_from_iter_ex {
+  ($var_a:tt, $var_b:tt) => {
     /// Creates a new StaticVec instance from the elements, if any, of `iter`.
     /// If `iter` has a size greater than the StaticVec's capacity, any items after
     /// that point are ignored.
     #[allow(clippy::eval_order_dependence)]
+    #[allow(unused_parens)]
     #[inline]
-    fn from_iter<I: IntoIterator<Item = $type>>(iter: I) -> Self {
+    default fn from_iter_ex(iter: I) -> Self {
       let mut i = 0;
       Self {
         data: {
           let mut res = Self::new_data_uninit();
+          let res_ref = &mut res;
           let mut it = iter.into_iter();
           while i < N {
             if let Some($var_a) = it.next() {
               unsafe {
-                ptr_mut(&mut res).add(i).write($var_b);
+                ptr_mut(res_ref).add(i).write($var_b);
               }
             } else {
               break;

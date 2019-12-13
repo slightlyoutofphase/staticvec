@@ -1,7 +1,7 @@
 #![allow(clippy::all)]
 
 use staticvec::{staticvec, StaticVec};
-
+use std::iter::FromIterator;
 #[derive(Copy, Clone, Debug)]
 struct ZST {}
 
@@ -397,4 +397,22 @@ fn main() {
   append_to.append(&mut to_append);
   println!("{:?}", to_append);
   println!("{:?}", append_to);
+  static STATIC_STATICVEC: StaticVec<u8, 5> = staticvec![1, 2, 3, 4, 5];
+  println!(
+    "{:?}",
+    STATIC_STATICVEC
+      .intersperse(7)
+      .reversed()
+      .sorted_unstable()
+      .drain_iter(4..7)
+  );
+  let mut extended = StaticVec::<u8, 12>::new();
+  extended.extend(staticvec![1, 2, 3].iter());
+  extended.extend(staticvec![4, 5, 6].into_iter());
+  let yyz = StaticVec::<u8, 6>::from_iter(staticvec![4, 5, 6].iter());
+  println!("{:?}", yyz);
+  let zzy = StaticVec::<u8, 6>::from_iter(staticvec![4, 5, 6].iter());
+  println!("{:?}", zzy);
+  let zwz = StaticVec::<u8, 3>::from_iter(staticvec![4, 5, 6].iter());
+  println!("{:?}", zwz);
 }

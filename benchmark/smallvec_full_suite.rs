@@ -104,6 +104,9 @@ impl<T: Copy + 'static, const N: usize> Vector<T> for StaticVec<T, N> {
   }
 
   fn from_elem(val: T, _n: usize) -> Self {
+    // This is what the `staticvec!` macro *used* to be implemented with,
+    // and is actually slower than the current const fn implementation
+    // which is too fast to be benchmarkable.
     staticvec::utils::new_from_value(val)
   }
 
