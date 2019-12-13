@@ -61,7 +61,6 @@ incremental = false
 
 [features]
 std = []
-repr_c = []
 serde_support = ["serde"]
 serde_json_support = ["serde_json"]
 default = ["std"]
