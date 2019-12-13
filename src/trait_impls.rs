@@ -32,7 +32,7 @@ use serde::{
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
-/// A Helper trait for specialization-based implementations of [`Extend`](core::iter::Extend) and
+/// A helper trait for specialization-based implementations of [`Extend`](core::iter::Extend) and
 /// ['FromIterator`](core::iter::FromIterator).
 trait ExtendEx<T, I> {
   fn extend_ex(&mut self, iter: I);
@@ -159,7 +159,8 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, N> {
 impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
-    match self.length {
+    let length = self.length;
+    match length {
       // If `self` is empty, just return a new StaticVec.
       0 => Self::new(),
       _ => Self {
@@ -168,11 +169,11 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
           unsafe {
             self
               .as_ptr()
-              .copy_to_nonoverlapping(ptr_mut(&mut res), self.length);
+              .copy_to_nonoverlapping(ptr_mut(&mut res), length);
             res
           }
         },
-        length: self.length,
+        length,
       },
     }
   }
@@ -633,7 +634,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
 
   #[inline]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-    let read_length = self.length.min(buf.len());
+    let current_length = self.length;
+    let read_length = current_length.min(buf.len());
     // Safety:  read_length <= buf.length and self.length. Rust borrowing
     // rules mean that buf is guaranteed not to overlap with self.
     unsafe {
@@ -641,14 +643,14 @@ impl<const N: usize> Read for StaticVec<u8, N> {
         .as_mut_ptr()
         .copy_from_nonoverlapping(self.as_ptr(), read_length);
     }
-    if read_length < self.length {
+    if read_length < current_length {
       // TODO: find out if the optimizer elides the bounds check here. It
       // should be able to, since the only non-const value is read_length,
       // which is known to be <= self.length
       self.as_mut_slice().copy_within(read_length.., 0);
     }
     // Safety: 0 <= read_length <= self.length
-    self.length -= read_length;
+    self.set_len(current_length - read_length);
     Ok(read_length)
   }
 
