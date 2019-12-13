@@ -933,7 +933,6 @@ impl<T, const N: usize> StaticVec<T, N> {
       res_ptr.write(self.ptr_at_unchecked(i).read());
       res.set_len((length * 2) - 1);
     }
-
     res
   }
 
