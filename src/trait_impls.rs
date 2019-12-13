@@ -650,7 +650,7 @@ impl<const N: usize> Read for StaticVec<u8, N> {
       self.as_mut_slice().copy_within(read_length.., 0);
     }
     // Safety: 0 <= read_length <= self.length
-    self.set_len(current_length - read_length);
+    unsafe { self.set_len(current_length - read_length) };
     Ok(read_length)
   }
 
