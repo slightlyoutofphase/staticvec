@@ -639,14 +639,8 @@ impl_partial_ord_with_as_slice_against_slice!([T1], &mut StaticVec<T2, N>);
 impl_partial_ord_with_as_slice_against_slice!(&[T1], StaticVec<T2, N>);
 impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, N>);
 
-/// Read from a StaticVec. This implementation reads from the StaticVec
-/// by copying bytes into the destination buffers, then shifting the remaining
-/// bytes over. This might be inefficient for your needs; consider using
-/// [`Cursor`] or [`[T] as Read`][slice-read] for more efficient
-/// ways to read out of a StaticVec without mutating it.
-///
-/// [`Cursor`]: https://doc.rust-lang.org/nightly/std/io/struct.Cursor.html
-/// [slice-read]: https://doc.rust-lang.org/nightly/std/primitive.slice.html#impl-Read]
+/// Read from a StaticVec. This implementation operates by copying bytes into the destination
+/// buffers, then shifting the remaining bytes over.
 #[cfg(feature = "std")]
 impl<const N: usize> Read for StaticVec<u8, N> {
   #[inline(always)]
