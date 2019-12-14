@@ -10,4 +10,5 @@ jobs:
   - os: osx
 
 script:
-  - cargo bench
+  - bash ./ci/run_miri.sh
+  - cargo test --no-default-features
