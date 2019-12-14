@@ -346,7 +346,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Note that unlike [`slice::get_unchecked`](https://doc.rust-lang.org/nightly/std/primitive.slice.html#method.get_unchecked),
   /// this method only supports accessing individual elements via `usize`; it cannot also produce
-  /// subslices. To unsafely get a subslice without a bounds check, use
+  /// subslices. To get a subslice without a bounds check, use
   /// `self.as_slice().get_unchecked(a..b)`.
   ///
   /// # Safety
