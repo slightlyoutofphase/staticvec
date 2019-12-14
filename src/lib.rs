@@ -1515,7 +1515,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     MaybeUninit::uninit()
   }
 
-  /// An internal convenience function to go from `*const MaybeUninit<[T; N]>` to `*const T`.
+  /// An internal convenience function to go from `&MaybeUninit<[T; N]>` to `*const T`.
   /// Similar to [`MaybeUninit::first_ptr`](core::mem::MaybeUninit::first_ptr), but for arrays
   /// as opposed to slices.
   #[inline(always)]
@@ -1523,7 +1523,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     this as *const MaybeUninit<[T; N]> as *const T
   }
 
-  /// An internal convenience function to go from `*mut MaybeUninit<[T; N]>` to `*mut T`.
+  /// An internal convenience function to go from `&mut MaybeUninit<[T; N]>` to `*mut T`.
   /// Similar to [`MaybeUninit::first_ptr_mut`](core::mem::MaybeUninit::first_ptr_mut), but for
   /// arrays as opposed to slices.
   #[inline(always)]
