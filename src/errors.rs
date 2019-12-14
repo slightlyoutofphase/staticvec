@@ -1,7 +1,7 @@
-use core::fmt;
+use core::fmt::{Debug, Display, Formatter, Result};
 
 #[cfg(feature = "std")]
-use std::error;
+use std::error::Error;
 
 /// This error indicates that an operation was attempted that would have increased the
 /// `length` value of a [`StaticVec`](crate::StaticVec), but the [`StaticVec`](crate::StaticVec) was
@@ -9,15 +9,15 @@ use std::error;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CapacityError<const N: usize>;
 
-impl<const N: usize> fmt::Display for CapacityError<N> {
+impl<const N: usize> Display for CapacityError<N> {
   #[inline(always)]
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  fn fmt(&self, f: &mut Formatter) -> Result {
     write!(f, "Insufficient remaining capacity (limit is {})!", N)
   }
 }
 
 #[cfg(feature = "std")]
-impl<const N: usize> error::Error for CapacityError<N> {}
+impl<const N: usize> Error for CapacityError<N> {}
 
 /// This error indicates that a push was attempted into a
 /// [`StaticVec`](crate::StaticVec) which failed because the
@@ -28,7 +28,7 @@ pub struct PushCapacityError<T, const N: usize>(T);
 
 impl<T, const N: usize> PushCapacityError<T, N> {
   #[inline(always)]
-  pub(crate) fn new(value: T) -> Self {
+  pub(crate) const fn new(value: T) -> Self {
     PushCapacityError(value)
   }
 
@@ -53,9 +53,9 @@ impl<T, const N: usize> AsMut<T> for PushCapacityError<T, N> {
   }
 }
 
-impl<T, const N: usize> fmt::Display for PushCapacityError<T, N> {
+impl<T, const N: usize> Display for PushCapacityError<T, N> {
   #[inline(always)]
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  fn fmt(&self, f: &mut Formatter) -> Result {
     // The unpushed value isn't really relevant to the error, so we don't
     // print it.
     write!(
@@ -66,9 +66,9 @@ impl<T, const N: usize> fmt::Display for PushCapacityError<T, N> {
   }
 }
 
-impl<T, const N: usize> fmt::Debug for PushCapacityError<T, N> {
+impl<T, const N: usize> Debug for PushCapacityError<T, N> {
   #[inline(always)]
-  default fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  default fn fmt(&self, f: &mut Formatter) -> Result {
     f.debug_struct("PushCapacityError")
       .field("N", &N)
       .field("value", &"...")
@@ -76,9 +76,9 @@ impl<T, const N: usize> fmt::Debug for PushCapacityError<T, N> {
   }
 }
 
-impl<T: fmt::Debug, const N: usize> fmt::Debug for PushCapacityError<T, N> {
+impl<T: Debug, const N: usize> Debug for PushCapacityError<T, N> {
   #[inline(always)]
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  fn fmt(&self, f: &mut Formatter) -> Result {
     f.debug_struct("PushCapacityError")
       .field("N", &N)
       .field("value", &self.0)
@@ -87,9 +87,9 @@ impl<T: fmt::Debug, const N: usize> fmt::Debug for PushCapacityError<T, N> {
 }
 
 #[cfg(feature = "std")]
-impl<T: fmt::Debug, const N: usize> error::Error for PushCapacityError<T, N> {
+impl<T: Debug, const N: usize> Error for PushCapacityError<T, N> {
   #[inline(always)]
-  fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+  fn source(&self) -> Option<&(dyn Error + 'static)> {
     Some(&CapacityError::<N>)
   }
 }

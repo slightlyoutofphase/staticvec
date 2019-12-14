@@ -4,7 +4,8 @@ use crate::StaticVec;
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
-use core::iter::FromIterator;
+#[doc(hidden)]
+pub use core::iter::FromIterator;
 use core::ops::{
   Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo,
   RangeToInclusive,

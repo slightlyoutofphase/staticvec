@@ -4,13 +4,13 @@ use core::intrinsics;
 use core::mem::MaybeUninit;
 use core::ptr;
 
-/// An internal convenience function to go from *const MaybeUninit<[T; N> to *const T.
+/// An internal convenience function to go from `*const MaybeUninit<[T; N]>` to `*const T`.
 #[inline(always)]
 pub(crate) fn ptr_const<T, const N: usize>(this: *const MaybeUninit<[T; N]>) -> *const T {
   this as *const T
 }
 
-/// An internal convenience function to go from *mut MaybeUninit<[T; N> to *mut T.
+/// An internal convenience function to go from `*mut MaybeUninit<[T; N]>` to `*mut T`.
 #[inline(always)]
 pub(crate) fn ptr_mut<T, const N: usize>(this: *mut MaybeUninit<[T; N]>) -> *mut T {
   this as *mut T
@@ -28,12 +28,16 @@ pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usi
   }
 }
 
+/// A simple reversal function that returns a new array, called in
+/// [`StaticVec::reversed`](crate::StaticVec::reversed).
 #[inline]
 pub(crate) fn reverse_copy<T, const N: usize>(
   length: usize,
   this: *const MaybeUninit<[T; N]>,
 ) -> MaybeUninit<[T; N]>
-where T: Copy {
+where
+  T: Copy,
+{
   let mut i = length;
   let src = ptr_const(this);
   let mut res: MaybeUninit<[T; N]> = MaybeUninit::uninit();
@@ -48,6 +52,9 @@ where T: Copy {
   res
 }
 
+/// Previously this was what one of the forms of the [`staticvec!`] macro used internally. Currently
+/// it's not used at all, and may be removed if I don't think of another use for it in the next
+/// little while.
 #[inline(always)]
 pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, COUNT>
 where T: Copy {
@@ -67,6 +74,7 @@ where T: Copy {
   }
 }
 
+/// A version of the default `partial_cmp` implementation with a more flexible function signature.
 #[inline]
 pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
   this: &[T2],
@@ -87,14 +95,14 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
   this.len().partial_cmp(&other.len())
 }
 
+/// A local inline-always version of `slice::from_raw_parts`.
 #[inline(always)]
-// Local inline-always version of slice::from_raw_parts.
 pub(crate) fn make_const_slice<'a, T>(data: *const T, length: usize) -> &'a [T] {
   unsafe { &*ptr::slice_from_raw_parts(data, length) }
 }
 
+/// A local inline-always version of `slice::from_raw_parts_mut`.
 #[inline(always)]
-// Local inline-always version of slice::from_raw_parts_mut.
 pub(crate) fn make_mut_slice<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
   unsafe { &mut *ptr::slice_from_raw_parts_mut(data, length) }
 }
