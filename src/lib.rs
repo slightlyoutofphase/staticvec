@@ -216,9 +216,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// actually initialized. Failure to do so will almost certainly result in undefined behavior.
   #[inline(always)]
   pub unsafe fn set_len(&mut self, new_len: usize) {
+    // Most of the `unsafe` functions in this crate that are heavily used internally
+    // have debug-build-only assertions where it's useful.
     debug_assert!(
       new_len <= N,
-      "Attempted to unsafely set length to {}; maximum is {}!",
+      "In `StaticVec::set_len`, provided length {} exceeds the maximum capacity of {}!",
       new_len,
       N
     );
@@ -278,7 +280,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` without doing any
-  /// checking to ensure that `index` is within the range `0..length`. The return value of this
+  /// checking to ensure that `index` is within the range `0..self.length`. The return value of this
   /// function is equivalent to what would be returned from `as_ptr().add(index)`.
   ///
   /// # Safety
@@ -287,11 +289,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// function returns a pointer to valid data.
   #[inline(always)]
   pub unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
+    // This can't have a debug assert because it's used internally in functions where `self.length`
+    // has intentionally been temporarily set to 0, and also in things like the iterator
+    // implementations where `end` is initially *at* `self.length`, not `self.length - 1`.
     self.as_ptr().add(index)
   }
 
   /// Returns a mutable pointer to the element of the StaticVec at `index` without doing any
-  /// checking to ensure that `index` is within the range `0..length`. The return value of this
+  /// checking to ensure that `index` is within the range `0..self.length`. The return value of this
   /// function is equivalent to what would be returned from `as_mut_ptr().add(index)`.
   ///
   /// # Safety
@@ -300,17 +305,20 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// function returns a pointer to valid data.
   #[inline(always)]
   pub unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
+    // This can't have a debug assert because it's used internally in functions where `self.length`
+    // has intentionally been temporarily set to 0, and also in things like the iterator
+    // implementations where `end` is initially *at* `self.length`, not `self.length - 1`.
     self.as_mut_ptr().add(index)
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` if `index`
-  /// is within the range `0..length`, or panics if it is not. The return value of this function is
-  /// equivalent to what would be returned from `as_ptr().add(index)`.
+  /// is within the range `0..self.length`, or panics if it is not. The return value of this
+  /// function is equivalent to what would be returned from `as_ptr().add(index)`.
   #[inline(always)]
   pub fn ptr_at(&self, index: usize) -> *const T {
     assert!(
       index < self.length,
-      "Provided index {} must be between 0 and {}!",
+      "In `StaticVec::ptr_at`, provided index {} must be within `0..{}`!",
       index,
       self.length
     );
@@ -318,13 +326,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a mutable pointer to the element of the StaticVec at `index` if `index`
-  /// is within the range `0..length`, or panics if it is not. The return value of this function is
-  /// equivalent to what would be returned from `as_mut_ptr().add(index)`.
+  /// is within the range `0..self.length`, or panics if it is not. The return value of this
+  /// function is equivalent to what would be returned from `as_mut_ptr().add(index)`.
   #[inline(always)]
   pub fn mut_ptr_at(&mut self, index: usize) -> *mut T {
     assert!(
       index < self.length,
-      "Provided index {} must be between 0 and {}!",
+      "In `StaticVec::mut_ptr_at`, provided index {} must be within `0..{}`!",
       index,
       self.length
     );
@@ -348,7 +356,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub unsafe fn get_unchecked(&self, index: usize) -> &T {
     debug_assert!(
       index < self.length,
-      "Attempted to unsafely get at index {} when length is {}!",
+      "In `StaticVec::get_unchecked`, provided index {} must be within `0..{}`!",
       index,
       self.length
     );
@@ -370,7 +378,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
     debug_assert!(
       index < self.length,
-      "Attempted to unsafely get at index {} when length is {}!",
+      "In `StaticVec::get_unchecked_mut`, provided index {} must be within `0..{}`!",
       index,
       self.length
     );
@@ -387,11 +395,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// in writing to an out-of-bounds memory region.
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, value: T) {
-    let length = self.length;
     debug_assert!(
-      length < N,
-      "Attempted to unsafely push to a full StaticVec!"
+      self.is_not_full(),
+      "`StaticVec::push_unchecked` was called through a StaticVec already at maximum capacity!"
     );
+    let length = self.length;
     self.mut_ptr_at_unchecked(length).write(value);
     self.set_len(length + 1);
   }
@@ -408,7 +416,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub unsafe fn pop_unchecked(&mut self) -> T {
     debug_assert!(
       self.is_not_empty(),
-      "Attempted to unsafely pop from an empty StaticVec!"
+      "`StaticVec::pop_unchecked` was called through an empty StaticVec!"
     );
     let new_length = self.length - 1;
     self.set_len(new_length);
@@ -1098,6 +1106,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     self.length = 0;
     unsafe {
       for i in 0..old_length {
+        // This is fine because we intentionally set length to `0` ourselves just now.
         let val = self.mut_ptr_at_unchecked(i);
         if filter(&mut *val) {
           res.mut_ptr_at_unchecked(res.length).write(val.read());

@@ -97,11 +97,19 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
 /// A local inline-always version of `slice::from_raw_parts`.
 #[inline(always)]
 pub(crate) fn make_const_slice<'a, T>(data: *const T, length: usize) -> &'a [T] {
+  debug_assert!(
+    !data.is_null(),
+    "A null pointer was passed to `staticvec::utils::make_const_slice`!"
+  );
   unsafe { &*ptr::slice_from_raw_parts(data, length) }
 }
 
 /// A local inline-always version of `slice::from_raw_parts_mut`.
 #[inline(always)]
 pub(crate) fn make_mut_slice<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
+  debug_assert!(
+    !data.is_null(),
+    "A null pointer was passed to `staticvec::utils::make_mut_slice`!"
+  );
   unsafe { &mut *ptr::slice_from_raw_parts_mut(data, length) }
 }
