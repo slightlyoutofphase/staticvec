@@ -599,7 +599,7 @@ fn insert() {
   assert_eq!(vec, [1, 4, 2, 3, 5]);
 }
 
-// The next few tests for `insert_many` are adapted from the SmallVec testsuite.
+// The next couple of tests for `insert_many` are adapted from the SmallVec testsuite.
 
 #[test]
 fn insert_many() {

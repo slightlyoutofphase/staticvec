@@ -33,100 +33,6 @@ use serde::{
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
-/// A helper trait for specialization-based implementations of [`Extend`](core::iter::Extend) and
-/// ['FromIterator`](core::iter::FromIterator).
-trait ExtendEx<T, I> {
-  fn extend_ex(&mut self, iter: I);
-  fn from_iter_ex(iter: I) -> Self;
-}
-
-impl<T, I: IntoIterator<Item = T>, const N: usize> ExtendEx<T, I> for StaticVec<T, N> {
-  impl_extend_ex!(val, val);
-  impl_from_iter_ex!(val, val);
-}
-
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&'a T, I> for StaticVec<T, N> {
-  impl_extend_ex!(val, (*val));
-  impl_from_iter_ex!(val, (*val));
-}
-
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, &StaticVec<T, N>> for StaticVec<T, N> {
-  #[inline(always)]
-  default fn extend_ex(&mut self, iter: &StaticVec<T, N>) {
-    self.extend_from_slice(iter);
-  }
-
-  #[inline(always)]
-  default fn from_iter_ex(iter: &StaticVec<T, N>) -> Self {
-    Self::new_from_slice(iter)
-  }
-}
-
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, &StaticVec<T, N2>> for StaticVec<T, N1> {
-  #[inline(always)]
-  default fn extend_ex(&mut self, iter: &StaticVec<T, N2>) {
-    self.extend_from_slice(iter);
-  }
-
-  #[inline(always)]
-  default fn from_iter_ex(iter: &StaticVec<T, N2>) -> Self {
-    Self::new_from_slice(iter)
-  }
-}
-
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N>> for StaticVec<T, N> {
-  #[inline(always)]
-  default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N>) {
-    self.extend_from_slice(iter.as_slice());
-  }
-
-  #[inline(always)]
-  default fn from_iter_ex(iter: StaticVecIterConst<'a, T, N>) -> Self {
-    Self::new_from_slice(iter.as_slice())
-  }
-}
-
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N2>> for StaticVec<T, N1> {
-  #[inline(always)]
-  default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N2>) {
-    self.extend_from_slice(iter.as_slice());
-  }
-
-  #[inline(always)]
-  default fn from_iter_ex(iter: StaticVecIterConst<'a, T, N2>) -> Self {
-    Self::new_from_slice(iter.as_slice())
-  }
-}
-
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, core::slice::Iter<'a, T>> for StaticVec<T, N> {
-  #[inline(always)]
-  fn extend_ex(&mut self, iter: core::slice::Iter<'a, T>) {
-    self.extend_from_slice(iter.as_slice());
-  }
-
-  #[inline(always)]
-  fn from_iter_ex(iter: core::slice::Iter<'a, T>) -> Self {
-    Self::new_from_slice(iter.as_slice())
-  }
-}
-
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, &'a [T]> for StaticVec<T, N> {
-  #[inline(always)]
-  fn extend_ex(&mut self, iter: &'a [T]) {
-    self.extend_from_slice(iter);
-  }
-
-  #[inline(always)]
-  fn from_iter_ex(iter: &'a [T]) -> Self {
-    Self::new_from_slice(iter)
-  }
-}
-
 impl<T, const N: usize> AsMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_mut(&mut self) -> &mut [T] {
@@ -248,6 +154,100 @@ impl<T, const N: usize> Drop for StaticVec<T, N> {
 }
 
 impl<T: Eq, const N: usize> Eq for StaticVec<T, N> {}
+
+/// A helper trait for specialization-based implementations of [`Extend`](core::iter::Extend) and
+/// ['FromIterator`](core::iter::FromIterator).
+trait ExtendEx<T, I> {
+  fn extend_ex(&mut self, iter: I);
+  fn from_iter_ex(iter: I) -> Self;
+}
+
+impl<T, I: IntoIterator<Item = T>, const N: usize> ExtendEx<T, I> for StaticVec<T, N> {
+  impl_extend_ex!(val, val);
+  impl_from_iter_ex!(val, val);
+}
+
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&'a T, I> for StaticVec<T, N> {
+  impl_extend_ex!(val, (*val));
+  impl_from_iter_ex!(val, (*val));
+}
+
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, &StaticVec<T, N>> for StaticVec<T, N> {
+  #[inline(always)]
+  default fn extend_ex(&mut self, iter: &StaticVec<T, N>) {
+    self.extend_from_slice(iter);
+  }
+
+  #[inline(always)]
+  default fn from_iter_ex(iter: &StaticVec<T, N>) -> Self {
+    Self::new_from_slice(iter)
+  }
+}
+
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, &StaticVec<T, N2>> for StaticVec<T, N1> {
+  #[inline(always)]
+  default fn extend_ex(&mut self, iter: &StaticVec<T, N2>) {
+    self.extend_from_slice(iter);
+  }
+
+  #[inline(always)]
+  default fn from_iter_ex(iter: &StaticVec<T, N2>) -> Self {
+    Self::new_from_slice(iter)
+  }
+}
+
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N>> for StaticVec<T, N> {
+  #[inline(always)]
+  default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N>) {
+    self.extend_from_slice(iter.as_slice());
+  }
+
+  #[inline(always)]
+  default fn from_iter_ex(iter: StaticVecIterConst<'a, T, N>) -> Self {
+    Self::new_from_slice(iter.as_slice())
+  }
+}
+
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N2>> for StaticVec<T, N1> {
+  #[inline(always)]
+  default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N2>) {
+    self.extend_from_slice(iter.as_slice());
+  }
+
+  #[inline(always)]
+  default fn from_iter_ex(iter: StaticVecIterConst<'a, T, N2>) -> Self {
+    Self::new_from_slice(iter.as_slice())
+  }
+}
+
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, core::slice::Iter<'a, T>> for StaticVec<T, N> {
+  #[inline(always)]
+  fn extend_ex(&mut self, iter: core::slice::Iter<'a, T>) {
+    self.extend_from_slice(iter.as_slice());
+  }
+
+  #[inline(always)]
+  fn from_iter_ex(iter: core::slice::Iter<'a, T>) -> Self {
+    Self::new_from_slice(iter.as_slice())
+  }
+}
+
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, &'a [T]> for StaticVec<T, N> {
+  #[inline(always)]
+  fn extend_ex(&mut self, iter: &'a [T]) {
+    self.extend_from_slice(iter);
+  }
+
+  #[inline(always)]
+  fn from_iter_ex(iter: &'a [T]) -> Self {
+    Self::new_from_slice(iter)
+  }
+}
 
 impl<T, const N: usize> Extend<T> for StaticVec<T, N> {
   #[inline(always)]
