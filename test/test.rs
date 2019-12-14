@@ -9,9 +9,6 @@ use core::cell;
 #[cfg(feature = "std")]
 use std::panic::{self, AssertUnwindSafe};
 
-#[cfg(feature = "std")]
-use std::io::{IoSlice, Write};
-
 #[cfg(not(miri))]
 #[cfg(feature = "std")]
 use cool_asserts::assert_panics;
@@ -709,12 +706,12 @@ fn iter() {
   let mut i = v.iter();
   assert_eq!(*i.next().unwrap(), 1);
   assert_eq!(*i.next_back().unwrap(), 5);
-  assert_eq!("[2, 3, 4]", format!("{:?}", i));
+  assert_eq!("StaticVecIterConst([2, 3, 4])", format!("{:?}", i));
   assert_eq!(*i.next().unwrap(), 2);
   assert_eq!(*i.next_back().unwrap(), 4);
-  assert_eq!("[3]", format!("{:?}", i));
+  assert_eq!("StaticVecIterConst([3])", format!("{:?}", i));
   assert_eq!(*i.next().unwrap(), 3);
-  assert_eq!("[]", format!("{:?}", i));
+  assert_eq!("StaticVecIterConst([])", format!("{:?}", i));
 }
 
 #[test]
@@ -723,12 +720,12 @@ fn iter_mut() {
   let mut i = v.iter_mut();
   assert_eq!(*i.next().unwrap(), 1);
   assert_eq!(*i.next_back().unwrap(), 5);
-  assert_eq!("[2, 3, 4]", format!("{:?}", i));
+  assert_eq!("StaticVecIterMut([2, 3, 4])", format!("{:?}", i));
   assert_eq!(*i.next().unwrap(), 2);
   assert_eq!(*i.next_back().unwrap(), 4);
-  assert_eq!("[3]", format!("{:?}", i));
+  assert_eq!("StaticVecIterMut([3])", format!("{:?}", i));
   assert_eq!(*i.next().unwrap(), 3);
-  assert_eq!("[]", format!("{:?}", i));
+  assert_eq!("StaticVecIterMut([])", format!("{:?}", i));
 }
 
 #[test]
@@ -737,12 +734,12 @@ fn into_iter() {
   let mut i = v.into_iter();
   assert_eq!(i.next().unwrap(), 1);
   assert_eq!(i.next_back().unwrap(), 5);
-  assert_eq!("[2, 3, 4]", format!("{:?}", i));
+  assert_eq!("StaticVecIntoIter([2, 3, 4])", format!("{:?}", i));
   assert_eq!(i.next().unwrap(), 2);
   assert_eq!(i.next_back().unwrap(), 4);
-  assert_eq!("[3]", format!("{:?}", i));
+  assert_eq!("StaticVecIntoIter([3])", format!("{:?}", i));
   assert_eq!(i.next().unwrap(), 3);
-  assert_eq!("[]", format!("{:?}", i));
+  assert_eq!("StaticVecIntoIter([])", format!("{:?}", i));
   let v2 = staticvec![
     Box::new(Struct { s: "AAA" }),
     Box::new(Struct { s: "BBB" }),
@@ -752,7 +749,7 @@ fn into_iter() {
   assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "AAA" }));
   assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "BBB" }));
   assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "CCC" }));
-  assert_eq!("[]", format!("{:?}", i2));
+  assert_eq!("StaticVecIntoIter([])", format!("{:?}", i2));
   let v3 = staticvec![
     Box::new(Struct { s: "AAA" }),
     Box::new(Struct { s: "BBB" }),
@@ -986,7 +983,8 @@ fn push() {
 #[cfg(feature = "std")]
 mod read_tests {
   use staticvec::*;
-  use std::io::{self, Read};
+  use std::io::{self, BufRead, Read};
+
   // We provide custom implementations of most `Read` methods; test those
   // impls
   #[test]
@@ -1039,7 +1037,6 @@ mod read_tests {
     ints.read_exact(&mut buffer).unwrap();
     assert_eq!(buffer, [1, 2, 3, 4]);
     assert_eq!(ints, &[6, 7, 8, 9, 10]);
-
     let mut buffer2 = [0, 0, 0, 0, 0, 0, 0, 0];
     let err = ints.read_exact(&mut buffer2).unwrap_err();
     assert_eq!(err.kind(), io::ErrorKind::UnexpectedEof);
@@ -1061,6 +1058,60 @@ mod read_tests {
       "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]",
       format!("{:?}", bufs)
     );
+  }
+
+  #[test]
+  fn bufread() {
+    let mut cursor = StaticVec::<u8, 7>::from("foo\nbar".as_bytes());
+    let mut buf = String::new();
+    let num_bytes = cursor
+      .read_line(&mut buf)
+      .expect("reading from cursor won't fail");
+    assert_eq!(num_bytes, 4);
+    assert_eq!(buf, "foo\n");
+    buf.clear();
+    let num_bytes = cursor
+      .read_line(&mut buf)
+      .expect("reading from cursor won't fail");
+    assert_eq!(num_bytes, 3);
+    assert_eq!(buf, "bar");
+    buf.clear();
+    let num_bytes = cursor
+      .read_line(&mut buf)
+      .expect("reading from cursor won't fail");
+    assert_eq!(num_bytes, 0);
+    assert_eq!(buf, "");
+    let cursor2 = StaticVec::<u8, 18>::from("lorem\nipsum\r\ndolor".as_bytes());
+    let mut lines_iter = cursor2.lines().map(|l| l.unwrap());
+    assert_eq!(lines_iter.next(), Some(String::from("lorem")));
+    assert_eq!(lines_iter.next(), Some(String::from("ipsum")));
+    assert_eq!(lines_iter.next(), Some(String::from("dolor")));
+    assert_eq!(lines_iter.next(), None);
+    let mut cursor3 = StaticVec::<u8, 11>::from("lorem-ipsum".as_bytes());
+    let mut buf = vec![];
+    let num_bytes = cursor3
+      .read_until(b'-', &mut buf)
+      .expect("reading from cursor won't fail");
+    assert_eq!(num_bytes, 6);
+    assert_eq!(buf, b"lorem-");
+    buf.clear();
+    let num_bytes = cursor3
+      .read_until(b'-', &mut buf)
+      .expect("reading from cursor won't fail");
+    assert_eq!(num_bytes, 5);
+    assert_eq!(buf, b"ipsum");
+    buf.clear();
+    let num_bytes = cursor3
+      .read_until(b'-', &mut buf)
+      .expect("reading from cursor won't fail");
+    assert_eq!(num_bytes, 0);
+    assert_eq!(buf, b"");
+    let cursor4 = StaticVec::<u8, 17>::from("lorem-ipsum-dolor".as_bytes());
+    let mut split_iter = cursor4.split(b'-').map(|l| l.unwrap());
+    assert_eq!(split_iter.next(), Some(b"lorem".to_vec()));
+    assert_eq!(split_iter.next(), Some(b"ipsum".to_vec()));
+    assert_eq!(split_iter.next(), Some(b"dolor".to_vec()));
+    assert_eq!(split_iter.next(), None);
   }
 }
 
@@ -1251,34 +1302,37 @@ fn union() {
 }
 
 #[cfg(feature = "std")]
-#[test]
-fn write() {
-  // From arrayvec
-  let mut v = StaticVec::<u8, 8>::new();
-  write!(&mut v, "\x01\x02\x03").unwrap();
-  assert_eq!(&v[..], &[1, 2, 3]);
-  let r = v.write(&[9; 16]).unwrap();
-  assert_eq!(r, 5);
-  assert_eq!(&v[..], &[1, 2, 3, 9, 9, 9, 9, 9]);
-}
+mod write_tests {
+  use staticvec::*;
+  use std::io::{IoSlice, Write};
 
-#[cfg(feature = "std")]
-#[test]
-fn write_all() {
-  let mut v = StaticVec::<u8, 6>::new();
-  assert!(v.write_all(&[1, 2, 3, 4, 5, 6, 7, 8]).is_err());
-  v.clear();
-  assert!(v.write_all(&[1, 2, 3, 4, 5, 6]).is_ok());
-}
+  #[test]
+  fn write() {
+    // From arrayvec
+    let mut v = StaticVec::<u8, 8>::new();
+    write!(&mut v, "\x01\x02\x03").unwrap();
+    assert_eq!(&v[..], &[1, 2, 3]);
+    let r = v.write(&[9; 16]).unwrap();
+    assert_eq!(r, 5);
+    assert_eq!(&v[..], &[1, 2, 3, 9, 9, 9, 9, 9]);
+  }
 
-#[cfg(feature = "std")]
-#[test]
-fn write_vectored() {
-  let mut v = StaticVec::<u8, 8>::new();
-  assert_eq!(
-    v.write_vectored(&[IoSlice::new(&[1, 2, 3, 4]), IoSlice::new(&[5, 6, 7, 8])])
-      .unwrap(),
-    8
-  );
-  assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
+  #[test]
+  fn write_all() {
+    let mut v = StaticVec::<u8, 6>::new();
+    assert!(v.write_all(&[1, 2, 3, 4, 5, 6, 7, 8]).is_err());
+    v.clear();
+    assert!(v.write_all(&[1, 2, 3, 4, 5, 6]).is_ok());
+  }
+
+  #[test]
+  fn write_vectored() {
+    let mut v = StaticVec::<u8, 8>::new();
+    assert_eq!(
+      v.write_vectored(&[IoSlice::new(&[1, 2, 3, 4]), IoSlice::new(&[5, 6, 7, 8])])
+        .unwrap(),
+      8
+    );
+    assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
+  }
 }

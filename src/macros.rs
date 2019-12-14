@@ -63,7 +63,7 @@ macro_rules! impl_from_iter_ex {
       while i < N {
         if let Some($var_a) = it.next() {
           unsafe {
-            ptr_mut(&mut res).add(i).write($var_b);
+            Self::first_ptr_mut(&mut res).add(i).write($var_b);
           }
         } else {
           break;

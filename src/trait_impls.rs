@@ -1,9 +1,11 @@
 use crate::iterators::*;
-use crate::utils::{make_const_slice, make_mut_slice, partial_compare, ptr_mut};
+use crate::utils::{make_const_slice, make_mut_slice, partial_compare};
 use crate::StaticVec;
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
+// We re-export FromIterator as the implementation of it done in this file
+// is used directly in the main `lib.rs` file.
 #[doc(hidden)]
 pub use core::iter::FromIterator;
 use core::ops::{
@@ -22,7 +24,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 #[cfg(feature = "std")]
-use std::io::{self, IoSlice, IoSliceMut, Read, Write};
+use std::io::{self, BufRead, IoSlice, IoSliceMut, Read, Write};
 
 #[cfg(feature = "serde_support")]
 use core::marker::PhantomData;
@@ -97,7 +99,7 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
           unsafe {
             self
               .as_ptr()
-              .copy_to_nonoverlapping(ptr_mut(&mut res), length);
+              .copy_to_nonoverlapping(Self::first_ptr_mut(&mut res), length);
             res
           }
         },
@@ -167,8 +169,9 @@ impl<T, I: IntoIterator<Item = T>, const N: usize> ExtendEx<T, I> for StaticVec<
   impl_from_iter_ex!(val, val);
 }
 
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&'a T, I> for StaticVec<T, N> {
+impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&'a T, I>
+  for StaticVec<T, N>
+{
   impl_extend_ex!(val, (*val));
   impl_from_iter_ex!(val, (*val));
 }
@@ -185,8 +188,9 @@ impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, &StaticVec<T, N>> for Sta
   }
 }
 
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, &StaticVec<T, N2>> for StaticVec<T, N1> {
+impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, &StaticVec<T, N2>>
+  for StaticVec<T, N1>
+{
   #[inline(always)]
   default fn extend_ex(&mut self, iter: &StaticVec<T, N2>) {
     self.extend_from_slice(iter);
@@ -198,8 +202,9 @@ impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, &Static
   }
 }
 
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N>> for StaticVec<T, N> {
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N>>
+  for StaticVec<T, N>
+{
   #[inline(always)]
   default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N>) {
     self.extend_from_slice(iter.as_slice());
@@ -211,8 +216,9 @@ impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T,
   }
 }
 
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N2>> for StaticVec<T, N1> {
+impl<'a, T: 'a + Copy, const N1: usize, const N2: usize>
+  ExtendEx<&'a T, StaticVecIterConst<'a, T, N2>> for StaticVec<T, N1>
+{
   #[inline(always)]
   default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N2>) {
     self.extend_from_slice(iter.as_slice());
@@ -224,8 +230,9 @@ impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, StaticV
   }
 }
 
-#[rustfmt::skip]
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, core::slice::Iter<'a, T>> for StaticVec<T, N> {
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, core::slice::Iter<'a, T>>
+  for StaticVec<T, N>
+{
   #[inline(always)]
   fn extend_ex(&mut self, iter: core::slice::Iter<'a, T>) {
     self.extend_from_slice(iter.as_slice());
@@ -593,7 +600,7 @@ impl<T, const N: usize> IntoIterator for StaticVec<T, N> {
         unsafe {
           self
             .as_ptr()
-            .copy_to_nonoverlapping(ptr_mut(&mut data), old_length)
+            .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), old_length)
         };
         data
       },
@@ -779,17 +786,31 @@ impl<const N: usize> Write for StaticVec<u8, N> {
   }
 }
 
+#[cfg(feature = "std")]
+impl<const N: usize> BufRead for StaticVec<u8, N> {
+  #[inline(always)]
+  fn fill_buf(&mut self) -> io::Result<&[u8]> {
+    Ok(&**self)
+  }
+
+  #[inline(always)]
+  fn consume(&mut self, amt: usize) {
+    *self = unsafe { Self::new_from_slice(self.as_slice().get_unchecked(amt..)) };
+  }
+}
+
 #[cfg(feature = "serde_support")]
-#[rustfmt::skip]
 impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, N>
-where T: Deserialize<'de> {
+where T: Deserialize<'de>
+{
   #[inline]
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where D: Deserializer<'de> {
     struct StaticVecVisitor<'de, T, const N: usize>(PhantomData<(&'de (), T)>);
 
     impl<'de, T, const N: usize> Visitor<'de> for StaticVecVisitor<'de, T, N>
-    where T: Deserialize<'de> {
+    where T: Deserialize<'de>
+    {
       type Value = StaticVec<T, N>;
 
       #[inline(always)]
@@ -818,9 +839,9 @@ where T: Deserialize<'de> {
 }
 
 #[cfg(feature = "serde_support")]
-#[rustfmt::skip]
 impl<T, const N: usize> Serialize for StaticVec<T, N>
-where T: Serialize {
+where T: Serialize
+{
   #[inline(always)]
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where S: Serializer {

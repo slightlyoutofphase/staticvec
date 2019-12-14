@@ -4,18 +4,6 @@ use core::intrinsics;
 use core::mem::MaybeUninit;
 use core::ptr;
 
-/// An internal convenience function to go from `*const MaybeUninit<[T; N]>` to `*const T`.
-#[inline(always)]
-pub(crate) fn ptr_const<T, const N: usize>(this: *const MaybeUninit<[T; N]>) -> *const T {
-  this as *const T
-}
-
-/// An internal convenience function to go from `*mut MaybeUninit<[T; N]>` to `*mut T`.
-#[inline(always)]
-pub(crate) fn ptr_mut<T, const N: usize>(this: *mut MaybeUninit<[T; N]>) -> *mut T {
-  this as *mut T
-}
-
 /// An internal function for calculating pointer offsets as usizes, while accounting
 /// directly for possible ZSTs. This is used specifically in the iterator implementations.
 #[inline(always)]
@@ -30,17 +18,18 @@ pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usi
 
 /// A simple reversal function that returns a new array, called in
 /// [`StaticVec::reversed`](crate::StaticVec::reversed).
-#[rustfmt::skip]
 #[inline]
 pub(crate) fn reverse_copy<T, const N: usize>(
   length: usize,
-  this: *const MaybeUninit<[T; N]>,
+  this: &MaybeUninit<[T; N]>,
 ) -> MaybeUninit<[T; N]>
-where T: Copy {
+where
+  T: Copy,
+{
   let mut i = length;
-  let src = ptr_const(this);
+  let src = StaticVec::first_ptr(this);
   let mut res: MaybeUninit<[T; N]> = MaybeUninit::uninit();
-  let mut dest = ptr_mut(&mut res);
+  let mut dest = StaticVec::first_ptr_mut(&mut res);
   while i > 0 {
     unsafe {
       src.add(i - 1).copy_to_nonoverlapping(dest, 1);
@@ -62,7 +51,7 @@ where T: Copy {
       unsafe {
         let mut data = StaticVec::new_data_uninit();
         for i in 0..COUNT {
-          // Can't use ptr_mut() here as the type inference doesn't work
+          // Can't use `first_ptr_mut` here as the type inference doesn't work
           // in this context for some reason.
           (data.as_mut_ptr() as *mut T).add(i).write(value);
         }
@@ -74,12 +63,12 @@ where T: Copy {
 }
 
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.
-#[rustfmt::skip]
 #[inline]
 pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
   this: &[T2],
   other: &[T1],
-) -> Option<Ordering> {
+) -> Option<Ordering>
+{
   let min_length = this.len().min(other.len());
   unsafe {
     let left = this.get_unchecked(0..min_length);

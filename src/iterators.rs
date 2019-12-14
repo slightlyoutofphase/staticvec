@@ -1,4 +1,4 @@
-use crate::utils::{distance_between, make_const_slice, ptr_const, ptr_mut};
+use crate::utils::{distance_between, make_const_slice};
 use crate::StaticVec;
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics;
@@ -149,7 +149,9 @@ impl<'a, T: 'a, const N: usize> Clone for StaticVecIterConst<'a, T, N> {
 impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    f.debug_list().entries(self.as_slice()).finish()
+    f.debug_tuple("StaticVecIterConst")
+      .field(&self.as_slice())
+      .finish()
   }
 }
 
@@ -244,7 +246,9 @@ unsafe impl<'a, T: 'a + Sync, const N: usize> Send for StaticVecIterMut<'a, T, N
 impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    f.debug_list().entries(self.as_slice()).finish()
+    f.debug_tuple("StaticVecIterMut")
+      .field(&self.as_slice())
+      .finish()
   }
 }
 
@@ -262,8 +266,8 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
     unsafe {
       format!(
         "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        &*ptr_const(&self.data).add(self.start),
-        &*ptr_const(&self.data).add(self.end - 1)
+        &*StaticVec::first_ptr(&self.data).add(self.start),
+        &*StaticVec::first_ptr(&self.data).add(self.end - 1)
       )
     }
   }
@@ -273,7 +277,10 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    make_const_slice(unsafe { ptr_const(&self.data).add(self.start) }, self.len())
+    make_const_slice(
+      unsafe { StaticVec::first_ptr(&self.data).add(self.start) },
+      self.len(),
+    )
   }
 }
 
@@ -285,7 +292,7 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     match self.end - self.start {
       0 => None,
       _ => {
-        let res = Some(unsafe { ptr_const(&self.data).add(self.start).read() });
+        let res = Some(unsafe { StaticVec::first_ptr(&self.data).add(self.start).read() });
         self.start += 1;
         res
       }
@@ -306,7 +313,7 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
       0 => None,
       _ => {
         self.end -= 1;
-        Some(unsafe { ptr_const(&self.data).add(self.end).read() })
+        Some(unsafe { StaticVec::first_ptr(&self.data).add(self.end).read() })
       }
     }
   }
@@ -332,7 +339,9 @@ unsafe impl<T: Sync, const N: usize> Send for StaticVecIntoIter<T, N> {}
 impl<T: Debug, const N: usize> Debug for StaticVecIntoIter<T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    f.debug_list().entries(self.as_slice()).finish()
+    f.debug_tuple("StaticVecIntoIter")
+      .field(&self.as_slice())
+      .finish()
   }
 }
 
@@ -344,7 +353,7 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
       0 => (),
       _ => unsafe {
         ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
-          ptr_mut(&mut self.data).add(self.start),
+          StaticVec::first_ptr_mut(&mut self.data).add(self.start),
           item_count,
         ))
       },

@@ -1,6 +1,6 @@
 #![no_std]
-#![allow(clippy::inline_always)]
 #![allow(clippy::doc_markdown)]
+#![allow(clippy::inline_always)]
 #![allow(incomplete_features)]
 #![feature(const_fn)]
 #![feature(const_generics)]
@@ -21,7 +21,7 @@
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
 pub use crate::trait_impls::*;
-use crate::utils::{make_const_slice, make_mut_slice, ptr_mut, reverse_copy};
+use crate::utils::{make_const_slice, make_mut_slice, reverse_copy};
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 use core::marker::PhantomData;
@@ -34,11 +34,11 @@ use core::ptr;
 #[cfg(any(feature = "std", rustdoc))]
 extern crate alloc;
 
-#[cfg(feature = "std")]
-extern crate std;
-
 #[cfg(any(feature = "std", rustdoc))]
 use alloc::vec::Vec;
+
+#[cfg(feature = "std")]
+extern crate std;
 
 mod iterators;
 #[macro_use]
@@ -81,7 +81,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         unsafe {
           values
             .as_ptr()
-            .copy_to_nonoverlapping(ptr_mut(&mut data), length);
+            .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), length);
           data
         }
       },
@@ -128,7 +128,7 @@ impl<T, const N: usize> StaticVec<T, N> {
             let mut data = Self::new_data_uninit();
             values
               .as_ptr()
-              .copy_to_nonoverlapping(ptr_mut(&mut data), N2.min(N));
+              .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), N2.min(N));
             // Wrap the values in a MaybeUninit to inhibit their destructors (if any),
             // then manually drop any excess ones.
             let mut forgotten = MaybeUninit::new(values);
@@ -505,8 +505,18 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// that exist in later positions are shifted to the left.
   #[inline]
   pub fn remove(&mut self, index: usize) -> T {
-    assert!(index < self.length);
-    unsafe { self.drain(index..=index).as_ptr().read() }
+    // This is mostly the same as how normal Vec implements it.
+    let current_length = self.length;
+    assert!(index < current_length);
+    unsafe {
+      let self_ptr = self.mut_ptr_at_unchecked(index);
+      let res = self_ptr.read();
+      self_ptr
+        .offset(1)
+        .copy_to(self_ptr, current_length - index - 1);
+      self.set_len(current_length - 1);
+      res
+    }
   }
 
   /// Removes the first instance of `item` from the StaticVec if the item exists.
@@ -560,9 +570,9 @@ impl<T, const N: usize> StaticVec<T, N> {
     let old_length = self.length;
     assert!(old_length < N && index <= old_length);
     unsafe {
-      let p = self.mut_ptr_at_unchecked(index);
-      p.copy_to(p.offset(1), old_length - index);
-      p.write(value);
+      let self_ptr = self.mut_ptr_at_unchecked(index);
+      self_ptr.copy_to(self_ptr.offset(1), old_length - index);
+      self_ptr.write(value);
       self.set_len(old_length + 1);
     }
   }
@@ -595,19 +605,19 @@ impl<T, const N: usize> StaticVec<T, N> {
       "Insufficient remaining capacity / out of bounds!"
     );
     unsafe {
-      let mut this = self.mut_ptr_at_unchecked(index);
-      this.copy_to(this.add(iter_size), old_length - index);
+      let mut self_ptr = self.mut_ptr_at_unchecked(index);
+      self_ptr.copy_to(self_ptr.add(iter_size), old_length - index);
       self.length = index;
       let mut item_count = 0;
       while item_count < N {
-        if let Some(element) = it.next() {
-          let mut current = this.add(item_count);
+        if let Some(item) = it.next() {
+          let mut current = self_ptr.add(item_count);
           if item_count >= iter_size {
-            this = self.mut_ptr_at_unchecked(index);
-            current = this.add(item_count);
+            self_ptr = self.mut_ptr_at_unchecked(index);
+            current = self_ptr.add(item_count);
             current.copy_to(current.offset(1), old_length - index);
           }
-          current.write(element);
+          current.write(item);
           item_count += 1;
         } else {
           break;
@@ -625,9 +635,9 @@ impl<T, const N: usize> StaticVec<T, N> {
     let old_length = self.length;
     if old_length < N && index <= old_length {
       unsafe {
-        let p = self.mut_ptr_at_unchecked(index);
-        p.copy_to(p.offset(1), old_length - index);
-        p.write(value);
+        let self_ptr = self.mut_ptr_at_unchecked(index);
+        self_ptr.copy_to(self_ptr.offset(1), old_length - index);
+        self_ptr.write(value);
         self.set_len(old_length + 1);
         Ok(())
       }
@@ -882,13 +892,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Due to needing to call `clone()` through each individual element of `self` and `other`, this
   /// function is less efficient than [`concat`](crate::StaticVec::concat), so
   /// [`concat`](crate::StaticVec::concat) should be preferred whenever possible.
-  #[rustfmt::skip]
   #[inline]
   pub fn concat_clone<const N2: usize>(
     &self,
     other: &StaticVec<T, N2>,
   ) -> StaticVec<T, { N + N2 }>
-  where T: Clone {
+  where
+    T: Clone,
+  {
     let mut res = StaticVec::new();
     for i in 0..self.length {
       unsafe { res.push_unchecked(self.get_unchecked(i).clone()) };
@@ -984,7 +995,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         unsafe {
           vec
             .as_ptr()
-            .copy_to_nonoverlapping(ptr_mut(&mut data), item_count);
+            .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), item_count);
           // Manually drop any excess values in the source vec to avoid undesirable memory leaks.
           if vec_len > item_count {
             ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
@@ -1045,7 +1056,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         unsafe {
           self
             .ptr_at_unchecked(start)
-            .copy_to_nonoverlapping(ptr_mut(&mut res), res_length);
+            .copy_to_nonoverlapping(Self::first_ptr_mut(&mut res), res_length);
           self
             .ptr_at_unchecked(end)
             .copy_to(self.mut_ptr_at_unchecked(start), current_length - end);
@@ -1156,7 +1167,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         let mut split = Self::new_data_uninit();
         self
           .ptr_at_unchecked(at)
-          .copy_to_nonoverlapping(ptr_mut(&mut split), split_length);
+          .copy_to_nonoverlapping(Self::first_ptr_mut(&mut split), split_length);
         split
       },
       length: split_length,
@@ -1335,7 +1346,6 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///   [1, 2, 3, 4],
   /// );
   /// ```
-  #[rustfmt::skip]
   #[inline]
   pub fn union<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
   where T: Clone + PartialEq {
@@ -1498,11 +1508,26 @@ impl<T, const N: usize> StaticVec<T, N> {
     res
   }
 
-  #[doc(hidden)]
+  /// An internal convenience function to get an *uninitialized* instance of
+  /// `MaybeUninit<[T; N]>`.
   #[inline(always)]
   pub(crate) const fn new_data_uninit() -> MaybeUninit<[T; N]> {
-    // An internal convenience function to get an *uninitialized* instance of
-    // `MaybeUninit<[T; N]>`.
     MaybeUninit::uninit()
+  }
+
+  /// An internal convenience function to go from `*const MaybeUninit<[T; N]>` to `*const T`.
+  /// Similar to [`MaybeUninit::first_ptr`](core::mem::MaybeUninit::first_ptr), but for arrays
+  /// as opposed to slices.
+  #[inline(always)]
+  pub(crate) const fn first_ptr(this: &MaybeUninit<[T; N]>) -> *const T {
+    this as *const MaybeUninit<[T; N]> as *const T
+  }
+
+  /// An internal convenience function to go from `*mut MaybeUninit<[T; N]>` to `*mut T`.
+  /// Similar to [`MaybeUninit::first_ptr_mut`](core::mem::MaybeUninit::first_ptr_mut), but for
+  /// arrays as opposed to slices.
+  #[inline(always)]
+  pub(crate) const fn first_ptr_mut(this: &mut MaybeUninit<[T; N]>) -> *mut T {
+    this as *mut MaybeUninit<[T; N]> as *mut T
   }
 }
