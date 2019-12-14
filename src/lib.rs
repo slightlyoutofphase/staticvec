@@ -1114,10 +1114,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   where F: FnMut(&mut T) -> bool {
     let mut res = Self::new();
     let old_length = self.length;
+    // Temporarily set our length to 0 to avoid double drops and such if anything
+    // goes wrong in the filter loop.
     self.length = 0;
     unsafe {
+      // If `self.length` was already 0, this loop is skipped completely.
       for i in 0..old_length {
-        // This is fine because we intentionally set length to `0` ourselves just now.
+        // This is fine because we intentionally set `self.length` to `0` ourselves just now.
         let val = self.mut_ptr_at_unchecked(i);
         if filter(&mut *val) {
           res.mut_ptr_at_unchecked(res.length).write(val.read());
