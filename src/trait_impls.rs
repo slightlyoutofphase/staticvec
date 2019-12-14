@@ -795,7 +795,7 @@ impl<const N: usize> BufRead for StaticVec<u8, N> {
 
   #[inline(always)]
   fn consume(&mut self, amt: usize) {
-    *self = unsafe { Self::new_from_slice(self.as_slice().get_unchecked(amt..)) };
+    *self = Self::new_from_slice(&self[amt..]);
   }
 }
 
