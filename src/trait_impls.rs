@@ -45,16 +45,39 @@ impl<T, I: IntoIterator<Item = T>, const N: usize> ExtendEx<T, I> for StaticVec<
   impl_from_iter_ex!(val, val);
 }
 
-impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&'a T, I>
-  for StaticVec<T, N>
-{
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&'a T, I> for StaticVec<T, N> {
   impl_extend_ex!(val, (*val));
   impl_from_iter_ex!(val, (*val));
 }
 
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N>>
-  for StaticVec<T, N>
-{
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, &StaticVec<T, N>> for StaticVec<T, N> {
+  #[inline(always)]
+  default fn extend_ex(&mut self, iter: &StaticVec<T, N>) {
+    self.extend_from_slice(iter);
+  }
+
+  #[inline(always)]
+  default fn from_iter_ex(iter: &StaticVec<T, N>) -> Self {
+    Self::new_from_slice(iter)
+  }
+}
+
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, &StaticVec<T, N2>> for StaticVec<T, N1> {
+  #[inline(always)]
+  default fn extend_ex(&mut self, iter: &StaticVec<T, N2>) {
+    self.extend_from_slice(iter);
+  }
+
+  #[inline(always)]
+  default fn from_iter_ex(iter: &StaticVec<T, N2>) -> Self {
+    Self::new_from_slice(iter)
+  }
+}
+
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N>> for StaticVec<T, N> {
   #[inline(always)]
   default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N>) {
     self.extend_from_slice(iter.as_slice());
@@ -66,9 +89,8 @@ impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T,
   }
 }
 
-impl<'a, T: 'a + Copy, const N1: usize, const N2: usize>
-  ExtendEx<&'a T, StaticVecIterConst<'a, T, N2>> for StaticVec<T, N1>
-{
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N2>> for StaticVec<T, N1> {
   #[inline(always)]
   default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N2>) {
     self.extend_from_slice(iter.as_slice());
@@ -80,9 +102,8 @@ impl<'a, T: 'a + Copy, const N1: usize, const N2: usize>
   }
 }
 
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, core::slice::Iter<'a, T>>
-  for StaticVec<T, N>
-{
+#[rustfmt::skip]
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, core::slice::Iter<'a, T>> for StaticVec<T, N> {
   #[inline(always)]
   fn extend_ex(&mut self, iter: core::slice::Iter<'a, T>) {
     self.extend_from_slice(iter.as_slice());
@@ -765,17 +786,16 @@ impl<const N: usize> Write for StaticVec<u8, N> {
 }
 
 #[cfg(feature = "serde_support")]
+#[rustfmt::skip]
 impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, N>
-where T: Deserialize<'de>
-{
+where T: Deserialize<'de> {
   #[inline]
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where D: Deserializer<'de> {
     struct StaticVecVisitor<'de, T, const N: usize>(PhantomData<(&'de (), T)>);
 
     impl<'de, T, const N: usize> Visitor<'de> for StaticVecVisitor<'de, T, N>
-    where T: Deserialize<'de>
-    {
+    where T: Deserialize<'de> {
       type Value = StaticVec<T, N>;
 
       #[inline(always)]
@@ -804,9 +824,9 @@ where T: Deserialize<'de>
 }
 
 #[cfg(feature = "serde_support")]
+#[rustfmt::skip]
 impl<T, const N: usize> Serialize for StaticVec<T, N>
-where T: Serialize
-{
+where T: Serialize {
   #[inline(always)]
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where S: Serializer {

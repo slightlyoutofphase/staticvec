@@ -874,14 +874,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Due to needing to call `clone()` through each individual element of `self` and `other`, this
   /// function is less efficient than [`concat`](crate::StaticVec::concat), so
   /// [`concat`](crate::StaticVec::concat) should be preferred whenever possible.
+  #[rustfmt::skip]
   #[inline]
   pub fn concat_clone<const N2: usize>(
     &self,
     other: &StaticVec<T, N2>,
   ) -> StaticVec<T, { N + N2 }>
-  where
-    T: Clone,
-  {
+  where T: Clone {
     let mut res = StaticVec::new();
     for i in 0..self.length {
       unsafe { res.push_unchecked(self.get_unchecked(i).clone()) };
@@ -1327,6 +1326,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///   [1, 2, 3, 4],
   /// );
   /// ```
+  #[rustfmt::skip]
   #[inline]
   pub fn union<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
   where T: Clone + PartialEq {

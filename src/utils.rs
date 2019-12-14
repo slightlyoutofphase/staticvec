@@ -30,14 +30,13 @@ pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usi
 
 /// A simple reversal function that returns a new array, called in
 /// [`StaticVec::reversed`](crate::StaticVec::reversed).
+#[rustfmt::skip]
 #[inline]
 pub(crate) fn reverse_copy<T, const N: usize>(
   length: usize,
   this: *const MaybeUninit<[T; N]>,
 ) -> MaybeUninit<[T; N]>
-where
-  T: Copy,
-{
+where T: Copy {
   let mut i = length;
   let src = ptr_const(this);
   let mut res: MaybeUninit<[T; N]> = MaybeUninit::uninit();
@@ -75,12 +74,12 @@ where T: Copy {
 }
 
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.
+#[rustfmt::skip]
 #[inline]
 pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
   this: &[T2],
   other: &[T1],
-) -> Option<Ordering>
-{
+) -> Option<Ordering> {
   let min_length = this.len().min(other.len());
   unsafe {
     let left = this.get_unchecked(0..min_length);
