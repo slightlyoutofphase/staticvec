@@ -340,7 +340,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a constant reference to the element of the StaticVec at `index`,
-  /// if `index` is within the range `0..length`. No checks are performed to
+  /// if `index` is within the range `0..self.length`. No checks are performed to
   /// ensure that is the case, so this function is marked `unsafe` and should
   /// be used with caution only when performance is absolutely paramount.
   ///
@@ -364,7 +364,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a mutable reference to the element of the StaticVec at `index`,
-  /// if `index` is within the range `0..length`. No checks are performed to
+  /// if `index` is within the range `0..self.length`. No checks are performed to
   /// ensure that is the case, so this function is marked `unsafe` and should
   /// be used with caution only when performance is absolutely paramount.
   ///
