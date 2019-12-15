@@ -5,6 +5,7 @@
 #![feature(const_fn)]
 #![feature(const_generics)]
 #![feature(const_if_match)]
+#![feature(const_mut_refs)]
 #![feature(const_raw_ptr_to_usize_cast)]
 #![feature(core_intrinsics)]
 #![feature(doc_cfg)]
@@ -260,7 +261,8 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns a mutable pointer to the first element of the StaticVec's internal array.
   #[inline(always)]
-  pub fn as_mut_ptr(&mut self) -> *mut T {
+  pub const fn as_mut_ptr(&mut self) -> *mut T {
+    // Written like this so it can be `const fn`.
     &mut self.data as *mut _ as *mut T
   }
 
