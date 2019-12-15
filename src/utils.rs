@@ -28,7 +28,7 @@ where
 {
   let mut i = length;
   let src = StaticVec::first_ptr(this);
-  let mut res: MaybeUninit<[T; N]> = MaybeUninit::uninit();
+  let mut res = StaticVec::new_data_uninit();
   let mut dest = StaticVec::first_ptr_mut(&mut res);
   while i > 0 {
     unsafe {
