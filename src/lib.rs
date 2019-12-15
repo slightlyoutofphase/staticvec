@@ -280,34 +280,56 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` without doing any
-  /// checking to ensure that `index` is within the range `0..self.length`. The return value of this
-  /// function is equivalent to what would be returned from `as_ptr().add(index)`.
+  /// checking to ensure that `index` is actually within any particular bounds. The return value of
+  /// this function is equivalent to what would be returned from `as_ptr().add(index)`.
   ///
   /// # Safety
   ///
   /// It is up to the caller to ensure that `index` is within the appropriate bounds such that the
-  /// function returns a pointer to valid data.
+  /// function returns a pointer to a location that falls somewhere inside the full span of the
+  /// StaticVec's backing array, and that if reading from the returned pointer, it has *already*
+  /// been initialized properly.
   #[inline(always)]
   pub unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
-    // This can't have a debug assert because it's used internally in functions where `self.length`
-    // has intentionally been temporarily set to 0, and also in things like the iterator
-    // implementations where `end` is initially *at* `self.length`, not `self.length - 1`.
+    // We check against `N` as opposed to `length` in our debug assertion here, as these
+    // `_unchecked` versions of `ptr_at` and `mut_ptr_at` are primarily intended for
+    // initialization-related purposes (and used extensively that way internally throughout the
+    // crate.)
+    debug_assert!(
+      index <= N,
+      "In `StaticVec::ptr_at_unchecked`, provided index {} must be within `0..={}`!",
+      index,
+      N
+    );
     self.as_ptr().add(index)
   }
 
   /// Returns a mutable pointer to the element of the StaticVec at `index` without doing any
-  /// checking to ensure that `index` is within the range `0..self.length`. The return value of this
-  /// function is equivalent to what would be returned from `as_mut_ptr().add(index)`.
+  /// checking to ensure that `index` is actually within any particular bounds. The return value of
+  /// this function is equivalent to what would be returned from `as_mut_ptr().add(index)`.
   ///
   /// # Safety
   ///
   /// It is up to the caller to ensure that `index` is within the appropriate bounds such that the
-  /// function returns a pointer to valid data.
+  /// function returns a pointer to a location that falls somewhere inside the full span of the
+  /// StaticVec's backing array.
+  ///
+  /// It is also the responsibility of the caller to ensure that the `length` field of the StaticVec
+  /// is adjusted to properly reflect whatever range of elements this function may be used to
+  /// initialize, and that if reading from the returned pointer, it has *already* been initialized
+  /// properly.
   #[inline(always)]
   pub unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
-    // This can't have a debug assert because it's used internally in functions where `self.length`
-    // has intentionally been temporarily set to 0, and also in things like the iterator
-    // implementations where `end` is initially *at* `self.length`, not `self.length - 1`.
+    // We check against `N` as opposed to `length` in our debug assertion here, as these
+    // `_unchecked` versions of `ptr_at` and `mut_ptr_at` are primarily intended for
+    // initialization-related purposes (and used extensively that way internally throughout the
+    // crate.)
+    debug_assert!(
+      index <= N,
+      "In `StaticVec::mut_ptr_at_unchecked`, provided index {} must be within `0..={}`!",
+      index,
+      N
+    );
     self.as_mut_ptr().add(index)
   }
 
@@ -339,10 +361,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe { self.mut_ptr_at_unchecked(index) }
   }
 
-  /// Returns a constant reference to the element of the StaticVec at `index`,
-  /// if `index` is within the range `0..self.length`. No checks are performed to
-  /// ensure that is the case, so this function is marked `unsafe` and should
-  /// be used with caution only when performance is absolutely paramount.
+  /// Returns a constant reference to the element of the StaticVec at `index` if `index` is within
+  /// the range `0..self.length`, without performing any checks to ensure that is actually the case.
   ///
   /// Note that unlike [`slice::get_unchecked`](https://doc.rust-lang.org/nightly/std/primitive.slice.html#method.get_unchecked),
   /// this method only supports accessing individual elements via `usize`; it cannot also produce
@@ -363,10 +383,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     &*self.ptr_at_unchecked(index)
   }
 
-  /// Returns a mutable reference to the element of the StaticVec at `index`,
-  /// if `index` is within the range `0..self.length`. No checks are performed to
-  /// ensure that is the case, so this function is marked `unsafe` and should
-  /// be used with caution only when performance is absolutely paramount.
+  /// Returns a mutable reference to the element of the StaticVec at `index` if `index` is within
+  /// the range `0..self.length`, without performing any checks to ensure that is actually the case.
   ///
   /// The same differences between this method and the slice method of the same name
   /// apply as do for [`get_unchecked`](crate::StaticVec::get_unchecked).
