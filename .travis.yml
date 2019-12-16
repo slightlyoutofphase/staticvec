@@ -10,5 +10,7 @@ jobs:
   - os: osx
 
 script:
-  - bash ./ci/run_miri.sh
+  # Miri is temporarily disabled until it supports `const_loop`.
+  # - bash ./ci/run_miri.sh
+  - cargo test --features="std"
   - cargo test --no-default-features

@@ -1,9 +1,6 @@
 #![allow(clippy::all)]
 #![allow(dead_code)]
-#[cfg(not(miri))]
 #![feature(const_fn, const_if_match, const_loop)]
-#[cfg(miri)]
-#![feature(const_fn, const_if_match)]
 
 use staticvec::*;
 
@@ -889,14 +886,11 @@ fn macros() {
   assert_eq!(V3, [1, 2, 3, 4]);
   const V4: StaticVec<i32, 128> = staticvec![27; 128];
   assert!(V4 == [27; 128]);
-  #[cfg(not(miri))]
-  {
-    static V: StaticVec<f64, 3> = sortedstaticvec!(f64, [16.0, 15.0, 14.0]);
-    assert_eq!(V, [14.0, 15.0, 16.0]);
-    assert_eq!(V.reversed().drain(0..1), [16.0]);
-    static VV: StaticVec<f64, 0> = sortedstaticvec!(f64, []);
-    assert_eq!(VV, []);
-  }
+  static V: StaticVec<f64, 3> = sortedstaticvec!(f64, [16.0, 15.0, 14.0]);
+  assert_eq!(V, [14.0, 15.0, 16.0]);
+  assert_eq!(V.reversed().drain(0..1), [16.0]);
+  static VV: StaticVec<f64, 0> = sortedstaticvec!(f64, []);
+  assert_eq!(VV, []);
 }
 
 #[test]
