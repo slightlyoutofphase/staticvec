@@ -25,6 +25,43 @@ macro_rules! staticvec {
   };
 }
 
+/// Accepts an array of any type that implements [`PartialOrd`](core::cmp::PartialOrd),
+/// sorts it, and creates a new [`StaticVec`](crate::StaticVec) instance from the result
+/// in a fully const context compatible manner.
+///
+/// Example usage:
+///
+/// ```
+/// #![feature(const_fn, const_if_match, const_loop)]
+/// // Currently, it's necessary to have the type specified in the macro itself.
+/// static V: StaticVec<f64, 3> = sortedstaticvec!(f64, [16.0, 15.0, 14.0]);
+/// assert_eq!(V, [14.0, 15.0, 16.0]);
+/// assert_eq!(V.reversed().drain(0..1), [16.0]);
+/// static VV: StaticVec<f64, 0> = sortedstaticvec!(f64, []);
+/// assert_eq!(VV, []);
+/// ```
+#[macro_export]
+macro_rules! sortedstaticvec {
+  (@put_one $val:expr) => (1);
+  ($type: ty, [$($val:expr),* $(,)*]) => {{
+    #[doc(hidden)]
+    use staticsort::staticsort;
+    match 0$(+sortedstaticvec!(@put_one $val))* {
+      0 => $crate::StaticVec::new(),
+      _ => $crate::StaticVec::new_from_const_array(
+             staticsort!(
+               $type,
+               0,
+               0$(+sortedstaticvec!(@put_one $val))* - 1,
+               0$(+sortedstaticvec!(@put_one $val))*,
+               [$($val),*]
+             )
+           ),
+    }
+
+  };};
+}
+
 macro_rules! impl_extend_ex {
   ($var_a:tt, $var_b:tt) => {
     /// Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than

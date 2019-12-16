@@ -1,6 +1,6 @@
 // So we don't get "function complexity" lints and such since it's a demo.
 #![allow(clippy::all)]
-
+#![feature(const_fn, const_if_match, const_loop)]
 use staticvec::*;
 
 #[derive(Copy, Clone, Debug)]
@@ -416,4 +416,9 @@ fn main() {
   println!("{:?}", zzy);
   let zwz = StaticVec::<u8, 3>::from_iter(staticvec![4, 5, 6].iter());
   println!("{:?}", zwz);
+  static V: StaticVec<f64, 3> = sortedstaticvec!(f64, [16.0, 15.0, 14.0]);
+  assert_eq!(V, [14.0, 15.0, 16.0]);
+  assert_eq!(V.reversed().drain(0..1), [16.0]);
+  static VV: StaticVec<f64, 0> = sortedstaticvec!(f64, []);
+  assert_eq!(VV, []);
 }
