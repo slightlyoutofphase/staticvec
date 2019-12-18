@@ -662,17 +662,17 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     // Safety:  read_length <= buf.length and self.length. Rust borrowing
     // rules mean that buf is guaranteed not to overlap with self.
     unsafe {
-      buf
-        .as_mut_ptr()
+      buf.as_mut_ptr()
         .copy_from_nonoverlapping(self.as_ptr(), read_length);
     }
     if read_length < current_length {
-      // TODO: find out if the optimizer elides the bounds check here. It
-      // should be able to, since the only non-const value is read_length,
-      // which is known to be <= self.length
-      self.as_mut_slice().copy_within(read_length.., 0);
+      // Safety: we just confirmed that read_length is less than our current length.
+      unsafe {
+        self.ptr_at_unchecked(read_length)
+          .copy_to(self.as_mut_ptr(), current_length - read_length)
+      };
     }
-    // Safety: 0 <= read_length <= self.length
+    // Safety: 0 <= read_length <= current_length
     unsafe { self.set_len(current_length - read_length) };
     Ok(read_length)
   }
@@ -715,7 +715,7 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     // internal data only once. This as opposed to calling `read` in a loop,
     // which shifts the inner data each time.
     let mut start_ptr = self.as_ptr();
-    let original_length = self.length;
+    let old_length = self.length;
     // We update self.length inplace in the loop to track how many bytes
     // have been written. This means that when we perform the shift at the
     // end, self.length is already correct.
@@ -728,19 +728,19 @@ impl<const N: usize> Read for StaticVec<u8, N> {
       // Safety: start_ptr is known to point to the array in self, which
       // is different than `buf`. read_length <= self.length.
       unsafe {
-        buf
-          .as_mut_ptr()
+        buf.as_mut_ptr()
           .copy_from_nonoverlapping(start_ptr, read_length);
         start_ptr = start_ptr.add(read_length);
         self.length -= read_length;
       }
     }
-    let total_read = original_length - self.length;
-    if self.length > 0 {
-      // TODO: find out if the optimizer elides the bounds check here. It
-      // should be able to, since the only non-const value is total_read,
-      // which is known to be <= self.length
-      self.as_mut_slice().copy_within(total_read.., 0);
+    let current_length = self.length;
+    let total_read = old_length - current_length;
+    if current_length > 0 {
+      unsafe {
+        self.ptr_at_unchecked(total_read)
+          .copy_to(self.as_mut_ptr(), current_length)
+      };
     }
     Ok(total_read)
   }
