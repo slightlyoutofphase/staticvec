@@ -1140,7 +1140,7 @@ mod read_tests {
     let mut buf1 = [0; 4];
     let mut buf2 = [0; 4];
     let mut buf3 = [0; 4];
-    let bufs = [
+    let mut bufs = [
       io::IoSliceMut::new(&mut buf1),
       io::IoSliceMut::new(&mut buf2),
       io::IoSliceMut::new(&mut buf3),
@@ -1158,7 +1158,7 @@ mod read_tests {
     let mut buf4 = [0; 2];
     let mut buf5 = [0; 3];
     let mut buf6 = [0; 4];
-    let bufs2 = [
+    let mut bufs2 = [
       io::IoSliceMut::new(&mut buf4),
       io::IoSliceMut::new(&mut buf5),
       io::IoSliceMut::new(&mut buf6),
