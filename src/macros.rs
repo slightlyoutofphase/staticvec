@@ -25,8 +25,8 @@ macro_rules! staticvec {
   };
 }
 
-/// Accepts an array of any [`Copy`](core::marker::Copy) type that derives or implements
-/// [`PartialOrd`](core::cmp::PartialOrd), sorts it, and creates a new
+/// Accepts an array of any primitive [`Copy`](core::marker::Copy) type that has a
+/// [`PartialOrd`](core::cmp::PartialOrd) implementation, sorts it, and creates a new
 /// [`StaticVec`](crate::StaticVec) instance from the result in a fully const context compatible
 /// manner.
 ///
@@ -59,7 +59,6 @@ macro_rules! sortedstaticvec {
              )
            ),
     }
-
   };};
 }
 
