@@ -1089,6 +1089,8 @@ mod read_tests {
     let mut buffer3 = staticvec![0; 9];
     assert_eq!(ints.read(buffer3.as_mut_slice()).unwrap(), 5);
     assert_eq!(ints, []);
+    assert_eq!(ints.read(buffer3.as_mut_slice()).unwrap(), 0);
+    assert_eq!(ints, []);
     assert_eq!(ints.read(staticvec![].as_mut_slice()).unwrap(), 0);
   }
 
@@ -1138,15 +1140,37 @@ mod read_tests {
     let mut buf1 = [0; 4];
     let mut buf2 = [0; 4];
     let mut buf3 = [0; 4];
-    let bufs = &mut [
+    let bufs = [
       io::IoSliceMut::new(&mut buf1),
       io::IoSliceMut::new(&mut buf2),
       io::IoSliceMut::new(&mut buf3),
     ];
-    assert_eq!(ints.read_vectored(bufs).unwrap(), 12);
+    assert_eq!(ints.read_vectored(&mut bufs).unwrap(), 12);
     assert_eq!(
       "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]",
       format!("{:?}", bufs)
+    );
+    assert_eq!(
+      ints,
+      []
+    );
+    let mut ints2 = staticvec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    let mut buf4 = [0; 2];
+    let mut buf5 = [0; 3];
+    let mut buf6 = [0; 4];
+    let bufs2 = [
+      io::IoSliceMut::new(&mut buf4),
+      io::IoSliceMut::new(&mut buf5),
+      io::IoSliceMut::new(&mut buf6),
+    ];
+    assert_eq!(ints2.read_vectored(bufs2).unwrap(), 9);
+    assert_eq!(
+      "[[1, 2], [3, 4, 5], [6, 7, 8, 9]]",
+      format!("{:?}", bufs2)
+    );
+    assert_eq!(
+      ints2,
+      [10, 11, 12]
     );
   }
 
