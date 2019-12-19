@@ -78,8 +78,8 @@ name = "clone_suite"
 path = "benchmark/clone_suite.rs"
 
 [[bench]]
-name = "comparison_suite"
-path = "benchmark/comparison_suite.rs"
+name = "push_pop_suite"
+path = "benchmark/push_pop.rs"
 
 [[bench]]
 name = "smallvec_full_suite"
@@ -103,5 +103,3 @@ serde_json = { optional = true, version = "1.0" }
 [dev-dependencies]
 # This is used in the test suite.
 cool_asserts = "1.0.0"
-# This is here so we can compare against it in one of the benchmarks.
-arrayvec = { version = "0.5", features = ["array-sizes-33-128", "array-sizes-129-255"] }
