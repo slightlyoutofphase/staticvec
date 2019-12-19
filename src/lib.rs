@@ -1141,27 +1141,28 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn drain_filter<F>(&mut self, mut filter: F) -> Self
   where F: FnMut(&mut T) -> bool {
-    let mut res = Self::new();
     let old_length = self.length;
     // Temporarily set our length to 0 to avoid double drops and such if anything
     // goes wrong in the filter loop.
     self.length = 0;
+    let mut res = Self::new();
+    let mut res_length = 0;
     unsafe {
       // If `self.length` was already 0, this loop is skipped completely.
       for i in 0..old_length {
         // This is fine because we intentionally set `self.length` to `0` ourselves just now.
-        let val = self.mut_ptr_at_unchecked(i);
-        if filter(&mut *val) {
-          res.mut_ptr_at_unchecked(res.length).write(val.read());
-          res.length += 1;
-        } else if res.length > 0 {
+        if filter(self.get_unchecked_mut(i)) {
+          res.mut_ptr_at_unchecked(res_length).write(self.ptr_at_unchecked(i).read());
+          res_length += 1;
+        } else if res_length > 0 {
           self
             .ptr_at_unchecked(i)
-            .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(i - res.length), 1);
+            .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(i - res_length), 1);
         }
       }
     }
-    self.length = old_length - res.length;
+    self.length = old_length - res_length;
+    res.length = res_length;
     res
   }
 
