@@ -87,7 +87,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
       _ => unsafe {
         let res = Some(&*self.start);
         self.start = match intrinsics::size_of::<T>() {
-          0 => (self.start as usize + 1) as *const _,
+          0 => (self.start as usize + 1) as *const T,
           _ => self.start.offset(1),
         };
         res
@@ -109,7 +109,7 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T
       0 => None,
       _ => unsafe {
         self.end = match intrinsics::size_of::<T>() {
-          0 => (self.end as usize - 1) as *const _,
+          0 => (self.end as usize - 1) as *const T,
           _ => self.end.offset(-1),
         };
         Some(&*self.end)
@@ -195,7 +195,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
       _ => unsafe {
         let res = Some(&mut *self.start);
         self.start = match intrinsics::size_of::<T>() {
-          0 => (self.start as usize + 1) as *mut _,
+          0 => (self.start as usize + 1) as *mut T,
           _ => self.start.offset(1),
         };
         res
@@ -217,7 +217,7 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, 
       0 => None,
       _ => unsafe {
         self.end = match intrinsics::size_of::<T>() {
-          0 => (self.end as usize - 1) as *mut _,
+          0 => (self.end as usize - 1) as *mut T,
           _ => self.end.offset(-1),
         };
         Some(&mut *self.end)
