@@ -467,7 +467,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// full; that is, if `self.len() == self.capacity()`.
   #[inline(always)]
   pub fn push(&mut self, value: T) {
-    assert!(self.is_not_full());
+    assert!(
+      self.is_not_full(),
+      "`StaticVec::push` was called through a StaticVec already at maximum capacity!"
+    );
     unsafe { self.push_unchecked(value) };
   }
 

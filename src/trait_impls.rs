@@ -381,7 +381,12 @@ impl<T, const N: usize> Index<usize> for StaticVec<T, N> {
   /// and if so returns the value at that position as a constant reference.
   #[inline(always)]
   fn index(&self, index: usize) -> &Self::Output {
-    assert!(index < self.length);
+    assert!(
+      index < self.length,
+      "In StaticVec::index, provided index {} must be less than the current length of {}!",
+      index,
+      self.length
+    );
     unsafe { self.get_unchecked(index) }
   }
 }
@@ -391,7 +396,12 @@ impl<T, const N: usize> IndexMut<usize> for StaticVec<T, N> {
   /// and if so returns the value at that position as a mutable reference.
   #[inline(always)]
   fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-    assert!(index < self.length);
+    assert!(
+      index < self.length,
+      "In StaticVec::index_mut, provided index {} must be less than the current length of {}!",
+      index,
+      self.length
+    );
     unsafe { self.get_unchecked_mut(index) }
   }
 }
