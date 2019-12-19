@@ -1150,10 +1150,7 @@ mod read_tests {
       "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]",
       format!("{:?}", bufs)
     );
-    assert_eq!(
-      ints,
-      []
-    );
+    assert_eq!(ints, []);
     let mut ints2 = staticvec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     let mut buf4 = [0; 2];
     let mut buf5 = [0; 3];
@@ -1164,14 +1161,8 @@ mod read_tests {
       io::IoSliceMut::new(&mut buf6),
     ];
     assert_eq!(ints2.read_vectored(&mut bufs2).unwrap(), 9);
-    assert_eq!(
-      "[[1, 2], [3, 4, 5], [6, 7, 8, 9]]",
-      format!("{:?}", bufs2)
-    );
-    assert_eq!(
-      ints2,
-      [10, 11, 12]
-    );
+    assert_eq!("[[1, 2], [3, 4, 5], [6, 7, 8, 9]]", format!("{:?}", bufs2));
+    assert_eq!(ints2, [10, 11, 12]);
   }
 
   #[test]

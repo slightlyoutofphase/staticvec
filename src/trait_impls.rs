@@ -662,13 +662,15 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     // Safety:  read_length <= buf.length and self.length. Rust borrowing
     // rules mean that buf is guaranteed not to overlap with self.
     unsafe {
-      buf.as_mut_ptr()
+      buf
+        .as_mut_ptr()
         .copy_from_nonoverlapping(self.as_ptr(), read_length);
     }
     if read_length < current_length {
       // Safety: we just confirmed that read_length is less than our current length.
       unsafe {
-        self.ptr_at_unchecked(read_length)
+        self
+          .ptr_at_unchecked(read_length)
           .copy_to(self.as_mut_ptr(), current_length - read_length)
       };
     }
@@ -728,7 +730,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
       // Safety: start_ptr is known to point to the array in self, which
       // is different than `buf`. read_length <= self.length.
       unsafe {
-        buf.as_mut_ptr()
+        buf
+          .as_mut_ptr()
           .copy_from_nonoverlapping(start_ptr, read_length);
         start_ptr = start_ptr.add(read_length);
         self.length -= read_length;
@@ -738,7 +741,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     let total_read = old_length - current_length;
     if current_length > 0 {
       unsafe {
-        self.ptr_at_unchecked(total_read)
+        self
+          .ptr_at_unchecked(total_read)
           .copy_to(self.as_mut_ptr(), current_length)
       };
     }
