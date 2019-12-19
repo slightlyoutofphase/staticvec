@@ -304,8 +304,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     // initialization-related purposes (and used extensively that way internally throughout the
     // crate.)
     debug_assert!(
-      index < N,
-      "In `StaticVec::ptr_at_unchecked`, provided index {} must be within `0..{}`!",
+      index <= N,
+      "In `StaticVec::ptr_at_unchecked`, provided index {} must be within `0..={}`!",
       index,
       N
     );
@@ -333,8 +333,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     // initialization-related purposes (and used extensively that way internally throughout the
     // crate.)
     debug_assert!(
-      index < N,
-      "In `StaticVec::mut_ptr_at_unchecked`, provided index {} must be within `0..{}`!",
+      index <= N,
+      "In `StaticVec::mut_ptr_at_unchecked`, provided index {} must be within `0..={}`!",
       index,
       N
     );
