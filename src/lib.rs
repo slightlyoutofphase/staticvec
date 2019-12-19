@@ -369,8 +369,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe { self.mut_ptr_at_unchecked(index) }
   }
 
-  /// Returns a constant reference to the element of the StaticVec at `index` if `index` is within
-  /// the range `0..self.length`, without performing any checks to ensure that is actually the case.
+  /// Returns a constant reference to the element of the StaticVec at `index` without doing any
+  /// checking to ensure that `index` is actually within any particular bounds.
   ///
   /// Note that unlike [`slice::get_unchecked`](https://doc.rust-lang.org/nightly/std/primitive.slice.html#method.get_unchecked),
   /// this method only supports accessing individual elements via `usize`; it cannot also produce
@@ -383,16 +383,16 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub unsafe fn get_unchecked(&self, index: usize) -> &T {
     debug_assert!(
-      index == 0 || < self.length,
+      index < N,
       "In `StaticVec::get_unchecked`, provided index {} must be within `0..{}`!",
       index,
-      self.length
+      N
     );
     &*self.ptr_at_unchecked(index)
   }
 
-  /// Returns a mutable reference to the element of the StaticVec at `index` if `index` is within
-  /// the range `0..self.length`, without performing any checks to ensure that is actually the case.
+  /// Returns a mutable reference to the element of the StaticVec at `index` without doing any
+  /// checking to ensure that `index` is actually within any particular bounds.
   ///
   /// The same differences between this method and the slice method of the same name
   /// apply as do for [`get_unchecked`](crate::StaticVec::get_unchecked).
@@ -403,10 +403,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
     debug_assert!(
-      index == 0 || index < self.length,
+      index < N,
       "In `StaticVec::get_unchecked_mut`, provided index {} must be within `0..{}`!",
       index,
-      self.length
+      N
     );
     &mut *self.mut_ptr_at_unchecked(index)
   }
