@@ -1,5 +1,5 @@
 use crate::iterators::*;
-use crate::utils::{make_const_slice, make_mut_slice, partial_compare};
+use crate::utils::{slice_from_raw_parts, slice_from_raw_parts_mut, partial_compare};
 use crate::StaticVec;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
@@ -429,7 +429,7 @@ impl<T, const N: usize> Index<Range<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: Range<usize>) -> &Self::Output {
     assert!(index.start < index.end && index.end <= self.length);
-    make_const_slice(
+    slice_from_raw_parts(
       unsafe { self.ptr_at_unchecked(index.start) },
       index.end - index.start,
     )
@@ -443,7 +443,7 @@ impl<T, const N: usize> IndexMut<Range<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
     assert!(index.start < index.end && index.end <= self.length);
-    make_mut_slice(
+    slice_from_raw_parts_mut(
       unsafe { self.mut_ptr_at_unchecked(index.start) },
       index.end - index.start,
     )
@@ -458,7 +458,7 @@ impl<T, const N: usize> Index<RangeFrom<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeFrom<usize>) -> &Self::Output {
     assert!(index.start <= self.length);
-    make_const_slice(
+    slice_from_raw_parts(
       unsafe { self.ptr_at_unchecked(index.start) },
       self.length - index.start,
     )
@@ -472,7 +472,7 @@ impl<T, const N: usize> IndexMut<RangeFrom<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeFrom<usize>) -> &mut Self::Output {
     assert!(index.start <= self.length);
-    make_mut_slice(
+    slice_from_raw_parts_mut(
       unsafe { self.mut_ptr_at_unchecked(index.start) },
       self.length - index.start,
     )
@@ -506,7 +506,7 @@ impl<T, const N: usize> Index<RangeInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeInclusive<usize>) -> &Self::Output {
     assert!(index.start() <= index.end() && *index.end() < self.length);
-    make_const_slice(
+    slice_from_raw_parts(
       unsafe { self.ptr_at_unchecked(*index.start()) },
       (index.end() + 1) - index.start(),
     )
@@ -520,7 +520,7 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut Self::Output {
     assert!(index.start() <= index.end() && *index.end() < self.length);
-    make_mut_slice(
+    slice_from_raw_parts_mut(
       unsafe { self.mut_ptr_at_unchecked(*index.start()) },
       (index.end() + 1) - index.start(),
     )
@@ -535,7 +535,7 @@ impl<T, const N: usize> Index<RangeTo<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeTo<usize>) -> &Self::Output {
     assert!(index.end <= self.length);
-    make_const_slice(self.as_ptr(), index.end)
+    slice_from_raw_parts(self.as_ptr(), index.end)
   }
 }
 
@@ -546,7 +546,7 @@ impl<T, const N: usize> IndexMut<RangeTo<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeTo<usize>) -> &mut Self::Output {
     assert!(index.end <= self.length);
-    make_mut_slice(self.as_mut_ptr(), index.end)
+    slice_from_raw_parts_mut(self.as_mut_ptr(), index.end)
   }
 }
 
@@ -558,7 +558,7 @@ impl<T, const N: usize> Index<RangeToInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeToInclusive<usize>) -> &Self::Output {
     assert!(index.end < self.length);
-    make_const_slice(self.as_ptr(), index.end + 1)
+    slice_from_raw_parts(self.as_ptr(), index.end + 1)
   }
 }
 
@@ -569,7 +569,7 @@ impl<T, const N: usize> IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeToInclusive<usize>) -> &mut Self::Output {
     assert!(index.end < self.length);
-    make_mut_slice(self.as_mut_ptr(), index.end + 1)
+    slice_from_raw_parts_mut(self.as_mut_ptr(), index.end + 1)
   }
 }
 
