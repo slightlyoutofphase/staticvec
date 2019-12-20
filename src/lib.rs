@@ -1417,7 +1417,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// the one found in `SmallVec` in that it only provides the first element of the StaticVec as
   /// a mutable pointer, not also the length as a mutable reference.
   #[inline(always)]
-  pub fn triple_mut(&mut self) -> (*mut T, usize, usize) {
+  pub const fn triple_mut(&mut self) -> (*mut T, usize, usize) {
     (self.as_mut_ptr(), self.length, N)
   }
 
