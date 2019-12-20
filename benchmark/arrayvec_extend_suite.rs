@@ -55,6 +55,9 @@ fn staticvec_extend_with_slice(b: &mut Bencher) {
   b.iter(|| {
     v.clear();
     let iter = data.iter().map(|&x| x);
+    // The black box kind of makes this one *too* slow I think,
+    // but without it (as is also the case for several of the other bench functions)
+    // it always runs in 0 ns.
     black_box(v.extend(iter));
     v[511]
   });
