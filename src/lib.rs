@@ -2,11 +2,15 @@
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::inline_always)]
 #![allow(incomplete_features)]
+#![feature(const_compare_raw_pointers)]
 #![feature(const_fn)]
+#![feature(const_fn_union)]
 #![feature(const_generics)]
 #![feature(const_if_match)]
 #![feature(const_loop)]
 #![feature(const_mut_refs)]
+#![feature(const_panic)]
+#![feature(const_raw_ptr_deref)]
 #![feature(const_raw_ptr_to_usize_cast)]
 #![feature(core_intrinsics)]
 #![feature(doc_cfg)]
@@ -14,16 +18,16 @@
 #![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_uninit_array)]
-#![cfg_attr(feature = "std", feature(read_initializer))]
-#![feature(slice_from_raw_parts)]
+#![feature(read_initializer)]
 #![feature(slice_partition_dedup)]
 #![feature(specialization)]
 #![feature(trusted_len)]
+#![feature(untagged_unions)]
 
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
 pub use crate::trait_impls::*;
-use crate::utils::{make_const_slice, make_mut_slice, reverse_copy};
+use crate::utils::{slice_from_raw_parts, slice_from_raw_parts_mut, reverse_copy};
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 use core::marker::PhantomData;
@@ -274,17 +278,17 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns a constant reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
-  pub fn as_slice(&self) -> &[T] {
+  pub const fn as_slice(&self) -> &[T] {
     // Safety: `self.as_ptr()` is a pointer to an array for which the first `length`
     // elements are guaranteed to be initialized. Therefore this is a valid slice.
-    make_const_slice(self.as_ptr(), self.length)
+    slice_from_raw_parts(self.as_ptr(), self.length)
   }
 
   /// Returns a mutable reference to a slice of the StaticVec's inhabited area.
   #[inline(always)]
-  pub fn as_mut_slice(&mut self) -> &mut [T] {
+  pub const fn as_mut_slice(&mut self) -> &mut [T] {
     // Safety: See as_slice.
-    make_mut_slice(self.as_mut_ptr(), self.length)
+    slice_from_raw_parts_mut(self.as_mut_ptr(), self.length)
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` without doing any
@@ -1031,7 +1035,7 @@ impl<T, const N: usize> StaticVec<T, N> {
             .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), item_count);
           // Manually drop any excess values in the source vec to avoid undesirable memory leaks.
           if vec_len > item_count {
-            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
+            ptr::drop_in_place(slice_from_raw_parts_mut(
               vec.as_mut_ptr().add(item_count),
               vec_len - item_count,
             ));
@@ -1187,7 +1191,9 @@ impl<T, const N: usize> StaticVec<T, N> {
       let old_length = self.length;
       unsafe {
         self.set_len(length);
-        ptr::drop_in_place(self.as_mut_slice().get_unchecked_mut(length..old_length));
+        ptr::drop_in_place(
+          slice_from_raw_parts_mut(self.mut_ptr_at_unchecked(length), old_length - length)
+        );
       }
     }
   }
