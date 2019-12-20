@@ -18,7 +18,7 @@
 #![feature(maybe_uninit_extra)]
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_uninit_array)]
-#![feature(read_initializer)]
+#![cfg_attr(feature = "std", feature(read_initializer))]
 #![feature(slice_partition_dedup)]
 #![feature(specialization)]
 #![feature(trusted_len)]
