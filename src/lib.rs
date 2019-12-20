@@ -379,9 +379,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// # Safety
   ///
-  /// It is up to the caller to ensure that `index` is within the appropriate bounds.
+  /// It is up to the caller to ensure that `index` is within the range `0..self.length`.
   #[inline(always)]
   pub unsafe fn get_unchecked(&self, index: usize) -> &T {
+    // This function is used internally in places where `length` has been intentionally
+    // temporarily set to zero, so we do our debug assertion against `N`.
     debug_assert!(
       index < N,
       "In `StaticVec::get_unchecked`, provided index {} must be within `0..{}`!",
@@ -399,9 +401,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// # Safety
   ///
-  /// It is up to the caller to ensure that `index` is within the appropriate bounds.
+  /// It is up to the caller to ensure that `index` is within the range `0..self.length`.
   #[inline(always)]
   pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+    // This function is used internally in places where `length` has been intentionally
+    // temporarily set to zero, so we do our debug assertion against `N`.
     debug_assert!(
       index < N,
       "In `StaticVec::get_unchecked_mut`, provided index {} must be within `0..{}`!",
