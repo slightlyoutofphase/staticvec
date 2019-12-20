@@ -83,22 +83,71 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
   this.len().partial_cmp(&other.len())
 }
 
-/// A local inline-always version of `slice::from_raw_parts`.
-#[inline(always)]
-pub(crate) fn make_const_slice<'a, T>(data: *const T, length: usize) -> &'a [T] {
-  debug_assert!(
-    !data.is_null(),
-    "A null pointer was passed to `staticvec::utils::make_const_slice`!"
-  );
-  unsafe { &*ptr::slice_from_raw_parts(data, length) }
+/// Copied locally from `core/ptr/mod.rs` so we can use it in `const fn` versions of the slice
+/// creation methods.
+#[repr(C)]
+pub(crate) union Repr<T> {
+  pub(crate) rust: *const [T],
+  rust_mut: *mut [T],
+  pub(crate) raw: FatPtr<T>,
 }
 
-/// A local inline-always version of `slice::from_raw_parts_mut`.
+/// Copied locally from `core/ptr/mod.rs` so we can use it in `const fn` versions of the slice
+/// creation methods.
+#[repr(C)]
+pub(crate) struct FatPtr<T> {
+  data: *const T,
+  pub(crate) len: usize,
+}
+
+/// A local `const fn` version of `ptr.is_null()`.
+pub(crate) const fn is_null_const<T>(p: *const T) -> bool {
+  unsafe { (p as *const u8) == ptr::null() }
+}
+
+/// A local `const fn` version of `ptr.is_null()`.
+pub(crate) const fn is_null_mut<T>(p: *mut T) -> bool {
+  unsafe { (p as *mut u8) == ptr::null_mut() }
+}
+
+/// A local `const fn` version of `ptr::slice_from_raw_parts`.
 #[inline(always)]
-pub(crate) fn make_mut_slice<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
+pub(crate) const fn ptr_slice_from_raw_parts<T>(data: *const T, len: usize) -> *const [T] {
   debug_assert!(
-    !data.is_null(),
-    "A null pointer was passed to `staticvec::utils::make_mut_slice`!"
+    !is_null_const(data),
+    "A null pointer was passed to `staticvec::utils::ptr_slice_from_raw_parts`!"
   );
-  unsafe { &mut *ptr::slice_from_raw_parts_mut(data, length) }
+  unsafe {
+    Repr {
+      raw: FatPtr { data, len },
+    }
+    .rust
+  }
+}
+
+/// A local `const fn` version of `ptr::slice_from_raw_parts_mut`.
+#[inline(always)]
+pub(crate) const fn ptr_slice_from_raw_parts_mut<T>(data: *mut T, len: usize) -> *mut [T] {
+  debug_assert!(
+    !is_null_mut(data),
+    "A null pointer was passed to `staticvec::utils::ptr_slice_from_raw_parts_mut`!"
+  );
+  unsafe {
+    Repr {
+      raw: FatPtr { data, len },
+    }
+    .rust_mut
+  }
+}
+
+/// A local `const fn` version of `slice::from_raw_parts`.
+#[inline(always)]
+pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -> &'a [T] {
+  unsafe { &*ptr_slice_from_raw_parts(data, length) }
+}
+
+/// A local `const fn` version of `slice::from_raw_parts_mut`.
+#[inline(always)]
+pub(crate) const fn slice_from_raw_parts_mut<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
+  unsafe { &mut *ptr_slice_from_raw_parts_mut(data, length) }
 }
