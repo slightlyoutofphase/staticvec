@@ -1,4 +1,4 @@
-use crate::utils::{distance_between, make_const_slice};
+use crate::utils::{distance_between, slice_from_raw_parts};
 use crate::StaticVec;
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics;
@@ -71,9 +71,9 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` pointers.
   #[inline(always)]
-  pub fn as_slice(&self) -> &'a [T] {
+  pub const fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    make_const_slice(self.start, self.len())
+    slice_from_raw_parts(self.start, distance_between(self.end, self.start))
   }
 }
 
@@ -179,9 +179,9 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   /// `start` and `end` pointers. Though this is a mutable iterator, the slice cannot be mutable
   /// as it would lead to aliasing issues.
   #[inline(always)]
-  pub fn as_slice(&self) -> &'a [T] {
+  pub const fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    make_const_slice(self.start, self.len())
+    slice_from_raw_parts(self.start, distance_between(self.end, self.start))
   }
 }
 
@@ -277,7 +277,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   #[inline(always)]
   pub fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    make_const_slice(
+    slice_from_raw_parts(
       unsafe { StaticVec::first_ptr(&self.data).add(self.start) },
       self.len(),
     )
@@ -352,7 +352,7 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
     match item_count {
       0 => (),
       _ => unsafe {
-        ptr::drop_in_place(ptr::slice_from_raw_parts_mut(
+        ptr::drop_in_place(slice_from_raw_parts_mut(
           StaticVec::first_ptr_mut(&mut self.data).add(self.start),
           item_count,
         ))
@@ -377,7 +377,7 @@ impl<'a, T: 'a, const N: usize> StaticVecDrain<'a, T, N> {
   /// Returns an immutable slice consisting of the current range of elements the iterator has a view
   /// over.
   #[inline(always)]
-  pub fn as_slice(&self) -> &[T] {
+  pub const fn as_slice(&self) -> &[T] {
     self.iter.as_slice()
   }
 }
