@@ -1152,7 +1152,9 @@ impl<T, const N: usize> StaticVec<T, N> {
       for i in 0..old_length {
         // This is fine because we intentionally set `self.length` to `0` ourselves just now.
         if filter(self.get_unchecked_mut(i)) {
-          res.mut_ptr_at_unchecked(res_length).write(self.ptr_at_unchecked(i).read());
+          res
+            .mut_ptr_at_unchecked(res_length)
+            .write(self.ptr_at_unchecked(i).read());
           res_length += 1;
         } else if res_length > 0 {
           self

@@ -5,7 +5,7 @@ repository = "https://github.com/slightlyoutofphase/staticvec"
 documentation = "https://docs.rs/staticvec/"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-version = "0.6.7"
+version = "0.6.8"
 authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec", "array", "no_std", "vector", "stack"]
 categories = ["data-structures", "no-std"]
@@ -43,7 +43,7 @@ lto = false
 debug-assertions = true
 codegen-units = 16
 panic = 'unwind'
-incremental = true
+incremental = false
 overflow-checks = true
 
 [profile.bench]

@@ -1,6 +1,7 @@
 use crate::iterators::*;
 use crate::utils::{make_const_slice, make_mut_slice, partial_compare};
 use crate::StaticVec;
+use core::borrow::{Borrow, BorrowMut};
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
@@ -46,6 +47,20 @@ impl<T, const N: usize> AsRef<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_ref(&self) -> &[T] {
     self.as_slice()
+  }
+}
+
+impl<T, const N: usize> Borrow<[T]> for StaticVec<T, N> {
+  #[inline(always)]
+  fn borrow(&self) -> &[T] {
+    &self[..]
+  }
+}
+
+impl<T, const N: usize> BorrowMut<[T]> for StaticVec<T, N> {
+  #[inline(always)]
+  fn borrow_mut(&mut self) -> &mut [T] {
+    &mut self[..]
   }
 }
 
