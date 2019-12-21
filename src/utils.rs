@@ -86,18 +86,18 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
 /// Copied locally from `core/ptr/mod.rs` so we can use it in `const fn` versions of the slice
 /// creation methods.
 #[repr(C)]
-pub(crate) union Repr<T> {
-  pub(crate) rust: *const [T],
-  rust_mut: *mut [T],
-  pub(crate) raw: FatPtr<T>,
+pub(crate) struct FatPtr<T> {
+  data: *const T,
+  pub(crate) len: usize,
 }
 
 /// Copied locally from `core/ptr/mod.rs` so we can use it in `const fn` versions of the slice
 /// creation methods.
 #[repr(C)]
-pub(crate) struct FatPtr<T> {
-  data: *const T,
-  pub(crate) len: usize,
+pub(crate) union Repr<T> {
+  pub(crate) rust: *const [T],
+  rust_mut: *mut [T],
+  pub(crate) raw: FatPtr<T>,
 }
 
 /// A local `const fn` version of `ptr.is_null()`.
