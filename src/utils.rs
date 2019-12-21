@@ -83,6 +83,58 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
   this.len().partial_cmp(&other.len())
 }
 
+/// A simple quicksort function for internal use, called in
+/// ['quicksorted_unstable`](crate::StaticVec::quicksorted_unstable).
+#[inline]
+pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
+  values: *mut T,
+  mut low: isize,
+  mut high: isize,
+)
+{
+  loop {
+    let mut i = low;
+    let mut j = high;
+    unsafe {
+      let p = *values.offset(low + ((high - low) >> 1));
+      loop {
+        while *values.offset(i) < p {
+          i += 1;
+        }
+        while *values.offset(j) > p {
+          j -= 1;
+        }
+        if i <= j {
+          if i != j {
+            let q = *values.offset(i);
+            *values.offset(i) = *values.offset(j);
+            *values.offset(j) = q;
+          }
+          i += 1;
+          j -= 1;
+        }
+        if i > j {
+          break;
+        }
+      }
+    }
+    if j - low < high - i {
+      if low < j {
+        quicksort_internal(values, low, j);
+      }
+      low = i;
+    } else {
+      if i < high {
+        quicksort_internal(values, i, high)
+      }
+      high = j;
+    }
+    if low >= high {
+      break;
+    }
+  }
+}
+
 /// Copied locally from `core/ptr/mod.rs` so we can use it in `const fn` versions of the slice
 /// creation methods.
 #[repr(C)]

@@ -11,7 +11,7 @@ use test::{black_box, Bencher};
 use staticvec::StaticVec;
 
 #[bench]
-fn staticvec_extend_from_slice(b: &mut Bencher) {
+fn staticvec_extend_from_slice_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u8, 512>::new();
   let data = [1; 512];
   b.iter(|| {
@@ -23,7 +23,7 @@ fn staticvec_extend_from_slice(b: &mut Bencher) {
 }
 
 #[bench]
-fn staticvec_extend_with_constant(b: &mut Bencher) {
+fn staticvec_extend_with_constant_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u8, 512>::new();
   let cap = v.capacity();
   b.iter(|| {
@@ -36,7 +36,7 @@ fn staticvec_extend_with_constant(b: &mut Bencher) {
 }
 
 #[bench]
-fn staticvec_extend_with_range(b: &mut Bencher) {
+fn staticvec_extend_with_range_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u16, 512>::new();
   let cap = v.capacity();
   b.iter(|| {
@@ -49,7 +49,7 @@ fn staticvec_extend_with_range(b: &mut Bencher) {
 }
 
 #[bench]
-fn staticvec_extend_with_slice(b: &mut Bencher) {
+fn staticvec_extend_with_slice_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u8, 512>::new();
   let data = [1; 512];
   b.iter(|| {
@@ -65,7 +65,7 @@ fn staticvec_extend_with_slice(b: &mut Bencher) {
 }
 
 #[bench]
-fn staticvec_extend_with_write(b: &mut Bencher) {
+fn staticvec_extend_with_write_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u8, 512>::new();
   let data = [1; 512];
   b.iter(|| {

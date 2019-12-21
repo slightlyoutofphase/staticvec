@@ -27,7 +27,9 @@
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
 pub use crate::trait_impls::*;
-use crate::utils::{reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut};
+use crate::utils::{
+  quicksort_internal, reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut,
+};
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 use core::marker::PhantomData;
@@ -736,6 +738,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// StaticVec's inhabited area without modifying the original data.
   /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues,
   /// and [`Ord`](core::cmp::Ord) to make the sorting possible.
+  ///
+  /// Example usage:
+  /// ```
+  /// const V: StaticVec<StaticVec<i32, 2>, 2> = staticvec![staticvec![1, 3], staticvec![4, 2]];
+  /// assert_eq!(
+  ///   V.iter().flatten().collect::<StaticVec<i32, 4>>().sorted(),
+  ///   [1, 2, 3, 4]
+  /// );
+  /// ```
   #[cfg(feature = "std")]
   #[doc(cfg(feature = "std"))]
   #[inline]
@@ -758,6 +769,42 @@ impl<T, const N: usize> StaticVec<T, N> {
     let mut res = self.clone();
     res.sort_unstable();
     res
+  }
+
+  /// Returns a separate, unstable-quicksorted StaticVec of the contents of the
+  /// StaticVec's inhabited area without modifying the original data.
+  /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues,
+  /// and [`PartialOrd`](core::cmp::PartialOrd) to make the sorting possible.
+  ///
+  /// Unlike [`sorted`](crate::StaticVec::sorted) and
+  /// [`sorted_unstable`](crate::StaticVec::sorted_unstable), this function does not make use of
+  /// Rust's built-in sorting methods, but instead makes direct use of a fairly unsophisticated
+  /// recursive quicksort algorithm implemented in this crate.
+  ///
+  /// This has the advantage of only needing to have [`PartialOrd`](core::cmp::PartialOrd) as a
+  /// constraint as opposed to [`Ord`](core::cmp::Ord), but is very likely less performant for
+  /// most inputs, so if the type you're sorting does derive or implement
+  /// [`Ord`](core::cmp::Ord) it's recommended that you use [`sorted`](crate::StaticVec::sorted) or
+  /// [`sorted_unstable`](crate::StaticVec::sorted_unstable) instead of this function.
+  #[inline]
+  pub fn quicksorted_unstable(&self) -> Self
+  where T: Copy + PartialOrd {
+    let length = self.length;
+    if length < 2 {
+      // StaticVec uses specialization to have an optimized verson of `Clone` for copy types.
+      return self.clone();
+    }
+    let mut res = Self::new_data_uninit();
+    unsafe {
+      self
+        .as_ptr()
+        .copy_to_nonoverlapping(Self::first_ptr_mut(&mut res), length);
+    }
+    quicksort_internal(Self::first_ptr_mut(&mut res), 0, (length - 1) as isize);
+    Self {
+      data: res,
+      length: length,
+    }
   }
 
   /// Returns a separate, reversed StaticVec of the contents of the StaticVec's

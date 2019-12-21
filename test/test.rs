@@ -424,6 +424,13 @@ fn drain() {
 }
 
 #[test]
+#[should_panic]
+fn drain_panic() {
+  let mut v3 = StaticVec::from([0; 0]);
+  v3.drain(0..=0);
+}
+
+#[test]
 fn drain_iter() {
   let mut v = staticvec![1, 2, 3];
   let u: StaticVec<i32, 6> = v.drain_iter(1..).collect();
@@ -718,7 +725,7 @@ fn insert_many() {
 
 #[test]
 #[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
-fn insert_many_asserts() {
+fn insert_many_panic() {
   let mut v: StaticVec<u8, 8> = StaticVec::new();
   for i in 0..7 {
     v.push(i + 1);
@@ -1076,6 +1083,20 @@ fn push() {
   assert_eq!(vec, [1, 2, 3, 3]);
 }
 
+#[test]
+fn quicksorted_unstable() {
+  const V: StaticVec<StaticVec<i32, 3>, 2> = staticvec![staticvec![1, 2, 3], staticvec![6, 5, 4]];
+  assert_eq!(
+    V.iter()
+      .flatten()
+      .collect::<StaticVec<i32, 6>>()
+      .quicksorted_unstable(),
+    [1, 2, 3, 4, 5, 6]
+  );
+  let v2 = StaticVec::<i32, 128>::new();
+  assert_eq!(v2.quicksorted_unstable(), []);
+}
+
 #[cfg(feature = "std")]
 mod read_tests {
   use staticvec::*;
@@ -1241,6 +1262,13 @@ fn remove() {
 }
 
 #[test]
+#[should_panic]
+fn remove_panic() {
+  let mut v = staticvec![1, 2, 3];
+  v.remove(128);
+}
+
+#[test]
 fn remove_item() {
   let mut vec = staticvec![1, 2, 3, 1];
   vec.remove_item(&1);
@@ -1296,14 +1324,27 @@ fn set_len() {
 #[cfg(feature = "std")]
 #[test]
 fn sorted() {
-  let v = staticvec![-5, 4, 1, -3, 2].sorted();
-  assert!(v == [-5, -3, 1, 2, 4]);
+  const V: StaticVec<StaticVec<i32, 3>, 2> = staticvec![staticvec![1, 2, 3], staticvec![6, 5, 4]];
+  assert_eq!(
+    V.iter().flatten().collect::<StaticVec<i32, 6>>().sorted(),
+    [1, 2, 3, 4, 5, 6]
+  );
+  let v2 = StaticVec::<i32, 128>::new();
+  assert_eq!(v2.sorted(), []);
 }
 
 #[test]
 fn sorted_unstable() {
-  let v = staticvec![-5, 4, 1, -3, 2].sorted_unstable();
-  assert!(v == [-5, -3, 1, 2, 4]);
+  const V: StaticVec<StaticVec<i32, 3>, 2> = staticvec![staticvec![1, 2, 3], staticvec![6, 5, 4]];
+  assert_eq!(
+    V.iter()
+      .flatten()
+      .collect::<StaticVec<i32, 6>>()
+      .sorted_unstable(),
+    [1, 2, 3, 4, 5, 6]
+  );
+  let v2 = StaticVec::<i32, 128>::new();
+  assert_eq!(v2.sorted_unstable(), []);
 }
 
 #[test]
@@ -1312,6 +1353,13 @@ fn split_off() {
   let vec2 = vec.split_off(1);
   assert_eq!(vec, [1]);
   assert_eq!(vec2, [2, 3]);
+}
+
+#[test]
+#[should_panic]
+fn split_off_assert() {
+  let mut vec3 = StaticVec::<i32, 0>::new();
+  assert_eq!(vec3.split_off(9000), []);
 }
 
 #[test]

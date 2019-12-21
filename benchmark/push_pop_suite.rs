@@ -10,7 +10,7 @@ use test::{black_box, Bencher};
 use staticvec::{staticvec, StaticVec};
 
 #[bench]
-fn u32_255_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u32_255_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u32, 255>::new();
   b.iter(|| {
     v.clear();
@@ -22,7 +22,7 @@ fn u32_255_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_512_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u32_512_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u32, 512>::new();
   b.iter(|| {
     v.clear();
@@ -34,7 +34,7 @@ fn u32_512_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_1024_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u32_1024_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u32, 1024>::new();
   b.iter(|| {
     v.clear();
@@ -46,7 +46,7 @@ fn u32_1024_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_2048_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u32_2048_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u32, 2048>::new();
   b.iter(|| {
     v.clear();
@@ -58,7 +58,7 @@ fn u32_2048_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_4096_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u32_4096_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u32, 4096>::new();
   b.iter(|| {
     v.clear();
@@ -70,7 +70,7 @@ fn u32_4096_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_8192_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u32_8192_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u32, 8192>::new();
   b.iter(|| {
     v.clear();
@@ -82,7 +82,7 @@ fn u32_8192_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_255_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u64_255_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u64, 255>::new();
   b.iter(|| {
     v.clear();
@@ -94,7 +94,7 @@ fn u64_255_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_512_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u64_512_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u64, 512>::new();
   b.iter(|| {
     v.clear();
@@ -106,7 +106,7 @@ fn u64_512_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_1024_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u64_1024_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u64, 1024>::new();
   b.iter(|| {
     v.clear();
@@ -118,7 +118,7 @@ fn u64_1024_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_2048_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u64_2048_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u64, 2048>::new();
   b.iter(|| {
     v.clear();
@@ -130,7 +130,7 @@ fn u64_2048_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_4096_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u64_4096_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u64, 4096>::new();
   b.iter(|| {
     v.clear();
@@ -142,7 +142,7 @@ fn u64_4096_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_8192_staticvec_push(b: &mut Bencher) {
+fn staticvec_push_u64_8192_blackboxed(b: &mut Bencher) {
   let mut v = StaticVec::<u64, 8192>::new();
   b.iter(|| {
     v.clear();
@@ -154,7 +154,7 @@ fn u64_8192_staticvec_push(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_255_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u32_255_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u32; 255];
     for _ in 0..255 {
@@ -165,7 +165,7 @@ fn u32_255_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_512_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u32_512_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u32; 512];
     for _ in 0..512 {
@@ -176,7 +176,7 @@ fn u32_512_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_1024_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u32_1024_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u32; 1024];
     for _ in 0..1024 {
@@ -187,7 +187,7 @@ fn u32_1024_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_2048_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u32_2048_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u32; 2048];
     for _ in 0..2048 {
@@ -198,7 +198,7 @@ fn u32_2048_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_4096_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u32_4096_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u32; 4096];
     for _ in 0..4096 {
@@ -209,7 +209,7 @@ fn u32_4096_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u32_8192_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u32_8192_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u32; 8192];
     for _ in 0..8192 {
@@ -220,7 +220,7 @@ fn u32_8192_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_255_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u64_255_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u64; 255];
     for _ in 0..255 {
@@ -231,7 +231,7 @@ fn u64_255_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_512_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u64_512_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u64; 512];
     for _ in 0..512 {
@@ -242,7 +242,7 @@ fn u64_512_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_1024_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u64_1024_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u64; 1024];
     for _ in 0..1024 {
@@ -253,7 +253,7 @@ fn u64_1024_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_2048_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u64_2048_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u64; 2048];
     for _ in 0..2048 {
@@ -264,7 +264,7 @@ fn u64_2048_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_4096_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u64_4096_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u64; 4096];
     for _ in 0..4096 {
@@ -275,7 +275,7 @@ fn u64_4096_staticvec_pop(b: &mut Bencher) {
 }
 
 #[bench]
-fn u64_8192_staticvec_pop(b: &mut Bencher) {
+fn staticvec_pop_u64_8192_blackboxed(b: &mut Bencher) {
   b.iter(|| {
     let mut v = staticvec![128u64; 8192];
     for _ in 0..8192 {
