@@ -93,7 +93,7 @@ required-features = ["std"]
 [[example]]
 name = "serde_support_demo"
 path = "demo/serde_support_demo.rs"
-required-features = ["serde_support", "serde_json_support"]
+required-features = ["std", "serde_support", "serde_json_support"]
 
 [dependencies]
 staticsort = "^0.1.4"
