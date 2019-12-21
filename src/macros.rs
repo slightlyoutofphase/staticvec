@@ -45,12 +45,10 @@ macro_rules! staticvec {
 macro_rules! sortedstaticvec {
   (@put_one $val:expr) => (1);
   ($type: ty, [$($val:expr),* $(,)*]) => {{
-    #[doc(hidden)]
-    use staticsort::staticsort;
     match 0$(+sortedstaticvec!(@put_one $val))* {
       0 => $crate::StaticVec::new(),
       _ => $crate::StaticVec::new_from_const_array(
-             staticsort!(
+             $crate::__staticsort!(
                $type,
                0,
                0$(+sortedstaticvec!(@put_one $val))* - 1,

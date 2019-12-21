@@ -37,6 +37,9 @@ use core::ops::{
 };
 use core::ptr;
 
+#[doc(hidden)]
+pub use staticsort::staticsort as __staticsort;
+
 #[cfg(any(feature = "std", rustdoc))]
 extern crate alloc;
 
