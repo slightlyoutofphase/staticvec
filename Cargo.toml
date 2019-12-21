@@ -96,7 +96,7 @@ path = "demo/serde_support_demo.rs"
 required-features = ["serde_support", "serde_json_support"]
 
 [dependencies]
-staticsort = { version = "0.1" }
+staticsort = "^0.1.4"
 serde = { optional = true, version = "1.0", features = ["derive"] }
 serde_json = { optional = true, version = "1.0" }
 

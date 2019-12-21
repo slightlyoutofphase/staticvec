@@ -744,6 +744,9 @@ fn intersperse() {
   );
   assert_eq!(staticvec![""].intersperse("B"), [""]);
   assert_eq!(staticvec!["A"].intersperse("B"), ["A"]);
+  let mut x = staticvec!["A"];
+  x.clear();
+  assert_eq!(x.intersperse("B"), StaticVec::<&str, 0>::new());
 }
 
 #[test]
@@ -754,6 +757,9 @@ fn intersperse_clone() {
   );
   assert_eq!(staticvec![""].intersperse_clone("B"), [""]);
   assert_eq!(staticvec!["A"].intersperse_clone("B"), ["A"]);
+  let mut x = staticvec!["A"];
+  x.clear();
+  assert_eq!(x.intersperse_clone("B"), StaticVec::<&str, 0>::new());
 }
 
 #[test]

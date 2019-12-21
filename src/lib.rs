@@ -27,7 +27,7 @@
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
 pub use crate::trait_impls::*;
-use crate::utils::{slice_from_raw_parts, slice_from_raw_parts_mut, reverse_copy};
+use crate::utils::{reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut};
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 use core::marker::PhantomData;
@@ -1006,8 +1006,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     let mut res = StaticVec::new();
     let length = self.length;
     unsafe {
-      for item in self.as_slice().get_unchecked(0..length - 1) {
-        res.push_unchecked(item.clone());
+      for i in 0..length - 1 {
+        res.push_unchecked(self.get_unchecked(i).clone());
         res.push_unchecked(separator.clone());
       }
       res.push_unchecked(self.get_unchecked(length - 1).clone());
@@ -1191,9 +1191,10 @@ impl<T, const N: usize> StaticVec<T, N> {
       let old_length = self.length;
       unsafe {
         self.set_len(length);
-        ptr::drop_in_place(
-          slice_from_raw_parts_mut(self.mut_ptr_at_unchecked(length), old_length - length)
-        );
+        ptr::drop_in_place(slice_from_raw_parts_mut(
+          self.mut_ptr_at_unchecked(length),
+          old_length - length,
+        ));
       }
     }
   }

@@ -101,11 +101,13 @@ pub(crate) struct FatPtr<T> {
 }
 
 /// A local `const fn` version of `ptr.is_null()`.
+#[inline(always)]
 pub(crate) const fn is_null_const<T>(p: *const T) -> bool {
   unsafe { (p as *const u8) == ptr::null() }
 }
 
 /// A local `const fn` version of `ptr.is_null()`.
+#[inline(always)]
 pub(crate) const fn is_null_mut<T>(p: *mut T) -> bool {
   unsafe { (p as *mut u8) == ptr::null_mut() }
 }

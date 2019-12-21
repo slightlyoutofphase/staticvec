@@ -1,5 +1,5 @@
 use crate::iterators::*;
-use crate::utils::{slice_from_raw_parts, slice_from_raw_parts_mut, partial_compare};
+use crate::utils::{partial_compare, slice_from_raw_parts, slice_from_raw_parts_mut};
 use crate::StaticVec;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
