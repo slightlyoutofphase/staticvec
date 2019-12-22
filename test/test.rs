@@ -1,16 +1,15 @@
 #![allow(clippy::all)]
 #![allow(dead_code)]
+#![allow(unused_imports)]
 #![feature(const_fn, const_if_match, const_loop)]
 
 use staticvec::*;
 
 use core::cell;
 
-#[cfg(not(miri))]
 #[cfg(feature = "std")]
 use std::panic::{self, AssertUnwindSafe};
 
-#[cfg(not(miri))]
 #[cfg(feature = "std")]
 use cool_asserts::assert_panics;
 
@@ -206,7 +205,7 @@ fn clone_from_longer() {
   assert_eq!(dst, src);
 }
 
-#[cfg(not(miri))]
+#[cfg_attr(all(windows, miri), ignore)]
 #[cfg(feature = "std")]
 #[test]
 fn panicking_clone() {
@@ -423,6 +422,7 @@ fn drain() {
   );
 }
 
+#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn drain_panic() {
@@ -491,6 +491,7 @@ fn drain_iter() {
   );
 }
 
+#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn drain_iter_panic() {
@@ -665,18 +666,18 @@ fn index() {
   assert_eq!(vec[1..], [1, 2, 3, 4]);
   assert_eq!(vec[1..=3], [1, 2, 3]);
   assert_eq!(vec[..], [0, 1, 2, 3, 4]);
-  // Because this block includes obviously-violated bounds checks, miri
-  // complains about it
-  #[cfg(not(miri))]
-  #[cfg(feature = "std")]
-  {
-    // Check bounds checking
-    assert_panics!(vec[10]);
-    assert_panics!(&vec[..10]);
-    assert_panics!(&vec[10..]);
-    assert_panics!(&vec[10..15]);
-    assert_panics!(&vec[1..0]);
-  }
+}
+
+#[cfg(not(miri))]
+#[test]
+#[cfg(feature = "std")]
+fn index_panics() {
+  let vec = staticvec![0, 1, 2, 3, 4];
+  assert_panics!(vec[10]);
+  assert_panics!(&vec[..10]);
+  assert_panics!(&vec[10..]);
+  assert_panics!(&vec[10..15]);
+  assert_panics!(&vec[1..0]);
 }
 
 #[test]
@@ -723,6 +724,7 @@ fn insert_many() {
   );
 }
 
+#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
 fn insert_many_panic() {
@@ -1095,6 +1097,7 @@ fn quicksorted_unstable() {
   );
   let v2 = StaticVec::<i32, 128>::new();
   assert_eq!(v2.quicksorted_unstable(), []);
+  assert_eq!(staticvec![2, 1].quicksorted_unstable(), [1, 2]);
 }
 
 #[cfg(feature = "std")]
@@ -1261,6 +1264,7 @@ fn remove() {
   assert_eq!(v, [1, 3]);
 }
 
+#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn remove_panic() {
@@ -1355,6 +1359,7 @@ fn split_off() {
   assert_eq!(vec2, [2, 3]);
 }
 
+#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn split_off_assert() {
