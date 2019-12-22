@@ -24,7 +24,7 @@ pub(crate) unsafe fn never(s: &str) -> ! {
 ///
 /// We reimplement the `core` function to avoid panicking (UB instead, be careful)
 ///
-/// Reimplemented from:
+/// Reimplemented from;
 ///
 /// `https://github.com/rust-lang/rust/blob/7843e2792dce0f20d23b3c1cca51652013bef0ea/src/libcore/char/methods.rs#L447`
 /// # Safety
@@ -62,30 +62,26 @@ pub(crate) unsafe fn encode_char_utf8_unchecked<const N: usize>(
   if code < MAX_ONE_B {
     debug_assert!(N.saturating_sub(index) >= 1);
     write(dst, code.into_lossy()); 
+    s.vec.set_len(s.len().saturating_add(1));
   } else if code < MAX_TWO_B {
     debug_assert!(N.saturating_sub(index) >= 2);
     write(dst, (code >> 6 & 0x1F).into_lossy() | TAG_TWO_B);
     write(dst.add(1), (code & 0x3F).into_lossy() | TAG_CONT);
+    s.vec.set_len(s.len().saturating_add(2));
   } else if code < MAX_THREE_B {
     debug_assert!(N.saturating_sub(index) >= 3);
     write(dst, (code >> 12 & 0x0F).into_lossy() | TAG_THREE_B);
     write(dst.add(1), (code >> 6 & 0x3F).into_lossy() | TAG_CONT);
     write(dst.add(2), (code & 0x3F).into_lossy() | TAG_CONT);
+    s.vec.set_len(s.len().saturating_add(3));
   } else {
     debug_assert!(N.saturating_sub(index) >= 4);
     write(dst, (code >> 18 & 0x07).into_lossy() | TAG_FOUR_B);
     write(dst.add(1), (code >> 12 & 0x3F).into_lossy() | TAG_CONT);
     write(dst.add(2), (code >> 6 & 0x3F).into_lossy() | TAG_CONT);
     write(dst.add(3), (code & 0x3F).into_lossy() | TAG_CONT);
+    s.vec.set_len(s.len().saturating_add(4));
   }
-}
-
-/// Copies part of slice to another part (`mem::copy`, basically `memmove`)
-#[inline]
-unsafe fn shift_unchecked(s: &mut [u8], from: usize, to: usize, len: usize) {
-  debug_assert!(to.saturating_add(len) <= s.len() && from.saturating_add(len) <= s.len());
-  let (f, t) = (s.as_ptr().add(from), s.as_mut_ptr().add(to));
-  copy(f, t, len);
 }
 
 /// Shifts string right
@@ -105,7 +101,7 @@ pub(crate) unsafe fn shift_right_unchecked<const N: usize>(
   let len = s.len().saturating_sub(from);
   debug_assert!(from <= to && to.saturating_add(len) <= s.capacity());
   debug_assert!(s.as_str().is_char_boundary(from));
-  shift_unchecked(s.as_mut_bytes(), from, to, len);
+  copy(s.as_ptr().add(from), s.as_mut_ptr().add(to), s.len().saturating_sub(from));
 }
 
 /// Shifts string left
@@ -118,9 +114,7 @@ pub(crate) unsafe fn shift_left_unchecked<const N: usize>(
 {
   debug_assert!(to <= from && from <= s.len());
   debug_assert!(s.as_str().is_char_boundary(from));
-
-  let len = s.len().saturating_sub(to);
-  shift_unchecked(s.as_mut_bytes(), from, to, len);
+  copy(s.as_ptr().add(from), s.as_mut_ptr().add(to), s.len().saturating_sub(from));
 }
 
 /// Returns error if size is outside of specified boundary
@@ -212,7 +206,7 @@ mod tests {
     let mut string = StaticString::<20>::default();
     unsafe {
       encode_char_utf8_unchecked(&mut string, 'a', 0);
-      assert_eq!(from_utf8(&string.as_mut_bytes()[..1]).unwrap(), "a");
+      assert_eq!(from_utf8(&string.as_mut_bytes()).unwrap(), "a");
       let mut string = StaticString::<20>::try_from_str("a").unwrap();
 
       encode_char_utf8_unchecked(&mut string, '🤔', 1);

@@ -22,7 +22,6 @@
 //! }
 //! ```
 
-pub mod drain;
 pub mod error;
 mod trait_impls;
 #[doc(hidden)]
@@ -31,7 +30,6 @@ pub mod utils;
 pub use self::error::Error;
 use crate::StaticVec;
 
-use self::drain::Drain;
 use self::utils::{encode_char_utf8_unchecked, is_char_boundary, is_inside_boundary, never};
 use self::utils::{shift_left_unchecked, shift_right_unchecked, truncate_str};
 use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
@@ -691,7 +689,6 @@ impl<const N: usize> StaticString<N> {
   pub unsafe fn push_unchecked(&mut self, ch: char) {
     let (len, chlen) = (self.len(), ch.len_utf8());
     encode_char_utf8_unchecked(self, ch, len);
-    self.vec.set_len(self.len().saturating_add(chlen));
   }
 
   /// Truncates `StaticString` to specified size (if smaller than current size and a valid utf-8
@@ -793,7 +790,7 @@ impl<const N: usize> StaticString<N> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
   /// assert!(s.remove("ABCD🤔".len()).unwrap_err().is_out_of_bounds());
   /// assert!(s.remove(10).unwrap_err().is_out_of_bounds());
-  /// assert!(s.remove(6).unwrap_err().is_utf8());
+  /// assert!(s.remove(6).unwrap_err().isnt_char_boundary());
   /// assert_eq!(s.remove(0), Ok('A'));
   /// assert_eq!(s.as_str(), "BCD🤔");
   /// assert_eq!(s.remove(2), Ok('D'));
@@ -843,11 +840,11 @@ impl<const N: usize> StaticString<N> {
   /// # use staticvec::string::{StaticString, Error};
   /// # fn main() -> Result<(), Error> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
-  /// s.try_insert(1, 'A')?;
-  /// s.try_insert(2, 'B')?;
-  /// assert_eq!(s.as_str(), "AABBCD🤔");
+  /// s.try_insert(1, 'E')?;
+  /// s.try_insert(2, 'F')?;
+  /// assert_eq!(s.as_str(), "AEFBCD🤔");
   /// assert!(s.try_insert(20, 'C').unwrap_err().is_out_of_bounds());
-  /// assert!(s.try_insert(8, 'D').unwrap_err().is_utf8());
+  /// assert!(s.try_insert(8, 'D').unwrap_err().isnt_char_boundary());
   ///
   /// let mut s = StaticString::<20>::try_from_str(&"0".repeat(20))?;
   /// assert!(s.try_insert(0, 'C').unwrap_err().is_out_of_bounds());
@@ -893,7 +890,6 @@ impl<const N: usize> StaticString<N> {
     let clen = ch.len_utf8();
     shift_right_unchecked(self, idx, idx.saturating_add(clen));
     encode_char_utf8_unchecked(self, ch, idx);
-    self.vec.set_len(self.len().saturating_add(clen));
   }
 
   /// Inserts string slice at specified index, returning error if total length is bigger than
@@ -915,7 +911,7 @@ impl<const N: usize> StaticString<N> {
   /// assert!(s.try_insert_str(1, "0".repeat(20)).unwrap_err().is_out_of_bounds());
   /// assert_eq!(s.as_str(), "ABCABBCD🤔");
   /// assert!(s.try_insert_str(20, "C").unwrap_err().is_out_of_bounds());
-  /// assert!(s.try_insert_str(10, "D").unwrap_err().is_utf8());
+  /// assert!(s.try_insert_str(10, "D").unwrap_err().isnt_char_boundary());
   /// # Ok(())
   /// # }
   /// ```
@@ -947,7 +943,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(s.as_str(), "ABCABBCD🤔");
   ///
   /// assert!(s.insert_str(20, "C").unwrap_err().is_out_of_bounds());
-  /// assert!(s.insert_str(10, "D").unwrap_err().is_utf8());
+  /// assert!(s.insert_str(10, "D").unwrap_err().isnt_char_boundary());
   ///
   /// s.clear();
   /// s.insert_str(0, "0".repeat(30))?;
@@ -1055,7 +1051,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(s.split_off(6)?.as_str(), "CD");
   /// assert_eq!(s.as_str(), "AB🤔");
   /// assert!(s.split_off(20).unwrap_err().is_out_of_bounds());
-  /// assert!(s.split_off(4).unwrap_err().is_utf8());
+  /// assert!(s.split_off(4).unwrap_err().isnt_char_boundary());
   /// # Ok(())
   /// # }
   /// ```
@@ -1086,58 +1082,6 @@ impl<const N: usize> StaticString<N> {
     unsafe { self.vec.set_len(0) };
   }
 
-  /// Creates a draining iterator that removes the specified range in the `StaticString` and yields
-  /// the removed chars.
-  ///
-  /// Note: The element range is removed even if the iterator is not consumed until the end.
-  ///
-  /// ```rust
-  /// # use staticvec::string::{StaticString, Error};
-  /// # fn main() -> Result<(), Error> {
-  /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
-  /// assert_eq!(s.drain(..3)?.collect::<Vec<_>>(), vec!['A', 'B', 'C']);
-  /// assert_eq!(s.as_str(), "D🤔");
-  ///
-  /// assert!(s.drain(3..).unwrap_err().is_utf8());
-  /// assert!(s.drain(10..).unwrap_err().is_out_of_bounds());
-  /// # Ok(())
-  /// # }
-  /// ```
-  #[inline]
-  pub fn drain<R>(&mut self, range: R) -> Result<Drain<N>, Error>
-  where R: RangeBounds<usize> {
-    let start = match range.start_bound() {
-      Bound::Included(t) => *t,
-      Bound::Excluded(t) => t.saturating_add(1),
-      Bound::Unbounded => 0,
-    };
-    let end = match range.end_bound() {
-      Bound::Included(t) => t.saturating_add(1),
-      Bound::Excluded(t) => *t,
-      Bound::Unbounded => self.len(),
-    };
-
-    is_inside_boundary(start, end)?;
-    is_inside_boundary(end, self.len())?;
-    is_char_boundary(self, start)?;
-    is_char_boundary(self, end)?;
-    debug_assert!(start <= end && end <= self.len());
-    debug_assert!(self.as_str().is_char_boundary(start));
-    debug_assert!(self.as_str().is_char_boundary(end));
-
-    let drain = unsafe {
-      let slice = self.as_str().get_unchecked(start..end);
-      Self::from_str_unchecked(slice)
-    };
-    unsafe { shift_left_unchecked(self, end, start) };
-    unsafe {
-      self
-        .vec
-        .set_len(self.len().saturating_sub(end.saturating_sub(start)))
-    };
-    Ok(Drain(drain, 0))
-  }
-
   /// Removes the specified range of the `StaticString`, and replaces it with the given string. The
   /// given string doesn't need to have the same length as the range.
   ///
@@ -1148,7 +1092,7 @@ impl<const N: usize> StaticString<N> {
   /// s.replace_range(2..4, "EFGHI")?;
   /// assert_eq!(s.as_str(), "ABEFGHI🤔");
   ///
-  /// assert!(s.replace_range(9.., "J").unwrap_err().is_utf8());
+  /// assert!(s.replace_range(9.., "J").unwrap_err().isnt_char_boundary());
   /// assert!(s.replace_range(..90, "K").unwrap_err().is_out_of_bounds());
   /// assert!(s.replace_range(0..1, "0".repeat(20)).unwrap_err().is_out_of_bounds());
   /// # Ok(())
