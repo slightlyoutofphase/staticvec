@@ -3,8 +3,7 @@
 //! [`StaticString`]: ../struct.StaticString.html
 
 use super::StaticString;
-use core::fmt::{self, Debug, Formatter};
-use core::{cmp::Ordering, hash::Hash, hash::Hasher, iter::FusedIterator};
+use core::iter::FusedIterator;
 
 /// A draining iterator for [`StaticString`].
 ///
@@ -12,47 +11,8 @@ use core::{cmp::Ordering, hash::Hash, hash::Hasher, iter::FusedIterator};
 ///
 /// [`StaticString`]: ../struct.StaticString.html
 /// [`drain`]: ../struct.StaticString.html#method.drain
-#[derive(Clone, Default)]
+#[derive(Debug)]
 pub struct Drain<const N: usize>(pub(crate) StaticString<N>, pub(crate) usize);
-
-impl<const N: usize> Debug for Drain<N> {
-  #[inline]
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    f.debug_tuple("Drain")
-      .field(&self.0)
-      .field(&self.1)
-      .finish()
-  }
-}
-
-impl<const N: usize> PartialEq for Drain<N> {
-  #[inline]
-  fn eq(&self, other: &Self) -> bool {
-    self.as_str().eq(other.as_str())
-  }
-}
-impl<const N: usize> Eq for Drain<N> {}
-
-impl<const N: usize> Ord for Drain<N> {
-  #[inline]
-  fn cmp(&self, other: &Self) -> Ordering {
-    self.as_str().cmp(other.as_str())
-  }
-}
-
-impl<const N: usize> PartialOrd for Drain<N> {
-  #[inline]
-  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-    Some(self.cmp(other))
-  }
-}
-
-impl<const N: usize> Hash for Drain<N> {
-  #[inline]
-  fn hash<H: Hasher>(&self, hasher: &mut H) {
-    self.as_str().hash(hasher)
-  }
-}
 
 impl<const N: usize> Drain<N> {
   /// Extracts string slice containing the remaining characters of `Drain`.

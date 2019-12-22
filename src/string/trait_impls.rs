@@ -20,23 +20,21 @@ impl<const N: usize> Default for StaticString<N> {
 impl<const N: usize> AsRef<str> for StaticString<N> {
   #[inline]
   fn as_ref(&self) -> &str {
-    unsafe { str::from_utf8_unchecked(self.as_ref()) }
+      self.as_str()
   }
 }
 
 impl<const N: usize> AsMut<str> for StaticString<N> {
   #[inline]
   fn as_mut(&mut self) -> &mut str {
-    let len = self.len();
-    let slice = unsafe { self.as_mut_bytes().get_unchecked_mut(..len) };
-    unsafe { str::from_utf8_unchecked_mut(slice) }
+      self.as_mut_str()
   }
 }
 
 impl<const N: usize> AsRef<[u8]> for StaticString<N> {
   #[inline]
   fn as_ref(&self) -> &[u8] {
-    unsafe { self.as_bytes().get_unchecked(..self.len()) }
+      self.as_bytes()
   }
 }
 
@@ -120,10 +118,9 @@ impl<'a, const N: usize> Add<&'a str> for StaticString<N> {
   type Output = Self;
 
   #[inline]
-  fn add(self, other: &str) -> Self::Output {
-    let mut out = unsafe { Self::from_str_unchecked(self) };
-    out.push_str(other);
-    out
+  fn add(mut self, other: &str) -> Self::Output {
+    self.push_str(other);
+        self
   }
 }
 
