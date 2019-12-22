@@ -51,8 +51,10 @@ impl<const N: usize> StaticString<N> {
   /// assert!(string.is_empty());
   /// ```
   #[inline]
-  pub fn new() -> Self {
-    Self::default()
+  pub const fn new() -> Self {
+    Self {
+      vec: StaticVec::new(),
+    }
   }
 
   /// Creates new `StaticString` from string slice if length is lower or equal to [`capacity`],
@@ -494,8 +496,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn as_str(&self) -> &str {
-    unsafe { str::from_utf8_unchecked(self.as_bytes()) }
+  pub const fn as_str(&self) -> &str {
+    unsafe { &*(self.as_bytes() as *const [u8] as *const str) }
   }
 
   /// Extracts a mutable string slice containing the entire `StaticString`
@@ -510,9 +512,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub fn as_mut_str(&mut self) -> &mut str {
-    let len = self.len();
-    let slice = unsafe { self.as_mut_bytes().get_unchecked_mut(..len) };
-    unsafe { str::from_utf8_unchecked_mut(slice) }
+    unsafe { &mut *(self.as_mut_bytes() as *mut [u8] as *mut str) }
   }
 
   /// Extracts a byte slice containing the entire `StaticString`
@@ -526,8 +526,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn as_bytes(&self) -> &[u8] {
-    unsafe { self.vec.as_slice().get_unchecked(..self.len()) }
+  pub const fn as_bytes(&self) -> &[u8] {
+    self.vec.as_slice()
   }
 
   /// Extracts a mutable string slice containing the entire `StaticString`
@@ -541,9 +541,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub unsafe fn as_mut_bytes(&mut self) -> &mut [u8] {
-    let len = self.len();
-    self.vec.as_mut_slice().get_unchecked_mut(..len)
+  pub const unsafe fn as_mut_bytes(&mut self) -> &mut [u8] {
+    self.vec.as_mut_slice()
   }
 
   /// Returns maximum string capacity, defined at compile time, it will never change
@@ -553,7 +552,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(StaticString::<32>::new().capacity(), 32);
   /// ```
   #[inline]
-  pub fn capacity(&self) -> usize {
+  pub const fn capacity(&self) -> usize {
     self.vec.capacity()
   }
 
@@ -687,8 +686,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub unsafe fn push_unchecked(&mut self, ch: char) {
-    let (len, chlen) = (self.len(), ch.len_utf8());
-    encode_char_utf8_unchecked(self, ch, len);
+    encode_char_utf8_unchecked(self, ch, self.len());
   }
 
   /// Truncates `StaticString` to specified size (if smaller than current size and a valid utf-8
@@ -1015,7 +1013,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn len(&self) -> usize {
+  pub const fn len(&self) -> usize {
     self.vec.len()
   }
 
@@ -1032,8 +1030,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn is_empty(&self) -> bool {
-    self.len() == 0
+  pub const fn is_empty(&self) -> bool {
+    self.vec.is_empty()
   }
 
   /// Splits `StaticString` in two if `at` is smaller than `self.len()`.

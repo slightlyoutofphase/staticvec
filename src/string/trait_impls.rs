@@ -11,9 +11,7 @@ use core::{borrow::Borrow, borrow::BorrowMut, cmp::Ordering, hash::Hash, hash::H
 impl<const N: usize> Default for StaticString<N> {
   #[inline]
   fn default() -> Self {
-    Self {
-      vec: Default::default(),
-    }
+    Self::new()
   }
 }
 
