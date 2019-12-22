@@ -1,9 +1,11 @@
-//! Fixed capacity stack based generic string
+//! `String`-like datastructure based on [`StaticVec`]
+//!
+//! [`StaticVec`]: ../struct.StaticVec.html
 //!
 //! ## Examples
 //!
 //! ```rust
-//! # use staticvec::string::{StaticString, Error};
+//! use staticvec::string::{StaticString, Error};
 //!
 //! #[derive(Debug)]
 //! pub struct User {
@@ -22,7 +24,7 @@
 //! }
 //! ```
 
-pub mod error;
+mod error;
 mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
@@ -36,7 +38,9 @@ use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
 use core::str::{self, from_utf8, from_utf8_unchecked};
 use core::{cmp::min, ops::*, ptr::copy_nonoverlapping};
 
-/// String based on StaticVec
+/// `String`-like datastructure based on [`StaticVec`]
+///
+/// [`StaticVec`]: ../struct.StaticVec.html
 #[derive(Clone)]
 pub struct StaticString<const N: usize> {
   pub(crate) vec: StaticVec<u8, N>,

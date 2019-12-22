@@ -5,7 +5,7 @@ use core::{char::DecodeUtf16Error, str::Utf8Error};
 
 /// Every error possible when using [`StaticString`]
 ///
-/// [`StaticString`]: ../struct.StaticString.html
+/// [`StaticString`]: ./struct.StaticString.html
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Error {
   /// Conversion between available byte slice and UTF-8 failed
