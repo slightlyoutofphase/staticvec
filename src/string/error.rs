@@ -21,33 +21,33 @@ pub enum Error {
 impl Error {
   #[inline]
   pub fn is_utf8(&self) -> bool {
-      match self {
-          Self::Utf8(_) => true,
-          _ => false
+    match self {
+      Self::Utf8(_) => true,
+      _ => false,
     }
   }
 
   #[inline]
   pub fn is_utf16(&self) -> bool {
-      match self {
-          Self::Utf16(_) => true,
-          _ => false
+    match self {
+      Self::Utf16(_) => true,
+      _ => false,
     }
   }
 
   #[inline]
   pub fn is_out_of_bounds(&self) -> bool {
-      match self {
-          Self::OutOfBounds => true,
-          _ => false
+    match self {
+      Self::OutOfBounds => true,
+      _ => false,
     }
   }
 
   #[inline]
   pub fn isnt_char_boundary(&self) -> bool {
-      match self {
-          Self::NotCharBoundary => true,
-          _ => false
+    match self {
+      Self::NotCharBoundary => true,
+      _ => false,
     }
   }
 }

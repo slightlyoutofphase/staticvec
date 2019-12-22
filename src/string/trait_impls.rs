@@ -20,21 +20,21 @@ impl<const N: usize> Default for StaticString<N> {
 impl<const N: usize> AsRef<str> for StaticString<N> {
   #[inline]
   fn as_ref(&self) -> &str {
-      self.as_str()
+    self.as_str()
   }
 }
 
 impl<const N: usize> AsMut<str> for StaticString<N> {
   #[inline]
   fn as_mut(&mut self) -> &mut str {
-      self.as_mut_str()
+    self.as_mut_str()
   }
 }
 
 impl<const N: usize> AsRef<[u8]> for StaticString<N> {
   #[inline]
   fn as_ref(&self) -> &[u8] {
-      self.as_bytes()
+    self.as_bytes()
   }
 }
 
@@ -120,7 +120,7 @@ impl<'a, const N: usize> Add<&'a str> for StaticString<N> {
   #[inline]
   fn add(mut self, other: &str) -> Self::Output {
     self.push_str(other);
-        self
+    self
   }
 }
 

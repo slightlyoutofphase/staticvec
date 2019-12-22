@@ -61,7 +61,7 @@ pub(crate) unsafe fn encode_char_utf8_unchecked<const N: usize>(
 
   if code < MAX_ONE_B {
     debug_assert!(N.saturating_sub(index) >= 1);
-    write(dst, code.into_lossy()); 
+    write(dst, code.into_lossy());
     s.vec.set_len(s.len().saturating_add(1));
   } else if code < MAX_TWO_B {
     debug_assert!(N.saturating_sub(index) >= 2);
@@ -101,7 +101,11 @@ pub(crate) unsafe fn shift_right_unchecked<const N: usize>(
   let len = s.len().saturating_sub(from);
   debug_assert!(from <= to && to.saturating_add(len) <= s.capacity());
   debug_assert!(s.as_str().is_char_boundary(from));
-  copy(s.as_ptr().add(from), s.as_mut_ptr().add(to), s.len().saturating_sub(from));
+  copy(
+    s.as_ptr().add(from),
+    s.as_mut_ptr().add(to),
+    s.len().saturating_sub(from),
+  );
 }
 
 /// Shifts string left
@@ -114,7 +118,11 @@ pub(crate) unsafe fn shift_left_unchecked<const N: usize>(
 {
   debug_assert!(to <= from && from <= s.len());
   debug_assert!(s.as_str().is_char_boundary(from));
-  copy(s.as_ptr().add(from), s.as_mut_ptr().add(to), s.len().saturating_sub(from));
+  copy(
+    s.as_ptr().add(from),
+    s.as_mut_ptr().add(to),
+    s.len().saturating_sub(from),
+  );
 }
 
 /// Returns error if size is outside of specified boundary
