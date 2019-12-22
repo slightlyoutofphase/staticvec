@@ -801,10 +801,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         .copy_to_nonoverlapping(Self::first_ptr_mut(&mut res), length);
     }
     quicksort_internal(Self::first_ptr_mut(&mut res), 0, (length - 1) as isize);
-    Self {
-      data: res,
-      length: length,
-    }
+    Self { data: res, length }
   }
 
   /// Returns a separate, reversed StaticVec of the contents of the StaticVec's
