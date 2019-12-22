@@ -12,9 +12,6 @@ categories = ["data-structures", "no-std"]
 edition = "2018"
 include = ["Cargo.toml", "rustfmt.toml", "src/**/*.rs", "demo/**/*.rs", "benchmark/**/*.rs", "test/**/*.rs", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
 
-[lib]
-doctest = false
-
 [badges.maintenance]
 status = "actively-developed"
 
