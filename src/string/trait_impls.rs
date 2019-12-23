@@ -1,6 +1,6 @@
 //! Trait implementations for `StaticString` (that aren't for integration)
 
-use super::{Error, StaticString};
+use super::{StaticString, StaticStringError};
 use core::fmt::{self, Debug, Display, Formatter, Write};
 use core::iter::FromIterator;
 use core::ops::{Add, Deref, DerefMut, Index, IndexMut};
@@ -44,7 +44,7 @@ impl<'a, const N: usize> From<&'a str> for StaticString<N> {
 }
 
 impl<const N: usize> FromStr for StaticString<N> {
-  type Err = Error;
+  type Err = StaticStringError;
 
   #[inline]
   fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -125,7 +125,7 @@ impl<'a, const N: usize> Add<&'a str> for StaticString<N> {
 impl<const N: usize> Write for StaticString<N> {
   #[inline]
   fn write_str(&mut self, slice: &str) -> fmt::Result {
-    self.try_push_str(slice).map_err(|_| fmt::Error)
+    self.try_push_str(slice).map_err(|_| fmt::StaticStringError)
   }
 }
 

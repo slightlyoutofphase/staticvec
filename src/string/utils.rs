@@ -1,6 +1,6 @@
 //! Misc functions to improve readability
 
-use super::{Error, StaticString};
+use super::{StaticString, StaticStringError};
 use core::ptr::{copy, write};
 
 pub(crate) trait IntoLossy<T>: Sized {
@@ -127,17 +127,23 @@ pub(crate) unsafe fn shift_left_unchecked<const N: usize>(
 
 /// Returns error if size is outside of specified boundary
 #[inline]
-pub fn is_inside_boundary(size: usize, limit: usize) -> Result<(), Error> {
-  Some(()).filter(|_| size <= limit).ok_or(Error::OutOfBounds)
+pub fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StaticStringError> {
+  Some(())
+    .filter(|_| size <= limit)
+    .ok_or(StaticStringError::OutOfBounds)
 }
 
 /// Returns error if index is not at a valid utf-8 char boundary
 #[inline]
-pub fn is_char_boundary<const N: usize>(s: &StaticString<N>, idx: usize) -> Result<(), Error> {
+pub fn is_char_boundary<const N: usize>(
+  s: &StaticString<N>,
+  idx: usize,
+) -> Result<(), StaticStringError>
+{
   if s.as_str().is_char_boundary(idx) {
     return Ok(());
   }
-  Err(Error::NotCharBoundary)
+  Err(StaticStringError::NotCharBoundary)
 }
 
 /// Truncates string to specified size (ignoring last bytes if they form a partial `char`)

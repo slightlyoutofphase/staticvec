@@ -7,7 +7,7 @@ use core::{char::DecodeUtf16Error, str::Utf8Error};
 ///
 /// [`StaticString`]: ./struct.StaticString.html
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Error {
+pub enum StaticStringError {
   /// Conversion between available byte slice and UTF-8 failed
   Utf8(Utf8Error),
   /// Conversion between available `u16` slice and string failed
@@ -18,7 +18,7 @@ pub enum Error {
   OutOfBounds,
 }
 
-impl Error {
+impl StaticStringError {
   #[inline]
   pub fn is_utf8(&self) -> bool {
     match self {
@@ -52,7 +52,7 @@ impl Error {
   }
 }
 
-impl Display for Error {
+impl Display for StaticStringError {
   #[inline]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match self {
@@ -65,16 +65,16 @@ impl Display for Error {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {}
+impl std::error::Error for StaticStringError {}
 
-impl From<DecodeUtf16Error> for Error {
+impl From<DecodeUtf16Error> for StaticStringError {
   #[inline]
   fn from(err: DecodeUtf16Error) -> Self {
     Self::Utf16(err)
   }
 }
 
-impl From<Utf8Error> for Error {
+impl From<Utf8Error> for StaticStringError {
   #[inline]
   fn from(err: Utf8Error) -> Self {
     Self::Utf8(err)

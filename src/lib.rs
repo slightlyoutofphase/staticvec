@@ -26,6 +26,7 @@
 
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
+pub use crate::string::*;
 pub use crate::trait_impls::*;
 use crate::utils::{
   quicksort_internal, reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut,
@@ -56,7 +57,8 @@ mod iterators;
 mod macros;
 #[doc(hidden)]
 mod errors;
-pub mod string;
+#[doc(hidden)]
+mod string;
 mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
