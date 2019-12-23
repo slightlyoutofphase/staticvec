@@ -63,12 +63,12 @@ serde_json_support = ["serde_json"]
 default = ["std"]
 
 [[test]]
-name = "test"
-path = "test/test.rs"
+name = "test_staticvec"
+path = "test/test_staticvec.rs"
 
 [[test]]
-name = "string_parity"
-path = "test/string_parity.rs"
+name = "test_staticstring"
+path = "test/test_staticstring.rs"
 
 [[bench]]
 name = "arrayvec_extend_suite"
