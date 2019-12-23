@@ -123,7 +123,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::StaticVec;
+  /// # use staticvec::StaticVec;
   /// // Same input length as the declared capacity:
   /// let v = StaticVec::<i32, 3>::new_from_array([1, 2, 3]);
   /// assert_eq!(v, [1, 2, 3]);
@@ -135,7 +135,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// and static arrays, which may prove more ergonomic in some cases as it allows
   /// for a greater degree of type inference:
   /// ```
-  /// use staticvec::StaticVec;
+  /// # use staticvec::StaticVec;
   /// // The StaticVec on the next line is inferred to be of type `StaticVec<&'static str, 4>`.
   /// let v = StaticVec::from(["A", "B", "C", "D"]);
   /// ```
@@ -747,7 +747,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::{staticvec, StaticVec};
+  /// # use staticvec::{staticvec, StaticVec};
   /// const V: StaticVec<StaticVec<i32, 2>, 2> = staticvec![staticvec![1, 3], staticvec![4, 2]];
   /// assert_eq!(
   ///   V.iter().flatten().collect::<StaticVec<i32, 4>>().sorted(),
@@ -828,7 +828,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::StaticVec;
+  /// # use staticvec::StaticVec;
   /// let mut i = 0;
   /// let v = StaticVec::<i32, 64>::filled_with(|| { i += 1; i });
   /// assert_eq!(v.len(), 64);
@@ -859,7 +859,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::StaticVec;
+  /// # use staticvec::StaticVec;
   /// let v = StaticVec::<usize, 64>::filled_with_by_index(|i| { i + 1 });
   /// assert_eq!(v.len(), 64);
   /// assert_eq!(v[0], 1);
@@ -956,7 +956,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::staticvec;
+  /// # use staticvec::staticvec;
   /// assert_eq!(
   ///  staticvec!["A, B"].concat(&staticvec!["C", "D", "E", "F"]),
   ///  ["A, B", "C", "D", "E", "F"]
@@ -1013,7 +1013,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::staticvec;
+  /// # use staticvec::staticvec;
   /// assert_eq!(
   ///  staticvec!["A", "B", "C", "D"].intersperse("Z"),
   ///  ["A", "Z", "B", "Z", "C", "Z", "D"]
@@ -1320,7 +1320,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::staticvec;
+  /// # use staticvec::staticvec;
   /// assert_eq!(
   ///   staticvec![4, 5, 6, 7].difference(&staticvec![1, 2, 3, 7]),
   ///   [4, 5, 6]
@@ -1357,7 +1357,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::staticvec;
+  /// # use staticvec::staticvec;
   /// assert_eq!(
   ///   staticvec![1, 2, 3].symmetric_difference(&staticvec![3, 4, 5]),
   ///   [1, 2, 4, 5]
@@ -1411,7 +1411,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::staticvec;
+  /// # use staticvec::staticvec;
   /// assert_eq!(
   ///   staticvec![4, 5, 6, 7].intersection(&staticvec![1, 2, 3, 7, 4]),
   ///   [4, 7],
@@ -1448,7 +1448,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::staticvec;
+  /// # use staticvec::staticvec;
   /// assert_eq!(
   ///   staticvec![1, 2, 3].union(&staticvec![4, 2, 3, 4]),
   ///   [1, 2, 3, 4],
@@ -1497,7 +1497,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::{staticvec, StaticVec};
+  /// # use staticvec::{staticvec, StaticVec};
   /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
   /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
   /// assert_eq!(A.added(&B), [6.0, 8.0, 10.0, 12.0]);
@@ -1531,7 +1531,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::{staticvec, StaticVec};
+  /// # use staticvec::{staticvec, StaticVec};
   /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
   /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
   /// assert_eq!(A.subtracted(&B), [2.0, 2.0, 2.0, 2.0]);
@@ -1565,7 +1565,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::{staticvec, StaticVec};
+  /// # use staticvec::{staticvec, StaticVec};
   /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
   /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
   /// assert_eq!(A.multiplied(&B), [8.0, 15.0, 24.0, 35.0]);
@@ -1599,7 +1599,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Example usage:
   /// ```
-  /// use staticvec::{staticvec, StaticVec};
+  /// # use staticvec::{staticvec, StaticVec};
   /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
   /// const B: StaticVec<f64, 4> = staticvec![2.0, 3.0, 4.0, 5.0];
   /// assert_eq!(A.divided(&B), [2.0, 1.6666666666666667, 1.5, 1.4]);
