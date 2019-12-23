@@ -1,7 +1,4 @@
-//! Misc functions to improve readability
-
-use super::{StaticString, StaticStringError};
-use core::ptr::{copy, write};
+use super::{StaticString, StringError};
 
 pub(crate) trait IntoLossy<T>: Sized {
   fn into_lossy(self) -> T;
@@ -58,28 +55,33 @@ pub(crate) unsafe fn encode_char_utf8_unchecked<const N: usize>(
   debug_assert!(ch.len_utf8().saturating_add(s.len()) <= s.capacity());
   let dst = s.vec.as_mut_ptr().add(index);
   let code = ch as u32;
-
   if code < MAX_ONE_B {
     debug_assert!(N.saturating_sub(index) >= 1);
-    write(dst, code.into_lossy());
+    dst.write(code.into_lossy());
     s.vec.set_len(s.len().saturating_add(1));
   } else if code < MAX_TWO_B {
     debug_assert!(N.saturating_sub(index) >= 2);
-    write(dst, (code >> 6 & 0x1F).into_lossy() | TAG_TWO_B);
-    write(dst.add(1), (code & 0x3F).into_lossy() | TAG_CONT);
+    dst.write((code >> 6 & 0x1F).into_lossy() | TAG_TWO_B);
+    dst.offset(1).write((code & 0x3F).into_lossy() | TAG_CONT);
     s.vec.set_len(s.len().saturating_add(2));
   } else if code < MAX_THREE_B {
     debug_assert!(N.saturating_sub(index) >= 3);
-    write(dst, (code >> 12 & 0x0F).into_lossy() | TAG_THREE_B);
-    write(dst.add(1), (code >> 6 & 0x3F).into_lossy() | TAG_CONT);
-    write(dst.add(2), (code & 0x3F).into_lossy() | TAG_CONT);
+    dst.write((code >> 12 & 0x0F).into_lossy() | TAG_THREE_B);
+    dst
+      .offset(1)
+      .write((code >> 6 & 0x3F).into_lossy() | TAG_CONT);
+    dst.offset(2).write((code & 0x3F).into_lossy() | TAG_CONT);
     s.vec.set_len(s.len().saturating_add(3));
   } else {
     debug_assert!(N.saturating_sub(index) >= 4);
-    write(dst, (code >> 18 & 0x07).into_lossy() | TAG_FOUR_B);
-    write(dst.add(1), (code >> 12 & 0x3F).into_lossy() | TAG_CONT);
-    write(dst.add(2), (code >> 6 & 0x3F).into_lossy() | TAG_CONT);
-    write(dst.add(3), (code & 0x3F).into_lossy() | TAG_CONT);
+    dst.write((code >> 18 & 0x07).into_lossy() | TAG_FOUR_B);
+    dst
+      .offset(1)
+      .write((code >> 12 & 0x3F).into_lossy() | TAG_CONT);
+    dst
+      .offset(2)
+      .write((code >> 6 & 0x3F).into_lossy() | TAG_CONT);
+    dst.offset(3).write((code & 0x3F).into_lossy() | TAG_CONT);
     s.vec.set_len(s.len().saturating_add(4));
   }
 }
@@ -101,11 +103,9 @@ pub(crate) unsafe fn shift_right_unchecked<const N: usize>(
   let len = s.len().saturating_sub(from);
   debug_assert!(from <= to && to.saturating_add(len) <= s.capacity());
   debug_assert!(s.as_str().is_char_boundary(from));
-  copy(
-    s.as_ptr().add(from),
-    s.as_mut_ptr().add(to),
-    s.len().saturating_sub(from),
-  );
+  s.as_ptr()
+    .add(from)
+    .copy_to(s.as_mut_ptr().add(to), s.len().saturating_sub(from));
 }
 
 /// Shifts string left
@@ -118,19 +118,17 @@ pub(crate) unsafe fn shift_left_unchecked<const N: usize>(
 {
   debug_assert!(to <= from && from <= s.len());
   debug_assert!(s.as_str().is_char_boundary(from));
-  copy(
-    s.as_ptr().add(from),
-    s.as_mut_ptr().add(to),
-    s.len().saturating_sub(from),
-  );
+  s.as_ptr()
+    .add(from)
+    .copy_to(s.as_mut_ptr().add(to), s.len().saturating_sub(from));
 }
 
 /// Returns error if size is outside of specified boundary
 #[inline]
-pub fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StaticStringError> {
+pub fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StringError> {
   Some(())
     .filter(|_| size <= limit)
-    .ok_or(StaticStringError::OutOfBounds)
+    .ok_or(StringError::OutOfBounds)
 }
 
 /// Returns error if index is not at a valid utf-8 char boundary
@@ -138,12 +136,12 @@ pub fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StaticStringE
 pub fn is_char_boundary<const N: usize>(
   s: &StaticString<N>,
   idx: usize,
-) -> Result<(), StaticStringError>
+) -> Result<(), StringError>
 {
   if s.as_str().is_char_boundary(idx) {
     return Ok(());
   }
-  Err(StaticStringError::NotCharBoundary)
+  Err(StringError::NotCharBoundary)
 }
 
 /// Truncates string to specified size (ignoring last bytes if they form a partial `char`)
@@ -222,7 +220,6 @@ mod tests {
       encode_char_utf8_unchecked(&mut string, 'a', 0);
       assert_eq!(from_utf8(&string.as_mut_bytes()).unwrap(), "a");
       let mut string = StaticString::<20>::try_from_str("a").unwrap();
-
       encode_char_utf8_unchecked(&mut string, '🤔', 1);
       assert_eq!(from_utf8(&string.as_mut_bytes()[..5]).unwrap(), "a🤔");
     }

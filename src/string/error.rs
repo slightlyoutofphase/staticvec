@@ -5,7 +5,7 @@ use core::str::Utf8Error;
 /// This enum represents several different possible "error states" that may be encountered
 /// while using a `StaticString`.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum StaticStringError {
+pub enum StringError {
   /// Conversion between available byte slice and UTF-8 failed
   Utf8(Utf8Error),
   /// Conversion between available `u16` slice and string failed
@@ -16,8 +16,8 @@ pub enum StaticStringError {
   OutOfBounds,
 }
 
-impl StaticStringError {
-  #[inline]
+impl StringError {
+  #[inline(always)]
   pub fn is_utf8(&self) -> bool {
     match self {
       Self::Utf8(_) => true,
@@ -25,7 +25,7 @@ impl StaticStringError {
     }
   }
 
-  #[inline]
+  #[inline(always)]
   pub fn is_utf16(&self) -> bool {
     match self {
       Self::Utf16(_) => true,
@@ -33,7 +33,7 @@ impl StaticStringError {
     }
   }
 
-  #[inline]
+  #[inline(always)]
   pub fn is_out_of_bounds(&self) -> bool {
     match self {
       Self::OutOfBounds => true,
@@ -41,8 +41,8 @@ impl StaticStringError {
     }
   }
 
-  #[inline]
-  pub fn isnt_char_boundary(&self) -> bool {
+  #[inline(always)]
+  pub fn is_not_char_boundary(&self) -> bool {
     match self {
       Self::NotCharBoundary => true,
       _ => false,
@@ -50,8 +50,8 @@ impl StaticStringError {
   }
 }
 
-impl Display for StaticStringError {
-  #[inline]
+impl Display for StringError {
+  #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     match self {
       Self::Utf8(err) => write!(f, "{}", err),
@@ -63,17 +63,17 @@ impl Display for StaticStringError {
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for StaticStringError {}
+impl std::error::Error for StringError {}
 
-impl From<DecodeUtf16Error> for StaticStringError {
-  #[inline]
+impl From<DecodeUtf16Error> for StringError {
+  #[inline(always)]
   fn from(err: DecodeUtf16Error) -> Self {
     Self::Utf16(err)
   }
 }
 
-impl From<Utf8Error> for StaticStringError {
-  #[inline]
+impl From<Utf8Error> for StringError {
+  #[inline(always)]
   fn from(err: Utf8Error) -> Self {
     Self::Utf8(err)
   }

@@ -5,7 +5,7 @@
 //! ## Examples
 //!
 //! ```rust
-//! use staticvec::{StaticString, StaticStringError};
+//! use staticvec::{StaticString, StringError};
 //!
 //! #[derive(Debug)]
 //! pub struct User {
@@ -13,7 +13,7 @@
 //!   pub role: StaticString<5>,
 //! }
 //!
-//! fn main() -> Result<(), StaticStringError> {
+//! fn main() -> Result<(), StringError> {
 //!   let user = User {
 //!     username: StaticString::try_from_str("user")?,
 //!     role: StaticString::try_from_str("admin")?,
@@ -23,7 +23,7 @@
 //! }
 //! ```
 
-pub use self::error::StaticStringError;
+pub use self::error::StringError;
 use self::utils::{
   encode_char_utf8_unchecked, is_char_boundary, is_inside_boundary, never, shift_left_unchecked,
   shift_right_unchecked, truncate_str,
@@ -65,13 +65,13 @@ impl<const N: usize> StaticString<N> {
 
   /// Creates a new `StaticString` from a string slice if the slice has a length less than or equal
   /// to the StaticString's declared capacity, or returns a a
-  /// [`StaticStringError`](self::error::StaticStringError) otherwise.
+  /// [`StringError`](self::error::StringError) otherwise.
   ///
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   /// ```rust
-  /// use staticvec::{StaticString, StaticStringError};
+  /// use staticvec::{StaticString, StringError};
   ///
-  /// fn main() -> Result<(), StaticStringError> {
+  /// fn main() -> Result<(), StringError> {
   ///   let string = StaticString::<20>::try_from_str("My String")?;
   ///   assert_eq!(string.as_str(), "My String");
   ///   assert_eq!(StaticString::<20>::try_from_str("")?.as_str(), "");
@@ -81,7 +81,7 @@ impl<const N: usize> StaticString<N> {
   /// }
   /// ```
   #[inline]
-  pub fn try_from_str<S>(s: S) -> Result<Self, StaticStringError>
+  pub fn try_from_str<S>(s: S) -> Result<Self, StringError>
   where S: AsRef<str> {
     let mut string = Self::default();
     string.try_push_str(s)?;
@@ -145,8 +145,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let string = StaticString::<300>::try_from_iterator(&["My String", " My Other String"][..])?;
   /// assert_eq!(string.as_str(), "My String My Other String");
   ///
@@ -156,7 +156,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_from_iterator<U, I>(iter: I) -> Result<Self, StaticStringError>
+  pub fn try_from_iterator<U, I>(iter: I) -> Result<Self, StringError>
   where
     U: AsRef<str>,
     I: IntoIterator<Item = U>, {
@@ -173,8 +173,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let string = StaticString::<300>::from_iterator(&["My String", " Other String"][..]);
   /// assert_eq!(string.as_str(), "My String Other String");
   ///
@@ -240,8 +240,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let string = StaticString::<20>::try_from_chars("My String".chars())?;
   /// assert_eq!(string.as_str(), "My String");
   ///
@@ -251,7 +251,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_from_chars<I>(iter: I) -> Result<Self, StaticStringError>
+  pub fn try_from_chars<I>(iter: I) -> Result<Self, StringError>
   where I: IntoIterator<Item = char> {
     let mut out = Self::default();
     for c in iter {
@@ -317,13 +317,13 @@ impl<const N: usize> StaticString<N> {
   /// Creates new `StaticString` from byte slice, returning [`Utf8`] on invalid utf-8 data or
   /// [`OutOfBounds`] if bigger than [`capacity`]
   ///
-  /// [`Utf8`]: ./error/enum.StaticStringError.html#variant.Utf8
-  /// [`OutOfBounds`]: ./error/enum.StaticStringError.html#variant.OutOfBounds
+  /// [`Utf8`]: ./error/enum.StringError.html#variant.Utf8
+  /// [`OutOfBounds`]: ./error/enum.StringError.html#variant.OutOfBounds
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let string = StaticString::<20>::try_from_utf8("My String")?;
   /// assert_eq!(string.as_str(), "My String");
   ///
@@ -335,8 +335,8 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
-  pub fn try_from_utf8<B>(slice: B) -> Result<Self, StaticStringError>
+  #[inline(always)]
+  pub fn try_from_utf8<B>(slice: B) -> Result<Self, StringError>
   where B: AsRef<[u8]> {
     Ok(Self::try_from_str(from_utf8(slice.as_ref())?)?)
   }
@@ -348,8 +348,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let string = StaticString::<20>::from_utf8("My String")?;
   /// assert_eq!(string.as_str(), "My String");
   ///
@@ -362,8 +362,8 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
-  pub fn from_utf8<B>(slice: B) -> Result<Self, StaticStringError>
+  #[inline(always)]
+  pub fn from_utf8<B>(slice: B) -> Result<Self, StringError>
   where B: AsRef<[u8]> {
     Ok(Self::from_str_truncate(from_utf8(slice.as_ref())?))
   }
@@ -385,23 +385,23 @@ impl<const N: usize> StaticString<N> {
   /// // let out_of_bounds = "0".repeat(300);
   /// // let ub = unsafe { StaticString::<20>::from_utf8_unchecked(out_of_bounds)) };
   /// ```
-  #[inline]
+  #[inline(always)]
   pub unsafe fn from_utf8_unchecked<B>(slice: B) -> Self
   where B: AsRef<[u8]> {
     debug_assert!(from_utf8(slice.as_ref()).is_ok());
     Self::from_str_unchecked(from_utf8_unchecked(slice.as_ref()))
   }
 
-  /// Creates new `StaticString` from `u16` slice, returning [`Utf16`] on invalid utf-16 data or
+  /// Creates new `StaticString` from a `u16` slice, returning [`Utf16`] on invalid utf-16 data or
   /// [`OutOfBounds`] if bigger than [`capacity`]
   ///
-  /// [`Utf16`]: ./error/enum.StaticStringError.html#variant.Utf16
-  /// [`OutOfBounds`]: ./error/enum.StaticStringError.html#variant.OutOfBounds
+  /// [`Utf16`]: ./error/enum.StringError.html#variant.Utf16
+  /// [`OutOfBounds`]: ./error/enum.StringError.html#variant.OutOfBounds
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let music = [0xD834, 0xDD1E, 0x006d, 0x0075, 0x0073, 0x0069, 0x0063];
   /// let string = StaticString::<20>::try_from_utf16(music)?;
   /// assert_eq!(string.as_str(), "𝄞music");
@@ -415,7 +415,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_from_utf16<B>(slice: B) -> Result<Self, StaticStringError>
+  pub fn try_from_utf16<B>(slice: B) -> Result<Self, StringError>
   where B: AsRef<[u16]> {
     let mut out = Self::default();
     for c in decode_utf16(slice.as_ref().iter().cloned()) {
@@ -431,8 +431,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let music = [0xD834, 0xDD1E, 0x006d, 0x0075, 0x0073, 0x0069, 0x0063];
   /// let string = StaticString::<20>::from_utf16(music)?;
   /// assert_eq!(string.as_str(), "𝄞music");
@@ -447,7 +447,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn from_utf16<B>(slice: B) -> Result<Self, StaticStringError>
+  pub fn from_utf16<B>(slice: B) -> Result<Self, StringError>
   where B: AsRef<[u16]> {
     let mut out = Self::default();
     for c in decode_utf16(slice.as_ref().iter().cloned()) {
@@ -464,8 +464,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let music = [0xD834, 0xDD1E, 0x006d, 0x0075, 0x0073, 0x0069, 0x0063];
   /// let string = StaticString::<20>::from_utf16_lossy(music);
   /// assert_eq!(string.as_str(), "𝄞music");
@@ -494,14 +494,14 @@ impl<const N: usize> StaticString<N> {
   /// Extracts a string slice containing the entire `StaticString`
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let s = StaticString::<20>::try_from_str("My String")?;
   /// assert_eq!(s.as_str(), "My String");
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub const fn as_str(&self) -> &str {
     unsafe { &*(self.as_bytes() as *const [u8] as *const str) }
   }
@@ -509,14 +509,14 @@ impl<const N: usize> StaticString<N> {
   /// Extracts a mutable string slice containing the entire `StaticString`
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("My String")?;
   /// assert_eq!(s.as_mut_str(), "My String");
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub fn as_mut_str(&mut self) -> &mut str {
     unsafe { &mut *(self.as_mut_bytes() as *mut [u8] as *mut str) }
   }
@@ -524,14 +524,14 @@ impl<const N: usize> StaticString<N> {
   /// Extracts a byte slice containing the entire `StaticString`
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let s = StaticString::<20>::try_from_str("My String")?;
   /// assert_eq!(s.as_bytes(), "My String".as_bytes());
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub const fn as_bytes(&self) -> &[u8] {
     self.vec.as_slice()
   }
@@ -539,14 +539,14 @@ impl<const N: usize> StaticString<N> {
   /// Extracts a mutable string slice containing the entire `StaticString`
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("My String")?;
   /// assert_eq!(unsafe { s.as_mut_bytes() }, "My String".as_bytes());
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub const unsafe fn as_mut_bytes(&mut self) -> &mut [u8] {
     self.vec.as_mut_slice()
   }
@@ -557,7 +557,7 @@ impl<const N: usize> StaticString<N> {
   /// # use staticvec::StaticString;
   /// assert_eq!(StaticString::<32>::new().capacity(), 32);
   /// ```
-  #[inline]
+  #[inline(always)]
   pub const fn capacity(&self) -> usize {
     self.vec.capacity()
   }
@@ -568,8 +568,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<300>::try_from_str("My String")?;
   /// s.try_push_str(" My other String")?;
   /// assert_eq!(s.as_str(), "My String My other String");
@@ -579,7 +579,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_push_str<S>(&mut self, string: S) -> Result<(), StaticStringError>
+  pub fn try_push_str<S>(&mut self, string: S) -> Result<(), StringError>
   where S: AsRef<str> {
     let new_end = string.as_ref().len().saturating_add(self.len());
     is_inside_boundary(new_end, self.capacity())?;
@@ -593,8 +593,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<300>::try_from_str("My String")?;
   /// s.push_str(" My other String");
   /// assert_eq!(s.as_str(), "My String My other String");
@@ -605,7 +605,7 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub fn push_str<S>(&mut self, string: S)
   where S: AsRef<str> {
     let size = self.capacity().saturating_sub(self.len());
@@ -621,8 +621,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<300>::try_from_str("My String")?;
   /// unsafe { s.push_str_unchecked(" My other String") };
   /// assert_eq!(s.as_str(), "My String My other String");
@@ -649,8 +649,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("My String")?;
   /// s.try_push('!')?;
   /// assert_eq!(s.as_str(), "My String!");
@@ -661,7 +661,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_push(&mut self, character: char) -> Result<(), StaticStringError> {
+  pub fn try_push(&mut self, character: char) -> Result<(), StringError> {
     let new_end = character.len_utf8().saturating_add(self.len());
     is_inside_boundary(new_end, self.capacity())?;
     unsafe { self.push_unchecked(character) };
@@ -677,8 +677,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("My String")?;
   /// unsafe { s.push_unchecked('!') };
   /// assert_eq!(s.as_str(), "My String!");
@@ -689,7 +689,7 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, ch: char) {
     encode_char_utf8_unchecked(self, ch, self.len());
   }
@@ -698,8 +698,8 @@ impl<const N: usize> StaticString<N> {
   /// char index).
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("My String")?;
   /// s.truncate(5)?;
   /// assert_eq!(s.as_str(), "My St");
@@ -714,8 +714,8 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
-  pub fn truncate(&mut self, size: usize) -> Result<(), StaticStringError> {
+  #[inline(always)]
+  pub fn truncate(&mut self, size: usize) -> Result<(), StringError> {
     let len = min(self.len(), size);
     is_char_boundary(self, len).map(|()| unsafe { self.vec.set_len(len) })
   }
@@ -723,8 +723,8 @@ impl<const N: usize> StaticString<N> {
   /// Removes last character from `StaticString`, if any.
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("A🤔")?;
   /// assert_eq!(s.pop(), Some('🤔'));
   /// assert_eq!(s.pop(), Some('A'));
@@ -732,7 +732,7 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub fn pop(&mut self) -> Option<char> {
     self.as_str().chars().last().map(|ch| {
       unsafe { self.vec.set_len(self.len().saturating_sub(ch.len_utf8())) };
@@ -743,8 +743,8 @@ impl<const N: usize> StaticString<N> {
   /// Removes spaces from the beggining and end of the string
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut string = StaticString::<300>::try_from_str("   to be trimmed     ")?;
   /// string.trim();
   /// assert_eq!(string.as_str(), "to be trimmed");
@@ -788,12 +788,12 @@ impl<const N: usize> StaticString<N> {
   /// Removes specified char from `StaticString`
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
   /// assert!(s.remove("ABCD🤔".len()).unwrap_err().is_out_of_bounds());
   /// assert!(s.remove(10).unwrap_err().is_out_of_bounds());
-  /// assert!(s.remove(6).unwrap_err().isnt_char_boundary());
+  /// assert!(s.remove(6).unwrap_err().is_not_char_boundary());
   /// assert_eq!(s.remove(0), Ok('A'));
   /// assert_eq!(s.as_str(), "BCD🤔");
   /// assert_eq!(s.remove(2), Ok('D'));
@@ -802,7 +802,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn remove(&mut self, idx: usize) -> Result<char, StaticStringError> {
+  pub fn remove(&mut self, idx: usize) -> Result<char, StringError> {
     is_inside_boundary(idx, self.len().saturating_sub(1))?;
     is_char_boundary(self, idx)?;
     debug_assert!(idx < self.len() && self.as_str().is_char_boundary(idx));
@@ -816,15 +816,15 @@ impl<const N: usize> StaticString<N> {
   /// Retains only the characters specified by the predicate.
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
   /// s.retain(|c| c != '🤔');
   /// assert_eq!(s.as_str(), "ABCD");
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub fn retain<F: FnMut(char) -> bool>(&mut self, mut f: F) {
     // Not the most efficient solution, we could shift left during batch mismatch
     *self = unsafe { Self::from_chars_unchecked(self.as_str().chars().filter(|c| f(*c))) };
@@ -836,18 +836,18 @@ impl<const N: usize> StaticString<N> {
   /// Returns [`OutOfBounds`] if `idx` is out of bounds and [`Utf8`] if `idx` is not a char position
   ///
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
-  /// [`OutOfBounds`]: ./error/enum.StaticStringError.html#variant.OutOfBounds
-  /// [`Utf8`]: ./error/enum.StaticStringError.html#variant.Utf8
+  /// [`OutOfBounds`]: ./error/enum.StringError.html#variant.OutOfBounds
+  /// [`Utf8`]: ./error/enum.StringError.html#variant.Utf8
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
   /// s.try_insert(1, 'E')?;
   /// s.try_insert(2, 'F')?;
   /// assert_eq!(s.as_str(), "AEFBCD🤔");
   /// assert!(s.try_insert(20, 'C').unwrap_err().is_out_of_bounds());
-  /// assert!(s.try_insert(8, 'D').unwrap_err().isnt_char_boundary());
+  /// assert!(s.try_insert(8, 'D').unwrap_err().is_not_char_boundary());
   ///
   /// let mut s = StaticString::<20>::try_from_str(&"0".repeat(20))?;
   /// assert!(s.try_insert(0, 'C').unwrap_err().is_out_of_bounds());
@@ -855,7 +855,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_insert(&mut self, idx: usize, ch: char) -> Result<(), StaticStringError> {
+  pub fn try_insert(&mut self, idx: usize, ch: char) -> Result<(), StringError> {
     is_inside_boundary(idx, self.len())?;
     let new_end = ch.len_utf8().saturating_add(self.len());
     is_inside_boundary(new_end, self.capacity())?;
@@ -875,8 +875,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
   /// unsafe { s.insert_unchecked(1, 'A') };
   /// unsafe { s.insert_unchecked(1, 'B') };
@@ -902,24 +902,24 @@ impl<const N: usize> StaticString<N> {
   /// Returns [`Utf8`] if `idx` is not a char position
   ///
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
-  /// [`OutOfBounds`]: ./error/enum.StaticStringError.html#variant.OutOfBounds
-  /// [`Utf8`]: ./error/enum.StaticStringError.html#variant.Utf8
+  /// [`OutOfBounds`]: ./error/enum.StringError.html#variant.OutOfBounds
+  /// [`Utf8`]: ./error/enum.StringError.html#variant.Utf8
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
   /// s.try_insert_str(1, "AB")?;
   /// s.try_insert_str(1, "BC")?;
   /// assert!(s.try_insert_str(1, "0".repeat(20)).unwrap_err().is_out_of_bounds());
   /// assert_eq!(s.as_str(), "ABCABBCD🤔");
   /// assert!(s.try_insert_str(20, "C").unwrap_err().is_out_of_bounds());
-  /// assert!(s.try_insert_str(10, "D").unwrap_err().isnt_char_boundary());
+  /// assert!(s.try_insert_str(10, "D").unwrap_err().is_not_char_boundary());
   /// # Ok(())
   /// # }
   /// ```
   #[inline]
-  pub fn try_insert_str<S>(&mut self, idx: usize, s: S) -> Result<(), StaticStringError>
+  pub fn try_insert_str<S>(&mut self, idx: usize, s: S) -> Result<(), StringError>
   where S: AsRef<str> {
     is_inside_boundary(idx, self.len())?;
     let new_end = s.as_ref().len().saturating_add(self.len());
@@ -934,19 +934,19 @@ impl<const N: usize> StaticString<N> {
   /// Returns [`OutOfBounds`] if `idx` is out of bounds and [`Utf8`] if `idx` is not a char position
   ///
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
-  /// [`OutOfBounds`]: ./error/enum.StaticStringError.html#variant.OutOfBounds
-  /// [`Utf8`]: ./error/enum.StaticStringError.html#variant.Utf8
+  /// [`OutOfBounds`]: ./error/enum.StringError.html#variant.OutOfBounds
+  /// [`Utf8`]: ./error/enum.StringError.html#variant.Utf8
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
   /// s.insert_str(1, "AB")?;
   /// s.insert_str(1, "BC")?;
   /// assert_eq!(s.as_str(), "ABCABBCD🤔");
   ///
   /// assert!(s.insert_str(20, "C").unwrap_err().is_out_of_bounds());
-  /// assert!(s.insert_str(10, "D").unwrap_err().isnt_char_boundary());
+  /// assert!(s.insert_str(10, "D").unwrap_err().is_not_char_boundary());
   ///
   /// s.clear();
   /// s.insert_str(0, "0".repeat(30))?;
@@ -955,7 +955,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn insert_str<S>(&mut self, idx: usize, string: S) -> Result<(), StaticStringError>
+  pub fn insert_str<S>(&mut self, idx: usize, string: S) -> Result<(), StringError>
   where S: AsRef<str> {
     is_inside_boundary(idx, self.len())?;
     is_char_boundary(self, idx)?;
@@ -975,8 +975,8 @@ impl<const N: usize> StaticString<N> {
   /// [`capacity`]: ./struct.StaticString.html#method.capacity
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
   /// unsafe { s.insert_str_unchecked(1, "AB") };
   /// unsafe { s.insert_str_unchecked(1, "BC") };
@@ -1007,8 +1007,8 @@ impl<const N: usize> StaticString<N> {
   /// Returns `StaticString` length.
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD")?;
   /// assert_eq!(s.len(), 4);
   /// s.try_push('🤔')?;
@@ -1017,7 +1017,7 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub const fn len(&self) -> usize {
     self.vec.len()
   }
@@ -1025,8 +1025,8 @@ impl<const N: usize> StaticString<N> {
   /// Checks if `StaticString` is empty.
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD")?;
   /// assert!(!s.is_empty());
   /// s.clear();
@@ -1034,7 +1034,7 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub const fn is_empty(&self) -> bool {
     self.vec.is_empty()
   }
@@ -1044,22 +1044,22 @@ impl<const N: usize> StaticString<N> {
   /// Returns [`Utf8`] if `at` does not lie at a valid utf-8 char boundary and [`OutOfBounds`] if
   /// it's out of bounds
   ///
-  /// [`OutOfBounds`]: ./error/enum.StaticStringError.html#variant.OutOfBounds
-  /// [`Utf8`]: ./error/enum.StaticStringError.html#variant.Utf8
+  /// [`OutOfBounds`]: ./error/enum.StringError.html#variant.OutOfBounds
+  /// [`Utf8`]: ./error/enum.StringError.html#variant.Utf8
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("AB🤔CD")?;
   /// assert_eq!(s.split_off(6)?.as_str(), "CD");
   /// assert_eq!(s.as_str(), "AB🤔");
   /// assert!(s.split_off(20).unwrap_err().is_out_of_bounds());
-  /// assert!(s.split_off(4).unwrap_err().isnt_char_boundary());
+  /// assert!(s.split_off(4).unwrap_err().is_not_char_boundary());
   /// # Ok(())
   /// # }
   /// ```
   #[inline]
-  pub fn split_off(&mut self, at: usize) -> Result<Self, StaticStringError> {
+  pub fn split_off(&mut self, at: usize) -> Result<Self, StringError> {
     is_inside_boundary(at, self.len())?;
     is_char_boundary(self, at)?;
     debug_assert!(at <= self.len() && self.as_str().is_char_boundary(at));
@@ -1071,8 +1071,8 @@ impl<const N: usize> StaticString<N> {
   /// Empties `StaticString`
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD")?;
   /// assert!(!s.is_empty());
   /// s.clear();
@@ -1080,7 +1080,7 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub fn clear(&mut self) {
     unsafe { self.vec.set_len(0) };
   }
@@ -1089,20 +1089,20 @@ impl<const N: usize> StaticString<N> {
   /// given string doesn't need to have the same length as the range.
   ///
   /// ```rust
-  /// # use staticvec::{StaticString, StaticStringError};
-  /// # fn main() -> Result<(), StaticStringError> {
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
   /// s.replace_range(2..4, "EFGHI")?;
   /// assert_eq!(s.as_str(), "ABEFGHI🤔");
   ///
-  /// assert!(s.replace_range(9.., "J").unwrap_err().isnt_char_boundary());
+  /// assert!(s.replace_range(9.., "J").unwrap_err().is_not_char_boundary());
   /// assert!(s.replace_range(..90, "K").unwrap_err().is_out_of_bounds());
   /// assert!(s.replace_range(0..1, "0".repeat(20)).unwrap_err().is_out_of_bounds());
   /// # Ok(())
   /// # }
   /// ```
   #[inline]
-  pub fn replace_range<S, R>(&mut self, r: R, with: S) -> Result<(), StaticStringError>
+  pub fn replace_range<S, R>(&mut self, r: R, with: S) -> Result<(), StringError>
   where
     S: AsRef<str>,
     R: RangeBounds<usize>, {
