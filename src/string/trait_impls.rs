@@ -125,7 +125,7 @@ impl<'a, const N: usize> Add<&'a str> for StaticString<N> {
 impl<const N: usize> Write for StaticString<N> {
   #[inline]
   fn write_str(&mut self, slice: &str) -> fmt::Result {
-    self.try_push_str(slice).map_err(|_| fmt::StaticStringError)
+    self.try_push_str(slice).map_err(|_| fmt::Error)
   }
 }
 

@@ -58,7 +58,7 @@ mod macros;
 #[doc(hidden)]
 mod errors;
 #[doc(hidden)]
-mod string;
+pub mod string;
 mod trait_impls;
 #[doc(hidden)]
 pub mod utils;

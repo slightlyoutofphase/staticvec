@@ -1,4 +1,6 @@
-use staticvec::string::{utils::is_char_boundary, utils::is_inside_boundary, Error, StaticString};
+use staticvec::string::{
+  utils::is_char_boundary, utils::is_inside_boundary, StaticString, StaticStringError,
+};
 use std::panic::{catch_unwind, AssertUnwindSafe, RefUnwindSafe};
 use std::{fmt::Debug, iter::FromIterator};
 
@@ -406,7 +408,7 @@ fn insert_unchecked() {
     |s| {
       let mut ms = MyString::try_from_str(s).unwrap();
       is_inside_boundary(2usize, ms.len())
-        .map_err(Error::from)
+        .map_err(StaticStringError::from)
         .and_then(|()| Ok(is_char_boundary(&ms, 2)?))
         .map(|()| unsafe { ms.insert_unchecked(2, 'a') })
         .map(|()| ms)
@@ -465,7 +467,7 @@ fn insert_str_unchecked() {
     |s| {
       let mut ms = MyString::try_from_str(s).unwrap();
       is_inside_boundary(2usize, ms.len())
-        .map_err(Error::from)
+        .map_err(StaticStringError::from)
         .and_then(|()| Ok(is_char_boundary(&ms, 2)?))
         .map(|()| unsafe { ms.insert_str_unchecked(2, s) })
         .map(|()| ms)
