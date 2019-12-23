@@ -3,16 +3,19 @@ use core::fmt::{self, Debug, Display, Formatter};
 use core::str::Utf8Error;
 
 /// This enum represents several different possible "error states" that may be encountered
-/// while using a `StaticString`.
+/// while using a [`StaticString`](crate::string::StaticString).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum StringError {
-  /// Conversion between available byte slice and UTF-8 failed
+  /// Indicates a failed conversion from a `u8` slice to a
+  /// [`StaticString`](crate::string::StaticString).
   Utf8(Utf8Error),
-  /// Conversion between available `u16` slice and string failed
+  /// Indicates a failed conversion from a `u16` slice to a
+  /// [`StaticString`](crate::string::StaticString).
   Utf16(DecodeUtf16Error),
-  /// Accessed invalid Utf8 character index
+  /// Indicates an attempted access of an invalid UTF-8 character index.
   NotCharBoundary,
-  /// Out of boundaries access
+  /// Indicates an out-of-bounds indexed access of a [`StaticString`](crate::string::StaticString)
+  /// instance.
   OutOfBounds,
 }
 
