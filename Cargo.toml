@@ -66,6 +66,10 @@ default = ["std"]
 name = "test"
 path = "test/test.rs"
 
+[[test]]
+name = "string_parity"
+path = "test/string_parity.rs"
+
 [[bench]]
 name = "arrayvec_extend_suite"
 path = "benchmark/arrayvec_extend_suite.rs"
