@@ -26,6 +26,7 @@
 
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
+pub use crate::string::utils as string_utils;
 pub use crate::string::*;
 pub use crate::trait_impls::*;
 use crate::utils::{
@@ -58,7 +59,7 @@ mod macros;
 #[doc(hidden)]
 mod errors;
 #[doc(hidden)]
-pub mod string;
+mod string;
 mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
@@ -1461,8 +1462,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       res.dedup();
       res
     } else {
-      let mut res =
-        StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
+      let mut res = StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
       res.dedup();
       res
     }

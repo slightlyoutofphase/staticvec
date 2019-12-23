@@ -1,11 +1,9 @@
-//! Contains all of this crate errors
-
+use core::char::DecodeUtf16Error;
 use core::fmt::{self, Debug, Display, Formatter};
-use core::{char::DecodeUtf16Error, str::Utf8Error};
+use core::str::Utf8Error;
 
-/// Every error possible when using [`StaticString`]
-///
-/// [`StaticString`]: ./struct.StaticString.html
+/// This enum represents several different possible "error states" that may be encountered
+/// while using a `StaticString`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum StaticStringError {
   /// Conversion between available byte slice and UTF-8 failed

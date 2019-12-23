@@ -1,5 +1,6 @@
-use staticvec::string::{
-  utils::is_char_boundary, utils::is_inside_boundary, StaticString, StaticStringError,
+use staticvec::{
+  string_utils::{is_char_boundary, is_inside_boundary},
+  StaticString, StaticStringError,
 };
 use std::panic::{catch_unwind, AssertUnwindSafe, RefUnwindSafe};
 use std::{fmt::Debug, iter::FromIterator};
