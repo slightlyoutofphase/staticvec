@@ -1260,7 +1260,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Splits the StaticVec into two at the given index.
   /// The original StaticVec will contain elements `0..at`,
-  /// and the new one will contain elements `at..length`.
+  /// and the new one will contain elements `at..self.len()`.
   #[inline]
   pub fn split_off(&mut self, at: usize) -> Self {
     let length = self.length;
