@@ -10,7 +10,7 @@ Implements a fixed-capacity stack-allocated Vec alternative backed by an array, 
 
 Note: the word "static" here is meant by the traditional definition of "unchanging" / "not dynamic" etc.
 
-This crate does **not** use literal `static` variables for anything.
+This crate does **not** use literal `static` variables for anything (but does provide multiple ways to instantiate a `StaticVec` **as** a `static` or `const` variable if desired).
 
 Fully `#![no_std]` compatible (with almost no loss of functionality) by setting
 `default-features = false` for the `staticvec` dependency in your `Cargo.toml`.
