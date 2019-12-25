@@ -59,6 +59,28 @@ impl<const N: usize> StaticString<N> {
     }
   }
 
+  /// Creates a new StaticString from a string slice, truncating the slice as necessary if it has
+  /// a length greater than the StaticString's declared capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::StaticString;
+  /// let string = StaticString::<20>::from_str("My String");
+  /// assert_eq!(string.as_str(), "My String");
+  /// println!("{}", string);
+  /// let truncate = "0".repeat(21);
+  /// let truncated = "0".repeat(20);
+  /// let string = StaticString::<20>::from_str(&truncate);
+  /// assert_eq!(string.as_str(), truncated);
+  /// ```
+  #[inline(always)]
+  pub fn from_str<S>(string: S) -> Self
+  where S: AsRef<str> {
+    let mut s = Self::default();
+    s.push_str(string);
+    s
+  }
+
   /// Creates a new StaticString from a string slice if the slice has a length less than or equal
   /// to the StaticString's declared capacity, or returns [`StringError::OutOfBounds`] otherwise.
   ///
@@ -80,55 +102,6 @@ impl<const N: usize> StaticString<N> {
     let mut res = Self::default();
     res.try_push_str(string)?;
     Ok(res)
-  }
-
-  /// Creates a new StaticString from a string slice, truncating the slice as necessary if it has
-  /// a length greater than the StaticString's declared capacity.
-  ///
-  /// Example usage:
-  /// ```
-  /// # use staticvec::StaticString;
-  /// let string = StaticString::<20>::from_str_truncate("My String");
-  /// assert_eq!(string.as_str(), "My String");
-  /// println!("{}", string);
-  /// let truncate = "0".repeat(21);
-  /// let truncated = "0".repeat(20);
-  /// let string = StaticString::<20>::from_str_truncate(&truncate);
-  /// assert_eq!(string.as_str(), truncated);
-  /// ```
-  #[inline(always)]
-  pub fn from_str_truncate<S>(string: S) -> Self
-  where S: AsRef<str> {
-    let mut s = Self::default();
-    s.push_str(string);
-    s
-  }
-
-  /// Creates a new StaticString instance from the contents of `string`.
-  ///
-  /// # Safety
-  ///
-  /// `string.len()` must not exceed the declared capacity of the StaticString being created, as
-  /// this would result in writing to an out-of-bounds memory region.
-  ///
-  /// Example usage:
-  /// ```
-  /// # use staticvec::StaticString;
-  /// let filled = "0".repeat(20);
-  /// let string = unsafe {
-  ///   StaticString::<20>::from_str_unchecked(&filled)
-  /// };
-  /// assert_eq!(string.as_str(), filled.as_str());
-  /// // Undefined behavior, don't do it:
-  /// // let out_of_bounds = "0".repeat(21);
-  /// // let ub = unsafe { StaticString::<20>::from_str_unchecked(out_of_bounds) };
-  /// ```
-  #[inline(always)]
-  pub unsafe fn from_str_unchecked<S>(string: S) -> Self
-  where S: AsRef<str> {
-    let mut out = Self::default();
-    out.push_str_unchecked(string);
-    out
   }
 
   /// Creates a new StaticString from the contents of an iterator if the iterator has a length less
@@ -219,7 +192,7 @@ impl<const N: usize> StaticString<N> {
     I: IntoIterator<Item = U>, {
     let mut out = Self::default();
     for s in iter {
-      out.push_str_unchecked(s);
+      out.push_str(s);
     }
     out
   }
@@ -344,7 +317,7 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn from_utf8<B>(slice: B) -> Result<Self, StringError>
   where B: AsRef<[u8]> {
-    Ok(Self::from_str_truncate(from_utf8(slice.as_ref())?))
+    Ok(Self::from_str(from_utf8(slice.as_ref())?))
   }
 
   /// Creates a new StaticString instance from a provided byte slice, without doing any checking to
@@ -373,7 +346,7 @@ impl<const N: usize> StaticString<N> {
   pub unsafe fn from_utf8_unchecked<B>(slice: B) -> Self
   where B: AsRef<[u8]> {
     debug_assert!(from_utf8(slice.as_ref()).is_ok());
-    Self::from_str_unchecked(from_utf8_unchecked(slice.as_ref()))
+    Self::from_str(from_utf8_unchecked(slice.as_ref()))
   }
 
   /// Creates a new StaticString from provided `u16` slice, returning [`StringError::Utf16`] on
@@ -543,30 +516,7 @@ impl<const N: usize> StaticString<N> {
     self.vec.capacity()
   }
 
-  /// Pushes `string` to the StaticString if `self.len() + string.len()` does not exceed
-  /// the StaticString's total capacity, or returns [`StringError::OutOfBounds`] otherwise.
-  ///
-  /// Example usage:
-  /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<300>::try_from_str("My String")?;
-  /// s.try_push_str(" My other String")?;
-  /// assert_eq!(s.as_str(), "My String My other String");
-  /// assert!(s.try_push_str("0".repeat(300)).is_err());
-  /// # Ok(())
-  /// # }
-  /// ```
-  #[inline]
-  pub fn try_push_str<S>(&mut self, string: S) -> Result<(), StringError>
-  where S: AsRef<str> {
-    let new_end = string.as_ref().len().saturating_add(self.len());
-    is_inside_boundary(new_end, self.capacity())?;
-    unsafe { self.push_str_unchecked(string) };
-    Ok(())
-  }
-
-  /// Pushes `string` to the StaticString, truncating `string` as necessary if it is the case that
+  /// Pushes `string` to the StaticString. Does nothing if it is the case that
   /// `self.len() + string.len()` exceeds the StaticString's total capacity.
   ///
   /// Example usage:
@@ -585,39 +535,66 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn push_str<S>(&mut self, string: S)
   where S: AsRef<str> {
-    let size = self.capacity().saturating_sub(self.len());
-    unsafe { self.push_str_unchecked(truncate_str(string.as_ref(), size)) }
+    self.vec.extend_from_slice(string.as_ref().as_bytes())
   }
 
-  /// Pushes `string` to the StaticString without doing any checking to ensure that `self.len() +
-  /// string.len()` does not exceed the total capacity of the StaticString.
-  ///
-  /// # Safety
-  ///
-  /// `self.len() + string.len()` must not exceed the total capacity of the StaticString instance,
-  /// as this would result in writing to an out-of-bounds memory region.
+  /// Pushes `string` to the StaticString if `self.len() + string.len()` does not exceed
+  /// the StaticString's total capacity, or returns [`StringError::OutOfBounds`] otherwise.
   ///
   /// Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<300>::try_from_str("My String")?;
-  /// unsafe { s.push_str_unchecked(" My other String") };
+  /// s.try_push_str(" My other String")?;
   /// assert_eq!(s.as_str(), "My String My other String");
-  /// // Undefined behavior, don't do it:
-  /// // let mut undefined_behavior = StaticString::<20>::default();
-  /// // undefined_behavior.push_str_unchecked("0".repeat(21));
+  /// assert!(s.try_push_str("0".repeat(300)).is_err());
   /// # Ok(())
   /// # }
   /// ```
   #[inline]
-  pub unsafe fn push_str_unchecked<S>(&mut self, string: S)
+  pub fn try_push_str<S>(&mut self, string: S) -> Result<(), StringError>
   where S: AsRef<str> {
-    let (s, len) = (string.as_ref(), string.as_ref().len());
-    debug_assert!(len.saturating_add(self.len()) <= self.capacity());
-    let dest = self.vec.as_mut_ptr().add(self.len());
-    s.as_ptr().copy_to_nonoverlapping(dest, len);
-    self.vec.set_len(self.len().saturating_add(len));
+    let string_len = string.as_ref().len();
+    match self.vec.remaining_capacity() < string_len {
+      false => {
+        self.push_str(string);
+        Ok(())
+      }
+      true => Err(StringError::OutOfBounds),
+    }
+  }
+
+  /// Appends the given char to the end of the StaticString without doing any checking to ensure
+  /// that `self.len() + character.len_utf8()` does not exceed the total capacity of the
+  /// StaticString instance.
+  ///
+  /// # Safety
+  ///
+  /// `self.len() + character.len_utf8()` must not exceed the total capacity of the StaticString
+  /// instance, as this would result in writing to an out-of-bounds memory region.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
+  /// let mut s = StaticString::<20>::try_from_str("My String")?;
+  /// unsafe { s.push_unchecked('!') };
+  /// assert_eq!(s.as_str(), "My String!");
+  /// // s = StaticString::<20>::try_from_str(&"0".repeat(20))?;
+  /// // Undefined behavior, don't do it:
+  /// // s.push_unchecked('!');
+  /// # Ok(())
+  /// # }
+  /// ```
+  #[inline(always)]
+  pub unsafe fn push_unchecked(&mut self, character: char) {
+    match character.len_utf8() {
+      1 => self.vec.push_unchecked(character as u8),
+      _ => self
+        .vec
+        .extend_from_slice(character.encode_utf8(&mut [0; 4]).as_bytes()),
+    };
   }
 
   /// Appends the given char to the end of the StaticString, panicking if the StaticString
@@ -672,33 +649,6 @@ impl<const N: usize> StaticString<N> {
       }
       true => Err(StringError::OutOfBounds),
     }
-  }
-
-  /// Appends the given char to the end of the StaticString without doing any checking to ensure
-  /// that `self.len() + character.len_utf8()` does not exceed the total capacity of the
-  /// StaticString instance.
-  ///
-  /// # Safety
-  ///
-  /// `self.len() + character.len_utf8()` must not exceed the total capacity of the StaticString
-  /// instance, as this would result in writing to an out-of-bounds memory region.
-  ///
-  /// Example usage:
-  /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("My String")?;
-  /// unsafe { s.push_unchecked('!') };
-  /// assert_eq!(s.as_str(), "My String!");
-  /// // s = StaticString::<20>::try_from_str(&"0".repeat(20))?;
-  /// // Undefined behavior, don't do it:
-  /// // s.push_unchecked('!');
-  /// # Ok(())
-  /// # }
-  /// ```
-  #[inline(always)]
-  pub unsafe fn push_unchecked(&mut self, character: char) {
-    encode_char_utf8_unchecked(self, character, self.len());
   }
 
   /// Truncates the StaticString to the specified length if the length is both less than the

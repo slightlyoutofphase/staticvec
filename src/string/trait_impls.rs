@@ -121,7 +121,7 @@ impl<'a, const N: usize> Extend<&'a str> for StaticString<N> {
 impl<'a, const N: usize> From<&'a str> for StaticString<N> {
   #[inline(always)]
   fn from(s: &str) -> Self {
-    Self::from_str_truncate(s)
+    Self::from_str(s)
   }
 }
 
