@@ -662,12 +662,12 @@ impl<const N: usize> StaticString<N> {
   }
 
   /// Appends the given char to the end of the StaticString without doing any checking to ensure
-  /// that `self.len() + character.len_utf8()` does not exceed the total capacity of the StaticVec
-  /// instance.
+  /// that `self.len() + character.len_utf8()` does not exceed the total capacity of the
+  /// StaticString instance.
   ///
   /// # Safety
   ///
-  /// `self.len() + character.len_utf8()` must not exceed the total capacity of the StaticVec
+  /// `self.len() + character.len_utf8()` must not exceed the total capacity of the StaticString
   /// instance, as this would result in writing to an out-of-bounds memory region.
   ///
   /// Example usage:
@@ -1038,6 +1038,24 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub const fn is_empty(&self) -> bool {
     self.vec.is_empty()
+  }
+
+  /// Returns true if the StaticString's length is equal to its capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
+  /// let mut s = StaticString::<4>::try_from_str("ABCD")?;
+  /// assert!(s.is_full());
+  /// s.clear();
+  /// assert!(!s.is_full());
+  /// # Ok(())
+  /// # }
+  /// ```
+  #[inline(always)]
+  pub const fn is_full(&self) -> bool {
+    self.vec.is_full()
   }
 
   /// Splits the StaticString in two if `at` is less than the its current length.

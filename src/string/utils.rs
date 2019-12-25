@@ -29,6 +29,7 @@ pub(crate) unsafe fn never(s: &str) -> ! {
 /// - It's UB if index is outside of buffer's boundaries (buffer needs at most 4 bytes)
 /// - It's UB if index is inside a character (like a index 3 for "a🤔")
 #[inline]
+#[allow(clippy::missing_docs_in_private_items)]
 pub(crate) unsafe fn encode_char_utf8_unchecked<const N: usize>(
   s: &mut StaticString<N>,
   ch: char,
@@ -36,19 +37,12 @@ pub(crate) unsafe fn encode_char_utf8_unchecked<const N: usize>(
 )
 {
   // UTF-8 ranges and tags for encoding characters
-  #[allow(clippy::missing_docs_in_private_items)]
   const TAG_CONT: u8 = 0b1000_0000;
-  #[allow(clippy::missing_docs_in_private_items)]
   const TAG_TWO_B: u8 = 0b1100_0000;
-  #[allow(clippy::missing_docs_in_private_items)]
   const TAG_THREE_B: u8 = 0b1110_0000;
-  #[allow(clippy::missing_docs_in_private_items)]
   const TAG_FOUR_B: u8 = 0b1111_0000;
-  #[allow(clippy::missing_docs_in_private_items)]
   const MAX_ONE_B: u32 = 0x80;
-  #[allow(clippy::missing_docs_in_private_items)]
   const MAX_TWO_B: u32 = 0x800;
-  #[allow(clippy::missing_docs_in_private_items)]
   const MAX_THREE_B: u32 = 0x10000;
 
   debug_assert!(ch.len_utf8().saturating_add(index) <= s.capacity());

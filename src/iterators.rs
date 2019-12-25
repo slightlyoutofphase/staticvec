@@ -348,7 +348,7 @@ impl<T: Debug, const N: usize> Debug for StaticVecIntoIter<T, N> {
 impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
   #[inline(always)]
   fn drop(&mut self) {
-    let item_count = self.len();
+    let item_count = self.end - self.start;
     match item_count {
       0 => (),
       _ => unsafe {

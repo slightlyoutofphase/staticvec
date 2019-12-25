@@ -278,14 +278,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub const fn as_ptr(&self) -> *const T {
     // Written like this so it can be `const fn`.
-    &self.data as *const _ as *const T
+    &self.data as *const MaybeUninit<[T; N]> as *const T
   }
 
   /// Returns a mutable pointer to the first element of the StaticVec's internal array.
   #[inline(always)]
   pub const fn as_mut_ptr(&mut self) -> *mut T {
     // Written like this so it can be `const fn`.
-    &mut self.data as *mut _ as *mut T
+    &mut self.data as *mut MaybeUninit<[T; N]> as *mut T
   }
 
   /// Returns a constant reference to a slice of the StaticVec's inhabited area.
