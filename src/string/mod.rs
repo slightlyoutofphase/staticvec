@@ -633,9 +633,13 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn push(&mut self, character: char) {
-    let new_end = character.len_utf8().saturating_add(self.len());
-    is_inside_boundary(new_end, self.capacity()).expect("Insufficient remaining capacity!");
-    unsafe { self.push_unchecked(character) };
+    match character.len_utf8() {
+      1 => self.vec.push(character as u8),
+      _ => self
+        .vec
+        .try_extend_from_slice(character.encode_utf8(&mut [0; 4]).as_bytes())
+        .unwrap(),
+    }
   }
 
   /// Appends the given char to the end of the StaticString, returning [`StringError::OutOfBounds`]
@@ -655,10 +659,19 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub fn try_push(&mut self, character: char) -> Result<(), StringError> {
-    let new_end = character.len_utf8().saturating_add(self.len());
-    is_inside_boundary(new_end, self.capacity())?;
-    unsafe { self.push_unchecked(character) };
-    Ok(())
+    let char_len = character.len_utf8();
+    match self.vec.remaining_capacity() < char_len {
+      false => {
+        match char_len {
+          1 => unsafe { self.vec.push_unchecked(character as u8) },
+          _ => self
+            .vec
+            .extend_from_slice(character.encode_utf8(&mut [0; 4]).as_bytes()),
+        };
+        Ok(())
+      }
+      true => Err(StringError::OutOfBounds),
+    }
   }
 
   /// Appends the given char to the end of the StaticString without doing any checking to ensure
