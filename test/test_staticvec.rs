@@ -91,6 +91,17 @@ impl Drop for Struct {
   }
 }
 
+#[derive(Debug, Eq, PartialEq)]
+struct ZST {}
+
+impl Drop for ZST {
+  fn drop(&mut self) {
+    // This won't do anything observable in the test context, but it
+    // works as a placeholder.
+    println!("Dropping a ZST!")
+  }
+}
+
 #[test]
 fn append() {
   let mut a = staticvec![Struct { s: "A" }, Struct { s: "B" }, Struct { s: "C" }];
@@ -489,6 +500,18 @@ fn drain_iter() {
     &v4[..],
     &[Box::new(12), Box::new(12), Box::new(12), Box::new(12)]
   );
+  let mut v5 = staticvec![
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {}
+  ];
+  v5.drain_iter(0..4);
+  assert_eq!(&v5[..], &[ZST {}, ZST {}, ZST {}, ZST {}]);
 }
 
 #[cfg_attr(all(windows, miri), ignore)]
@@ -858,6 +881,10 @@ fn into_iter() {
   let mut i3 = v3.into_iter();
   // We do this so Miri can make sure it drops the remaining values properly.
   i3.next();
+  let v4 = staticvec![ZST {}, ZST {}, ZST {}];
+  let mut i4 = v4.into_iter();
+  // We do this so Miri can make sure it drops the remaining values properly.
+  i4.next();
 }
 
 #[cfg(feature = "std")]
@@ -1498,5 +1525,12 @@ mod write_tests {
       8
     );
     assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
+    let mut v2 = StaticVec::<u8, 4>::new();
+    assert_eq!(
+      v2.write_vectored(&[IoSlice::new(&[1, 2, 3, 4]), IoSlice::new(&[5, 6, 7, 8])])
+        .unwrap(),
+      4
+    );
+    assert_eq!(v2, [1, 2, 3, 4]);
   }
 }
