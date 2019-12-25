@@ -28,15 +28,9 @@ fn try_from_str() {
   assert(String::from, MyString::try_from_str);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
-fn from_str_truncate() {
-  assert(String::from, MyString::from_str_truncate);
-}
-
-#[test]
-fn from_str_unchecked() {
-  assert(String::from, |s| unsafe { MyString::from_str_unchecked(s) });
+fn from_str() {
+  assert(String::from, |s| MyString::from_str(s));
 }
 
 #[test]
@@ -247,22 +241,6 @@ fn add_str() {
   assert(
     |s| String::from(s) + s,
     |s| MyString::try_from_str(s).unwrap() + s,
-  );
-}
-
-#[test]
-fn push_str_unchecked() {
-  assert(
-    |s| {
-      let mut st = String::from(s);
-      st.push_str(s);
-      st
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      unsafe { ms.push_str_unchecked(s) };
-      ms
-    },
   );
 }
 
