@@ -440,16 +440,17 @@ impl<'a, T: 'a, const N: usize> Drop for StaticVecDrain<'a, T, N> {
   fn drop(&mut self) {
     // Read out any remaining contents first.
     while let Some(_) = self.next() {}
-    if self.length > 0 {
+    // Adjust the StaticVec that this StaticVecDrain was created from, if necessary.
+    let total_length = self.length;
+    if total_length > 0 {
       unsafe {
         let vec_ref = &mut *self.vec;
         let start = vec_ref.length;
         let tail = self.start;
         vec_ref
-          .as_ptr()
-          .add(tail)
-          .copy_to(vec_ref.as_mut_ptr().add(start), self.length);
-        vec_ref.set_len(start + self.length);
+          .ptr_at_unchecked(tail)
+          .copy_to(vec_ref.mut_ptr_at_unchecked(start), total_length);
+        vec_ref.set_len(start + total_length);
       }
     }
   }
