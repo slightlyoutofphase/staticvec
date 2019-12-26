@@ -1362,6 +1362,7 @@ fn sorted() {
   );
   let v2 = StaticVec::<i32, 128>::new();
   assert_eq!(v2.sorted(), []);
+  assert_eq!(staticvec![2, 1].sorted(), [1, 2]);
 }
 
 #[test]
@@ -1376,6 +1377,7 @@ fn sorted_unstable() {
   );
   let v2 = StaticVec::<i32, 128>::new();
   assert_eq!(v2.sorted_unstable(), []);
+  assert_eq!(staticvec![2, 1].sorted_unstable(), [1, 2]);
 }
 
 #[test]
