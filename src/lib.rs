@@ -27,14 +27,15 @@
 
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::iterators::*;
-pub use crate::string::utils as string_utils;
-pub use crate::string::*;
-pub use crate::trait_impls::*;
+pub use crate::string::string_utils;
+pub use crate::string::{StaticString, StringError};
 use crate::utils::{
   quicksort_internal, reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut,
 };
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
+#[doc(hidden)]
+pub use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{
@@ -1463,7 +1464,8 @@ impl<T, const N: usize> StaticVec<T, N> {
       res.dedup();
       res
     } else {
-      let mut res = StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
+      let mut res =
+        StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
       res.dedup();
       res
     }

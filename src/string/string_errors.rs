@@ -1,3 +1,4 @@
+use crate::errors::CapacityError;
 use core::char::DecodeUtf16Error;
 use core::fmt::{self, Debug, Display, Formatter};
 use core::str::Utf8Error;
@@ -79,5 +80,12 @@ impl From<Utf8Error> for StringError {
   #[inline(always)]
   fn from(err: Utf8Error) -> Self {
     Self::Utf8(err)
+  }
+}
+
+impl<const N: usize> From<CapacityError<N>> for StringError {
+  #[inline(always)]
+  fn from(_err: CapacityError<N>) -> Self {
+    Self::OutOfBounds
   }
 }

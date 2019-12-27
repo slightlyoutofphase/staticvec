@@ -5,10 +5,7 @@ use core::borrow::{Borrow, BorrowMut};
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
-// We re-export FromIterator as the implementation of it done in this file
-// is used directly in the main `lib.rs` file.
-#[doc(hidden)]
-pub use core::iter::FromIterator;
+use core::iter::FromIterator;
 use core::ops::{
   Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo,
   RangeToInclusive,

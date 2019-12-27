@@ -21,21 +21,22 @@
 //! }
 //! ```
 
-pub use self::error::StringError;
-use self::utils::{
+pub use self::string_errors::StringError;
+use self::string_utils::{
   encode_char_utf8_unchecked, is_char_boundary, is_inside_boundary, never, shift_left_unchecked,
   shift_right_unchecked, truncate_str,
 };
+use crate::errors::CapacityError;
 use crate::StaticVec;
 use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
 use core::cmp::min;
 use core::ops::*;
 use core::str::{self, from_utf8, from_utf8_unchecked};
 
-mod error;
-mod trait_impls;
+mod string_errors;
+mod string_trait_impls;
 #[doc(hidden)]
-pub mod utils;
+pub mod string_utils;
 
 /// A fixed-capacity `String`-like struct built around an instance of `StaticVec<u8, N>`.
 #[derive(Clone)]
@@ -74,9 +75,8 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(string.as_str(), truncated);
   /// ```
   #[inline(always)]
-  pub fn from_str<S>(string: S) -> Self
-  where S: AsRef<str> {
-    let mut s = Self::default();
+  pub fn from_str<S: AsRef<str>>(string: S) -> Self {
+    let mut s = Self::new();
     s.push_str(string);
     s
   }
@@ -97,9 +97,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub fn try_from_str<S>(string: S) -> Result<Self, StringError>
-  where S: AsRef<str> {
-    let mut res = Self::default();
+  pub fn try_from_str<S: AsRef<str>>(string: S) -> Result<Self, CapacityError<N>> {
+    let mut res = Self::new();
     res.try_push_str(string)?;
     Ok(res)
   }
@@ -120,11 +119,10 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_from_iterator<U, I>(iter: I) -> Result<Self, StringError>
-  where
-    U: AsRef<str>,
-    I: IntoIterator<Item = U>, {
-    let mut out = Self::default();
+  pub fn try_from_iterator<U: AsRef<str>, I: IntoIterator<Item = U>>(
+    iter: I,
+  ) -> Result<Self, CapacityError<N>> {
+    let mut out = Self::new();
     for s in iter {
       out.try_push_str(s)?;
     }
@@ -149,11 +147,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn from_iterator<U, I>(iter: I) -> Self
-  where
-    U: AsRef<str>,
-    I: IntoIterator<Item = U>, {
-    let mut out = Self::default();
+  pub fn from_iterator<U: AsRef<str>, I: IntoIterator<Item = U>>(iter: I) -> Self {
+    let mut out = Self::new();
     for s in iter {
       if out.try_push_str(s.as_ref()).is_err() {
         out.push_str(s);
@@ -186,11 +181,8 @@ impl<const N: usize> StaticString<N> {
   /// // };
   /// ```
   #[inline(always)]
-  pub unsafe fn from_iterator_unchecked<U, I>(iter: I) -> Self
-  where
-    U: AsRef<str>,
-    I: IntoIterator<Item = U>, {
-    let mut out = Self::default();
+  pub unsafe fn from_iterator_unchecked<U: AsRef<str>, I: IntoIterator<Item = U>>(iter: I) -> Self {
+    let mut out = Self::new();
     for s in iter {
       out.push_str(s);
     }
@@ -213,9 +205,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub fn try_from_chars<I>(iter: I) -> Result<Self, StringError>
-  where I: IntoIterator<Item = char> {
-    let mut out = Self::default();
+  pub fn try_from_chars<I: IntoIterator<Item = char>>(iter: I) -> Result<Self, StringError> {
+    let mut out = Self::new();
     for c in iter {
       out.try_push(c)?;
     }
@@ -236,9 +227,8 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(truncate.as_str(), truncated.as_str());
   /// ```
   #[inline(always)]
-  pub fn from_chars<I>(iter: I) -> Self
-  where I: IntoIterator<Item = char> {
-    let mut out = Self::default();
+  pub fn from_chars<I: IntoIterator<Item = char>>(iter: I) -> Self {
+    let mut out = Self::new();
     for c in iter {
       if out.try_push(c).is_err() {
         break;
@@ -265,9 +255,8 @@ impl<const N: usize> StaticString<N> {
   /// // let ub = unsafe { StaticString::<20>::from_chars_unchecked(out_of_bounds.chars()) };
   /// ```
   #[inline(always)]
-  pub unsafe fn from_chars_unchecked<I>(iter: I) -> Self
-  where I: IntoIterator<Item = char> {
-    let mut out = Self::default();
+  pub unsafe fn from_chars_unchecked<I: IntoIterator<Item = char>>(iter: I) -> Self {
+    let mut out = Self::new();
     for c in iter {
       out.push_unchecked(c)
     }
@@ -292,8 +281,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub fn try_from_utf8<B>(slice: B) -> Result<Self, StringError>
-  where B: AsRef<[u8]> {
+  pub fn try_from_utf8<B: AsRef<[u8]>>(slice: B) -> Result<Self, StringError> {
     Ok(Self::try_from_str(from_utf8(slice.as_ref())?)?)
   }
 
@@ -315,8 +303,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub fn from_utf8<B>(slice: B) -> Result<Self, StringError>
-  where B: AsRef<[u8]> {
+  pub fn from_utf8<B: AsRef<[u8]>>(slice: B) -> Result<Self, StringError> {
     Ok(Self::from_str(from_utf8(slice.as_ref())?))
   }
 
@@ -343,8 +330,7 @@ impl<const N: usize> StaticString<N> {
   /// // let ub = unsafe { StaticString::<20>::from_utf8_unchecked(out_of_bounds)) };
   /// ```
   #[inline(always)]
-  pub unsafe fn from_utf8_unchecked<B>(slice: B) -> Self
-  where B: AsRef<[u8]> {
+  pub unsafe fn from_utf8_unchecked<B: AsRef<[u8]>>(slice: B) -> Self {
     debug_assert!(from_utf8(slice.as_ref()).is_ok());
     Self::from_str(from_utf8_unchecked(slice.as_ref()))
   }
@@ -368,9 +354,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_from_utf16<B>(slice: B) -> Result<Self, StringError>
-  where B: AsRef<[u16]> {
-    let mut out = Self::default();
+  pub fn try_from_utf16<B: AsRef<[u16]>>(slice: B) -> Result<Self, StringError> {
+    let mut out = Self::new();
     for c in decode_utf16(slice.as_ref().iter().cloned()) {
       out.try_push(c?)?;
     }
@@ -397,9 +382,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn from_utf16<B>(slice: B) -> Result<Self, StringError>
-  where B: AsRef<[u16]> {
-    let mut out = Self::default();
+  pub fn from_utf16<B: AsRef<[u16]>>(slice: B) -> Result<Self, StringError> {
+    let mut out = Self::new();
     for c in decode_utf16(slice.as_ref().iter().cloned()) {
       if out.try_push(c?).is_err() {
         break;
@@ -427,9 +411,8 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub fn from_utf16_lossy<B>(slice: B) -> Self
-  where B: AsRef<[u16]> {
-    let mut out = Self::default();
+  pub fn from_utf16_lossy<B: AsRef<[u16]>>(slice: B) -> Self {
+    let mut out = Self::new();
     for c in decode_utf16(slice.as_ref().iter().cloned()) {
       if out.try_push(c.unwrap_or(REPLACEMENT_CHARACTER)).is_err() {
         break;
@@ -516,7 +499,7 @@ impl<const N: usize> StaticString<N> {
     self.vec.capacity()
   }
 
-  /// Pushes `string` to the StaticString. Does nothing if it is the case that
+  /// Attempts to push `string` to the StaticString. Does nothing if it is the case that
   /// `self.len() + string.len()` exceeds the StaticString's total capacity.
   ///
   /// Example usage:
@@ -526,20 +509,20 @@ impl<const N: usize> StaticString<N> {
   /// let mut s = StaticString::<300>::try_from_str("My String")?;
   /// s.push_str(" My other String");
   /// assert_eq!(s.as_str(), "My String My other String");
-  /// let mut s = StaticString::<20>::default();
+  /// let mut s = StaticString::<20>::new();
   /// s.push_str("0".repeat(21));
   /// assert_eq!(s.as_str(), "0".repeat(20).as_str());
   /// # Ok(())
   /// # }
   /// ```
   #[inline(always)]
-  pub fn push_str<S>(&mut self, string: S)
-  where S: AsRef<str> {
+  pub fn push_str<S: AsRef<str>>(&mut self, string: S) {
     self.vec.extend_from_slice(string.as_ref().as_bytes())
   }
 
   /// Pushes `string` to the StaticString if `self.len() + string.len()` does not exceed
-  /// the StaticString's total capacity, or returns [`StringError::OutOfBounds`] otherwise.
+  /// the StaticString's total capacity, or returns a
+  /// [`CapacityError`](crate::errors::CapacityError) otherwise.
   ///
   /// Example usage:
   /// ```
@@ -553,15 +536,14 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_push_str<S>(&mut self, string: S) -> Result<(), StringError>
-  where S: AsRef<str> {
-    let string_len = string.as_ref().len();
-    match self.vec.remaining_capacity() < string_len {
+  pub fn try_push_str<S: AsRef<str>>(&mut self, string: S) -> Result<(), CapacityError<N>> {
+    let string_ref = string.as_ref();
+    match self.vec.remaining_capacity() < string_ref.len() {
       false => {
-        self.push_str(string);
+        self.vec.extend_from_slice(string_ref.as_bytes());
         Ok(())
       }
-      true => Err(StringError::OutOfBounds),
+      true => Err(CapacityError {}),
     }
   }
 
@@ -882,8 +864,12 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn try_insert_str<S>(&mut self, index: usize, string: S) -> Result<(), StringError>
-  where S: AsRef<str> {
+  pub fn try_insert_str<S: AsRef<str>>(
+    &mut self,
+    index: usize,
+    string: S,
+  ) -> Result<(), StringError>
+  {
     is_inside_boundary(index, self.len())?;
     let new_end = string.as_ref().len().saturating_add(self.len());
     is_inside_boundary(new_end, self.capacity())?;
@@ -915,8 +901,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn insert_str<S>(&mut self, index: usize, string: S) -> Result<(), StringError>
-  where S: AsRef<str> {
+  pub fn insert_str<S: AsRef<str>>(&mut self, index: usize, string: S) -> Result<(), StringError> {
     is_inside_boundary(index, self.len())?;
     is_char_boundary(self, index)?;
     let size = self.capacity().saturating_sub(self.len());
@@ -953,8 +938,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub unsafe fn insert_str_unchecked<S>(&mut self, index: usize, string: S)
-  where S: AsRef<str> {
+  pub unsafe fn insert_str_unchecked<S: AsRef<str>>(&mut self, index: usize, string: S) {
     let (s, slen) = (string.as_ref(), string.as_ref().len());
     let ptr = s.as_ptr();
     debug_assert!(self.len().saturating_add(slen) <= self.capacity());
@@ -1086,10 +1070,12 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline]
-  pub fn replace_range<S, R>(&mut self, r: R, with: S) -> Result<(), StringError>
-  where
-    S: AsRef<str>,
-    R: RangeBounds<usize>, {
+  pub fn replace_range<S: AsRef<str>, R: RangeBounds<usize>>(
+    &mut self,
+    r: R,
+    with: S,
+  ) -> Result<(), StringError>
+  {
     let replace_with = with.as_ref();
     let start = match r.start_bound() {
       Bound::Included(t) => *t,

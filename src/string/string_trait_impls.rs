@@ -1,4 +1,4 @@
-use super::{StaticString, StringError};
+use super::StaticString;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
 use core::fmt::{self, Debug, Display, Formatter, Write};
@@ -139,12 +139,12 @@ impl<'a, const N: usize> FromIterator<&'a str> for StaticString<N> {
   }
 }
 
-impl<const N: usize> FromStr for StaticString<N> {
-  type Err = StringError;
+impl<'a, const N: usize> FromStr for StaticString<N> {
+  type Err = ();
 
   #[inline(always)]
   fn from_str(s: &str) -> Result<Self, Self::Err> {
-    Self::try_from_str(s)
+    Ok(Self::from_str(s))
   }
 }
 
