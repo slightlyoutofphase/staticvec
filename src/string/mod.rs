@@ -571,14 +571,18 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, character: char) {
-    // TODO: Maybe remove this function? As it stands currently, it's only *half* unsafe...
-    // Which is to say, `push_unchecked` is unsafe, but `extend_from_slice` just truncates
-    // if there's not enough capacity left...
-    match character.len_utf8() {
+    let char_len = character.len_utf8();
+    match char_len {
       1 => self.vec.push_unchecked(character as u8),
-      _ => self
-        .vec
-        .extend_from_slice(character.encode_utf8(&mut [0; 4]).as_bytes()),
+      _ => unsafe {
+        let old_length = self.len();
+        character
+          .encode_utf8(&mut [0; 4])
+          .as_bytes()
+          .as_ptr()
+          .copy_to_nonoverlapping(self.vec.mut_ptr_at_unchecked(old_length), char_len);
+        self.vec.set_len(old_length + char_len);
+      }
     };
   }
 
