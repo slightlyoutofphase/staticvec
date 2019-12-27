@@ -1464,8 +1464,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       res.dedup();
       res
     } else {
-      let mut res =
-        StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
+      let mut res = StaticVec::from_iter(other.iter().chain(self.difference(other).iter()).cloned());
       res.dedup();
       res
     }
