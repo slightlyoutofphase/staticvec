@@ -574,7 +574,7 @@ impl<const N: usize> StaticString<N> {
     let char_len = character.len_utf8();
     match char_len {
       1 => self.vec.push_unchecked(character as u8),
-      _ => unsafe {
+      _ => {
         let old_length = self.len();
         character
           .encode_utf8(&mut [0; 4])
