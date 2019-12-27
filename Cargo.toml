@@ -71,6 +71,10 @@ name = "test_staticstring"
 path = "test/test_staticstring.rs"
 
 [[bench]]
+name = "arrayvec_arraystring_suite"
+path = "benchmark/arrayvec_arraystring_suite.rs"
+
+[[bench]]
 name = "arrayvec_extend_suite"
 path = "benchmark/arrayvec_extend_suite.rs"
 
