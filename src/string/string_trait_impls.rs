@@ -107,7 +107,7 @@ impl<const N: usize> Extend<char> for StaticString<N> {
 impl<'a, const N: usize> Extend<&'a char> for StaticString<N> {
   #[inline(always)]
   fn extend<I: IntoIterator<Item = &'a char>>(&mut self, iter: I) {
-    self.extend(iter.into_iter().cloned());
+    self.extend(iter.into_iter().copied());
   }
 }
 
