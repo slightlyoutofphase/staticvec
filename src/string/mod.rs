@@ -678,7 +678,8 @@ impl<const N: usize> StaticString<N> {
     };
   }
 
-  /// Removes the specified char from the StaticString if the char is present.
+  /// Removes the char at `index` from the StaticString if `index` is both less than `self.len()`
+  /// and also a valid UTF-8 character boundary, or panics otherwise.
   ///
   /// Example usage:
   /// ```
