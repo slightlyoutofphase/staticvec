@@ -1457,6 +1457,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// );
   /// ```
   #[inline]
+  #[rustfmt::skip]
   pub fn union<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
   where T: Clone + PartialEq {
     if self.length <= other.length {

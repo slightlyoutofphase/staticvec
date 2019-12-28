@@ -4,138 +4,108 @@ pub(crate) trait IntoLossy<T>: Sized {
   fn into_lossy(self) -> T;
 }
 
-/// Marks branch as impossible, UB if taken in prod, panics in debug
-///
-/// This function should never be used lightly, it will cause UB if used wrong
-#[inline]
+/// Unsafely marks a branch as unreachable.
+#[inline(always)]
 #[allow(unused_variables)]
 pub(crate) unsafe fn never(s: &str) -> ! {
   #[cfg(debug_assertions)]
   panic!("{}", s);
-
   #[cfg(not(debug_assertions))]
   core::hint::unreachable_unchecked()
 }
 
-/// Encodes `char` into `StaticString` at specified position, heavily unsafe
-///
-/// We reimplement the `core` function to avoid panicking (UB instead, be careful)
-///
-/// Reimplemented from;
-///
-/// `https://github.com/rust-lang/rust/blob/7843e2792dce0f20d23b3c1cca51652013bef0ea/src/libcore/char/methods.rs#L447`
-/// # Safety
-///
-/// - It's UB if index is outside of buffer's boundaries (buffer needs at most 4 bytes)
-/// - It's UB if index is inside a character (like a index 3 for "a🤔")
+// UTF-8 ranges and tags for encoding characters.
+const TAG_CONT: u8 = 0b1000_0000;
+const TAG_TWO_B: u8 = 0b1100_0000;
+const TAG_THREE_B: u8 = 0b1110_0000;
+const TAG_FOUR_B: u8 = 0b1111_0000;
+const MAX_ONE_B: u32 = 0x80;
+const MAX_TWO_B: u32 = 0x800;
+const MAX_THREE_B: u32 = 0x10000;
+
+/// Encodes `character` into `string` at the specified position.
 #[inline]
-#[allow(clippy::missing_docs_in_private_items)]
 pub(crate) unsafe fn encode_char_utf8_unchecked<const N: usize>(
-  s: &mut StaticString<N>,
-  ch: char,
+  string: &mut StaticString<N>,
+  character: char,
   index: usize,
 )
 {
-  // UTF-8 ranges and tags for encoding characters
-  const TAG_CONT: u8 = 0b1000_0000;
-  const TAG_TWO_B: u8 = 0b1100_0000;
-  const TAG_THREE_B: u8 = 0b1110_0000;
-  const TAG_FOUR_B: u8 = 0b1111_0000;
-  const MAX_ONE_B: u32 = 0x80;
-  const MAX_TWO_B: u32 = 0x800;
-  const MAX_THREE_B: u32 = 0x10000;
-
-  debug_assert!(ch.len_utf8().saturating_add(index) <= s.capacity());
-  debug_assert!(ch.len_utf8().saturating_add(s.len()) <= s.capacity());
-  let dst = s.vec.as_mut_ptr().add(index);
-  let code = ch as u32;
+  let dst = string.vec.as_mut_ptr().add(index);
+  let code = character as u32;
   if code < MAX_ONE_B {
-    debug_assert!(N.saturating_sub(index) >= 1);
-    dst.write(code.into_lossy());
-    s.vec.set_len(s.len().saturating_add(1));
+    dst.write(code as u8);
+    string.vec.set_len(string.len() + 1);
   } else if code < MAX_TWO_B {
-    debug_assert!(N.saturating_sub(index) >= 2);
-    dst.write((code >> 6 & 0x1F).into_lossy() | TAG_TWO_B);
-    dst.offset(1).write((code & 0x3F).into_lossy() | TAG_CONT);
-    s.vec.set_len(s.len().saturating_add(2));
+    dst.write((code >> 6 & 0x1F) as u8 | TAG_TWO_B);
+    dst.offset(1).write((code & 0x3F) as u8 | TAG_CONT);
+    string.vec.set_len(string.len() + 2);
   } else if code < MAX_THREE_B {
-    debug_assert!(N.saturating_sub(index) >= 3);
-    dst.write((code >> 12 & 0x0F).into_lossy() | TAG_THREE_B);
-    dst
-      .offset(1)
-      .write((code >> 6 & 0x3F).into_lossy() | TAG_CONT);
-    dst.offset(2).write((code & 0x3F).into_lossy() | TAG_CONT);
-    s.vec.set_len(s.len().saturating_add(3));
+    dst.write((code >> 12 & 0x0F) as u8 | TAG_THREE_B);
+    dst.offset(1).write((code >> 6 & 0x3F) as u8 | TAG_CONT);
+    dst.offset(2).write((code & 0x3F) as u8 | TAG_CONT);
+    string.vec.set_len(string.len() + 3);
   } else {
-    debug_assert!(N.saturating_sub(index) >= 4);
-    dst.write((code >> 18 & 0x07).into_lossy() | TAG_FOUR_B);
-    dst
-      .offset(1)
-      .write((code >> 12 & 0x3F).into_lossy() | TAG_CONT);
-    dst
-      .offset(2)
-      .write((code >> 6 & 0x3F).into_lossy() | TAG_CONT);
-    dst.offset(3).write((code & 0x3F).into_lossy() | TAG_CONT);
-    s.vec.set_len(s.len().saturating_add(4));
+    dst.write((code >> 18 & 0x07) as u8 | TAG_FOUR_B);
+    dst.offset(1).write((code >> 12 & 0x3F) as u8 | TAG_CONT);
+    dst.offset(2).write((code >> 6 & 0x3F) as u8 | TAG_CONT);
+    dst.offset(3).write((code & 0x3F) as u8 | TAG_CONT);
+    string.vec.set_len(string.len() + 4);
   }
 }
 
-/// Shifts string right
-///
-/// # Safety
-///
-/// It's UB if `to + (s.len() - from)` is bigger than [`S::to_usize()`]
-///
-/// [`<S as Unsigned>::to_usize()`]: ../struct.StaticString.html#CAPACITY
-#[inline]
+/// Shifts `string` to the right.
+#[inline(always)]
 pub(crate) unsafe fn shift_right_unchecked<const N: usize>(
-  s: &mut StaticString<N>,
+  string: &mut StaticString<N>,
   from: usize,
   to: usize,
 )
 {
-  let len = s.len().saturating_sub(from);
-  debug_assert!(from <= to && to.saturating_add(len) <= s.capacity());
-  debug_assert!(s.as_str().is_char_boundary(from));
-  s.as_ptr()
+  debug_assert!(from <= to && to + string.len() - from <= string.capacity());
+  debug_assert!(string.as_str().is_char_boundary(from));
+  string
+    .as_ptr()
     .add(from)
-    .copy_to(s.as_mut_ptr().add(to), s.len().saturating_sub(from));
+    .copy_to(string.as_mut_ptr().add(to), string.len() - from);
 }
 
-/// Shifts string left
-#[inline]
+/// Shifts `string` to the left.
+#[inline(always)]
 pub(crate) unsafe fn shift_left_unchecked<const N: usize>(
-  s: &mut StaticString<N>,
+  string: &mut StaticString<N>,
   from: usize,
   to: usize,
 )
 {
-  debug_assert!(to <= from && from <= s.len());
-  debug_assert!(s.as_str().is_char_boundary(from));
-  s.as_ptr()
+  debug_assert!(to <= from && from <= string.len());
+  debug_assert!(string.as_str().is_char_boundary(from));
+  string
+    .as_ptr()
     .add(from)
-    .copy_to(s.as_mut_ptr().add(to), s.len().saturating_sub(from));
+    .copy_to(string.as_mut_ptr().add(to), string.len() - from);
 }
 
-/// Returns error if size is outside of specified boundary
-#[inline]
+/// Returns an error if `size` is greater than `limit`.
+#[inline(always)]
 pub fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StringError> {
-  Some(())
-    .filter(|_| size <= limit)
-    .ok_or(StringError::OutOfBounds)
+  match size <= limit {
+    false => Err(StringError::OutOfBounds),
+    true => Ok(()),
+  }
 }
 
-/// Returns error if index is not at a valid utf-8 char boundary
-#[inline]
+/// Returns an error if `index` not at a valid UTF-8 character boundary.
+#[inline(always)]
 pub fn is_char_boundary<const N: usize>(
-  s: &StaticString<N>,
-  idx: usize,
+  string: &StaticString<N>,
+  index: usize,
 ) -> Result<(), StringError>
 {
-  if s.as_str().is_char_boundary(idx) {
-    return Ok(());
+  match string.as_str().is_char_boundary(index) {
+    false => Err(StringError::NotCharBoundary),
+    true => Ok(()),
   }
-  Err(StringError::NotCharBoundary)
 }
 
 /// Truncates string to specified size (ignoring last bytes if they form a partial `char`)
@@ -144,9 +114,9 @@ pub(crate) fn truncate_str(slice: &str, size: usize) -> &str {
   if slice.is_char_boundary(size) {
     unsafe { slice.get_unchecked(..size) }
   } else if size < slice.len() {
-    let mut index = size.saturating_sub(1);
+    let mut index = size - 1;
     while !slice.is_char_boundary(index) {
-      index = index.saturating_sub(1);
+      index = index - 1;
     }
     unsafe { slice.get_unchecked(..index) }
   } else {
