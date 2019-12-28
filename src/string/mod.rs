@@ -152,11 +152,11 @@ impl<const N: usize> StaticString<N> {
     let mut i = 0;
     while i < N {
       if let Some(s) = it.next() {
+        i += s.as_ref().len();
         res.push_str(s);
       } else {
         break;
       }
-      i += i;
     }
     res
   }
@@ -178,11 +178,11 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub fn try_from_chars<I: IntoIterator<Item = char>>(iter: I) -> Result<Self, StringError> {
-    let mut out = Self::new();
+    let mut res = Self::new();
     for c in iter {
-      out.try_push(c)?;
+      res.try_push(c)?;
     }
-    Ok(out)
+    Ok(res)
   }
 
   /// Creates a new StaticString from the contents of a `char` iterator, returning immediately if
@@ -201,13 +201,8 @@ impl<const N: usize> StaticString<N> {
   #[inline]
   pub fn from_chars<I: IntoIterator<Item = char>>(iter: I) -> Self {
     let mut res = Self::new();
-    let mut it = iter.into_iter();
-    let mut i = 0;
-    while i < N {
-      if let Some(c) = it.next() {
-        unsafe { res.push_unchecked(c) };
-        i += c.len_utf8();
-      } else {
+    for c in iter {
+      if res.try_push(c).is_err() {
         break;
       }
     }
@@ -306,11 +301,11 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub fn try_from_utf16<B: AsRef<[u16]>>(slice: B) -> Result<Self, StringError> {
-    let mut out = Self::new();
-    for c in decode_utf16(slice.as_ref().iter().cloned()) {
-      out.try_push(c?)?;
+    let mut res = Self::new();
+    for c in decode_utf16(slice.as_ref().iter().copied()) {
+      res.try_push(c?)?;
     }
-    Ok(out)
+    Ok(res)
   }
 
   /// Creates a new StaticString instance from a provided `u16` slice, returning
@@ -334,13 +329,13 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub fn from_utf16<B: AsRef<[u16]>>(slice: B) -> Result<Self, StringError> {
-    let mut out = Self::new();
+    let mut res = Self::new();
     for c in decode_utf16(slice.as_ref().iter().copied()) {
-      if out.try_push(c?).is_err() {
+      if res.try_push(c?).is_err() {
         break;
       }
     }
-    Ok(out)
+    Ok(res)
   }
 
   /// Creates a new StaticString instance from a provided `u16` slice, replacing invalid UTF-16 data
@@ -363,13 +358,13 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn from_utf16_lossy<B: AsRef<[u16]>>(slice: B) -> Self {
-    let mut out = Self::new();
+    let mut res = Self::new();
     for c in decode_utf16(slice.as_ref().iter().copied()) {
-      if out.try_push(c.unwrap_or(REPLACEMENT_CHARACTER)).is_err() {
+      if res.try_push(c.unwrap_or(REPLACEMENT_CHARACTER)).is_err() {
         break;
       }
     }
-    out
+    res
   }
 
   /// Extracts a `str` slice containing the entire contents of the StaticString.
