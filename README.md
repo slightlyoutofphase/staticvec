@@ -10,7 +10,8 @@ Implements a fixed-capacity stack-allocated Vec alternative backed by an array, 
 
 Note: the word "static" here is meant by the traditional definition of "unchanging" / "not dynamic" etc.
 
-This crate does **not** use literal `static` variables for anything (but does provide multiple ways to instantiate a `StaticVec` **as** a `static` or `const` variable if desired).
+This crate does **not** use literal `static` variables for anything (but does provide multiple ways
+to instantiate a `StaticVec` **as** a `static` or `const` variable if desired).
 
 Fully `#![no_std]` compatible (with almost no loss of functionality) by setting
 `default-features = false` for the `staticvec` dependency in your `Cargo.toml`.
@@ -21,6 +22,9 @@ via `serde` is available by activating the `serde_support` crate feature.
 `StaticVec` also implements both `Deref` and `DerefMut` to `[T]`, meaning that all existing slice
 methods are accessible through instances of it and that references to it can be used in contexts
 where `[T]` is expected.
+
+As of version 7.5.0, this crate additionally provides a fixed-capacity `StaticString` struct, which is built
+around an instance of `StaticVec<u8, N>`.
 
 Contributions/suggestions/etc. very welcome!
 
