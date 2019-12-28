@@ -1,4 +1,5 @@
-//! A fixed-capacity `String`-like struct built around an instance of `StaticVec<u8, N>`.
+//! A fixed-capacity [`String`](std::string::String)-like struct built around an instance of
+//! `StaticVec<u8, N>`.
 //!
 //! ## Examples
 //!
@@ -37,7 +38,8 @@ mod string_trait_impls;
 #[doc(hidden)]
 pub mod string_utils;
 
-/// A fixed-capacity `String`-like struct built around an instance of `StaticVec<u8, N>`.
+/// A fixed-capacity [`String`](std::string::String)-like struct built around an instance of
+/// `StaticVec<u8, N>`.
 #[derive(Clone)]
 pub struct StaticString<const N: usize> {
   pub(crate) vec: StaticVec<u8, N>,
