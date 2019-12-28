@@ -50,14 +50,6 @@ fn from_chars() {
 }
 
 #[test]
-fn from_chars_unchecked() {
-  assert(
-    |s| String::from_iter(s.chars()),
-    |s| unsafe { MyString::from_chars_unchecked(s.chars()) },
-  );
-}
-
-#[test]
 fn try_from_iter() {
   assert(
     |s| String::from_iter(vec![s]),
@@ -70,14 +62,6 @@ fn from_iter() {
   assert(
     |s| String::from_iter(vec![s]),
     |s| MyString::from_iterator(vec![s]),
-  );
-}
-
-#[test]
-fn from_iter_unchecked() {
-  assert(
-    |s| String::from_iter(vec![s]),
-    |s| unsafe { MyString::from_iterator_unchecked(vec![s]) },
   );
 }
 
