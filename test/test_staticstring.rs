@@ -472,6 +472,16 @@ fn split_off() {
   );
 }
 
+#[test]
+fn split_off_errors() {
+  let mut s = StaticString::<0>::new();
+  let e = s.split_off(0);
+  assert_eq!(e.unwrap().len(), 0);
+  let mut s2 = StaticString::<1>::new();
+  assert!(s2.split_off(0).is_ok(), true);
+  assert_eq!(s2.len(), 0);
+}
+
 #[cfg_attr(all(windows, miri), ignore)]
 #[test]
 fn replace_range() {
@@ -488,6 +498,18 @@ fn replace_range() {
       ms.replace_range(..2, s).map(|()| (ms, ()))
     },
   );
+}
+
+#[test]
+fn replace_range_errors() {
+  let mut s = StaticString::<0>::new();
+  assert!(s.replace_range(0..12, "aaa").is_err(), true);
+  assert_eq!(s.len(), 0);
+  assert_eq!(s.as_str(), "");
+  let mut s2 = StaticString::<1>::new();
+  assert!(s2.replace_range(0..=0, "aaa").is_err(), true);
+  assert_eq!(s2.len(), 0);
+  assert_eq!(s2.as_str(), "");
 }
 
 #[test]
