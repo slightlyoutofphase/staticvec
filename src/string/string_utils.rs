@@ -95,7 +95,7 @@ pub fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StringError> 
   }
 }
 
-/// Returns an error if `index` not at a valid UTF-8 character boundary.
+/// Returns an error if `index` is not at a valid UTF-8 character boundary.
 #[inline(always)]
 pub fn is_char_boundary<const N: usize>(
   string: &StaticString<N>,
@@ -108,7 +108,8 @@ pub fn is_char_boundary<const N: usize>(
   }
 }
 
-/// Truncates string to specified size (ignoring last bytes if they form a partial `char`)
+/// Truncates `slice` to the specified size (ignoring the last few bytes if they form a partial
+/// `char`).
 #[inline]
 pub(crate) fn truncate_str(slice: &str, size: usize) -> &str {
   if slice.is_char_boundary(size) {
