@@ -511,8 +511,8 @@ impl<const N: usize> StaticString<N> {
   /// let mut s = StaticString::<20>::try_from_str("My String")?;
   /// unsafe { s.push_unchecked('!') };
   /// assert_eq!(s.as_str(), "My String!");
-  /// // s = StaticString::<20>::try_from_str(&"0".repeat(20))?;
   /// // Undefined behavior, don't do it:
+  /// // s = StaticString::<20>::try_from_str(&"0".repeat(20))?;
   /// // s.push_unchecked('!');
   /// # Ok(())
   /// # }
@@ -1000,8 +1000,11 @@ impl<const N: usize> StaticString<N> {
     unsafe { self.vec.set_len(0) };
   }
 
-  /// Removes the specified range from the StaticString, and replaces it with the provided input
-  /// (which does not need to have the same length as the range being removed.)
+  /// Removes the specified range from the StaticString and replaces it with the provided input
+  /// (which does not need to have the same length as the range being removed), returning
+  /// [`StringError::OutOfBounds`] if the range does not fall within `0..self.len()`, and
+  /// [`StringError::NotCharBoundary`] if the range does not begin at a valid UTF-8 character
+  /// boundary.
   ///
   /// Example usage:
   /// ```
@@ -1019,17 +1022,17 @@ impl<const N: usize> StaticString<N> {
   #[inline]
   pub fn replace_range<S: AsRef<str>, R: RangeBounds<usize>>(
     &mut self,
-    r: R,
+    range: R,
     with: S,
   ) -> Result<(), StringError>
   {
     let replace_with = with.as_ref();
-    let start = match r.start_bound() {
+    let start = match range.start_bound() {
       Bound::Included(t) => *t,
       Bound::Excluded(t) => t + 1,
       Bound::Unbounded => 0,
     };
-    let end = match r.end_bound() {
+    let end = match range.end_bound() {
       Bound::Included(t) => t + 1,
       Bound::Excluded(t) => *t,
       Bound::Unbounded => self.len(),
