@@ -104,32 +104,6 @@ impl<const N: usize> StaticString<N> {
     Ok(res)
   }
 
-  /// Creates a new StaticString from the contents of an iterator if the iterator has a length less
-  /// than or equal to the StaticString's declared capacity, or returns
-  /// [`StringError::OutOfBounds`] otherwise.
-  ///
-  /// Example usage:
-  /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let string = StaticString::<300>::try_from_iterator(&["My String", " My Other String"][..])?;
-  /// assert_eq!(string.as_str(), "My String My Other String");
-  /// let out_of_bounds = (0..100).map(|_| "000");
-  /// assert!(StaticString::<20>::try_from_iterator(out_of_bounds).is_err());
-  /// # Ok(())
-  /// # }
-  /// ```
-  #[inline]
-  pub fn try_from_iterator<U: AsRef<str>, I: IntoIterator<Item = U>>(
-    iter: I,
-  ) -> Result<Self, CapacityError<N>> {
-    let mut res = Self::new();
-    for s in iter {
-      res.try_push_str(s)?;
-    }
-    Ok(res)
-  }
-
   /// Creates a new StaticString from the contents of an iterator, returning immediately if and when
   /// the StaticString reaches maximum capacity regardless of whether or not the iterator still has
   /// more items to yield.
@@ -163,26 +137,28 @@ impl<const N: usize> StaticString<N> {
     res
   }
 
-  /// Creates a new StaticString from the contents of a `char` iterator if the iterator has a length
-  /// less than or equal to the StaticString's declared capacity, or returns
+  /// Creates a new StaticString from the contents of an iterator if the iterator has a length less
+  /// than or equal to the StaticString's declared capacity, or returns
   /// [`StringError::OutOfBounds`] otherwise.
   ///
   /// Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
-  /// let string = StaticString::<20>::try_from_chars("My String".chars())?;
-  /// assert_eq!(string.as_str(), "My String");
-  /// let out_of_bounds = "0".repeat(21);
-  /// assert!(StaticString::<20>::try_from_chars(out_of_bounds.chars()).is_err());
+  /// let string = StaticString::<300>::try_from_iterator(&["My String", " My Other String"][..])?;
+  /// assert_eq!(string.as_str(), "My String My Other String");
+  /// let out_of_bounds = (0..100).map(|_| "000");
+  /// assert!(StaticString::<20>::try_from_iterator(out_of_bounds).is_err());
   /// # Ok(())
   /// # }
   /// ```
   #[inline]
-  pub fn try_from_chars<I: IntoIterator<Item = char>>(iter: I) -> Result<Self, StringError> {
+  pub fn try_from_iterator<U: AsRef<str>, I: IntoIterator<Item = U>>(
+    iter: I,
+  ) -> Result<Self, CapacityError<N>> {
     let mut res = Self::new();
-    for c in iter {
-      res.try_push(c)?;
+    for s in iter {
+      res.try_push_str(s)?;
     }
     Ok(res)
   }
@@ -211,48 +187,28 @@ impl<const N: usize> StaticString<N> {
     res
   }
 
-  /// Creates a new StaticString from a byte slice, returning [`StringError::Utf8`] on invalid UTF-8
-  /// data or [`StringError::OutOfBounds`] if the slice has a length greater than the StaticString's
-  /// declared capacity.
+  /// Creates a new StaticString from the contents of a `char` iterator if the iterator has a length
+  /// less than or equal to the StaticString's declared capacity, or returns
+  /// [`StringError::OutOfBounds`] otherwise.
   ///
   /// Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
-  /// let string = StaticString::<20>::try_from_utf8("My String")?;
+  /// let string = StaticString::<20>::try_from_chars("My String".chars())?;
   /// assert_eq!(string.as_str(), "My String");
-  /// let invalid_utf8 = [0, 159, 146, 150];
-  /// assert!(StaticString::<20>::try_from_utf8(invalid_utf8).unwrap_err().is_utf8());
-  /// let out_of_bounds = "0000".repeat(400);
-  /// assert!(StaticString::<20>::try_from_utf8(out_of_bounds.as_bytes()).unwrap_err().is_out_of_bounds());
+  /// let out_of_bounds = "0".repeat(21);
+  /// assert!(StaticString::<20>::try_from_chars(out_of_bounds.chars()).is_err());
   /// # Ok(())
   /// # }
   /// ```
-  #[inline(always)]
-  pub fn try_from_utf8<B: AsRef<[u8]>>(slice: B) -> Result<Self, StringError> {
-    Ok(Self::try_from_str(from_utf8(slice.as_ref())?)?)
-  }
-
-  /// Creates a new StaticString instance from a provided byte slice, returning
-  /// [`StringError::Utf8`] on invalid UTF-8 data, and truncating the input slice as necessary if
-  /// it has a length greater than the declared capacity of the StaticString being created.
-  ///
-  /// Example usage:
-  /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let string = StaticString::<20>::from_utf8("My String")?;
-  /// assert_eq!(string.as_str(), "My String");
-  /// let invalid_utf8 = [0, 159, 146, 150];
-  /// assert!(StaticString::<20>::from_utf8(invalid_utf8).unwrap_err().is_utf8());
-  /// let out_of_bounds = "0".repeat(300);
-  /// assert_eq!(StaticString::<20>::from_utf8(out_of_bounds.as_bytes())?.as_str(), "0".repeat(20).as_str());
-  /// # Ok(())
-  /// # }
-  /// ```
-  #[inline(always)]
-  pub fn from_utf8<B: AsRef<[u8]>>(slice: B) -> Result<Self, StringError> {
-    Ok(Self::from_str(from_utf8(slice.as_ref())?))
+  #[inline]
+  pub fn try_from_chars<I: IntoIterator<Item = char>>(iter: I) -> Result<Self, StringError> {
+    let mut res = Self::new();
+    for c in iter {
+      res.try_push(c)?;
+    }
+    Ok(res)
   }
 
   /// Creates a new StaticString instance from a provided byte slice, without doing any checking to
@@ -283,31 +239,77 @@ impl<const N: usize> StaticString<N> {
     Self::from_str(from_utf8_unchecked(slice.as_ref()))
   }
 
-  /// Creates a new StaticString from provided `u16` slice, returning [`StringError::Utf16`] on
-  /// invalid UTF-16 data or [`StringError::OutOfBounds`] if the slice has a length greater than the
-  /// declared capacity of the StaticString being created.
+  /// Creates a new StaticString instance from a provided byte slice, returning
+  /// [`StringError::Utf8`] on invalid UTF-8 data, and truncating the input slice as necessary if
+  /// it has a length greater than the declared capacity of the StaticString being created.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
+  /// let string = StaticString::<20>::from_utf8("My String")?;
+  /// assert_eq!(string.as_str(), "My String");
+  /// let invalid_utf8 = [0, 159, 146, 150];
+  /// assert!(StaticString::<20>::from_utf8(invalid_utf8).unwrap_err().is_utf8());
+  /// let out_of_bounds = "0".repeat(300);
+  /// assert_eq!(StaticString::<20>::from_utf8(out_of_bounds.as_bytes())?.as_str(), "0".repeat(20).as_str());
+  /// # Ok(())
+  /// # }
+  /// ```
+  #[inline(always)]
+  pub fn from_utf8<B: AsRef<[u8]>>(slice: B) -> Result<Self, StringError> {
+    Ok(Self::from_str(from_utf8(slice.as_ref())?))
+  }
+
+  /// Creates a new StaticString from a byte slice, returning [`StringError::Utf8`] on invalid UTF-8
+  /// data or [`StringError::OutOfBounds`] if the slice has a length greater than the StaticString's
+  /// declared capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
+  /// let string = StaticString::<20>::try_from_utf8("My String")?;
+  /// assert_eq!(string.as_str(), "My String");
+  /// let invalid_utf8 = [0, 159, 146, 150];
+  /// assert!(StaticString::<20>::try_from_utf8(invalid_utf8).unwrap_err().is_utf8());
+  /// let out_of_bounds = "0000".repeat(400);
+  /// assert!(StaticString::<20>::try_from_utf8(out_of_bounds.as_bytes()).unwrap_err().is_out_of_bounds());
+  /// # Ok(())
+  /// # }
+  /// ```
+  #[inline(always)]
+  pub fn try_from_utf8<B: AsRef<[u8]>>(slice: B) -> Result<Self, StringError> {
+    Ok(Self::try_from_str(from_utf8(slice.as_ref())?)?)
+  }
+
+  /// Creates a new StaticString instance from a provided `u16` slice, replacing invalid UTF-16 data
+  /// with `REPLACEMENT_CHARACTER` (�), and truncating the input slice as necessary if
+  /// it has a length greater than the declared capacity of the StaticString being created.
   ///
   /// Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
   /// let music = [0xD834, 0xDD1E, 0x006d, 0x0075, 0x0073, 0x0069, 0x0063];
-  /// let string = StaticString::<20>::try_from_utf16(music)?;
+  /// let string = StaticString::<20>::from_utf16_lossy(music);
   /// assert_eq!(string.as_str(), "𝄞music");
   /// let invalid_utf16 = [0xD834, 0xDD1E, 0x006d, 0x0075, 0xD800, 0x0069, 0x0063];
-  /// assert!(StaticString::<20>::try_from_utf16(invalid_utf16).unwrap_err().is_utf16());
-  /// let out_of_bounds: Vec<_> = (0..300).map(|_| 0).collect();
-  /// assert!(StaticString::<20>::try_from_utf16(out_of_bounds).unwrap_err().is_out_of_bounds());
+  /// assert_eq!(StaticString::<20>::from_utf16_lossy(invalid_utf16).as_str(), "𝄞mu\u{FFFD}ic");
+  /// let out_of_bounds: Vec<u16> = (0..300).map(|_| 0).collect();
+  /// assert_eq!(StaticString::<20>::from_utf16_lossy(&out_of_bounds).as_str(), "\0".repeat(20).as_str());
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
-  pub fn try_from_utf16<B: AsRef<[u16]>>(slice: B) -> Result<Self, StringError> {
+  #[inline(always)]
+  pub fn from_utf16_lossy<B: AsRef<[u16]>>(slice: B) -> Self {
     let mut res = Self::new();
     for c in decode_utf16(slice.as_ref().iter().copied()) {
-      res.try_push(c?)?;
+      if res.try_push(c.unwrap_or(REPLACEMENT_CHARACTER)).is_err() {
+        break;
+      }
     }
-    Ok(res)
+    res
   }
 
   /// Creates a new StaticString instance from a provided `u16` slice, returning
@@ -340,33 +342,31 @@ impl<const N: usize> StaticString<N> {
     Ok(res)
   }
 
-  /// Creates a new StaticString instance from a provided `u16` slice, replacing invalid UTF-16 data
-  /// with `REPLACEMENT_CHARACTER` (�), and truncating the input slice as necessary if
-  /// it has a length greater than the declared capacity of the StaticString being created.
+  /// Creates a new StaticString from provided `u16` slice, returning [`StringError::Utf16`] on
+  /// invalid UTF-16 data or [`StringError::OutOfBounds`] if the slice has a length greater than the
+  /// declared capacity of the StaticString being created.
   ///
   /// Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
   /// let music = [0xD834, 0xDD1E, 0x006d, 0x0075, 0x0073, 0x0069, 0x0063];
-  /// let string = StaticString::<20>::from_utf16_lossy(music);
+  /// let string = StaticString::<20>::try_from_utf16(music)?;
   /// assert_eq!(string.as_str(), "𝄞music");
   /// let invalid_utf16 = [0xD834, 0xDD1E, 0x006d, 0x0075, 0xD800, 0x0069, 0x0063];
-  /// assert_eq!(StaticString::<20>::from_utf16_lossy(invalid_utf16).as_str(), "𝄞mu\u{FFFD}ic");
-  /// let out_of_bounds: Vec<u16> = (0..300).map(|_| 0).collect();
-  /// assert_eq!(StaticString::<20>::from_utf16_lossy(&out_of_bounds).as_str(), "\0".repeat(20).as_str());
+  /// assert!(StaticString::<20>::try_from_utf16(invalid_utf16).unwrap_err().is_utf16());
+  /// let out_of_bounds: Vec<_> = (0..300).map(|_| 0).collect();
+  /// assert!(StaticString::<20>::try_from_utf16(out_of_bounds).unwrap_err().is_out_of_bounds());
   /// # Ok(())
   /// # }
   /// ```
-  #[inline(always)]
-  pub fn from_utf16_lossy<B: AsRef<[u16]>>(slice: B) -> Self {
+  #[inline]
+  pub fn try_from_utf16<B: AsRef<[u16]>>(slice: B) -> Result<Self, StringError> {
     let mut res = Self::new();
     for c in decode_utf16(slice.as_ref().iter().copied()) {
-      if res.try_push(c.unwrap_or(REPLACEMENT_CHARACTER)).is_err() {
-        break;
-      }
+      res.try_push(c?)?;
     }
-    res
+    Ok(res)
   }
 
   /// Extracts a `str` slice containing the entire contents of the StaticString.
@@ -447,6 +447,19 @@ impl<const N: usize> StaticString<N> {
     self.vec.capacity()
   }
 
+  /// Returns the remaining capacity (which is to say, `self.capacity() - self.len()`) of the
+  /// StaticString.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::StaticString;
+  /// assert_eq!(StaticString::<32>::from("abcd").remaining_capacity(), 28);
+  /// ```
+  #[inline(always)]
+  pub const fn remaining_capacity(&self) -> usize {
+    self.vec.remaining_capacity()
+  }
+
   /// Attempts to push `string` to the StaticString, panicking if it is the case that `self.len() +
   /// string.len()` exceeds the StaticString's total capacity.
   ///
@@ -461,7 +474,7 @@ impl<const N: usize> StaticString<N> {
   pub fn push_str<S: AsRef<str>>(&mut self, string: S) {
     let string_ref = string.as_ref();
     assert!(
-      string_ref.len() <= self.vec.remaining_capacity(),
+      string_ref.len() <= self.remaining_capacity(),
       "Insufficient remaining capacity!"
     );
     self.vec.extend_from_slice(string_ref.as_bytes());
