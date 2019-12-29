@@ -317,13 +317,11 @@ impl<const N: usize> PartialOrd<&str> for StaticString<N> {
 impl<const N: usize> Write for StaticString<N> {
   #[inline(always)]
   fn write_str(&mut self, s: &str) -> fmt::Result {
-    self.push_str(s);
-    Ok(())
+    self.try_push_str(s).map_err(|_| fmt::Error)
   }
 
   #[inline(always)]
   fn write_char(&mut self, c: char) -> fmt::Result {
-    self.push(c);
-    Ok(())
+    self.try_push(c).map_err(|_| fmt::Error)
   }
 }

@@ -4,7 +4,6 @@
 /// also supported, and both forms can be used in const contexts.
 ///
 /// Example usage:
-///
 /// ```
 /// use staticvec::{staticvec, StaticVec};
 /// // The type of the StaticVec on the next line is `StaticVec<Vec<StaticVec<i32, 4>>, 1>`.
@@ -32,7 +31,6 @@ macro_rules! staticvec {
 /// manner.
 ///
 /// Example usage:
-///
 /// ```
 /// #![feature(const_fn, const_if_match, const_loop)]
 /// use staticvec::{sortedstaticvec, StaticVec};
