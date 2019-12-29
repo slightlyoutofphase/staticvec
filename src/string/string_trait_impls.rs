@@ -15,7 +15,7 @@ impl<'a, const N: usize> Add<&'a str> for StaticString<N> {
 
   #[inline(always)]
   fn add(mut self, other: &str) -> Self::Output {
-    self.push_str(other);
+    self.push_str_truncating(other);
     self
   }
 }
@@ -100,7 +100,7 @@ impl<const N: usize> Eq for StaticString<N> {}
 impl<const N: usize> Extend<char> for StaticString<N> {
   #[inline(always)]
   fn extend<I: IntoIterator<Item = char>>(&mut self, iterable: I) {
-    self.push_str(Self::from_chars(iterable))
+    self.push_str_truncating(Self::from_chars(iterable))
   }
 }
 
@@ -114,7 +114,7 @@ impl<'a, const N: usize> Extend<&'a char> for StaticString<N> {
 impl<'a, const N: usize> Extend<&'a str> for StaticString<N> {
   #[inline(always)]
   fn extend<I: IntoIterator<Item = &'a str>>(&mut self, iterable: I) {
-    self.push_str(Self::from_iterator(iterable))
+    self.push_str_truncating(Self::from_iterator(iterable))
   }
 }
 
@@ -279,10 +279,17 @@ impl<const N: usize> PartialEq for StaticString<N> {
   }
 }
 
-impl<'a, 'b, const N: usize> PartialEq<str> for StaticString<N> {
+impl<const N: usize> PartialEq<str> for StaticString<N> {
   #[inline(always)]
   fn eq(&self, other: &str) -> bool {
     self.as_str().eq(other)
+  }
+}
+
+impl<const N: usize> PartialEq<&str> for StaticString<N> {
+  #[inline(always)]
+  fn eq(&self, other: &&str) -> bool {
+    self.as_str().eq(*other)
   }
 }
 
@@ -293,9 +300,30 @@ impl<const N: usize> PartialOrd for StaticString<N> {
   }
 }
 
+impl<const N: usize> PartialOrd<str> for StaticString<N> {
+  #[inline(always)]
+  fn partial_cmp(&self, other: &str) -> Option<Ordering> {
+    Some(self.as_str().cmp(other))
+  }
+}
+
+impl<const N: usize> PartialOrd<&str> for StaticString<N> {
+  #[inline(always)]
+  fn partial_cmp(&self, other: &&str) -> Option<Ordering> {
+    Some(self.as_str().cmp(*other))
+  }
+}
+
 impl<const N: usize> Write for StaticString<N> {
   #[inline(always)]
-  fn write_str(&mut self, slice: &str) -> fmt::Result {
-    self.try_push_str(slice).map_err(|_| fmt::Error)
+  fn write_str(&mut self, s: &str) -> fmt::Result {
+    self.push_str(s);
+    Ok(())
+  }
+
+  #[inline(always)]
+  fn write_char(&mut self, c: char) -> fmt::Result {
+    self.push(c);
+    Ok(())
   }
 }
