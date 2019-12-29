@@ -117,7 +117,7 @@ pub(crate) fn truncate_str(slice: &str, size: usize) -> &str {
   } else if size < slice.len() {
     let mut index = size - 1;
     while !slice.is_char_boundary(index) {
-      index = index - 1;
+      index -= 1;
     }
     unsafe { slice.get_unchecked(..index) }
   } else {

@@ -75,6 +75,7 @@ impl<const N: usize> StaticString<N> {
   /// let string = StaticString::<20>::from_str(&truncate);
   /// assert_eq!(string.as_str(), truncated);
   /// ```
+  #[allow(clippy::should_implement_trait)]
   #[inline(always)]
   pub fn from_str<S: AsRef<str>>(string: S) -> Self {
     let mut res = Self::new();
@@ -418,6 +419,11 @@ impl<const N: usize> StaticString<N> {
   }
 
   /// Extracts a mutable `u8` slice containing the entire contents of the StaticString.
+  ///
+  /// # Safety
+  ///
+  /// Care must be taken to ensure that the returned `u8` slice is not mutated in such a way that
+  /// it no longer amounts to valid UTF-8.
   ///
   /// Example usage:
   /// ```

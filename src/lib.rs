@@ -1,6 +1,7 @@
 #![no_std]
 #![allow(clippy::doc_markdown)]
 #![allow(clippy::inline_always)]
+#![allow(clippy::match_bool)]
 #![allow(incomplete_features)]
 #![feature(const_compare_raw_pointers)]
 #![feature(const_fn)]
