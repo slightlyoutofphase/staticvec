@@ -206,6 +206,16 @@ fn try_push_str() {
 
 #[test]
 fn push_str() {
+  let mut s = String::from("🤔🤔🤔🤔🤔🤔🤔");
+  s.push_str("🤔🤔🤔🤔🤔🤔🤔");
+  assert_eq!(s, "🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔");
+  let mut ms = MyString::from("🤔🤔🤔🤔🤔🤔🤔");
+  ms.push_str("🤔🤔🤔🤔🤔🤔🤔");
+  assert_eq!(ms, "🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔");
+}
+
+#[test]
+fn push_str_truncating() {
   assert(
     |s| {
       let mut st = String::from(s);
