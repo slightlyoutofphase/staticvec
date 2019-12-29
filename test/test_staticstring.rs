@@ -1,8 +1,7 @@
-use core::{fmt::Debug, iter::FromIterator};
-use staticvec::{
-  string_utils::{is_char_boundary, is_inside_boundary},
-  StaticString, StringError,
-};
+use core::fmt::Debug;
+use core::iter::FromIterator;
+use staticvec::string_utils::{is_char_boundary, is_inside_boundary};
+use staticvec::{StaticString, StringError};
 use std::panic::{catch_unwind, AssertUnwindSafe, RefUnwindSafe};
 
 type MyString = StaticString<255>;
