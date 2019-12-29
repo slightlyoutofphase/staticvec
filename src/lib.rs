@@ -215,7 +215,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// constant rather than a method.
   pub const CAPACITY: usize = N;
 
-  /// Returns the remaining capacity of the StaticVec.
+  /// Returns the remaining capacity (which is to say, `self.capacity() - self.len()`) of the
+  /// StaticVec.
   #[inline(always)]
   pub const fn remaining_capacity(&self) -> usize {
     N - self.length
