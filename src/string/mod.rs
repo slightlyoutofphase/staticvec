@@ -78,7 +78,7 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn from_str<S: AsRef<str>>(string: S) -> Self {
     let mut res = Self::new();
-    res.push_str(string);
+    res.push_str_truncating(string);
     res
   }
 
@@ -155,7 +155,7 @@ impl<const N: usize> StaticString<N> {
     while i < N {
       if let Some(s) = it.next() {
         i += s.as_ref().len();
-        res.push_str(s);
+        res.push_str_truncating(s);
       } else {
         break;
       }
@@ -263,7 +263,7 @@ impl<const N: usize> StaticString<N> {
   ///
   /// The length of the slice must not exceed the declared capacity of the StaticString being
   /// created, as this would result in writing to an out-of-bounds memory region.
-  ///  
+  ///
   /// The slice must also contain strictly valid UTF-8 data, as if it does not, various assumptions
   /// made in the internal implementation of StaticString will be silently invalidated, almost
   /// certainly eventually resulting in undefined behavior.
@@ -447,25 +447,46 @@ impl<const N: usize> StaticString<N> {
     self.vec.capacity()
   }
 
-  /// Attempts to push `string` to the StaticString. Truncates `string` as necessary if it is the
-  /// case that `self.len() + string.len()` exceeds the StaticString's total capacity.
+  /// Attempts to push `string` to the StaticString, panicking if it is the case that `self.len() +
+  /// string.len()` exceeds the StaticString's total capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{StaticString};
+  /// let mut s = StaticString::<6>::from("foo");
+  /// s.push_str("bar");
+  /// assert_eq!(s, "foobar");
+  /// ```
+  #[inline(always)]
+  pub fn push_str<S: AsRef<str>>(&mut self, string: S) {
+    let string_ref = string.as_ref();
+    assert!(
+      string_ref.len() <= self.vec.remaining_capacity(),
+      "Insufficient remaining capacity!"
+    );
+    self.vec.extend_from_slice(string_ref.as_bytes());
+  }
+
+  /// Attempts to push `string` to the StaticString. Truncates `string` as necessary (or simply does
+  /// nothing at all) if it is the case that `self.len() + string.len()` exceeds the
+  /// StaticString's total capacity.
   ///
   /// Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
   /// let mut s = StaticString::<300>::try_from_str("My String")?;
-  /// s.push_str(" My other String");
+  /// s.push_str_truncating(" My other String");
   /// assert_eq!(s.as_str(), "My String My other String");
   /// let mut s = StaticString::<20>::new();
-  /// s.push_str("0".repeat(21));
+  /// s.push_str_truncating("0".repeat(21));
   /// assert_eq!(s.as_str(), "0".repeat(20).as_str());
   /// # Ok(())
   /// # }
   /// ```
   #[inline(always)]
-  pub fn push_str<S: AsRef<str>>(&mut self, string: S) {
-    self.vec.extend_from_slice(string.as_ref().as_bytes())
+  pub fn push_str_truncating<S: AsRef<str>>(&mut self, string: S) {
+    self.vec.extend_from_slice(string.as_ref().as_bytes());
   }
 
   /// Pushes `string` to the StaticString if `self.len() + string.len()` does not exceed
@@ -729,35 +750,6 @@ impl<const N: usize> StaticString<N> {
     *self = Self::from_chars(self.as_str().chars().filter(|c| f(*c)));
   }
 
-  /// Inserts `character` at `index`, returning [`StringError::OutOfBounds`] if the StaticString is
-  /// already at maximum capacity and [`StringError::Utf8`] if `index` is not a valid UTF-8
-  /// character index.
-  ///
-  /// Example usage:
-  /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
-  /// s.try_insert(1, 'E')?;
-  /// s.try_insert(2, 'F')?;
-  /// assert_eq!(s.as_str(), "AEFBCD🤔");
-  /// assert!(s.try_insert(20, 'C').unwrap_err().is_out_of_bounds());
-  /// assert!(s.try_insert(8, 'D').unwrap_err().is_not_char_boundary());
-  /// let mut s = StaticString::<20>::try_from_str(&"0".repeat(20))?;
-  /// assert!(s.try_insert(0, 'C').unwrap_err().is_out_of_bounds());
-  /// # Ok(())
-  /// # }
-  /// ```
-  #[inline]
-  pub fn try_insert(&mut self, index: usize, character: char) -> Result<(), StringError> {
-    is_inside_boundary(index, self.len())?;
-    let new_end = character.len_utf8() + self.len();
-    is_inside_boundary(new_end, self.capacity())?;
-    is_char_boundary(self, index)?;
-    unsafe { self.insert_unchecked(index, character) };
-    Ok(())
-  }
-
   /// Inserts `character` at `index` without doing any checking to ensure that the StaticVec is not
   /// already at maximum capacity or that `index` indicates a valid UTF-8 character boundary.
   ///
@@ -790,6 +782,52 @@ impl<const N: usize> StaticString<N> {
     let char_len = character.len_utf8();
     shift_right_unchecked(self, index, index + char_len);
     encode_char_utf8_unchecked(self, character, index);
+  }
+
+  /// Inserts `character` at `index`, returning [`StringError::OutOfBounds`] if the StaticString is
+  /// already at maximum capacity and [`StringError::Utf8`] if `index` is not a valid UTF-8
+  /// character index.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
+  /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
+  /// s.try_insert(1, 'E')?;
+  /// s.try_insert(2, 'F')?;
+  /// assert_eq!(s.as_str(), "AEFBCD🤔");
+  /// assert!(s.try_insert(20, 'C').unwrap_err().is_out_of_bounds());
+  /// assert!(s.try_insert(8, 'D').unwrap_err().is_not_char_boundary());
+  /// let mut s = StaticString::<20>::try_from_str(&"0".repeat(20))?;
+  /// assert!(s.try_insert(0, 'C').unwrap_err().is_out_of_bounds());
+  /// # Ok(())
+  /// # }
+  /// ```
+  #[inline]
+  pub fn try_insert(&mut self, index: usize, character: char) -> Result<(), StringError> {
+    is_inside_boundary(index, self.len())?;
+    let new_end = character.len_utf8() + self.len();
+    is_inside_boundary(new_end, self.capacity())?;
+    is_char_boundary(self, index)?;
+    unsafe { self.insert_unchecked(index, character) };
+    Ok(())
+  }
+
+  /// Inserts `character` at `index`, panicking if the StaticString is already at maximum capacity
+  /// or if `index` does not lie at a valid UTF-8 character index.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{StaticString};
+  /// let mut s = StaticString::<3>::new();
+  /// s.insert(0, 'f');
+  /// s.insert(1, 'o');
+  /// s.insert(2, 'o');
+  /// assert_eq!(s, "foo");
+  /// ```
+  #[inline(always)]
+  pub fn insert(&mut self, index: usize, character: char) {
+    self.try_insert(index, character).unwrap();
   }
 
   /// Inserts `string` at `index`, returning [`StringError::OutOfBounds`] if `self.len() +
