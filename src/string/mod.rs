@@ -505,9 +505,16 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn push_str_truncating<S: AsRef<str>>(&mut self, string: S) {
-    self
-      .vec
-      .extend_from_slice(truncate_str(string.as_ref(), self.remaining_capacity()).as_bytes());
+    let truncated = truncate_str(string.as_ref(), self.remaining_capacity());
+    let old_length = self.len();
+    let string_length = truncated.len();
+    unsafe {
+      truncated
+        .as_bytes()
+        .as_ptr()
+        .copy_to_nonoverlapping(self.vec.mut_ptr_at_unchecked(old_length), string_length);
+      self.vec.set_len(old_length + string_length);
+    }
   }
 
   /// Pushes `string` to the StaticString if `self.len() + string.len()` does not exceed
