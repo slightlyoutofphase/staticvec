@@ -71,4 +71,12 @@ fn main() {
   println!("Debug info: {:?}", s7);
   println!("Length: {}", s7.len());
   println!("Remaining capacity: {}", s7.remaining_capacity());
+  let mut s8 = StaticString::<8>::new();
+  for _ in 0..12 {
+    s8.push_str_truncating("A");
+  }
+  println!("Value: {}", s8);
+  println!("Debug info: {:?}", s8);
+  println!("Length: {}", s8.len());
+  println!("Remaining capacity: {}", s8.remaining_capacity());
 }
