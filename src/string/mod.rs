@@ -505,7 +505,9 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn push_str_truncating<S: AsRef<str>>(&mut self, string: S) {
-    self.vec.extend_from_slice(string.as_ref().as_bytes());
+    self
+      .vec
+      .extend_from_slice(truncate_str(string.as_ref(), self.remaining_capacity()).as_bytes());
   }
 
   /// Pushes `string` to the StaticString if `self.len() + string.len()` does not exceed
@@ -1102,7 +1104,7 @@ impl<const N: usize> StaticString<N> {
     is_char_boundary(self, start)?;
     is_char_boundary(self, end)?;
     debug_assert!(start <= end && end <= self.len());
-    debug_assert!((len - end) + start <= self.capacity());
+    debug_assert!(len.saturating_sub(end) + start <= self.capacity());
     debug_assert!(self.as_str().is_char_boundary(start));
     debug_assert!(self.as_str().is_char_boundary(end));
     if start + len > end {
