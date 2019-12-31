@@ -96,6 +96,11 @@ path = "demo/main_demo.rs"
 required-features = ["std"]
 
 [[example]]
+name = "string_demo"
+path = "demo/string_demo.rs"
+required-features = ["std"]
+
+[[example]]
 name = "serde_support_demo"
 path = "demo/serde_support_demo.rs"
 required-features = ["std", "serde_support", "serde_json_support"]
