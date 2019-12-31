@@ -532,7 +532,7 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub fn try_push_str<S: AsRef<str>>(&mut self, string: S) -> Result<(), CapacityError<N>> {
     let string_ref = string.as_ref();
     match self.vec.remaining_capacity() < string_ref.len() {
@@ -620,7 +620,7 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub fn try_push(&mut self, character: char) -> Result<(), StringError> {
     let char_len = character.len_utf8();
     match self.vec.remaining_capacity() < char_len {
@@ -831,7 +831,7 @@ impl<const N: usize> StaticString<N> {
   /// # Ok(())
   /// # }
   /// ```
-  #[inline]
+  #[inline(always)]
   pub fn try_insert(&mut self, index: usize, character: char) -> Result<(), StringError> {
     is_inside_boundary(index, self.len())?;
     let new_end = character.len_utf8() + self.len();
