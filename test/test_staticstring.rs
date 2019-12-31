@@ -507,6 +507,9 @@ fn replace_range() {
       ms.replace_range(..2, s).map(|()| (ms, ()))
     },
   );
+  let mut s2 = StaticString::<6>::from("ABCDEF");
+  s2.replace_range(2..4, "XY").unwrap();
+  assert_eq!(s2, "ABXYEF");
 }
 
 #[test]
