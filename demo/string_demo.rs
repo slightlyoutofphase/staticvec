@@ -3,6 +3,9 @@
 
 use staticvec::*;
 
+// There'll eventually be more stuff here probably, but for now it just tries
+// to show the more "interesting" features.
+
 fn main() {
   let mut s = StaticString::<4>::new();
   s.push_str("🤔");
@@ -42,4 +45,30 @@ fn main() {
   println!("Debug info: {:?}", s5);
   println!("Length: {}", s5.len());
   println!("Remaining capacity: {}", s5.remaining_capacity());
+  let mut s6 = StaticString::<5>::from(" ABC ");
+  println!("Value: {}", s6);
+  println!("Debug info: {:?}", s6);
+  println!("Length: {}", s6.len());
+  println!("Remaining capacity: {}", s6.remaining_capacity());
+  s6.trim();
+  println!("Value: {}", s6);
+  println!("Debug info: {:?}", s6);
+  println!("Length: {}", s6.len());
+  println!("Remaining capacity: {}", s6.remaining_capacity());
+  let mut a = StaticString::<6>::from("ABCDEF");
+  let b = a.split_off(3).unwrap();
+  println!("Value: {}", a);
+  println!("Debug info: {:?}", a);
+  println!("Length: {}", a.len());
+  println!("Remaining capacity: {}", a.remaining_capacity());
+  println!("Value: {}", b);
+  println!("Debug info: {:?}", b);
+  println!("Length: {}", b.len());
+  println!("Remaining capacity: {}", b.remaining_capacity());
+  let mut s7 = StaticString::<12>::from("🤔ABCD🤔");
+  s7.retain(|c| c != '🤔');
+  println!("Value: {}", s7);
+  println!("Debug info: {:?}", s7);
+  println!("Length: {}", s7.len());
+  println!("Remaining capacity: {}", s7.remaining_capacity());
 }
