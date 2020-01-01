@@ -479,11 +479,19 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn push_str<S: AsRef<str>>(&mut self, string: S) {
     let string_ref = string.as_ref();
+    let string_len = string_ref.len();
     assert!(
-      string_ref.len() <= self.remaining_capacity(),
+      string_len <= self.remaining_capacity(),
       "Insufficient remaining capacity!"
     );
-    self.vec.extend_from_slice(string_ref.as_bytes());
+    let old_length = self.len();
+    unsafe {
+      self
+        .vec
+        .mut_ptr_at_unchecked(old_length)
+        .copy_from_nonoverlapping(string_ref.as_ptr(), string_len);
+      self.vec.set_len(old_length + string_len);
+    }
   }
 
   /// Attempts to push `string` to the StaticString. Truncates `string` as necessary (or simply does
@@ -510,7 +518,6 @@ impl<const N: usize> StaticString<N> {
     let string_length = truncated.len();
     unsafe {
       truncated
-        .as_bytes()
         .as_ptr()
         .copy_to_nonoverlapping(self.vec.mut_ptr_at_unchecked(old_length), string_length);
       self.vec.set_len(old_length + string_length);
@@ -535,9 +542,17 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn try_push_str<S: AsRef<str>>(&mut self, string: S) -> Result<(), CapacityError<N>> {
     let string_ref = string.as_ref();
-    match self.vec.remaining_capacity() < string_ref.len() {
+    let string_len = string_ref.len();
+    match self.vec.remaining_capacity() < string_len {
       false => {
-        self.vec.extend_from_slice(string_ref.as_bytes());
+        let old_length = self.len();
+        unsafe {
+          self
+            .vec
+            .mut_ptr_at_unchecked(old_length)
+            .copy_from_nonoverlapping(string_ref.as_ptr(), string_len);
+          self.vec.set_len(old_length + string_len);
+        }
         Ok(())
       }
       true => Err(CapacityError {}),
@@ -575,7 +590,6 @@ impl<const N: usize> StaticString<N> {
         let old_length = self.len();
         character
           .encode_utf8(&mut [0; 4])
-          .as_bytes()
           .as_ptr()
           .copy_to_nonoverlapping(self.vec.mut_ptr_at_unchecked(old_length), char_len);
         self.vec.set_len(old_length + char_len);
