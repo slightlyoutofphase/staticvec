@@ -1125,11 +1125,10 @@ impl<const N: usize> StaticString<N> {
     is_char_boundary(self, end)?;
     if len == 0 {
       let old_length = self.len();
-      let count = old_length.saturating_sub(end);
       unsafe {
         self.as_ptr()
           .add(end)
-          .copy_to(self.as_mut_ptr().add(start), count);
+          .copy_to(self.as_mut_ptr().add(start), old_length.saturating_sub(end));
         self.vec.set_len(old_length.saturating_sub(replaced));
       }
       Ok(())
@@ -1139,11 +1138,11 @@ impl<const N: usize> StaticString<N> {
       } else {
         unsafe { shift_left_unchecked(self, end, start + len) };
       }
-      let grow: isize = len as isize - replaced as isize;
-      unsafe { self.vec.set_len((self.len() as isize + grow) as usize) };
       let ptr = replace_with.as_ptr();
       let dest = unsafe { self.vec.as_mut_ptr().add(start) };
       unsafe { ptr.copy_to_nonoverlapping(dest, len) };
+      let grow: isize = len as isize - replaced as isize;
+      unsafe { self.vec.set_len((self.len() as isize + grow) as usize) };
       Ok(())
     }
   }
