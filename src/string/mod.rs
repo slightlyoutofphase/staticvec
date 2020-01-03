@@ -1119,12 +1119,12 @@ impl<const N: usize> StaticString<N> {
     let len = replace_with.len();
     if len == 0 {
       let old_length = self.len();
-      let count = old_length - end;
+      let count = old_length.saturating_sub(end);
       unsafe {
         self.as_ptr()
           .add(end)
           .copy_to(self.as_mut_ptr().add(start), count);
-        self.vec.set_len(old_length - (end - start));
+        self.vec.set_len(old_length.saturating_sub(end.saturating_sub(start)));
       }
       Ok(())
     } else {
