@@ -1104,40 +1104,51 @@ impl<const N: usize> StaticString<N> {
     &mut self,
     range: R,
     with: S,
-  ) -> Result<(), StringError>
-  {
+  ) -> Result<(), StringError> {
     let replace_with = with.as_ref();
     let start = match range.start_bound() {
-      Bound::Included(t) => *t,
-      Bound::Excluded(t) => t + 1,
-      Bound::Unbounded => 0,
+      Included(t) => *t,
+      Excluded(t) => t + 1,
+      Unbounded => 0,
     };
     let end = match range.end_bound() {
-      Bound::Included(t) => t + 1,
-      Bound::Excluded(t) => *t,
-      Bound::Unbounded => self.len(),
+      Included(t) => t + 1,
+      Excluded(t) => *t,
+      Unbounded => self.len(),
     };
     let len = replace_with.len();
-    is_inside_boundary(start, end)?;
-    is_inside_boundary(end, self.len())?;
-    let replaced = end - start;
-    is_inside_boundary(replaced + len, self.capacity())?;
-    is_char_boundary(self, start)?;
-    is_char_boundary(self, end)?;
-    debug_assert!(start <= end && end <= self.len());
-    debug_assert!(len.saturating_sub(end) + start <= self.capacity());
-    debug_assert!(self.as_str().is_char_boundary(start));
-    debug_assert!(self.as_str().is_char_boundary(end));
-    if start + len > end {
-      unsafe { shift_right_unchecked(self, end, start + len) };
+    if len == 0 {
+      let old_length = self.len();
+      let count = old_length - end;
+      unsafe {
+        self.as_ptr()
+          .add(end)
+          .copy_to(self.as_mut_ptr().add(start), count);
+        self.vec.set_len(old_length - (end - start));
+      }
+      Ok(())
     } else {
-      unsafe { shift_left_unchecked(self, end, start + len) };
+      is_inside_boundary(start, end)?;
+      is_inside_boundary(end, self.len())?;
+      let replaced = end - start;
+      is_inside_boundary(replaced + len, self.capacity())?;
+      is_char_boundary(self, start)?;
+      is_char_boundary(self, end)?;
+      debug_assert!(start <= end && end <= self.len());
+      debug_assert!(len.saturating_sub(end) + start <= self.capacity());
+      debug_assert!(self.as_str().is_char_boundary(start));
+      debug_assert!(self.as_str().is_char_boundary(end));
+      if start + len > end {
+        unsafe { shift_right_unchecked(self, end, start + len) };
+      } else {
+        unsafe { shift_left_unchecked(self, end, start + len) };
+      }
+      let grow: isize = len as isize - replaced as isize;
+      unsafe { self.vec.set_len((self.len() as isize + grow) as usize) };
+      let ptr = replace_with.as_ptr();
+      let dest = unsafe { self.vec.as_mut_ptr().add(start) };
+      unsafe { ptr.copy_to_nonoverlapping(dest, len) };
+      Ok(())
     }
-    let grow = len.saturating_sub(replaced);
-    unsafe { self.vec.set_len(self.len() + grow) };
-    let ptr = replace_with.as_ptr();
-    let dest = unsafe { self.vec.as_mut_ptr().add(start) };
-    unsafe { ptr.copy_to_nonoverlapping(dest, len) };
-    Ok(())
   }
 }
