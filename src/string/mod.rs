@@ -1117,10 +1117,6 @@ impl<const N: usize> StaticString<N> {
       Bound::Unbounded => self.len(),
     };
     let len = replace_with.len();
-    debug_assert!(start <= end && end <= self.len());
-    debug_assert!(len.saturating_sub(end) + start <= self.capacity());
-    debug_assert!(self.as_str().is_char_boundary(start));
-    debug_assert!(self.as_str().is_char_boundary(end));
     is_inside_boundary(start, end)?;
     is_inside_boundary(end, self.len())?;
     let replaced = end.saturating_sub(start);
