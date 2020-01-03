@@ -1133,7 +1133,7 @@ impl<const N: usize> StaticString<N> {
     } else {
       unsafe { shift_left_unchecked(self, end, start + len) };
     }
-    let grow = len - replaced;
+    let grow = len.saturating_sub(replaced);
     unsafe { self.vec.set_len(self.len() + grow) };
     let ptr = replace_with.as_ptr();
     let dest = unsafe { self.vec.as_mut_ptr().add(start) };
