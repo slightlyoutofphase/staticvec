@@ -1117,6 +1117,16 @@ impl<const N: usize> StaticString<N> {
       Bound::Unbounded => self.len(),
     };
     let len = replace_with.len();
+    debug_assert!(start <= end && end <= self.len());
+    debug_assert!(len.saturating_sub(end) + start <= self.capacity());
+    debug_assert!(self.as_str().is_char_boundary(start));
+    debug_assert!(self.as_str().is_char_boundary(end));
+    is_inside_boundary(start, end)?;
+    is_inside_boundary(end, self.len())?;
+    let replaced = end.saturating_sub(start);
+    is_inside_boundary(replaced + len, self.capacity())?;
+    is_char_boundary(self, start)?;
+    is_char_boundary(self, end)?;
     if len == 0 {
       let old_length = self.len();
       let count = old_length.saturating_sub(end);
@@ -1124,20 +1134,10 @@ impl<const N: usize> StaticString<N> {
         self.as_ptr()
           .add(end)
           .copy_to(self.as_mut_ptr().add(start), count);
-        self.vec.set_len(old_length.saturating_sub(end.saturating_sub(start)));
+        self.vec.set_len(old_length.saturating_sub(replaced));
       }
       Ok(())
     } else {
-      is_inside_boundary(start, end)?;
-      is_inside_boundary(end, self.len())?;
-      let replaced = end - start;
-      is_inside_boundary(replaced + len, self.capacity())?;
-      is_char_boundary(self, start)?;
-      is_char_boundary(self, end)?;
-      debug_assert!(start <= end && end <= self.len());
-      debug_assert!(len.saturating_sub(end) + start <= self.capacity());
-      debug_assert!(self.as_str().is_char_boundary(start));
-      debug_assert!(self.as_str().is_char_boundary(end));
       if start + len > end {
         unsafe { shift_right_unchecked(self, end, start + len) };
       } else {
