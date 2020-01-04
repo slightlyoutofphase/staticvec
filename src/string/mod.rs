@@ -1104,7 +1104,8 @@ impl<const N: usize> StaticString<N> {
     &mut self,
     range: R,
     with: S,
-  ) -> Result<(), StringError> {
+  ) -> Result<(), StringError>
+  {
     let replace_with = with.as_ref();
     let start = match range.start_bound() {
       Bound::Included(t) => *t,
@@ -1126,7 +1127,8 @@ impl<const N: usize> StaticString<N> {
     if len == 0 {
       let old_length = self.len();
       unsafe {
-        self.as_ptr()
+        self
+          .as_ptr()
           .add(end)
           .copy_to(self.as_mut_ptr().add(start), old_length.saturating_sub(end));
         self.vec.set_len(old_length.saturating_sub(replaced));
