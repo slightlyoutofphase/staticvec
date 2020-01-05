@@ -484,12 +484,12 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub unsafe fn push_str_unchecked(&mut self, string: &str) {
     let old_length = self.len();
-    let string_len = string.len();
+    let string_length = string.len();
     self
       .vec
       .mut_ptr_at_unchecked(old_length)
-      .copy_from_nonoverlapping(string.as_ptr(), string_len);
-    self.vec.set_len(old_length + string_len);
+      .copy_from_nonoverlapping(string.as_ptr(), string_length);
+    self.vec.set_len(old_length + string_length);
   }
 
   /// Attempts to push `string` to the StaticString, panicking if it is the case that `self.len() +
@@ -585,16 +585,16 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, character: char) {
-    let char_len = character.len_utf8();
-    match char_len {
+    let char_length = character.len_utf8();
+    match char_length {
       1 => self.vec.push_unchecked(character as u8),
       _ => {
         let old_length = self.len();
         character
           .encode_utf8(&mut [0; 4])
           .as_ptr()
-          .copy_to_nonoverlapping(self.vec.mut_ptr_at_unchecked(old_length), char_len);
-        self.vec.set_len(old_length + char_len);
+          .copy_to_nonoverlapping(self.vec.mut_ptr_at_unchecked(old_length), char_length);
+        self.vec.set_len(old_length + char_length);
       }
     };
   }
@@ -760,10 +760,10 @@ impl<const N: usize> StaticString<N> {
     );
     let character = unsafe { self.as_str().get_unchecked(index..).chars().next() };
     let character = character.unwrap_or_else(|| unsafe { never("Missing char") });
-    let char_len = character.len_utf8();
+    let char_length = character.len_utf8();
     unsafe {
-      shift_left_unchecked(self, index + char_len, index);
-      self.vec.set_len(old_length - char_len);
+      shift_left_unchecked(self, index + char_length, index);
+      self.vec.set_len(old_length - char_length);
     }
     character
   }
@@ -816,8 +816,8 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub unsafe fn insert_unchecked(&mut self, index: usize, character: char) {
-    let char_len = character.len_utf8();
-    shift_right_unchecked(self, index, index + char_len);
+    let char_length = character.len_utf8();
+    shift_right_unchecked(self, index, index + char_length);
     encode_char_utf8_unchecked(self, character, index);
   }
 
