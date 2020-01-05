@@ -466,6 +466,32 @@ impl<const N: usize> StaticString<N> {
     self.vec.remaining_capacity()
   }
 
+  /// Pushes `string` to the StaticString without doing any checking to ensure that `self.len() +
+  /// string.len()` does not exceed the StaticString's total capacity.
+  ///
+  /// # Safety
+  ///
+  /// `self.len() + string.len()` must not exceed the total capacity of the StaticString
+  /// instance, as this would result in writing to an out-of-bounds memory region.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{StaticString};
+  /// let mut s = StaticString::<6>::from("foo");
+  /// unsafe { s.push_str_unchecked("bar") };
+  /// assert_eq!(s, "foobar");
+  /// ```
+  #[inline(always)]
+  pub unsafe fn push_str_unchecked(&mut self, string: &str) {
+    let old_length = self.len();
+    let string_len = string.len();
+    self
+      .vec
+      .mut_ptr_at_unchecked(old_length)
+      .copy_from_nonoverlapping(string.as_ptr(), string_len);
+    self.vec.set_len(old_length + string_len);
+  }
+
   /// Attempts to push `string` to the StaticString, panicking if it is the case that `self.len() +
   /// string.len()` exceeds the StaticString's total capacity.
   ///
@@ -479,19 +505,11 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn push_str<S: AsRef<str>>(&mut self, string: S) {
     let string_ref = string.as_ref();
-    let string_len = string_ref.len();
     assert!(
-      string_len <= self.remaining_capacity(),
+      string_ref.len() <= self.remaining_capacity(),
       "Insufficient remaining capacity!"
     );
-    let old_length = self.len();
-    unsafe {
-      self
-        .vec
-        .mut_ptr_at_unchecked(old_length)
-        .copy_from_nonoverlapping(string_ref.as_ptr(), string_len);
-      self.vec.set_len(old_length + string_len);
-    }
+    unsafe { self.push_str_unchecked(string_ref) };
   }
 
   /// Attempts to push `string` to the StaticString. Truncates `string` as necessary (or simply does
@@ -513,15 +531,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn push_str_truncating<S: AsRef<str>>(&mut self, string: S) {
-    let truncated = truncate_str(string.as_ref(), self.remaining_capacity());
-    let old_length = self.len();
-    let string_length = truncated.len();
-    unsafe {
-      truncated
-        .as_ptr()
-        .copy_to_nonoverlapping(self.vec.mut_ptr_at_unchecked(old_length), string_length);
-      self.vec.set_len(old_length + string_length);
-    }
+    unsafe { self.push_str_unchecked(truncate_str(string.as_ref(), self.remaining_capacity())) };
   }
 
   /// Pushes `string` to the StaticString if `self.len() + string.len()` does not exceed
@@ -542,17 +552,9 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn try_push_str<S: AsRef<str>>(&mut self, string: S) -> Result<(), CapacityError<N>> {
     let string_ref = string.as_ref();
-    let string_len = string_ref.len();
-    match self.vec.remaining_capacity() < string_len {
+    match self.vec.remaining_capacity() < string_ref.len() {
       false => {
-        let old_length = self.len();
-        unsafe {
-          self
-            .vec
-            .mut_ptr_at_unchecked(old_length)
-            .copy_from_nonoverlapping(string_ref.as_ptr(), string_len);
-          self.vec.set_len(old_length + string_len);
-        }
+        unsafe { self.push_str_unchecked(string_ref) };
         Ok(())
       }
       true => Err(CapacityError {}),
@@ -636,15 +638,9 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn try_push(&mut self, character: char) -> Result<(), StringError> {
-    let char_len = character.len_utf8();
-    match self.vec.remaining_capacity() < char_len {
+    match self.vec.remaining_capacity() < character.len_utf8() {
       false => {
-        match char_len {
-          1 => unsafe { self.vec.push_unchecked(character as u8) },
-          _ => self
-            .vec
-            .extend_from_slice(character.encode_utf8(&mut [0; 4]).as_bytes()),
-        };
+        unsafe { self.push_unchecked(character) }
         Ok(())
       }
       true => Err(StringError::OutOfBounds),
@@ -748,29 +744,28 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
-  /// assert!(s.remove("ABCD🤔".len()).unwrap_err().is_out_of_bounds());
-  /// assert!(s.remove(10).unwrap_err().is_out_of_bounds());
-  /// assert!(s.remove(6).unwrap_err().is_not_char_boundary());
-  /// assert_eq!(s.remove(0), Ok('A'));
-  /// assert_eq!(s.as_str(), "BCD🤔");
-  /// assert_eq!(s.remove(2), Ok('D'));
-  /// assert_eq!(s.as_str(), "BC🤔");
-  /// # Ok(())
-  /// # }
+  /// # use staticvec::StaticString;
+  /// let mut s = StaticString::<20>::from("ABCD🤔");
+  /// assert_eq!(s.remove(0), 'A');
+  /// assert!(s == "BCD🤔");
+  /// assert_eq!(s.remove(2), 'D');
+  /// assert!(s == "BC🤔");
   /// ```
   #[inline]
-  pub fn remove(&mut self, index: usize) -> Result<char, StringError> {
-    is_inside_boundary(index, self.len().saturating_sub(1))?;
-    is_char_boundary(self, index)?;
-    debug_assert!(index < self.len() && self.as_str().is_char_boundary(index));
+  pub fn remove(&mut self, index: usize) -> char {
+    let old_length = self.len();
+    assert!(
+      index < old_length && self.as_str().is_char_boundary(index),
+      "Out of bounds / invalid character boundary!"
+    );
     let character = unsafe { self.as_str().get_unchecked(index..).chars().next() };
     let character = character.unwrap_or_else(|| unsafe { never("Missing char") });
-    unsafe { shift_left_unchecked(self, index + character.len_utf8(), index) };
-    unsafe { self.vec.set_len(self.len() - character.len_utf8()) };
-    Ok(character)
+    let char_len = character.len_utf8();
+    unsafe {
+      shift_left_unchecked(self, index + char_len, index);
+      self.vec.set_len(old_length - char_len);
+    }
+    character
   }
 
   /// Removes all characters from the StaticString except for those specified by the predicate
@@ -1117,14 +1112,14 @@ impl<const N: usize> StaticString<N> {
       Bound::Excluded(t) => *t,
       Bound::Unbounded => self.len(),
     };
-    let len = replace_with.len();
+    let replace_length = replace_with.len();
     is_inside_boundary(start, end)?;
     is_inside_boundary(end, self.len())?;
     let replaced = end.saturating_sub(start);
-    is_inside_boundary(replaced + len, self.capacity())?;
+    is_inside_boundary(replaced + replace_length, self.capacity())?;
     is_char_boundary(self, start)?;
     is_char_boundary(self, end)?;
-    if len == 0 {
+    if replace_length == 0 {
       let old_length = self.len();
       unsafe {
         self
@@ -1135,15 +1130,15 @@ impl<const N: usize> StaticString<N> {
       }
       Ok(())
     } else {
-      if start + len > end {
-        unsafe { shift_right_unchecked(self, end, start + len) };
+      if start + replace_length > end {
+        unsafe { shift_right_unchecked(self, end, start + replace_length) };
       } else {
-        unsafe { shift_left_unchecked(self, end, start + len) };
+        unsafe { shift_left_unchecked(self, end, start + replace_length) };
       }
       let ptr = replace_with.as_ptr();
       let dest = unsafe { self.vec.as_mut_ptr().add(start) };
-      unsafe { ptr.copy_to_nonoverlapping(dest, len) };
-      let grow: isize = len as isize - replaced as isize;
+      unsafe { ptr.copy_to_nonoverlapping(dest, replace_length) };
+      let grow: isize = replace_length as isize - replaced as isize;
       unsafe { self.vec.set_len((self.len() as isize + grow) as usize) };
       Ok(())
     }

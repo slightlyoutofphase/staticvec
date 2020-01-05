@@ -314,22 +314,13 @@ fn trim() {
   );
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 fn remove() {
-  assert(
-    |s| {
-      unwind(move || {
-        let mut s = String::from(s);
-        let removed = s.remove(2);
-        (removed, s)
-      })
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.remove(2).map(|r| (r, ms))
-    },
-  );
+  let mut s = StaticString::<20>::from("ABCD🤔");
+  assert_eq!(s.remove(0), 'A');
+  assert!(s == "BCD🤔");
+  assert_eq!(s.remove(2), 'D');
+  assert!(s == "BC🤔");
 }
 
 #[test]
