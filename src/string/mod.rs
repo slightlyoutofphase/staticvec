@@ -1032,29 +1032,27 @@ impl<const N: usize> StaticString<N> {
   /// The original StaticString will contain elements `0..at`, and the new one will contain
   /// elements `at..self.len()`.
   ///
-  /// Returns [`StringError::Utf8`] if `at` does not represent a valid UTF-8 character boundary and
-  /// [`StringError::OutOfBounds`] if it falls outside the range `0..self.len()`.
+  /// Panics if `at` falls outside the range `0..self.len()` or does not represent a valid
+  /// UTF-8 character boundary.
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("AB🤔CD")?;
-  /// assert_eq!(s.split_off(6)?.as_str(), "CD");
-  /// assert_eq!(s.as_str(), "AB🤔");
-  /// assert!(s.split_off(20).unwrap_err().is_out_of_bounds());
-  /// assert!(s.split_off(4).unwrap_err().is_not_char_boundary());
-  /// # Ok(())
-  /// # }
+  /// # use staticvec::StaticString;
+  /// let mut s = StaticString::<20>::from("ABðŸ¤”CD");
+  /// assert_eq!(s.split_off(6).as_str(), "CD");
+  /// assert_eq!(s.as_str(), "ABðŸ¤”");
   /// ```
-  #[inline]
-  pub fn split_off(&mut self, at: usize) -> Result<Self, StringError> {
-    is_inside_boundary(at, self.len())?;
-    is_char_boundary(self, at)?;
-    debug_assert!(at <= self.len() && self.as_str().is_char_boundary(at));
-    let new = unsafe { Self::from_utf8_unchecked(self.as_str().get_unchecked(at..)) };
-    unsafe { self.vec.set_len(at) };
-    Ok(new)
+  #[inline(always)]
+  pub fn split_off(&mut self, at: usize) -> Self {
+    assert!(
+      at <= self.len() && self.as_str().is_char_boundary(at),
+      "Out of bounds / invalid character boundary!"
+    );
+    unsafe {
+      let new = Self::from_utf8_unchecked(self.as_str().get_unchecked(at..));
+      self.vec.set_len(at);
+      new
+    }
   }
 
   /// Removes all contents from the StaticString and sets its length back to zero.
