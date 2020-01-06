@@ -292,6 +292,16 @@ fn test_slicing() {
 }
 
 #[test]
+fn from_chars() {
+  let s = StaticString::<20>::from_chars("My String".chars());
+  assert_eq!(s.as_str(), "My String");
+  let out_of_bounds = "0".repeat(21);
+  let truncated = "0".repeat(20);
+  let truncate = StaticString::<20>::from_chars(out_of_bounds.chars());
+  assert_eq!(truncate.as_str(), truncated.as_str());
+}
+
+#[test]
 fn test_from_iterator() {
   let s = "ศไทย中华Việt Nam";
   let t = "ศไทย中华";
