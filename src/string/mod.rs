@@ -438,6 +438,27 @@ impl<const N: usize> StaticString<N> {
   pub const unsafe fn as_mut_bytes(&mut self) -> &mut [u8] {
     self.vec.as_mut_slice()
   }
+  
+  /// Returns a mutable reference to the StaticString's backing Staticvec.
+  ///
+  /// # Safety
+  ///
+  /// Care must be taken to ensure that the returned StaticVec reference is not mutated in such a
+  /// way that it no longer contains valid UTF-8.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{StaticString, StringError};
+  /// # fn main() -> Result<(), StringError> {
+  /// let mut s = StaticString::<20>::try_from_str("My String")?;
+  /// assert_eq!(unsafe { s.as_mut_staticvec() }, "My String".as_bytes());
+  /// # Ok(())
+  /// # }
+  /// ```
+  #[inline(always)]
+  pub const unsafe fn as_mut_staticvec(&mut self) -> &mut StaticVec<u8, N> {
+    &mut self.vec
+  }
 
   /// Returns the total capacity of the StaticString.
   /// This is always equivalent to the generic `N` parameter it was declared with,
