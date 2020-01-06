@@ -37,7 +37,7 @@ fn main() {
   println!("Length: {}", s4.len());
   println!("Remaining capacity: {}", s4.remaining_capacity());
   let mut s5 = StaticString::<6>::from("ABEF");
-  s5.insert_str(2, "CD").unwrap();
+  s5.insert_str(2, "CD");
   println!("Value: {}", s5);
   println!("Debug info: {:?}", s5);
   println!("Length: {}", s5.len());
