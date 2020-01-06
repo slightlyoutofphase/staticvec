@@ -1065,7 +1065,7 @@ impl<const N: usize> StaticString<N> {
   pub fn split_off(&mut self, at: usize) -> Self {
     assert!(
       at <= self.len() && self.as_str().is_char_boundary(at),
-      "Out of bounds / invalid character boundary!"
+      "Out of bounds or invalid character boundary!"
     );
     unsafe {
       let new = Self::from_utf8_unchecked(self.as_str().get_unchecked(at..));
