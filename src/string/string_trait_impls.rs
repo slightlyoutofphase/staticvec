@@ -5,18 +5,25 @@ use core::fmt::{self, Debug, Display, Formatter, Write};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::ops::{
-  Add, Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo,
+  Add, AddAssign, Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo,
   RangeToInclusive,
 };
 use core::str::{self, FromStr};
 
-impl<'a, const N: usize> Add<&'a str> for StaticString<N> {
+impl<const N: usize> Add<&str> for StaticString<N> {
   type Output = Self;
 
   #[inline(always)]
   fn add(mut self, other: &str) -> Self::Output {
     self.push_str_truncating(other);
     self
+  }
+}
+
+impl<const N: usize> AddAssign<&str> for StaticString<N> {
+  #[inline(always)]
+  fn add_assign(&mut self, other: &str) {
+    self.push_str_truncating(other);
   }
 }
 
