@@ -1,7 +1,8 @@
 // So we don't get "function complexity" lints and such since it's a demo.
 #![allow(clippy::all)]
+#![allow(incomplete_features)]
 
-use staticvec::*;
+use staticvec::{staticvec, StaticVec, StaticString};
 
 // There'll eventually be more stuff here probably, but for now it just tries
 // to show the more "interesting" features.
