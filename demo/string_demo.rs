@@ -2,9 +2,8 @@
 #![allow(clippy::all)]
 #![allow(dead_code)]
 #![allow(incomplete_features)]
-#![allow(unused_imports)]
 
-use staticvec::{staticvec, StaticVec, StaticString};
+use staticvec::*;
 
 // There'll eventually be more stuff here probably, but for now it just tries
 // to show the more "interesting" features.
