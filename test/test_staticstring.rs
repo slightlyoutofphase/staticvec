@@ -1,612 +1,276 @@
-use core::fmt::Debug;
-use core::iter::FromIterator;
-use staticvec::string_utils::{is_char_boundary, is_inside_boundary};
-use staticvec::{StaticString, StringError};
-use std::panic::{catch_unwind, AssertUnwindSafe, RefUnwindSafe};
+#![allow(clippy::all)]
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![feature(const_fn, const_if_match, const_loop)]
+
+use staticvec::*;
 
 type MyString = StaticString<255>;
 
-fn unwind<R, F>(func: F) -> Result<R, ()>
-where F: FnOnce() -> R {
-  catch_unwind(AssertUnwindSafe(func)).map_err(|_| ())
-}
-
-static STRINGS: [&'static str; 8] = [
-  "🤔🤔🤔🤔🤔🤔🤔",
-  "ABCDEFGHIJKLMNOPQRSASHUDAHSDIUASH         ",
-  "iejueueheuheuheu        0",
-  "",
-  "1",
-  "ab",
-  "   ",
-  "        899saH(8hadhaiuhsidnkandu",
-];
-
 #[test]
-fn try_from_str() {
-  assert(String::from, MyString::try_from_str);
+fn test_push_bytes() {
+  let mut s = MyString::from("ABC");
+  let mv = &mut s.vec;
+  mv.extend_from_slice(&[b'D']);
+  assert_eq!(s, "ABCD");
 }
 
 #[test]
-fn from_str() {
-  assert(String::from, |s| MyString::from_str(s));
+fn test_push_str() {
+  let mut s = MyString::new();
+  s.push_str("");
+  assert_eq!(&s[0..], "");
+  s.push_str("abc");
+  assert_eq!(&s[0..], "abc");
+  s.push_str("ประเทศไทย中华Việt Nam");
+  assert_eq!(&s[0..], "abcประเทศไทย中华Việt Nam");
 }
 
 #[test]
-fn try_from_chars() {
-  assert(
-    |s| String::from_iter(s.chars()),
-    |s| MyString::try_from_chars(s.chars()),
-  );
+fn test_add_assign() {
+  let mut s = MyString::new();
+  s += "";
+  assert_eq!(s.as_str(), "");
+  s += "abc";
+  assert_eq!(s.as_str(), "abc");
+  s += "ประเทศไทย中华Việt Nam";
+  assert_eq!(s.as_str(), "abcประเทศไทย中华Việt Nam");
 }
 
 #[test]
-fn from_chars() {
-  assert(
-    |s| String::from_iter(s.chars()),
-    |s| MyString::from_chars(s.chars()),
-  );
+fn test_push() {
+  let mut data = MyString::from("ประเทศไทย中");
+  data.push('华');
+  data.push('b'); // 1 byte
+  data.push('¢'); // 2 byte
+  data.push('€'); // 3 byte
+  data.push('𤭢'); // 4 byte
+  assert_eq!(data, "ประเทศไทย中华b¢€𤭢");
 }
 
 #[test]
-fn try_from_iter() {
-  assert(
-    |s| String::from_iter(vec![s]),
-    |s| MyString::try_from_iterator(vec![s]),
-  );
+fn test_pop() {
+  let mut data = MyString::from("ประเทศไทย中华b¢€𤭢");
+  assert_eq!(data.pop().unwrap(), '𤭢'); // 4 bytes
+  assert_eq!(data.pop().unwrap(), '€'); // 3 bytes
+  assert_eq!(data.pop().unwrap(), '¢'); // 2 bytes
+  assert_eq!(data.pop().unwrap(), 'b'); // 1 bytes
+  assert_eq!(data.pop().unwrap(), '华');
+  assert_eq!(data, "ประเทศไทย中");
 }
 
 #[test]
-fn from_iter() {
-  assert(
-    |s| String::from_iter(vec![s]),
-    |s| MyString::from_iterator(vec![s]),
-  );
+fn test_split_off_empty() {
+  let orig = "Hello, world!";
+  let mut split = MyString::from(orig);
+  let empty = split.split_off(orig.len());
+  assert!(empty.is_empty());
 }
 
 #[test]
-fn try_from_utf8() {
-  assert(
-    |s| String::from_utf8(s.as_bytes().to_vec()),
-    |s| MyString::try_from_utf8(s.as_bytes()),
-  );
+#[should_panic]
+fn test_split_off_past_end() {
+  let orig = "Hello, world!";
+  let mut split = MyString::from(orig);
+  split.split_off(orig.len() + 1);
 }
 
 #[test]
-fn from_utf8() {
-  assert(
-    |s| String::from_utf8(s.as_bytes().to_vec()),
-    |s| MyString::from_utf8(s.as_bytes()),
-  );
-}
-
-#[inline]
-fn invalidate_utf8(buf: &mut [u8]) -> &mut [u8] {
-  if buf.len() >= 4 {
-    buf[0] = 0;
-    buf[1] = 159;
-    buf[2] = 146;
-    buf[3] = 150;
-  }
-  buf
+#[should_panic]
+fn test_split_off_mid_char() {
+  let mut orig = MyString::from("山");
+  orig.split_off(1);
 }
 
 #[test]
-fn try_from_utf8_invalid() {
-  unsafe {
-    assert(
-      |s| String::from_utf8(invalidate_utf8(s.to_owned().as_bytes_mut()).to_vec()),
-      |s| MyString::try_from_utf8(invalidate_utf8(s.to_owned().as_bytes_mut())),
-    );
-  }
+fn test_split_off_ascii() {
+  let mut ab = MyString::from("ABCD");
+  let cd = ab.split_off(2);
+  assert_eq!(ab, "AB");
+  assert_eq!(cd, "CD");
 }
 
 #[test]
-fn from_utf8_invalid() {
-  unsafe {
-    assert(
-      |s| String::from_utf8(invalidate_utf8(s.to_owned().as_bytes_mut()).to_vec()),
-      |s| MyString::from_utf8(invalidate_utf8(s.to_owned().as_bytes_mut())),
-    );
-  }
+fn test_split_off_unicode() {
+  let mut nihon = MyString::from("日本語");
+  let go = nihon.split_off("日本".len());
+  assert_eq!(nihon, "日本");
+  assert_eq!(go, "語");
 }
 
 #[test]
-fn try_from_utf16() {
-  let utf16 = |s: &str| s.encode_utf16().collect::<Vec<_>>();
-  assert(
-    |s| String::from_utf16(&utf16(s)),
-    |s| MyString::try_from_utf16(&utf16(s)),
-  );
+fn test_str_truncate() {
+  let mut s = MyString::from("12345");
+  s.truncate(5).unwrap();
+  assert_eq!(s, "12345");
+  s.truncate(3).unwrap();
+  assert_eq!(s, "123");
+  s.truncate(0).unwrap();
+  assert_eq!(s, "");
+  let mut s = MyString::from("12345");
+  let p = s.as_ptr();
+  s.truncate(3).unwrap();
+  s.push_str("6");
+  let p_ = s.as_ptr();
+  assert_eq!(p_, p);
 }
 
 #[test]
-fn from_utf16() {
-  let utf16 = |s: &str| s.encode_utf16().collect::<Vec<_>>();
-  assert(
-    |s| String::from_utf16(&utf16(s)),
-    |s| MyString::from_utf16(&utf16(s)),
-  );
+fn test_str_truncate_invalid_len() {
+  let mut s = MyString::from("12345");
+  s.truncate(6).unwrap();
+  assert_eq!(s, "12345");
 }
 
 #[test]
-fn from_utf16_lossy() {
-  let utf16 = |s: &str| s.encode_utf16().collect::<Vec<_>>();
-  assert(
-    |s| String::from_utf16(&utf16(s)),
-    |s| MyString::from_utf16(&utf16(s)),
-  );
-}
-
-fn invalidate_utf16(buf: &mut [u16]) -> &mut [u16] {
-  if buf.len() >= 7 {
-    buf[0] = 0xD834;
-    buf[1] = 0xDD1E;
-    buf[2] = 0x006D;
-    buf[3] = 0x0075;
-    buf[4] = 0xD800;
-    buf[5] = 0x0069;
-    buf[6] = 0x0063;
-  }
-  buf
+#[should_panic]
+fn test_str_truncate_split_codepoint() {
+  let mut s = MyString::from("\u{FC}"); // ü
+  s.truncate(1).unwrap();
 }
 
 #[test]
-fn try_from_utf16_invalid() {
-  let utf16 = |s: &str| s.encode_utf16().collect::<Vec<_>>();
-  assert(
-    |s| String::from_utf16(invalidate_utf16(&mut utf16(s))),
-    |s| MyString::try_from_utf16(invalidate_utf16(&mut utf16(s))),
-  );
+fn test_str_clear() {
+  let mut s = MyString::from("12345");
+  s.clear();
+  assert_eq!(s.len(), 0);
+  assert_eq!(s, "");
 }
 
 #[test]
-fn from_utf16_invalid() {
-  let utf16 = |s: &str| s.encode_utf16().collect::<Vec<_>>();
-  assert(
-    |s| String::from_utf16(invalidate_utf16(&mut utf16(s))),
-    |s| MyString::from_utf16(invalidate_utf16(&mut utf16(s))),
-  );
-}
-
-#[test]
-fn from_utf16_lossy_invalid() {
-  let utf16 = |s: &str| s.encode_utf16().collect::<Vec<_>>();
-  assert(
-    |s| String::from_utf16(invalidate_utf16(&mut utf16(s))),
-    |s| MyString::from_utf16(invalidate_utf16(&mut utf16(s))),
-  );
-}
-
-#[test]
-fn from_utf8_unchecked() {
-  unsafe {
-    assert(
-      |s| String::from_utf8_unchecked(s.as_bytes().to_vec()),
-      |s| MyString::from_utf8_unchecked(s.as_bytes()),
-    );
-  }
-}
-
-#[test]
-fn try_push_str() {
-  assert(
-    |s| {
-      let mut st = String::from(s);
-      st.push_str(s);
-      st
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.try_push_str(s).map(|()| ms)
-    },
-  );
-}
-
-#[test]
-fn push_str() {
-  let mut s = String::from("🤔🤔🤔🤔🤔🤔🤔");
-  s.push_str("🤔🤔🤔🤔🤔🤔🤔");
-  assert_eq!(s, "🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔");
-  let mut ms = MyString::from("🤔🤔🤔🤔🤔🤔🤔");
-  ms.push_str("🤔🤔🤔🤔🤔🤔🤔");
-  assert_eq!(ms, "🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔🤔");
-}
-
-#[test]
-fn push_str_truncating() {
-  assert(
-    |s| {
-      let mut st = String::from(s);
-      st.push_str(s);
-      st
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.push_str(s);
-      ms
-    },
-  );
-}
-
-#[test]
-fn add_str() {
-  assert(
-    |s| String::from(s) + s,
-    |s| MyString::try_from_str(s).unwrap() + s,
-  );
-}
-
-#[test]
-fn push() {
-  assert(
-    |s| {
-      let mut s = String::from(s);
-      s.push('🤔');
-      s
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.try_push('🤔').map(|()| ms)
-    },
-  );
-}
-
-#[test]
-fn push_unchecked() {
-  assert(
-    |s| {
-      let mut s = String::from(s);
-      s.push('🤔');
-      s
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      unsafe { ms.push_unchecked('🤔') };
-      ms
-    },
-  );
-}
-
-#[cfg_attr(all(windows, miri), ignore)]
-#[test]
-fn truncate() {
-  assert(
-    |s| {
-      unwind(move || {
-        let mut s = String::from(s);
-        s.truncate(2);
-        s
-      })
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.truncate(2).map(|()| ms)
-    },
-  );
-}
-
-#[test]
-fn pop() {
-  assert(
-    |s| {
-      let mut s = String::from(s);
-      let old = s.pop();
-      (s, old)
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      let old = ms.pop();
-      (ms, old)
-    },
-  );
-}
-
-#[test]
-fn trim() {
-  assert(
-    |s| String::from(s).trim().to_owned(),
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.trim();
-      ms
-    },
-  );
+fn test_str_add() {
+  let a = MyString::from("12345");
+  let b = a + "2";
+  let b = b + "2";
+  assert_eq!(b.len(), 7);
+  assert_eq!(b, "1234522");
 }
 
 #[test]
 fn remove() {
-  let mut s = StaticString::<20>::from("ABCD🤔");
-  assert_eq!(s.remove(0), 'A');
-  assert!(s == "BCD🤔");
-  assert_eq!(s.remove(2), 'D');
-  assert!(s == "BC🤔");
+  let mut s = MyString::from("ศไทย中华Việt Nam; foobar");
+  assert_eq!(s.remove(0), 'ศ');
+  assert_eq!(s.len(), 33);
+  assert_eq!(s, "ไทย中华Việt Nam; foobar");
+  assert_eq!(s.remove(17), 'ệ');
+  assert_eq!(s, "ไทย中华Vit Nam; foobar");
 }
 
 #[test]
-fn retain() {
-  assert(
-    |s| {
-      let mut s = String::from(s);
-      s.retain(|c| c == 'a');
-      s
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.retain(|c| c == 'a');
-      ms
-    },
-  );
-}
-
-#[cfg_attr(all(windows, miri), ignore)]
-#[test]
-fn try_insert() {
-  assert(
-    |s| {
-      unwind(move || {
-        let mut s = String::from(s);
-        s.insert(2, 'a');
-        s
-      })
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.try_insert(2, 'a').map(|()| ms)
-    },
-  );
-}
-
-#[cfg_attr(all(windows, miri), ignore)]
-#[test]
-fn insert_unchecked() {
-  assert(
-    |s| {
-      unwind(move || {
-        let mut s = String::from(s);
-        s.insert(2, 'a');
-        s
-      })
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      is_inside_boundary(2usize, ms.len())
-        .map_err(StringError::from)
-        .and_then(|()| Ok(is_char_boundary(&ms, 2)?))
-        .map(|()| unsafe { ms.insert_unchecked(2, 'a') })
-        .map(|()| ms)
-    },
-  );
-}
-
-#[cfg_attr(all(windows, miri), ignore)]
-#[test]
-fn try_insert_str() {
-  assert(
-    |s| {
-      unwind(move || {
-        let mut st = String::from(s);
-        st.insert_str(2, s);
-        st
-      })
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.try_insert_str(2, s).map(|()| ms)
-    },
-  );
-}
-
-#[cfg_attr(all(windows, miri), ignore)]
-#[test]
-fn insert_str() {
-  assert(
-    |s| {
-      unwind(move || {
-        let mut st = String::from(s);
-        st.insert_str(2, s);
-        (st, ())
-      })
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      let res = ms.insert_str(2, s);
-      res.map(|()| (ms, ()))
-    },
-  );
-}
-
-#[cfg_attr(all(windows, miri), ignore)]
-#[test]
-fn insert_str_unchecked() {
-  assert(
-    |s| {
-      unwind(move || {
-        let mut st = String::from(s);
-        st.insert_str(2, s);
-        st
-      })
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      is_inside_boundary(2usize, ms.len())
-        .map_err(StringError::from)
-        .and_then(|()| Ok(is_char_boundary(&ms, 2)?))
-        .map(|()| unsafe { ms.insert_str_unchecked(2, s) })
-        .map(|()| ms)
-    },
-  );
+#[should_panic]
+fn remove_bad() {
+  StaticString::<0>::from("ศ").remove(1);
 }
 
 #[test]
-fn clear() {
-  assert(
-    |s| {
-      let mut st = String::from(s);
-      st.clear();
-      st
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.clear();
-      ms
-    },
-  );
+fn test_retain() {
+  let mut s = MyString::from("α_β_γ");
+  s.retain(|_| true);
+  assert_eq!(s, "α_β_γ");
+  s.retain(|c| c != '_');
+  assert_eq!(s, "αβγ");
+  s.retain(|c| c != 'β');
+  assert_eq!(s, "αγ");
+  s.retain(|c| c == 'α');
+  assert_eq!(s, "α");
+  s.retain(|_| false);
+  assert_eq!(s, "");
 }
 
 #[test]
-fn split_off() {
-  let mut s = StaticString::<20>::from("ABðŸ¤”CD");
-  assert_eq!(s.split_off(6).as_str(), "CD");
-  assert_eq!(s.as_str(), "ABðŸ¤”");
-}
-
-#[cfg_attr(all(windows, miri), ignore)]
-#[test]
-fn replace_range() {
-  assert(
-    |s| {
-      unwind(move || {
-        let mut st = String::from(s);
-        st.replace_range(..2, s);
-        (st, ())
-      })
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.replace_range(..2, s).map(|()| (ms, ()))
-    },
-  );
-  let mut s2 = StaticString::<6>::from("ABCDEF");
-  s2.replace_range(2..4, "XY").unwrap();
-  assert_eq!(s2, "ABXYEF");
+fn insert() {
+  let mut s = MyString::from("foobar");
+  s.insert(0, 'ệ');
+  assert_eq!(s, "ệfoobar");
+  s.insert(6, 'ย');
+  assert_eq!(s, "ệfooยbar");
 }
 
 #[test]
-fn replace_range_errors() {
-  let mut s = StaticString::<0>::new();
-  assert!(s.replace_range(0..12, "aaa").is_err(), true);
-  assert_eq!(s.len(), 0);
-  assert_eq!(s.as_str(), "");
-  let mut s2 = StaticString::<1>::new();
-  assert!(s2.replace_range(0..=0, "aaa").is_err(), true);
-  assert_eq!(s2.len(), 0);
-  assert_eq!(s2.as_str(), "");
+#[should_panic]
+fn insert_bad1() {
+  StaticString::<0>::from("").insert(1, 't');
 }
 
 #[test]
-fn len() {
-  assert(
-    |s| {
-      let st = String::from(s);
-      st.len().to_string()
-    },
-    |s| {
-      let ms = MyString::try_from_str(s).unwrap();
-      ms.len().to_string()
-    },
-  );
+#[should_panic]
+fn insert_bad2() {
+  StaticString::<0>::from("ệ").insert(1, 't');
 }
 
 #[test]
-fn is_empty() {
-  assert(
-    |s| {
-      let st = String::from(s);
-      st.is_empty().to_string()
-    },
-    |s| {
-      let ms = MyString::try_from_str(s).unwrap();
-      ms.is_empty().to_string()
-    },
-  );
+fn test_slicing() {
+  let s = MyString::from("foobar");
+  assert_eq!(&s[..], "foobar");
+  assert_eq!(&s[..3], "foo");
+  assert_eq!(&s[3..], "bar");
+  assert_eq!(&s[1..4], "oob");
 }
 
 #[test]
-fn new() {
-  assert_eq!(String::new().as_str(), MyString::new().as_str());
+fn test_from_iterator() {
+  let s = "ศไทย中华Việt Nam";
+  let t = "ศไทย中华";
+  let u = "Việt Nam";
+  let a: MyString = s.chars().collect();
+  assert_eq!(a, s);
+  let mut b = MyString::from(t);
+  b.extend(u.chars());
+  assert_eq!(b, s);
+  let c: MyString = staticvec![t, u].into_iter().collect();
+  assert_eq!(c, s);
+  let mut d = MyString::from(t);
+  d.extend(staticvec![u]);
+  assert_eq!(d, s);
 }
 
-// Internal hackery to make the function `assert` possible
-
-trait Normalize<EQ: PartialEq> {
-  fn normalize(&self) -> EQ;
+#[test]
+fn test_replace_range() {
+  let mut s = MyString::from("Hello, world!");
+  s.replace_range(7..12, "世界").unwrap();
+  assert_eq!(s, "Hello, 世界!");
 }
 
-impl Normalize<Result<String, ()>> for () {
-  fn normalize(&self) -> Result<String, ()> {
-    Ok("".to_owned())
-  }
+#[test]
+#[should_panic]
+fn test_replace_range_char_boundary() {
+  let mut s = MyString::from("Hello, 世界!");
+  s.replace_range(..8, "").unwrap();
 }
 
-impl Normalize<Result<String, ()>> for MyString {
-  fn normalize(&self) -> Result<String, ()> {
-    Ok(self.as_str().to_owned())
-  }
+#[test]
+fn test_replace_range_inclusive_range() {
+  let mut v = MyString::from("12345");
+  v.replace_range(2..=3, "789").unwrap();
+  assert_eq!(v, "127895");
+  v.replace_range(1..=2, "A").unwrap();
+  assert_eq!(v, "1A895");
 }
 
-impl Normalize<Result<String, ()>> for String {
-  fn normalize(&self) -> Result<String, ()> {
-    Ok(self.as_str().to_owned())
-  }
+#[test]
+#[should_panic]
+fn test_replace_range_out_of_bounds() {
+  let mut s = MyString::from("12345");
+  s.replace_range(5..6, "789").unwrap();
 }
 
-impl<'a> Normalize<Result<String, ()>> for &'a str {
-  fn normalize(&self) -> Result<String, ()> {
-    Ok(self.to_string())
-  }
+#[test]
+#[should_panic]
+fn test_replace_range_inclusive_out_of_bounds() {
+  let mut s = MyString::from("12345");
+  s.replace_range(5..=5, "789").unwrap();
 }
 
-impl Normalize<Result<String, ()>> for char {
-  fn normalize(&self) -> Result<String, ()> {
-    Ok(self.to_string())
-  }
+#[test]
+fn test_replace_range_empty() {
+  let mut s = MyString::from("12345");
+  s.replace_range(1..2, "").unwrap();
+  assert_eq!(s, "1345");
 }
 
-impl<N: Normalize<Result<String, ()>>> Normalize<Result<String, ()>> for Option<N> {
-  fn normalize(&self) -> Result<String, ()> {
-    self.as_ref().ok_or(()).and_then(|n| n.normalize())
-  }
-}
-
-impl<E, K: PartialEq, N: Normalize<Result<K, ()>>> Normalize<Result<K, ()>> for Result<N, E> {
-  fn normalize(&self) -> Result<K, ()> {
-    self.as_ref().map_err(|_| ()).and_then(|n| n.normalize())
-  }
-}
-
-impl<K: PartialEq, L: PartialEq, M: Normalize<K>, N: Normalize<L>> Normalize<Result<(K, L), ()>>
-  for (M, N)
-{
-  fn normalize(&self) -> Result<(K, L), ()> {
-    Ok((self.0.normalize(), self.1.normalize()))
-  }
-}
-
-impl<J, K, L, M, N, O> Normalize<Result<(J, K, L), ()>> for (M, N, O)
-where
-  J: PartialEq,
-  K: PartialEq,
-  L: PartialEq,
-  M: Normalize<J>,
-  N: Normalize<K>,
-  O: Normalize<L>,
-{
-  fn normalize(&self) -> Result<(J, K, L), ()> {
-    Ok((self.0.normalize(), self.1.normalize(), self.2.normalize()))
-  }
-}
-
-fn assert<Q, F, G, T, U>(f: F, g: G)
-where
-  Q: PartialEq + Debug,
-  T: Normalize<Q>,
-  U: Normalize<Q>,
-  F: Fn(&'static str) -> T + RefUnwindSafe,
-  G: Fn(&'static str) -> U + RefUnwindSafe, {
-  for string in &STRINGS {
-    let f = f(string).normalize();
-    let g = g(string).normalize();
-    assert_eq!(f, g);
-  }
+#[test]
+fn test_replace_range_unbounded() {
+  let mut s = MyString::from("12345");
+  s.replace_range(.., "").unwrap();
+  assert_eq!(s, "");
 }
