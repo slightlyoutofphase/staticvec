@@ -454,32 +454,11 @@ fn clear() {
   );
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 fn split_off() {
-  assert(
-    |s| {
-      unwind(move || {
-        let mut st = String::from(s);
-        let split = st.split_off(2);
-        (st, split)
-      })
-    },
-    |s| {
-      let mut ms = MyString::try_from_str(s).unwrap();
-      ms.split_off(2).map(|s| (ms, s))
-    },
-  );
-}
-
-#[test]
-fn split_off_errors() {
-  let mut s = StaticString::<0>::new();
-  let e = s.split_off(0);
-  assert_eq!(e.unwrap().len(), 0);
-  let mut s2 = StaticString::<1>::new();
-  assert!(s2.split_off(0).is_ok(), true);
-  assert_eq!(s2.len(), 0);
+  let mut s = StaticString::<20>::from("ABðŸ¤”CD");
+  assert_eq!(s.split_off(6).as_str(), "CD");
+  assert_eq!(s.as_str(), "ABðŸ¤”");
 }
 
 #[cfg_attr(all(windows, miri), ignore)]
