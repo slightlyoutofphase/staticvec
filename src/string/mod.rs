@@ -439,7 +439,7 @@ impl<const N: usize> StaticString<N> {
     self.vec.as_mut_slice()
   }
   
-  /// Returns a mutable reference to the StaticString's backing Staticvec.
+  /// Returns a mutable reference to the StaticString's backing StaticVec.
   ///
   /// # Safety
   ///
