@@ -56,7 +56,7 @@ fn main() {
   println!("Length: {}", s6.len());
   println!("Remaining capacity: {}", s6.remaining_capacity());
   let mut a = StaticString::<6>::from("ABCDEF");
-  let b = a.split_off(3).unwrap();
+  let b = a.split_off(3);
   println!("Value: {}", a);
   println!("Debug info: {:?}", a);
   println!("Length: {}", a.len());
