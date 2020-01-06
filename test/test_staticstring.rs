@@ -17,6 +17,68 @@ fn test_push_bytes() {
 }
 
 #[test]
+fn test_from_utf8() {
+  let xs = b"hello".to_vec();
+  assert_eq!(MyString::from_utf8(xs).unwrap(), MyString::from("hello"));
+  let xs = "ศไทย中华Việt Nam".as_bytes().to_vec();
+  assert_eq!(MyString::from_utf8(xs).unwrap(), MyString::from("ศไทย中华Việt Nam"));
+  let xs = b"hello\xFF".to_vec();
+  let err = MyString::from_utf8(xs);
+  assert!(err.is_err());
+}
+
+#[test]
+fn test_from_utf16() {
+  type MyStaticVec = StaticVec<u16, 255>;
+  let pairs = [
+    (
+      MyString::from("𐍅𐌿𐌻𐍆𐌹𐌻𐌰\n"),
+      MyStaticVec::from([
+        0xd800, 0xdf45, 0xd800, 0xdf3f, 0xd800, 0xdf3b, 0xd800, 0xdf46, 0xd800, 0xdf39,
+        0xd800, 0xdf3b, 0xd800, 0xdf30, 0x000a,
+      ]),
+    ),
+    (
+      MyString::from("𐐒𐑉𐐮𐑀𐐲𐑋 𐐏𐐲𐑍\n"),
+      MyStaticVec::from([
+        0xd801, 0xdc12, 0xd801, 0xdc49, 0xd801, 0xdc2e, 0xd801, 0xdc40, 0xd801, 0xdc32,
+        0xd801, 0xdc4b, 0x0020, 0xd801, 0xdc0f, 0xd801, 0xdc32, 0xd801, 0xdc4d, 0x000a,
+      ]),
+    ),
+    (
+      MyString::from("𐌀𐌖𐌋𐌄𐌑𐌉·𐌌𐌄𐌕𐌄𐌋𐌉𐌑\n"),
+      MyStaticVec::from([
+        0xd800, 0xdf00, 0xd800, 0xdf16, 0xd800, 0xdf0b, 0xd800, 0xdf04, 0xd800, 0xdf11,
+        0xd800, 0xdf09, 0x00b7, 0xd800, 0xdf0c, 0xd800, 0xdf04, 0xd800, 0xdf15, 0xd800,
+        0xdf04, 0xd800, 0xdf0b, 0xd800, 0xdf09, 0xd800, 0xdf11, 0x000a,
+      ]),
+    ),
+    (
+      MyString::from("𐒋𐒘𐒈𐒑𐒛𐒒 𐒕𐒓 𐒈𐒚𐒍 𐒏𐒜𐒒𐒖𐒆 𐒕𐒆\n"),
+      MyStaticVec::from([
+        0xd801, 0xdc8b, 0xd801, 0xdc98, 0xd801, 0xdc88, 0xd801, 0xdc91, 0xd801, 0xdc9b,
+        0xd801, 0xdc92, 0x0020, 0xd801, 0xdc95, 0xd801, 0xdc93, 0x0020, 0xd801, 0xdc88,
+        0xd801, 0xdc9a, 0xd801, 0xdc8d, 0x0020, 0xd801, 0xdc8f, 0xd801, 0xdc9c, 0xd801,
+        0xdc92, 0xd801, 0xdc96, 0xd801, 0xdc86, 0x0020, 0xd801, 0xdc95, 0xd801, 0xdc86,
+        0x000a,
+      ]),
+    ),
+    (MyString::from("\u{20000}"), MyStaticVec::from([0xD840, 0xDC00])),
+  ];
+  for p in &pairs {
+    let (s, u) = (*p).clone();
+    let s_as_utf16 = s.encode_utf16().collect::<StaticVec<u16, 255>>();
+    let u_as_string = MyString::from_utf16(&u).unwrap();
+    assert!(core::char::decode_utf16(u.iter().cloned()).all(|r| r.is_ok()));
+    assert_eq!(s_as_utf16, u);
+    assert_eq!(u_as_string, s);
+    assert_eq!(MyString::from_utf16_lossy(&u), s);
+    assert_eq!(MyString::from_utf16(&s_as_utf16).unwrap(), s);
+    assert_eq!(u_as_string.encode_utf16().collect::<StaticVec<u16, 255>>(), u);
+  }
+}
+
+#[test]
 fn test_push_str() {
   let mut s = MyString::new();
   s.push_str("");
