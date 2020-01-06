@@ -1,7 +1,7 @@
 #![allow(clippy::all)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
-#![feature(const_fn, const_if_match, const_loop)]
+#![feature(const_fn, const_generics, const_if_match, const_loop)]
 
 use staticvec::*;
 
