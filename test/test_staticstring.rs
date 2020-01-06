@@ -251,14 +251,35 @@ fn insert() {
 
 #[test]
 #[should_panic]
-fn insert_bad1() {
+fn insert_invalid1() {
   StaticString::<0>::from("").insert(1, 't');
 }
 
 #[test]
 #[should_panic]
-fn insert_bad2() {
+fn insert_invalid2() {
   StaticString::<0>::from("ệ").insert(1, 't');
+}
+
+#[test]
+fn insert_str() {
+  let mut s = StaticString::<20>::from("ABCD🤔");
+  s.insert_str(1, "AB");
+  s.insert_str(1, "BC");
+  assert_eq!(s.as_str(), "ABCABBCD🤔");
+  s.clear();
+  s.insert_str(0, "0".repeat(30));
+  assert_eq!(s.as_str(), "0".repeat(20).as_str());
+}
+
+#[test]
+#[should_panic]
+fn insert_str_invalid() {
+  let mut s = StaticString::<20>::from("ABCD🤔");
+  s.insert_str(1, "AB");
+  s.insert_str(1, "BC");
+  s.insert_str(20, "C");
+  s.insert_str(10, "D");
 }
 
 #[test]
