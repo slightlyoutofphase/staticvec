@@ -438,7 +438,7 @@ impl<const N: usize> StaticString<N> {
   pub const unsafe fn as_mut_bytes(&mut self) -> &mut [u8] {
     self.vec.as_mut_slice()
   }
-  
+
   /// Returns a mutable reference to the StaticString's backing StaticVec.
   ///
   /// # Safety
@@ -919,7 +919,7 @@ impl<const N: usize> StaticString<N> {
   #[inline]
   pub unsafe fn insert_str_unchecked<S: AsRef<str>>(&mut self, index: usize, string: S) {
     let string_ref = string.as_ref();
-    let string_length =  string_ref.len();
+    let string_length = string_ref.len();
     debug_assert!(string_length <= self.remaining_capacity());
     let string_ptr = string_ref.as_ptr();
     shift_right_unchecked(self, index, index + string_length);

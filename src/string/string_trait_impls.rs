@@ -5,8 +5,8 @@ use core::fmt::{self, Debug, Display, Formatter, Write};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::ops::{
-  Add, AddAssign, Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo,
-  RangeToInclusive,
+  Add, AddAssign, Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive,
+  RangeTo, RangeToInclusive,
 };
 use core::str::{self, FromStr};
 
