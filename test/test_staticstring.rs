@@ -11,7 +11,7 @@ type MyString = StaticString<255>;
 #[test]
 fn test_push_bytes() {
   let mut s = MyString::from("ABC");
-  let mv = &mut s.vec;
+  let mv = unsafe { s.as_mut_staticvec() };
   mv.extend_from_slice(&[b'D']);
   assert_eq!(s, "ABCD");
 }
