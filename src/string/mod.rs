@@ -936,12 +936,12 @@ impl<const N: usize> StaticString<N> {
   /// Example usage:
   /// ```
   /// # use staticvec::StaticString;
-  /// let mut s = StaticString::<20>::from("ABCD🤔")?;
+  /// let mut s = StaticString::<20>::from("ABCD🤔");
   /// s.insert_str(1, "AB");
   /// s.insert_str(1, "BC");
   /// assert_eq!(s.as_str(), "ABCABBCD🤔");
   /// s.clear();
-  /// s.insert_str(0, "0".repeat(30))?;
+  /// s.insert_str(0, "0".repeat(30));
   /// assert_eq!(s.as_str(), "0".repeat(20).as_str());
   /// ```
   #[inline(always)]
