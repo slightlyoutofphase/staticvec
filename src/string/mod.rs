@@ -1038,9 +1038,10 @@ impl<const N: usize> StaticString<N> {
   /// Example usage:
   /// ```
   /// # use staticvec::StaticString;
-  /// let mut s = StaticString::<20>::from("ABðŸ¤”CD");
-  /// assert_eq!(s.split_off(6).as_str(), "CD");
-  /// assert_eq!(s.as_str(), "ABðŸ¤”");
+  /// let mut ab = StaticString::<4>::from("ABCD");
+  /// let cd = ab.split_off(2);
+  /// assert_eq!(ab, "AB");
+  /// assert_eq!(cd, "CD");
   /// ```
   #[inline(always)]
   pub fn split_off(&mut self, at: usize) -> Self {
