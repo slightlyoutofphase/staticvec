@@ -1,6 +1,8 @@
 // So we don't get "function complexity" lints and such since it's a demo.
 #![allow(clippy::all)]
+#![allow(dead_code)]
 #![allow(incomplete_features)]
+#![allow(unused_imports)]
 
 use staticvec::{staticvec, StaticVec, StaticString};
 
