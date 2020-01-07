@@ -1,3 +1,4 @@
+use crate::StaticVec;
 use super::StaticString;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
