@@ -119,15 +119,15 @@ fn from_utf16() {
   ];
   for p in &pairs {
     let (s, u) = (*p).clone();
-    let s_as_utf16 = s.encode_utf16().collect::<StaticVec<u16, 255>>();
+    let s_as_utf16 = s.encode_utf16().collect::<MyStaticVec>();
     let u_as_string = MyString::from_utf16(&u).unwrap();
-    assert!(core::char::decode_utf16(u.iter().cloned()).all(|r| r.is_ok()));
+    assert!(core::char::decode_utf16(u.iter().copied()).all(|r| r.is_ok()));
     assert_eq!(s_as_utf16, u);
     assert_eq!(u_as_string, s);
     assert_eq!(MyString::from_utf16_lossy(&u), s);
     assert_eq!(MyString::from_utf16(&s_as_utf16).unwrap(), s);
     assert_eq!(
-      u_as_string.encode_utf16().collect::<StaticVec<u16, 255>>(),
+      u_as_string.encode_utf16().collect::<MyStaticVec>(),
       u
     );
   }
