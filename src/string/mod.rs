@@ -122,7 +122,7 @@ impl<const N: usize> StaticString<N> {
   /// let string = StaticString::<300>::from_iterator(&["My String", " Other String"][..]);
   /// assert_eq!(string.as_str(), "My String Other String");
   /// let out_of_bounds = (0..400).map(|_| "000");
-  /// let truncated = "0".repeat(20);
+  /// let truncated = "0".repeat(18);
   /// let truncate = StaticString::<20>::from_iterator(out_of_bounds);
   /// assert_eq!(truncate.as_str(), truncated.as_str());
   /// # Ok(())
