@@ -433,7 +433,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(&bytes[..], &[104, 101, 108, 108, 111][..]);
   /// ```
   #[inline(always)]
-  pub const fn into_bytes(self) -> StaticVec<u8, N> {
+  pub fn into_bytes(self) -> StaticVec<u8, N> {
     self.vec
   }
 
