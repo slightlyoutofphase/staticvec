@@ -985,7 +985,7 @@ impl<const N: usize> StaticString<N> {
   /// string.try_insert_str(1, "BC")?;
   /// assert!(string.try_insert_str(1, "0".repeat(20)).unwrap_err().is_out_of_bounds());
   /// assert_eq!(string.as_str(), "ABCABBCD🤔");
-  /// assert!(string.try_insert_str(20, "C").unwrap_err().is_out_of_bounds());
+  /// assert!(string.try_insert_str(20, "C").unwrap_err().is_not_char_boundary());
   /// assert!(string.try_insert_str(10, "D").unwrap_err().is_not_char_boundary());
   /// # Ok(())
   /// # }
@@ -997,11 +997,9 @@ impl<const N: usize> StaticString<N> {
     string: S,
   ) -> Result<(), StringError>
   {
-    let old_length = self.len();
-    is_inside_boundary(index, old_length)?;
     let string_ref = string.as_ref();
-    let new_end = string_ref.len() + old_length;
-    is_inside_boundary(new_end, self.capacity())?;
+    let new_end = string_ref.len() + self.len();
+    is_inside_boundary(new_end, N)?;
     is_char_boundary(self, index)?;
     unsafe { self.insert_str_unchecked(index, string_ref) };
     Ok(())
