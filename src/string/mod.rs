@@ -462,7 +462,7 @@ impl<const N: usize> StaticString<N> {
 
   /// Returns the total capacity of the StaticString.
   /// This is always equivalent to the generic `N` parameter it was declared with,
-  /// which determines the fixed size of the backing [`StaticVec`] instance.
+  /// which determines the fixed size of the backing StaticVec instance.
   ///
   /// Example usage:
   /// ```
@@ -668,9 +668,10 @@ impl<const N: usize> StaticString<N> {
     }
   }
 
-  /// Truncates the StaticString to the specified length if the length is both less than the
-  /// StaticString's current length and also a valid UTF-8 character index, or does nothing
-  /// otherwise.
+  /// Truncates the StaticString to `size` if `size` is less than the
+  /// StaticString's current length, or does nothing otherwise. Always
+  /// returns `Ok(())` unless `size` does not lie at a valid UTF-8 character
+  /// boundary, in which case [`StringError::NotCharBoundary`] is returned.
   ///
   /// Example usage:
   /// ```
@@ -927,11 +928,12 @@ impl<const N: usize> StaticString<N> {
     self.vec.set_len(self.len() + string_length);
   }
 
-  /// Inserts `string` at `index`, truncating `string` as necessary if it is the case that
-  /// `self.len() + string.len()` exceeds the total capacity of the StaticString.
+  /// Inserts `string` at `index`, shifting any values that exist in positions greater than
+  /// `index` to the right.
   ///
   /// Panics if `index` is greater than the length of the StaticString or if it does not lie
-  /// at a valid UTF-8 character position.
+  /// at a valid UTF-8 character boundary, as well as if `string.len() + self.len()` exceeds
+  /// the total capacity of the StaticString.
   ///
   /// Example usage:
   /// ```
@@ -940,19 +942,18 @@ impl<const N: usize> StaticString<N> {
   /// s.insert_str(1, "AB");
   /// s.insert_str(1, "BC");
   /// assert_eq!(s.as_str(), "ABCABBCD🤔");
-  /// s.clear();
-  /// s.insert_str(0, "0".repeat(30));
-  /// assert_eq!(s.as_str(), "0".repeat(20).as_str());
   /// ```
   #[inline(always)]
   pub fn insert_str<S: AsRef<str>>(&mut self, index: usize, string: S) {
+    let string_ref = string.as_ref();
+    let string_len = string_ref.len();
     let old_length = self.len();
     assert!(
-      index <= old_length && self.as_str().is_char_boundary(index),
-      "Out of bounds or invalid character boundary!"
+      string_length <= self.remaining_capacity() && index <= old_length &&
+      self.as_str().is_char_boundary(index),
+      "Insufficient remaining capacity or invalid character boundary!"
     );
-    let max_added_length = self.capacity() - old_length;
-    unsafe { self.insert_str_unchecked(index, truncate_str(string.as_ref(), max_added_length)) };
+    unsafe { self.insert_str_unchecked(index, string_ref) };
   }
 
   /// Inserts `string` at `index`, returning [`StringError::OutOfBounds`] if `self.len() +
@@ -1065,7 +1066,7 @@ impl<const N: usize> StaticString<N> {
   pub fn split_off(&mut self, at: usize) -> Self {
     assert!(
       at <= self.len() && self.as_str().is_char_boundary(at),
-      "Out of bounds or invalid character boundary!"
+      "Insufficient remaining capacity or invalid character boundary!"
     );
     unsafe {
       let new = Self::from_utf8_unchecked(self.as_str().get_unchecked(at..));
@@ -1094,9 +1095,9 @@ impl<const N: usize> StaticString<N> {
 
   /// Removes the specified range from the StaticString and replaces it with the provided input
   /// (which does not need to have the same length as the range being removed), returning
-  /// [`StringError::OutOfBounds`] if the range does not fall within `0..self.len()`, and
-  /// [`StringError::NotCharBoundary`] if the range does not begin at a valid UTF-8 character
-  /// boundary.
+  /// [`StringError::OutOfBounds`] if the high bounds of the range is greater than the StaticVec's
+  /// length, and [`StringError::NotCharBoundary`] if the low bound range does not lie at a valid
+  /// UTF-8 character boundary.
   ///
   /// Example usage:
   /// ```
