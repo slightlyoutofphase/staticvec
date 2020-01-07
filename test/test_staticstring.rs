@@ -250,6 +250,30 @@ fn push_str() {
 }
 
 #[test]
+fn push_str_unchecked() {
+  let mut s = MyString::new();
+  unsafe { s.push_str_unchecked("") };
+  assert_eq!(&s[0..], "");
+  unsafe { s.push_str_unchecked("abc") };
+  assert_eq!(&s[0..], "abc");
+  unsafe { s.push_str_unchecked("ประเทศไทย中华Việt Nam") };
+  assert_eq!(&s[0..], "abcประเทศไทย中华Việt Nam");
+}
+
+#[test]
+fn push_unchecked() {
+  let mut data = MyString::from("ประเทศไทย中");
+  unsafe {
+    data.push_unchecked('华');
+    data.push_unchecked('b');
+    data.push_unchecked('¢');
+    data.push_unchecked('€');
+    data.push_unchecked('𤭢');
+  }
+  assert_eq!(data, "ประเทศไทย中华b¢€𤭢");
+}
+
+#[test]
 fn remove() {
   let mut s = MyString::from("ศไทย中华Việt Nam; foobar");
   assert_eq!(s.remove(0), 'ศ');
