@@ -64,20 +64,6 @@ fn from_iterator() {
 }
 
 #[test]
-fn from_utf8() {
-  let xs = b"hello".to_vec();
-  assert_eq!(MyString::from_utf8(xs).unwrap(), MyString::from("hello"));
-  let xs = "ศไทย中华Việt Nam".as_bytes().to_vec();
-  assert_eq!(
-    MyString::from_utf8(xs).unwrap(),
-    MyString::from("ศไทย中华Việt Nam")
-  );
-  let xs = b"hello\xFF".to_vec();
-  let err = MyString::from_utf8(xs);
-  assert!(err.is_err());
-}
-
-#[test]
 fn from_utf16() {
   type MyStaticVec = StaticVec<u16, 42>;
   let pairs = [
@@ -131,6 +117,48 @@ fn from_utf16() {
       u
     );
   }
+}
+
+#[test]
+fn utf16_invalid() {
+  assert!(MyString::from_utf16(&[0xD800]).is_err());
+  assert!(MyString::from_utf16(&[0xD800, 0xD800]).is_err());
+  assert!(MyString::from_utf16(&[0x0061, 0xDC00]).is_err());
+  assert!(MyString::from_utf16(&[0xD800, 0xd801, 0xdc8b, 0xD800]).is_err());
+}
+
+#[test]
+fn from_utf16_lossy() {
+  assert_eq!(
+    MyString::from_utf16_lossy(&[0xD800]),
+    MyString::from("\u{FFFD}")
+  );
+  assert_eq!(
+    MyString::from_utf16_lossy(&[0xD800, 0xD800]),
+    MyString::from("\u{FFFD}\u{FFFD}")
+  );
+  assert_eq!(
+    MyString::from_utf16_lossy(&[0x0061, 0xDC00]),
+    MyString::from("a\u{FFFD}")
+  );
+  assert_eq!(
+    MyString::from_utf16_lossy(&[0xD800, 0xd801, 0xdc8b, 0xD800]),
+    MyString::from("\u{FFFD}𐒋\u{FFFD}")
+  );
+}
+
+#[test]
+fn from_utf8() {
+  let xs = b"hello".to_vec();
+  assert_eq!(MyString::from_utf8(xs).unwrap(), MyString::from("hello"));
+  let xs = "ศไทย中华Việt Nam".as_bytes().to_vec();
+  assert_eq!(
+    MyString::from_utf8(xs).unwrap(),
+    MyString::from("ศไทย中华Việt Nam")
+  );
+  let xs = b"hello\xFF".to_vec();
+  let err = MyString::from_utf8(xs);
+  assert!(err.is_err());
 }
 
 #[test]
