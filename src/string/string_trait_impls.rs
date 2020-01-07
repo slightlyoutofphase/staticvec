@@ -139,6 +139,13 @@ impl<const N: usize> FromIterator<char> for StaticString<N> {
   }
 }
 
+impl<const N: usize> FromIterator<&'a char> for StaticString<N> {
+  #[inline(always)]
+  fn from_iter<I: IntoIterator<Item = &'a char>>(iter: I) -> Self {
+    Self::from_chars(iter.into_iter().copied())
+  }
+}
+
 impl<'a, const N: usize> FromIterator<&'a str> for StaticString<N> {
   #[inline(always)]
   fn from_iter<I: IntoIterator<Item = &'a str>>(iter: I) -> Self {
@@ -167,17 +174,14 @@ impl<const N: usize> Index<Range<usize>> for StaticString<N> {
 
   #[inline(always)]
   fn index(&self, index: Range<usize>) -> &Self::Output {
-    let (start, end) = (index.start as usize, index.end as usize);
-    self.as_str().index(Range { start, end })
+    self.as_str().index(index)
   }
 }
 
 impl<const N: usize> IndexMut<Range<usize>> for StaticString<N> {
   #[inline(always)]
   fn index_mut(&mut self, index: Range<usize>) -> &mut str {
-    let (start, end) = (index.start as usize, index.end as usize);
-    let range = Range { start, end };
-    self.as_mut_str().index_mut(range)
+    self.as_mut_str().index_mut(index)
   }
 }
 
@@ -186,16 +190,14 @@ impl<const N: usize> Index<RangeFrom<usize>> for StaticString<N> {
 
   #[inline(always)]
   fn index(&self, index: RangeFrom<usize>) -> &Self::Output {
-    let start = index.start as usize;
-    self.as_str().index(RangeFrom { start })
+    self.as_str().index(index)
   }
 }
 
 impl<const N: usize> IndexMut<RangeFrom<usize>> for StaticString<N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeFrom<usize>) -> &mut str {
-    let start = index.start as usize;
-    self.as_mut_str().index_mut(RangeFrom { start })
+    self.as_mut_str().index_mut(index)
   }
 }
 
@@ -203,15 +205,15 @@ impl<const N: usize> Index<RangeFull> for StaticString<N> {
   type Output = str;
 
   #[inline(always)]
-  fn index(&self, index: RangeFull) -> &Self::Output {
-    self.as_str().index(index)
+  fn index(&self, _index: RangeFull) -> &Self::Output {
+    self.as_str()
   }
 }
 
 impl<const N: usize> IndexMut<RangeFull> for StaticString<N> {
   #[inline(always)]
-  fn index_mut(&mut self, index: RangeFull) -> &mut str {
-    self.as_mut_str().index_mut(index)
+  fn index_mut(&mut self, _index: RangeFull) -> &mut str {
+    self.as_mut_str()
   }
 }
 
@@ -220,18 +222,14 @@ impl<const N: usize> Index<RangeInclusive<usize>> for StaticString<N> {
 
   #[inline(always)]
   fn index(&self, index: RangeInclusive<usize>) -> &Self::Output {
-    let (start, end) = (*index.start(), *index.end());
-    let range = RangeInclusive::new(start, end);
-    self.as_str().index(range)
+    self.as_str().index(index)
   }
 }
 
 impl<const N: usize> IndexMut<RangeInclusive<usize>> for StaticString<N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeInclusive<usize>) -> &mut str {
-    let (start, end) = (*index.start() as usize, *index.end() as usize);
-    let range = RangeInclusive::new(start, end);
-    self.as_mut_str().index_mut(range)
+    self.as_mut_str().index_mut(index)
   }
 }
 
@@ -240,16 +238,14 @@ impl<const N: usize> Index<RangeTo<usize>> for StaticString<N> {
 
   #[inline(always)]
   fn index(&self, index: RangeTo<usize>) -> &Self::Output {
-    let end = index.end as usize;
-    self.as_str().index(RangeTo { end })
+    self.as_str().index(index)
   }
 }
 
 impl<const N: usize> IndexMut<RangeTo<usize>> for StaticString<N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeTo<usize>) -> &mut str {
-    let end = index.end as usize;
-    self.as_mut_str().index_mut(RangeTo { end })
+    self.as_mut_str().index_mut(index)
   }
 }
 
@@ -258,17 +254,14 @@ impl<const N: usize> Index<RangeToInclusive<usize>> for StaticString<N> {
 
   #[inline(always)]
   fn index(&self, index: RangeToInclusive<usize>) -> &Self::Output {
-    let end = index.end as usize;
-    self.as_str().index(RangeToInclusive { end })
+    self.as_str().index(index)
   }
 }
 
 impl<const N: usize> IndexMut<RangeToInclusive<usize>> for StaticString<N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeToInclusive<usize>) -> &mut str {
-    let end = index.end as usize;
-    let range = RangeToInclusive { end };
-    self.as_mut_str().index_mut(range)
+    self.as_mut_str().index_mut(index)
   }
 }
 
