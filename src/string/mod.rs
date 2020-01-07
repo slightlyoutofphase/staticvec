@@ -79,7 +79,13 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn from_str<S: AsRef<str>>(string: S) -> Self {
     let mut res = Self::new();
-    res.push_str_truncating(string);
+    let string_ref = string.as_ref();
+    unsafe {
+      match string_ref.len() <= N {
+        false => res.push_str_unchecked(truncate_str(string_ref, N)),
+        true => res.push_str_unchecked(string_ref),
+      }
+    }
     res
   }
 
@@ -125,14 +131,11 @@ impl<const N: usize> StaticString<N> {
   #[inline]
   pub fn from_iterator<U: AsRef<str>, I: IntoIterator<Item = U>>(iter: I) -> Self {
     let mut res = Self::new();
-    let mut it = iter.into_iter();
-    let mut i = 0;
-    while i < N {
-      if let Some(s) = it.next() {
-        i += s.as_ref().len();
-        res.push_str_truncating(s);
-      } else {
-        break;
+    for s in iter {
+      let s_ref = s.as_ref();
+      match res.remaining_capacity() < s_ref.len() {
+        false => unsafe { res.push_str_unchecked(s_ref) },
+        true => break,
       }
     }
     res
@@ -181,8 +184,9 @@ impl<const N: usize> StaticString<N> {
   pub fn from_chars<I: IntoIterator<Item = char>>(iter: I) -> Self {
     let mut res = Self::new();
     for c in iter {
-      if res.try_push(c).is_err() {
-        break;
+      match res.remaining_capacity() < c.len_utf8() {
+        false => unsafe { res.push_unchecked(c) },
+        true => break,
       }
     }
     res
