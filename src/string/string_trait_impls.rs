@@ -10,6 +10,9 @@ use core::ops::{
 };
 use core::str::{self, FromStr};
 
+#[cfg(feature = "std")]
+use alloc::string::String;
+
 impl<const N: usize> Add<&str> for StaticString<N> {
   type Output = Self;
 
@@ -129,6 +132,15 @@ impl<'a, const N: usize> From<&'a str> for StaticString<N> {
   #[inline(always)]
   fn from(s: &str) -> Self {
     Self::from_str(s)
+  }
+}
+
+impl<const N: usize> From<String> for StaticString<N> {
+  #[inline(always)]
+  fn from(string: String) -> Self {
+    Self {
+      vec: StaticVec::from_iter(string.into_bytes().iter()),
+    }
   }
 }
 
@@ -293,6 +305,13 @@ impl<const N: usize> PartialEq<&str> for StaticString<N> {
   }
 }
 
+impl<const N: usize> PartialEq<String> for StaticString<N> {
+  #[inline(always)]
+  fn eq(&self, other: &String) -> bool {
+    self.as_str().eq(other.as_str())
+  }
+}
+
 impl<const N: usize> PartialOrd for StaticString<N> {
   #[inline(always)]
   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -311,6 +330,13 @@ impl<const N: usize> PartialOrd<&str> for StaticString<N> {
   #[inline(always)]
   fn partial_cmp(&self, other: &&str) -> Option<Ordering> {
     Some(self.as_str().cmp(*other))
+  }
+}
+
+impl<const N: usize> PartialOrd<String> for StaticString<N> {
+  #[inline(always)]
+  fn partial_cmp(&self, other: &String) -> Option<Ordering> {
+    Some(self.as_str().cmp(other.as_str()))
   }
 }
 
