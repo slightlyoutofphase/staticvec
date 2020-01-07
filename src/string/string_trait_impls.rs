@@ -139,7 +139,7 @@ impl<const N: usize> FromIterator<char> for StaticString<N> {
   }
 }
 
-impl<const N: usize> FromIterator<&'a char> for StaticString<N> {
+impl<'a, const N: usize> FromIterator<&'a char> for StaticString<N> {
   #[inline(always)]
   fn from_iter<I: IntoIterator<Item = &'a char>>(iter: I) -> Self {
     Self::from_chars(iter.into_iter().copied())
