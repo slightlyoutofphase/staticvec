@@ -421,6 +421,21 @@ impl<const N: usize> StaticString<N> {
   pub const fn as_bytes(&self) -> &[u8] {
     self.vec.as_slice()
   }
+  
+  /// Returns the StaticString's internal instance of `StaticVec<u8, N>`.
+  /// Note that using this functio consumes the StaticString.
+  /// 
+  /// Example usage:
+  /// ```
+  /// # use staticvec::StaticString;
+  /// let s = StaticString::<5>::from("hello");
+  /// let bytes = s.into_bytes();
+  /// assert_eq!(&bytes[..], &[104, 101, 108, 108, 111][..]);
+  /// ```
+  #[inline(always)]
+  pub const fn into_bytes(self) -> StaticVec<u8, N> {
+    self.vec
+  }
 
   /// Extracts a mutable `u8` slice containing the entire contents of the StaticString.
   ///
