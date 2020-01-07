@@ -135,6 +135,7 @@ impl<'a, const N: usize> From<&'a str> for StaticString<N> {
   }
 }
 
+#[cfg(feature = "std")]
 impl<const N: usize> From<String> for StaticString<N> {
   #[inline(always)]
   fn from(string: String) -> Self {
@@ -305,6 +306,7 @@ impl<const N: usize> PartialEq<&str> for StaticString<N> {
   }
 }
 
+#[cfg(feature = "std")]
 impl<const N: usize> PartialEq<String> for StaticString<N> {
   #[inline(always)]
   fn eq(&self, other: &String) -> bool {
@@ -333,6 +335,7 @@ impl<const N: usize> PartialOrd<&str> for StaticString<N> {
   }
 }
 
+#[cfg(feature = "std")]
 impl<const N: usize> PartialOrd<String> for StaticString<N> {
   #[inline(always)]
   fn partial_cmp(&self, other: &String) -> Option<Ordering> {
