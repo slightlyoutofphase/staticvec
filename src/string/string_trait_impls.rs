@@ -1,4 +1,3 @@
-use crate::StaticVec;
 use super::StaticString;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
@@ -10,6 +9,9 @@ use core::ops::{
   RangeTo, RangeToInclusive,
 };
 use core::str::{self, FromStr};
+
+#[cfg(feature = "std")]
+use crate::StaticVec;
 
 #[cfg(feature = "std")]
 use alloc::string::String;
