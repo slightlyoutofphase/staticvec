@@ -423,7 +423,7 @@ impl<const N: usize> StaticString<N> {
   }
 
   /// Returns the StaticString's internal instance of `StaticVec<u8, N>`.
-  /// Note that using this functio consumes the StaticString.
+  /// Note that using this function consumes the StaticString.
   ///
   /// Example usage:
   /// ```
@@ -781,7 +781,7 @@ impl<const N: usize> StaticString<N> {
   }
 
   /// Removes the char at `index` from the StaticString if `index` is both less than `self.len()`
-  /// and also a valid UTF-8 character boundary, or panics otherwise.
+  /// and also lies at a valid UTF-8 character boundary, or panics otherwise.
   ///
   /// Example usage:
   /// ```
