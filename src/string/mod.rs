@@ -946,7 +946,7 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn insert_str<S: AsRef<str>>(&mut self, index: usize, string: S) {
     let string_ref = string.as_ref();
-    let string_len = string_ref.len();
+    let string_length = string_ref.len();
     let old_length = self.len();
     assert!(
       string_length <= self.remaining_capacity() && index <= old_length &&
