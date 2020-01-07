@@ -421,10 +421,10 @@ impl<const N: usize> StaticString<N> {
   pub const fn as_bytes(&self) -> &[u8] {
     self.vec.as_slice()
   }
-  
+
   /// Returns the StaticString's internal instance of `StaticVec<u8, N>`.
   /// Note that using this functio consumes the StaticString.
-  /// 
+  ///
   /// Example usage:
   /// ```
   /// # use staticvec::StaticString;
@@ -794,11 +794,11 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub fn remove(&mut self, index: usize) -> char {
-    let old_length = self.len();
     assert!(
-      index < old_length && self.as_str().is_char_boundary(index),
-      "Out of bounds / invalid character boundary!"
+      self.as_str().is_char_boundary(index),
+      "Out of bounds or invalid character boundary!"
     );
+    let old_length = self.len();
     let character = unsafe { self.as_str().get_unchecked(index..).chars().next() };
     let character = character.unwrap_or_else(|| unsafe { never("Missing char") });
     let char_length = character.len_utf8();
@@ -863,8 +863,8 @@ impl<const N: usize> StaticString<N> {
   }
 
   /// Inserts `character` at `index`, returning [`StringError::OutOfBounds`] if the StaticString is
-  /// already at maximum capacity and [`StringError::Utf8`] if `index` is not a valid UTF-8
-  /// character index.
+  /// already at maximum capacity and [`StringError::NotCharBoundary`] if `index` does not lie at a
+  /// valid UTF-8 character boundary.
   ///
   /// Example usage:
   /// ```
@@ -874,7 +874,7 @@ impl<const N: usize> StaticString<N> {
   /// s.try_insert(1, 'E')?;
   /// s.try_insert(2, 'F')?;
   /// assert_eq!(s.as_str(), "AEFBCD🤔");
-  /// assert!(s.try_insert(20, 'C').unwrap_err().is_out_of_bounds());
+  /// assert!(s.try_insert(20, 'C').unwrap_err().is_not_char_boundary());
   /// assert!(s.try_insert(8, 'D').unwrap_err().is_not_char_boundary());
   /// let mut s = StaticString::<20>::try_from_str(&"0".repeat(20))?;
   /// assert!(s.try_insert(0, 'C').unwrap_err().is_out_of_bounds());
@@ -883,9 +883,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn try_insert(&mut self, index: usize, character: char) -> Result<(), StringError> {
-    is_inside_boundary(index, self.len())?;
-    let new_end = character.len_utf8() + self.len();
-    is_inside_boundary(new_end, self.capacity())?;
+    is_inside_boundary(character.len_utf8() + self.len(), N)?;
     is_char_boundary(self, index)?;
     unsafe { self.insert_unchecked(index, character) };
     Ok(())
@@ -966,18 +964,17 @@ impl<const N: usize> StaticString<N> {
   pub fn insert_str<S: AsRef<str>>(&mut self, index: usize, string: S) {
     let string_ref = string.as_ref();
     let string_length = string_ref.len();
-    let old_length = self.len();
     assert!(
-      string_length <= self.remaining_capacity() && index <= old_length &&
-      self.as_str().is_char_boundary(index),
+      string_length <= self.remaining_capacity() && self.as_str().is_char_boundary(index),
       "Insufficient remaining capacity or invalid character boundary!"
     );
     unsafe { self.insert_str_unchecked(index, string_ref) };
   }
 
   /// Inserts `string` at `index`, returning [`StringError::OutOfBounds`] if `self.len() +
-  /// string.len()` exceeds the total capacity of the StaticString and [`StringError::Utf8`] if
-  /// `index` is not a valid UTF-8 character index.
+  /// string.len()` exceeds the total capacity of the StaticString and
+  /// [`StringError::NotCharBoundary`] if `index` does not lie at a valid UTF-8 character
+  /// boundary.
   ///
   /// Example usage:
   /// ```
@@ -1085,7 +1082,7 @@ impl<const N: usize> StaticString<N> {
   pub fn split_off(&mut self, at: usize) -> Self {
     assert!(
       at <= self.len() && self.as_str().is_char_boundary(at),
-      "Insufficient remaining capacity or invalid character boundary!"
+      "Out of bounds or invalid character boundary!"
     );
     unsafe {
       let new = Self::from_utf8_unchecked(self.as_str().get_unchecked(at..));

@@ -112,10 +112,7 @@ fn from_utf16() {
     assert_eq!(u_as_string, s);
     assert_eq!(MyString::from_utf16_lossy(&u), s);
     assert_eq!(MyString::from_utf16(&s_as_utf16).unwrap(), s);
-    assert_eq!(
-      u_as_string.encode_utf16().collect::<MyStaticVec>(),
-      u
-    );
+    assert_eq!(u_as_string.encode_utf16().collect::<MyStaticVec>(), u);
   }
 }
 
@@ -179,7 +176,7 @@ fn insert_invalid1() {
 #[test]
 #[should_panic]
 fn insert_invalid2() {
-  StaticString::<0>::from("ệ").insert(1, 't');
+  StaticString::<1>::from("ệ").insert(2, 't');
 }
 
 #[test]
@@ -432,4 +429,19 @@ fn truncate_invalid_len() {
 fn truncate_split_codepoint() {
   let mut s = MyString::from("\u{FC}");
   s.truncate(1).unwrap();
+}
+
+#[test]
+fn try_insert() {
+  assert!(MyString::from("foobar").try_insert(0, 'ệ').is_ok());
+  assert!(StaticString::<1>::from("ệ").try_insert(2, 't').is_err());
+}
+
+#[test]
+fn try_insert_str() {
+  let mut s = StaticString::<20>::from("ABCD🤔");
+  assert!(s.try_insert_str(1, "AB").is_ok());
+  assert!(s.try_insert_str(1, "BC").is_ok());
+  assert_eq!(s, "ABCABBCD🤔");
+  assert!(s.try_insert_str(0, "0".repeat(30)).is_err());
 }
