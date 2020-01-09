@@ -1124,14 +1124,14 @@ impl<const N: usize> StaticString<N> {
     let replace_with = with.as_ref();
     let old_length = self.len();
     let start = match range.start_bound() {
-      Included(t) => *t,
-      Excluded(t) => t + 1,
-      Unbounded => 0,
+      Bound::Included(t) => *t,
+      Bound::Excluded(t) => t + 1,
+      Bound::Unbounded => 0,
     };
     let end = match range.end_bound() {
-      Included(t) => t + 1,
-      Excluded(t) => *t,
-      Unbounded => old_length,
+      Bound::Included(t) => t + 1,
+      Bound::Excluded(t) => *t,
+      Bound::Unbounded => old_length,
     };
     let replace_length = replace_with.len();
     assert!(
