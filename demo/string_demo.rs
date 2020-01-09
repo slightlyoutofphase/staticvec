@@ -42,7 +42,7 @@ fn main() {
   println!("Debug info: {:?}", s5);
   println!("Length: {}", s5.len());
   println!("Remaining capacity: {}", s5.remaining_capacity());
-  s5.replace_range(2..4, "XY").unwrap();
+  s5.replace_range(2..4, "XY");
   println!("Value: {}", s5);
   println!("Debug info: {:?}", s5);
   println!("Length: {}", s5.len());
