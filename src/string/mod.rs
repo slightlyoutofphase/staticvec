@@ -1120,7 +1120,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(s.as_str(), "ABEFGHI🤔");
   /// ```
   #[inline]
-  pub fn replace_range<S: AsRef<str>, R: RangeBounds<usize>>(&mut self, range: R, with: S)
+  pub fn replace_range<S: AsRef<str>, R: RangeBounds<usize>>(&mut self, range: R, with: S) {
     let replace_with = with.as_ref();
     let old_length = self.len();
     let start = match range.start_bound() {
