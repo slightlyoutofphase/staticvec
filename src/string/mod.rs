@@ -1108,59 +1108,50 @@ impl<const N: usize> StaticString<N> {
   }
 
   /// Removes the specified range from the StaticString and replaces it with the provided input
-  /// (which does not need to have the same length as the range being removed), returning
-  /// [`StringError::OutOfBounds`] if the high bounds of the range is greater than the StaticVec's
-  /// length, and [`StringError::NotCharBoundary`] if the low bound range does not lie at a valid
-  /// UTF-8 character boundary.
+  /// (which does not need to have the same length as the range being removed), panicking if
+  /// either the high or low bounds of the range exceed `self.len()` or do not lie at valid UTF-8
+  /// character boundaries.
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
-  /// s.replace_range(2..4, "EFGHI")?;
+  /// # use staticvec::StaticString;
+  /// let mut s = StaticString::<20>::from("ABCD🤔");
+  /// s.replace_range(2..4, "EFGHI");
   /// assert_eq!(s.as_str(), "ABEFGHI🤔");
-  /// assert!(s.replace_range(9.., "J").unwrap_err().is_not_char_boundary());
-  /// assert!(s.replace_range(..90, "K").unwrap_err().is_out_of_bounds());
-  /// assert!(s.replace_range(0..1, "0".repeat(20)).unwrap_err().is_out_of_bounds());
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline]
-  pub fn replace_range<S: AsRef<str>, R: RangeBounds<usize>>(
-    &mut self,
-    range: R,
-    with: S,
-  ) -> Result<(), StringError>
-  {
+  pub fn replace_range<S: AsRef<str>, R: RangeBounds<usize>>(&mut self, range: R, with: S)
     let replace_with = with.as_ref();
+    let old_length = self.len();
     let start = match range.start_bound() {
-      Bound::Included(t) => *t,
-      Bound::Excluded(t) => t + 1,
-      Bound::Unbounded => 0,
+      Included(t) => *t,
+      Excluded(t) => t + 1,
+      Unbounded => 0,
     };
     let end = match range.end_bound() {
-      Bound::Included(t) => t + 1,
-      Bound::Excluded(t) => *t,
-      Bound::Unbounded => self.len(),
+      Included(t) => t + 1,
+      Excluded(t) => *t,
+      Unbounded => old_length,
     };
     let replace_length = replace_with.len();
-    is_inside_boundary(start, end)?;
-    is_inside_boundary(end, self.len())?;
+    assert!(
+      start <= end && end <= old_length,
+      "Invalid range or out of bounds!"
+    );
     let replaced = end.saturating_sub(start);
-    is_inside_boundary(replaced + replace_length, self.capacity())?;
-    is_char_boundary(self, start)?;
-    is_char_boundary(self, end)?;
+    assert!(
+      replaced + replace_length <= N &&
+      self.is_char_boundary(start) &&
+      self.is_char_boundary(end),
+      "Out of bounds or invalid character boundary!"
+    );
     if replace_length == 0 {
-      let old_length = self.len();
       unsafe {
-        self
-          .as_ptr()
+        self.as_ptr()
           .add(end)
           .copy_to(self.as_mut_ptr().add(start), old_length.saturating_sub(end));
         self.vec.set_len(old_length.saturating_sub(replaced));
       }
-      Ok(())
     } else {
       if start + replace_length > end {
         unsafe { shift_right_unchecked(self, end, start + replace_length) };
@@ -1171,8 +1162,7 @@ impl<const N: usize> StaticString<N> {
       let dest = unsafe { self.vec.as_mut_ptr().add(start) };
       unsafe { ptr.copy_to_nonoverlapping(dest, replace_length) };
       let grow: isize = replace_length as isize - replaced as isize;
-      unsafe { self.vec.set_len((self.len() as isize + grow) as usize) };
-      Ok(())
+      unsafe { self.vec.set_len((old_length as isize + grow) as usize) };
     }
   }
 }
