@@ -289,7 +289,7 @@ fn remove_invalid() {
 #[test]
 fn replace_range() {
   let mut s = MyString::from("Hello, world!");
-  s.replace_range(7..12, "世界").unwrap();
+  s.replace_range(7..12, "世界");
   assert_eq!(s, "Hello, 世界!");
 }
 
@@ -297,13 +297,13 @@ fn replace_range() {
 #[should_panic]
 fn replace_range_char_boundary() {
   let mut s = MyString::from("Hello, 世界!");
-  s.replace_range(..8, "").unwrap();
+  s.replace_range(..8, "");
 }
 
 #[test]
 fn replace_range_empty() {
   let mut s = MyString::from("12345");
-  s.replace_range(1..2, "").unwrap();
+  s.replace_range(1..2, "");
   assert_eq!(s, "1345");
 }
 
@@ -311,15 +311,15 @@ fn replace_range_empty() {
 #[should_panic]
 fn replace_range_inclusive_out_of_bounds() {
   let mut s = MyString::from("12345");
-  s.replace_range(5..=5, "789").unwrap();
+  s.replace_range(5..=5, "789");
 }
 
 #[test]
 fn replace_range_inclusive_range() {
   let mut v = MyString::from("12345");
-  v.replace_range(2..=3, "789").unwrap();
+  v.replace_range(2..=3, "789");
   assert_eq!(v, "127895");
-  v.replace_range(1..=2, "A").unwrap();
+  v.replace_range(1..=2, "A");
   assert_eq!(v, "1A895");
 }
 
@@ -327,13 +327,13 @@ fn replace_range_inclusive_range() {
 #[should_panic]
 fn replace_range_out_of_bounds() {
   let mut s = MyString::from("12345");
-  s.replace_range(5..6, "789").unwrap();
+  s.replace_range(5..6, "789");
 }
 
 #[test]
 fn replace_range_unbounded() {
   let mut s = MyString::from("12345");
-  s.replace_range(.., "").unwrap();
+  s.replace_range(.., "");
   assert_eq!(s, "");
 }
 
