@@ -401,34 +401,34 @@ fn split_off_unicode() {
 }
 
 #[test]
-fn truncate() {
+fn test_truncate() {
   let mut s = MyString::from("12345");
-  s.truncate(5).unwrap();
+  s.truncate(5);
   assert_eq!(s, "12345");
-  s.truncate(3).unwrap();
+  s.truncate(3);
   assert_eq!(s, "123");
-  s.truncate(0).unwrap();
+  s.truncate(0);
   assert_eq!(s, "");
   let mut s = MyString::from("12345");
   let p = s.as_ptr();
-  s.truncate(3).unwrap();
+  s.truncate(3);
   s.push_str("6");
   let p_ = s.as_ptr();
   assert_eq!(p_, p);
 }
 
 #[test]
-fn truncate_invalid_len() {
+fn test_truncate_invalid_len() {
   let mut s = MyString::from("12345");
-  s.truncate(6).unwrap();
+  s.truncate(6);
   assert_eq!(s, "12345");
 }
 
 #[test]
 #[should_panic]
-fn truncate_split_codepoint() {
+fn test_truncate_split_codepoint() {
   let mut s = MyString::from("\u{FC}");
-  s.truncate(1).unwrap();
+  s.truncate(1);
 }
 
 #[test]
