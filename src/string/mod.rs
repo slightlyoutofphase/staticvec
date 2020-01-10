@@ -1140,14 +1140,13 @@ impl<const N: usize> StaticString<N> {
     );
     let replaced = end.saturating_sub(start);
     assert!(
-      replaced + replace_length <= N &&
-      self.is_char_boundary(start) &&
-      self.is_char_boundary(end),
+      replaced + replace_length <= N && self.is_char_boundary(start) && self.is_char_boundary(end),
       "Out of bounds or invalid character boundary!"
     );
     if replace_length == 0 {
       unsafe {
-        self.as_ptr()
+        self
+          .as_ptr()
           .add(end)
           .copy_to(self.as_mut_ptr().add(start), old_length.saturating_sub(end));
         self.vec.set_len(old_length.saturating_sub(replaced));
