@@ -687,31 +687,29 @@ impl<const N: usize> StaticString<N> {
     }
   }
 
-  /// Truncates the StaticString to `size` if `size` is less than the
-  /// StaticString's current length, or does nothing otherwise. Always
-  /// returns `Ok(())` unless `size` does not lie at a valid UTF-8 character
-  /// boundary, in which case [`StringError::NotCharBoundary`] is returned.
+  /// Truncates the StaticString to `new_len` if `new_len` is less than or equal to the
+  /// StaticString's current length, or does nothing otherwise. Panics if `new_len` does not lie
+  /// at a valid UTF-8 character boundary.
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("My String")?;
-  /// s.truncate(5)?;
-  /// assert_eq!(s.as_str(), "My St");
+  /// # use staticvec::StaticString;
+  /// let mut s = StaticString::<20>::from("My String");
+  /// s.truncate(5);
+  /// assert_eq!(s, "My St");
   /// // Does nothing
-  /// s.truncate(6)?;
-  /// assert_eq!(s.as_str(), "My St");
-  /// // Index is not at a valid char
-  /// let mut s = StaticString::<20>::try_from_str("🤔")?;
-  /// assert!(s.truncate(1).is_err());
-  /// # Ok(())
-  /// # }
+  /// s.truncate(6);
+  /// assert_eq!(s, "My St");
+  /// // Panics
+  /// let mut s2 = StaticString::<20>::from("🤔");
+  /// assert!(s2.truncate(1));
   /// ```
   #[inline(always)]
-  pub fn truncate(&mut self, size: usize) -> Result<(), StringError> {
-    let new_length = self.len().min(size);
-    is_char_boundary(self, new_length).map(|()| unsafe { self.vec.set_len(new_length) })
+  pub fn truncate(&mut self, new_len: usize) {
+    if new_len <= self.len() {
+      assert!(self.as_str().is_char_boundary(new_len));
+      unsafe { self.vec.set_len(new_len) };
+    }
   }
 
   /// Returns the last character in the StaticString in `Some` if the StaticString's current length
@@ -1140,7 +1138,9 @@ impl<const N: usize> StaticString<N> {
     );
     let replaced = end.saturating_sub(start);
     assert!(
-      replaced + replace_length <= N && self.is_char_boundary(start) && self.is_char_boundary(end),
+      replaced + replace_length <= N &&
+      self.as_str().is_char_boundary(start) &&
+      self.as_str().is_char_boundary(end),
       "Out of bounds or invalid character boundary!"
     );
     if replace_length == 0 {
