@@ -401,7 +401,7 @@ fn split_off_unicode() {
 }
 
 #[test]
-fn test_truncate() {
+fn truncate() {
   let mut s = MyString::from("12345");
   s.truncate(5);
   assert_eq!(s, "12345");
@@ -418,7 +418,7 @@ fn test_truncate() {
 }
 
 #[test]
-fn test_truncate_invalid_len() {
+fn truncate_invalid_len() {
   let mut s = MyString::from("12345");
   s.truncate(6);
   assert_eq!(s, "12345");
@@ -426,7 +426,7 @@ fn test_truncate_invalid_len() {
 
 #[test]
 #[should_panic]
-fn test_truncate_split_codepoint() {
+fn truncate_split_codepoint() {
   let mut s = MyString::from("\u{FC}");
   s.truncate(1);
 }
