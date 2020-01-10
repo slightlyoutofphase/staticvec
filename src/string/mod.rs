@@ -700,9 +700,9 @@ impl<const N: usize> StaticString<N> {
   /// // Does nothing
   /// s.truncate(6);
   /// assert_eq!(s, "My St");
-  /// // Panics
-  /// let mut s2 = StaticString::<20>::from("🤔");
-  /// assert!(s2.truncate(1));
+  /// // Would panic
+  /// // let mut s2 = StaticString::<20>::from("🤔");
+  /// // s2.truncate(1);
   /// ```
   #[inline(always)]
   pub fn truncate(&mut self, new_len: usize) {
