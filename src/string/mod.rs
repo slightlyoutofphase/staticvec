@@ -94,7 +94,7 @@ impl<const N: usize> StaticString<N> {
   /// let truncate = "0".repeat(21);
   /// let truncated = "0".repeat(20);
   /// let string = StaticString::<20>::from_str(&truncate);
-  /// assert_eq!(string, truncated);
+  /// assert_eq!(string, truncated.as_str());
   /// ```
   #[allow(clippy::should_implement_trait)]
   #[inline(always)]

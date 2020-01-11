@@ -59,7 +59,6 @@ fn from_iterator() {
   assert_eq!(d, s);
 }
 
-#[cfg(feature = "std")]
 #[test]
 fn from_str() {
   let string = MyString::from_str("My String");
@@ -67,16 +66,15 @@ fn from_str() {
   let truncate = "0".repeat(21);
   let truncated = "0".repeat(20);
   let string = StaticString::<20>::from_str(&truncate);
-  assert_eq!(string, truncated);
+  assert_eq!(string, truncated.as_str());
 }
 
-#[cfg(feature = "std")]
 #[test]
 fn from_str_unchecked() {
   let string = unsafe { MyString::from_str_unchecked("My String") };
   assert_eq!(string, "My String");
   let string = unsafe { MyString::from_str_unchecked(&"0".repeat(21)) };
-  assert_eq!(string, "0".repeat(21));
+  assert_eq!(string, "0".repeat(21).as_str());
 }
 
 #[test]
