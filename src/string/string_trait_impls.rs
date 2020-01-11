@@ -90,14 +90,14 @@ impl<const N: usize> Deref for StaticString<N> {
 
   #[inline(always)]
   fn deref(&self) -> &Self::Target {
-    self.as_ref()
+    self.as_str()
   }
 }
 
 impl<const N: usize> DerefMut for StaticString<N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut Self::Target {
-    self.as_mut()
+    self.as_mut_str()
   }
 }
 
