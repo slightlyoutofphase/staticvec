@@ -73,7 +73,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   /// # use staticvec::StaticString;
   /// let string = unsafe { StaticString::<20>::from_str_unchecked("My String") };
-  /// assert_eq!(string.as_str(), "My String");
+  /// assert_eq!(string, "My String");
   /// ```
   #[inline(always)]
   pub unsafe fn from_str_unchecked(string: &str) -> Self {
@@ -89,12 +89,12 @@ impl<const N: usize> StaticString<N> {
   /// ```
   /// # use staticvec::StaticString;
   /// let string = StaticString::<20>::from_str("My String");
-  /// assert_eq!(string.as_str(), "My String");
+  /// assert_eq!(string, "My String");
   /// println!("{}", string);
   /// let truncate = "0".repeat(21);
   /// let truncated = "0".repeat(20);
   /// let string = StaticString::<20>::from_str(&truncate);
-  /// assert_eq!(string.as_str(), truncated);
+  /// assert_eq!(string, truncated);
   /// ```
   #[allow(clippy::should_implement_trait)]
   #[inline(always)]
@@ -195,7 +195,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   /// # use staticvec::StaticString;
   /// let string = StaticString::<20>::from_chars("My String".chars());
-  /// assert_eq!(string.as_str(), "My String");
+  /// assert_eq!(string, "My String");
   /// let out_of_bounds = "0".repeat(21);
   /// let truncated = "0".repeat(20);
   /// let truncate = StaticString::<20>::from_chars(out_of_bounds.chars());
@@ -254,7 +254,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   /// # use staticvec::StaticString;
   /// let string = unsafe { StaticString::<20>::from_utf8_unchecked("My String") };
-  /// assert_eq!(string.as_str(), "My String");
+  /// assert_eq!(string, "My String");
   /// // Undefined behavior, don't do it:
   /// // let out_of_bounds = "0".repeat(300);
   /// // let ub = unsafe { StaticString::<20>::from_utf8_unchecked(out_of_bounds)) };
@@ -274,7 +274,7 @@ impl<const N: usize> StaticString<N> {
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
   /// let string = StaticString::<20>::from_utf8("My String")?;
-  /// assert_eq!(string.as_str(), "My String");
+  /// assert_eq!(string, "My String");
   /// let invalid_utf8 = [0, 159, 146, 150];
   /// assert!(StaticString::<20>::from_utf8(invalid_utf8).unwrap_err().is_utf8());
   /// let out_of_bounds = "0".repeat(300);
@@ -287,16 +287,16 @@ impl<const N: usize> StaticString<N> {
     Ok(Self::from_str(from_utf8(slice.as_ref())?))
   }
 
-  /// Creates a new StaticString from a byte slice, returning [`StringError::Utf8`] on invalid UTF-8
-  /// data or [`StringError::OutOfBounds`] if the slice has a length greater than the StaticString's
-  /// declared capacity.
+  /// Creates a new StaticString from the provided byte slice, returning [`StringError::Utf8`] on
+  /// invalid UTF-8 data or [`StringError::OutOfBounds`] if the slice has a length greater than
+  /// the StaticString's declared capacity.
   ///
   /// Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
   /// let string = StaticString::<20>::try_from_utf8("My String")?;
-  /// assert_eq!(string.as_str(), "My String");
+  /// assert_eq!(string, "My String");
   /// let invalid_utf8 = [0, 159, 146, 150];
   /// assert!(StaticString::<20>::try_from_utf8(invalid_utf8).unwrap_err().is_utf8());
   /// let out_of_bounds = "0000".repeat(400);
@@ -315,17 +315,14 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
+  /// # use staticvec::StaticString;
   /// let music = [0xD834, 0xDD1E, 0x006d, 0x0075, 0x0073, 0x0069, 0x0063];
   /// let string = StaticString::<20>::from_utf16_lossy(music);
-  /// assert_eq!(string.as_str(), "𝄞music");
+  /// assert_eq!(string, "𝄞music");
   /// let invalid_utf16 = [0xD834, 0xDD1E, 0x006d, 0x0075, 0xD800, 0x0069, 0x0063];
   /// assert_eq!(StaticString::<20>::from_utf16_lossy(invalid_utf16).as_str(), "𝄞mu\u{FFFD}ic");
   /// let out_of_bounds: Vec<u16> = (0..300).map(|_| 0).collect();
   /// assert_eq!(StaticString::<20>::from_utf16_lossy(&out_of_bounds).as_str(), "\0".repeat(20).as_str());
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline(always)]
   pub fn from_utf16_lossy<B: AsRef<[u16]>>(slice: B) -> Self {
@@ -399,12 +396,9 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let s = StaticString::<20>::try_from_str("My String")?;
+  /// # use staticvec::StaticString;
+  /// let s = StaticString::<20>::from_str("My String");
   /// assert_eq!(s.as_str(), "My String");
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline(always)]
   pub const fn as_str(&self) -> &str {
@@ -415,12 +409,9 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("My String")?;
+  /// # use staticvec::StaticString;
+  /// let mut s = StaticString::<20>::from_str("My String");
   /// assert_eq!(s.as_mut_str(), "My String");
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline(always)]
   pub const fn as_mut_str(&mut self) -> &mut str {
@@ -431,12 +422,9 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let s = StaticString::<20>::try_from_str("My String")?;
+  /// # use staticvec::StaticString;
+  /// let s = StaticString::<20>::from_str("My String");
   /// assert_eq!(s.as_bytes(), "My String".as_bytes());
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline(always)]
   pub const fn as_bytes(&self) -> &[u8] {
@@ -830,13 +818,10 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
+  /// # use staticvec::StaticString;
+  /// let mut s = StaticString::<20>::from("ABCD🤔");
   /// s.retain(|c| c != '🤔');
-  /// assert_eq!(s.as_str(), "ABCD");
-  /// # Ok(())
-  /// # }
+  /// assert_eq!(s, "ABCD");
   /// ```
   #[inline(always)]
   pub fn retain<F: FnMut(char) -> bool>(&mut self, mut f: F) {
@@ -848,7 +833,7 @@ impl<const N: usize> StaticString<N> {
   /// `index` to the right.
   ///
   /// Does not do any checking to ensure that `character.len_utf8() + self.len()` does not exceed
-  /// the total capacity of the StaticString or that `index` indicates a valid UTF-8 character
+  /// the total capacity of the StaticString or that `index` lies at a valid UTF-8 character
   /// boundary.
   ///
   /// # Safety
@@ -950,18 +935,15 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("ABCD🤔")?;
+  /// # use staticvec::StaticString;
+  /// let mut s = StaticString::<20>::from_str("ABCD🤔");
   /// unsafe { s.insert_str_unchecked(1, "AB") };
   /// unsafe { s.insert_str_unchecked(1, "BC") };
-  /// assert_eq!(s.as_str(), "ABCABBCD🤔");
+  /// assert_eq!(s, "ABCABBCD🤔");
   /// // Undefined behavior, don't do it:
   /// // unsafe { s.insert_str_unchecked(20, "C") };
   /// // unsafe { s.insert_str_unchecked(10, "D") };
   /// // unsafe { s.insert_str_unchecked(1, "0".repeat(20)) };
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline]
   pub unsafe fn insert_str_unchecked<S: AsRef<str>>(&mut self, index: usize, string: S) {
@@ -1029,8 +1011,7 @@ impl<const N: usize> StaticString<N> {
   ) -> Result<(), StringError>
   {
     let string_ref = string.as_ref();
-    let new_end = string_ref.len() + self.len();
-    is_inside_boundary(new_end, N)?;
+    is_inside_boundary(self.len() + string_ref.len(), N)?;
     is_char_boundary(self, index)?;
     unsafe { self.insert_str_unchecked(index, string_ref) };
     Ok(())
@@ -1040,15 +1021,11 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("ABCD")?;
+  /// # use staticvec::StaticString;
+  /// let mut s = StaticString::<20>::from("ABCD");
   /// assert_eq!(s.len(), 4);
-  /// s.try_push('🤔')?;
-  /// // Emojis use 4 bytes (this is the default rust behavior, length of usize)
+  /// s.push('🤔');
   /// assert_eq!(s.len(), 8);
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline(always)]
   pub const fn len(&self) -> usize {
