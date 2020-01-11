@@ -7,7 +7,6 @@ jobs:
   include:
   - os: linux
     dist: bionic
-  - os: osx
 
 script:
   - bash ./ci/run_miri.sh
