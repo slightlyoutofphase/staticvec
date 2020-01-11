@@ -1138,9 +1138,9 @@ impl<const N: usize> StaticString<N> {
     );
     let replaced = end.saturating_sub(start);
     assert!(
-      replaced + replace_length <= N &&
-      self.as_str().is_char_boundary(start) &&
-      self.as_str().is_char_boundary(end),
+      replaced + replace_length <= N
+        && self.as_str().is_char_boundary(start)
+        && self.as_str().is_char_boundary(end),
       "Out of bounds or invalid character boundary!"
     );
     if replace_length == 0 {
