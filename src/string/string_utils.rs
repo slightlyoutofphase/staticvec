@@ -31,25 +31,25 @@ pub(crate) unsafe fn encode_char_utf8_unchecked<const N: usize>(
   index: usize,
 )
 {
-  let dst = string.vec.as_mut_ptr().add(index);
+  let dest = string.vec.mut_ptr_at_unchecked(index);
   let code = character as u32;
   if code < MAX_ONE_B {
-    dst.write(code as u8);
+    dest.write(code as u8);
     string.vec.set_len(string.len() + 1);
   } else if code < MAX_TWO_B {
-    dst.write((code >> 6 & 0x1F) as u8 | TAG_TWO_B);
-    dst.offset(1).write((code & 0x3F) as u8 | TAG_CONT);
+    dest.write((code >> 6 & 0x1F) as u8 | TAG_TWO_B);
+    dest.offset(1).write((code & 0x3F) as u8 | TAG_CONT);
     string.vec.set_len(string.len() + 2);
   } else if code < MAX_THREE_B {
-    dst.write((code >> 12 & 0x0F) as u8 | TAG_THREE_B);
-    dst.offset(1).write((code >> 6 & 0x3F) as u8 | TAG_CONT);
-    dst.offset(2).write((code & 0x3F) as u8 | TAG_CONT);
+    dest.write((code >> 12 & 0x0F) as u8 | TAG_THREE_B);
+    dest.offset(1).write((code >> 6 & 0x3F) as u8 | TAG_CONT);
+    dest.offset(2).write((code & 0x3F) as u8 | TAG_CONT);
     string.vec.set_len(string.len() + 3);
   } else {
-    dst.write((code >> 18 & 0x07) as u8 | TAG_FOUR_B);
-    dst.offset(1).write((code >> 12 & 0x3F) as u8 | TAG_CONT);
-    dst.offset(2).write((code >> 6 & 0x3F) as u8 | TAG_CONT);
-    dst.offset(3).write((code & 0x3F) as u8 | TAG_CONT);
+    dest.write((code >> 18 & 0x07) as u8 | TAG_FOUR_B);
+    dest.offset(1).write((code >> 12 & 0x3F) as u8 | TAG_CONT);
+    dest.offset(2).write((code >> 6 & 0x3F) as u8 | TAG_CONT);
+    dest.offset(3).write((code & 0x3F) as u8 | TAG_CONT);
     string.vec.set_len(string.len() + 4);
   }
 }

@@ -60,6 +60,24 @@ fn from_iterator() {
 }
 
 #[test]
+fn from_str() {
+  let string = MyString::from_str("My String");
+  assert_eq!(string, "My String");
+  let truncate = "0".repeat(21);
+  let truncated = "0".repeat(20);
+  let string = StaticString::<20>::from_str(&truncate);
+  assert_eq!(string, truncated);
+}
+
+#[test]
+fn from_str_unchecked() {
+  let string = unsafe { MyString::from_str_unchecked("My String") };
+  assert_eq!(string, "My String");
+  let string = unsafe { MyString::from_str_unchecked(&"0".repeat(21)) };
+  assert_eq!(string, "0".repeat(21));
+}
+
+#[test]
 fn from_utf16() {
   type MyStaticVec = StaticVec<u16, 42>;
   let pairs = [

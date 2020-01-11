@@ -61,7 +61,28 @@ impl<const N: usize> StaticString<N> {
     }
   }
 
-  /// Creates a new StaticString from a string slice, truncating the slice as necessary if it has
+  /// Creates a new StaticString instance from `string`, without doing any checking to ensure that
+  /// the length of `string` does not exceed the resulting StaticString's declared capacity.
+  ///
+  /// # Safety
+  ///
+  /// The length of `string` must not exceed the declared capacity of the StaticString being
+  /// created, as this would result in writing to an out-of-bounds memory region.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::StaticString;
+  /// let string = unsafe { StaticString::<20>::from_str_unchecked("My String") };
+  /// assert_eq!(string.as_str(), "My String");
+  /// ```
+  #[inline(always)]
+  pub unsafe fn from_str_unchecked(string: &str) -> Self {
+    let mut res = Self::new();
+    res.push_str_unchecked(string);
+    res
+  }
+
+  /// Creates a new StaticString from `string`, truncating `string` as necessary if it has
   /// a length greater than the StaticString's declared capacity.
   ///
   /// Example usage:
@@ -89,7 +110,7 @@ impl<const N: usize> StaticString<N> {
     res
   }
 
-  /// Creates a new StaticString from a string slice if the slice has a length less than or equal
+  /// Creates a new StaticString from `string` if the length of `string` is less than or equal
   /// to the StaticString's declared capacity, or returns [`StringError::OutOfBounds`] otherwise.
   ///
   /// Example usage:
@@ -216,9 +237,9 @@ impl<const N: usize> StaticString<N> {
     Ok(res)
   }
 
-  /// Creates a new StaticString instance from a provided byte slice, without doing any checking to
-  /// ensure that the slice contains valid UTF-8 data and has a length less than or equal to the
-  /// declared capacity of the StaticString.
+  /// Creates a new StaticString instance from the provided byte slice, without doing any checking
+  /// to ensure that the slice contains valid UTF-8 data and has a length less than or equal to
+  /// the declared capacity of the StaticString.
   ///
   /// # Safety
   ///
@@ -241,10 +262,10 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub unsafe fn from_utf8_unchecked<B: AsRef<[u8]>>(slice: B) -> Self {
     debug_assert!(from_utf8(slice.as_ref()).is_ok());
-    Self::from_str(from_utf8_unchecked(slice.as_ref()))
+    Self::from_str_unchecked(from_utf8_unchecked(slice.as_ref()))
   }
 
-  /// Creates a new StaticString instance from a provided byte slice, returning
+  /// Creates a new StaticString instance from the provided byte slice, returning
   /// [`StringError::Utf8`] on invalid UTF-8 data, and truncating the input slice as necessary if
   /// it has a length greater than the declared capacity of the StaticString being created.
   ///
@@ -288,8 +309,8 @@ impl<const N: usize> StaticString<N> {
     Ok(Self::try_from_str(from_utf8(slice.as_ref())?)?)
   }
 
-  /// Creates a new StaticString instance from a provided `u16` slice, replacing invalid UTF-16 data
-  /// with `REPLACEMENT_CHARACTER` (�), and truncating the input slice as necessary if
+  /// Creates a new StaticString instance from the provided `u16` slice, replacing invalid UTF-16
+  /// data with `REPLACEMENT_CHARACTER` (�), and truncating the input slice as necessary if
   /// it has a length greater than the declared capacity of the StaticString being created.
   ///
   /// Example usage:
@@ -317,7 +338,7 @@ impl<const N: usize> StaticString<N> {
     res
   }
 
-  /// Creates a new StaticString instance from a provided `u16` slice, returning
+  /// Creates a new StaticString instance from the provided `u16` slice, returning
   /// [`StringError::Utf16`] on invalid UTF-16 data, and truncating the input slice as necessary if
   /// it has a length greater than the declared capacity of the StaticString being created.
   ///
@@ -347,7 +368,7 @@ impl<const N: usize> StaticString<N> {
     Ok(res)
   }
 
-  /// Creates a new StaticString from provided `u16` slice, returning [`StringError::Utf16`] on
+  /// Creates a new StaticString from the provided `u16` slice, returning [`StringError::Utf16`] on
   /// invalid UTF-16 data or [`StringError::OutOfBounds`] if the slice has a length greater than the
   /// declared capacity of the StaticString being created.
   ///
@@ -523,12 +544,11 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub unsafe fn push_str_unchecked(&mut self, string: &str) {
-    let old_length = self.len();
     let string_length = string.len();
-    self
-      .vec
-      .mut_ptr_at_unchecked(old_length)
-      .copy_from_nonoverlapping(string.as_ptr(), string_length);
+    debug_assert!(string_length <= self.remaining_capacity());
+    let old_length = self.len();
+    let dest = self.vec.mut_ptr_at_unchecked(old_length);
+    string.as_ptr().copy_to_nonoverlapping(dest, string_length);
     self.vec.set_len(old_length + string_length);
   }
 
@@ -652,13 +672,11 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn push(&mut self, character: char) {
-    match character.len_utf8() {
-      1 => self.vec.push(character as u8),
-      _ => self
-        .vec
-        .try_extend_from_slice(character.encode_utf8(&mut [0; 4]).as_bytes())
-        .unwrap(),
-    }
+    assert!(
+      character.len_utf8() <= self.remaining_capacity(),
+      "Insufficient remaining capacity!"
+    );
+    unsafe { self.push_unchecked(character) };
   }
 
   /// Appends the given char to the end of the StaticString, returning [`StringError::OutOfBounds`]
@@ -678,7 +696,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn try_push(&mut self, character: char) -> Result<(), StringError> {
-    match self.vec.remaining_capacity() < character.len_utf8() {
+    match self.remaining_capacity() < character.len_utf8() {
       false => {
         unsafe { self.push_unchecked(character) }
         Ok(())
@@ -751,9 +769,9 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub fn trim(&mut self) {
-    let is_whitespace = |s: &[u8], index: usize| {
-      debug_assert!(index < s.len());
-      unsafe { s.get_unchecked(index) == &b' ' }
+    let is_whitespace = |bytes: &[u8], index: usize| {
+      debug_assert!(index < bytes.len());
+      unsafe { bytes.get_unchecked(index) == &b' ' }
     };
     let (mut start, mut end, mut leave) = (0_usize, self.len(), 0_usize);
     while start < end && leave < 2 {
@@ -1096,9 +1114,9 @@ impl<const N: usize> StaticString<N> {
       "Out of bounds or invalid character boundary!"
     );
     unsafe {
-      let new = Self::from_utf8_unchecked(self.as_str().get_unchecked(at..));
+      let res = Self::from_utf8_unchecked(self.as_str().get_unchecked(at..));
       self.vec.set_len(at);
-      new
+      res
     }
   }
 
