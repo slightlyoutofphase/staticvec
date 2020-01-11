@@ -23,7 +23,7 @@ via `serde` is available by activating the `serde_support` crate feature.
 methods are accessible through instances of it and that references to it can be used in contexts
 where `[T]` is expected.
 
-As of version 0.7.5, this crate additionally provides a fixed-capacity `StaticString` struct, which is built
+As of version 0.8.0, this crate additionally provides a fixed-capacity `StaticString` struct, which is built
 around an instance of `StaticVec<u8, N>`.
 
 Contributions/suggestions/etc. very welcome!
