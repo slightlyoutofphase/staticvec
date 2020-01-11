@@ -826,8 +826,12 @@ impl<const N: usize> StaticString<N> {
     *self = Self::from_chars(self.as_str().chars().filter(|c| f(*c)));
   }
 
-  /// Inserts `character` at `index` without doing any checking to ensure that the StaticVec is not
-  /// already at maximum capacity or that `index` indicates a valid UTF-8 character boundary.
+  /// Inserts `character` at `index`, shifting any values that exist in positions greater than
+  /// `index` to the right.
+  ///
+  /// Does not do any checking to ensure that `character.len_utf8() + self.len()` does not exceed
+  /// the total capacity of the StaticString or that `index` indicates a valid UTF-8 character
+  /// boundary.
   ///
   /// # Safety
   ///
@@ -835,7 +839,7 @@ impl<const N: usize> StaticString<N> {
   /// capacity, as if this in not the case it will result in writing to an out-of-bounds memory
   /// region.
   ///
-  /// `Index` must also represent a valid UTF-8 character boundary, as if it does not, various
+  /// `Index` must also lie at a valid UTF-8 character boundary, as if it does not, various
   /// assumptions made in the internal implementation of StaticString will be silently
   /// invalidated, almost certainly eventually resulting in undefined behavior.
   ///
@@ -860,9 +864,12 @@ impl<const N: usize> StaticString<N> {
     encode_char_utf8_unchecked(self, character, index);
   }
 
-  /// Inserts `character` at `index`, returning [`StringError::OutOfBounds`] if the StaticString is
-  /// already at maximum capacity and [`StringError::NotCharBoundary`] if `index` does not lie at a
-  /// valid UTF-8 character boundary.
+  /// Inserts `character` at `index`, shifting any values that exist in positions greater than
+  /// `index` to the right.
+  ///
+  /// Returns [`StringError::OutOfBounds`] if `character.len_utf8() + self.len()` exceeds the total
+  /// capacity of the StaticString and [`StringError::NotCharBoundary`] if `index` does not lie at
+  /// a valid UTF-8 character boundary.
   ///
   /// Example usage:
   /// ```
@@ -887,8 +894,11 @@ impl<const N: usize> StaticString<N> {
     Ok(())
   }
 
-  /// Inserts `character` at `index`, panicking if the StaticString is already at maximum capacity
-  /// or if `index` does not lie at a valid UTF-8 character index.
+  /// Inserts `character` at `index`, shifting any values that exist in positions greater than
+  /// `index` to the right.
+  ///
+  /// Panics if `character.len_utf8() + self.len()` exceeds the total capacity of the StaticString
+  /// or if `index` does not lie at a valid UTF-8 character boundary.
   ///
   /// Example usage:
   /// ```
@@ -904,16 +914,19 @@ impl<const N: usize> StaticString<N> {
     self.try_insert(index, character).unwrap();
   }
 
-  /// Inserts `string` at `index` without doing any checking to ensure that `self.len() +
-  /// string.len()`  does not exceed the total capacity of the StaticString or that `index`
-  /// indicates a valid UTF-8 character boundary.
+  /// Inserts `string` at `index`, shifting any values that exist in positions greater than
+  /// `index` to the right.
+  ///
+  /// Does not do any checking to ensure that `self.len() + string.len()` does not exceed
+  /// the total capacity of the StaticString or that `index` lies at a valid UTF-8
+  /// character boundary.
   ///
   /// # Safety
   ///
   /// `self.len() + string.len()` must not exceed the total capacity of the StaticString instance,
   /// as this would result in writing to an out-of-bounds memory region.
   ///
-  /// `Index` must also represent a valid UTF-8 character boundary, as if it does not, various
+  /// `Index` must also lie at a valid UTF-8 character boundary, as if it does not, various
   /// assumptions made in the internal implementation of StaticString will be silently
   /// invalidated, almost certainly eventually resulting in undefined behavior.
   ///
@@ -969,10 +982,12 @@ impl<const N: usize> StaticString<N> {
     unsafe { self.insert_str_unchecked(index, string_ref) };
   }
 
-  /// Inserts `string` at `index`, returning [`StringError::OutOfBounds`] if `self.len() +
-  /// string.len()` exceeds the total capacity of the StaticString and
-  /// [`StringError::NotCharBoundary`] if `index` does not lie at a valid UTF-8 character
-  /// boundary.
+  /// Inserts `string` at `index`, shifting any values that exist in positions greater than
+  /// `index` to the right.
+  ///
+  /// Returns [`StringError::OutOfBounds`] if `self.len() + string.len()` exceeds the total
+  /// capacity of the StaticString and [`StringError::NotCharBoundary`] if `index` does not
+  /// lie at a valid UTF-8 character boundary.
   ///
   /// Example usage:
   /// ```
