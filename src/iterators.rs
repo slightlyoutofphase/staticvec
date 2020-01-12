@@ -58,13 +58,16 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
-    // Safety: `start` and `end` are never null.
-    unsafe {
-      format!(
-        "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        &*self.start,
-        &*self.end.offset(-1)
-      )
+    match self.len() {
+      0 => String::from("Empty iterator!"),
+      _ => unsafe {
+        // Safety: `start` and `end` are never null.
+        format!(
+          "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
+          &*self.start,
+          &*self.end.offset(-1)
+        )
+      },
     }
   }
 
@@ -165,13 +168,16 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
-    // Safety: `start` and `end` are never null.
-    unsafe {
-      format!(
-        "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        &*self.start,
-        &*self.end.offset(-1)
-      )
+    match self.len() {
+      0 => String::from("Empty iterator!"),
+      _ => unsafe {
+        // Safety: `start` and `end` are never null.
+        format!(
+          "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
+          &*self.start,
+          &*self.end.offset(-1)
+        )
+      },
     }
   }
 
@@ -262,13 +268,16 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   #[inline(always)]
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
-    // Safety: `start` and `end` are never out of bounds.
-    unsafe {
-      format!(
-        "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-        &*StaticVec::first_ptr(&self.data).add(self.start),
-        &*StaticVec::first_ptr(&self.data).add(self.end - 1)
-      )
+    match self.len() {
+      0 => String::from("Empty iterator!"),
+      _ => unsafe {
+        // Safety: `start` and `end` are never out of bounds.
+        format!(
+          "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
+          &*StaticVec::first_ptr(&self.data).add(self.start),
+          &*StaticVec::first_ptr(&self.data).add(self.end - 1)
+        )
+      },
     }
   }
 

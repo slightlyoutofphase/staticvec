@@ -178,6 +178,13 @@ fn bounds_to_string() {
     "Current value of element at `start`: 1\nCurrent value of element at `end`: 4",
     itv.bounds_to_string()
   );
+  let mut v2 = StaticVec::<Box<i32>, 0>::new();
+  let it2 = v2.iter();
+  assert_eq!("Empty iterator!", it2.bounds_to_string());
+  let itm2 = v2.iter_mut();
+  assert_eq!("Empty iterator!", itm2.bounds_to_string());
+  let itv2 = v2.into_iter();
+  assert_eq!("Empty iterator!", itv2.bounds_to_string());
 }
 
 #[test]
