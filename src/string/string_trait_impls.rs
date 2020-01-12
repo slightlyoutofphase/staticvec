@@ -16,6 +16,9 @@ use crate::StaticVec;
 #[cfg(feature = "std")]
 use alloc::string::String;
 
+#[cfg(feature = "serde_support")]
+use serde::{de::Deserializer, ser::Serializer, Deserialize, Serialize};
+
 impl<const N: usize> Add<&str> for StaticString<N> {
   type Output = Self;
 
@@ -355,5 +358,21 @@ impl<const N: usize> Write for StaticString<N> {
   #[inline(always)]
   fn write_char(&mut self, c: char) -> fmt::Result {
     self.try_push(c).map_err(|_| fmt::Error)
+  }
+}
+
+#[cfg(feature = "serde_support")]
+impl<'de, const N: usize> Deserialize<'de> for StaticString<N> {
+  #[inline(always)]
+  fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+    <&str>::deserialize(deserializer).map(Self::from_str)
+  }
+}
+
+#[cfg(feature = "serde_support")]
+impl<const N: usize> Serialize for StaticString<N> {
+  #[inline(always)]
+  fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+    Serialize::serialize(self.as_str(), serializer)
   }
 }

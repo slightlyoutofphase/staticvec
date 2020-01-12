@@ -42,8 +42,14 @@ fn main() {
   let structs_b: StaticVec<MyStruct, 6> = serde_json::from_str(JSON_STR).unwrap();
 
   println!(
-    "{} \n\n{:?}",
+    "{} \n\n{:?}\n",
     serde_json::to_string_pretty(&structs_a).unwrap(),
     structs_b
   );
+
+  let json = serde_json::to_string_pretty(&StaticString::<8>::from("abcdefg")).unwrap();
+
+  let string: StaticString<8> = serde_json::from_str(&json).unwrap();
+
+  println!("{} \n\n{:?}", json, string);
 }
