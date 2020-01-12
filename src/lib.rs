@@ -21,6 +21,7 @@
 #![feature(maybe_uninit_ref)]
 #![feature(maybe_uninit_uninit_array)]
 #![cfg_attr(feature = "std", feature(read_initializer))]
+#![feature(slice_iter_mut_as_slice)]
 #![feature(slice_partition_dedup)]
 #![feature(specialization)]
 #![feature(trusted_len)]
@@ -37,7 +38,6 @@ use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
 #[doc(hidden)]
 pub use core::iter::FromIterator;
-use core::marker::PhantomData;
 use core::mem::MaybeUninit;
 use core::ops::{
   Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub,
@@ -728,12 +728,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn iter_mut(&mut self) -> StaticVecIterMut<T, N> {
     StaticVecIterMut {
-      start: self.as_mut_ptr(),
-      end: match intrinsics::size_of::<T>() {
-        0 => (self.as_mut_ptr() as *mut u8).wrapping_add(self.length) as *mut T,
-        _ => unsafe { self.mut_ptr_at_unchecked(self.length) },
-      },
-      marker: PhantomData,
+      iter: slice_from_raw_parts_mut(self.as_mut_ptr(), self.length).iter_mut(),
     }
   }
 

@@ -1,9 +1,8 @@
-use crate::utils::{distance_between, slice_from_raw_parts, slice_from_raw_parts_mut};
+use crate::utils::{slice_from_raw_parts, slice_from_raw_parts_mut};
 use crate::StaticVec;
 use core::fmt::{self, Debug, Formatter};
-use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
-use core::marker::{PhantomData, Send, Sync};
+use core::marker::{Send, Sync};
 use core::mem::MaybeUninit;
 use core::ptr;
 use core::slice;
@@ -23,9 +22,7 @@ pub struct StaticVecIterConst<'a, T: 'a, const N: usize> {
 /// Similar to [`IterMut`](core::slice::IterMut), but specifically implemented with StaticVecs in
 /// mind.
 pub struct StaticVecIterMut<'a, T: 'a, const N: usize> {
-  pub(crate) start: *mut T,
-  pub(crate) end: *mut T,
-  pub(crate) marker: PhantomData<&'a mut T>,
+  pub(crate) iter: slice::IterMut<'a, T>,
 }
 
 /// A "consuming" iterator that reads each element out of
@@ -86,8 +83,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
 
   #[inline(always)]
   fn size_hint(&self) -> (usize, Option<usize>) {
-    let len = self.len();
-    (len, Some(len))
+    self.iter.size_hint()
   }
 }
 
@@ -132,16 +128,13 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
-    match self.len() {
-      0 => String::from("Empty iterator!"),
-      _ => unsafe {
-        // Safety: `start` and `end` are never null.
-        format!(
-          "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-          &*self.start,
-          &*self.end.offset(-1)
-        )
-      },
+    let slice = self.as_slice();
+    match (slice.first(), slice.last()) {
+      (Some(first), Some(last)) => format!(
+        "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
+        first, last
+      ),
+      _ => String::from("Empty iterator!"),
     }
   }
 
@@ -149,9 +142,8 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   /// `start` and `end` pointers. Though this is a mutable iterator, the slice cannot be mutable
   /// as it would lead to aliasing issues.
   #[inline(always)]
-  pub const fn as_slice(&self) -> &[T] {
-    // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    slice_from_raw_parts(self.start, distance_between(self.end, self.start))
+  pub fn as_slice(&self) -> &[T] {
+    self.iter.as_slice()
   }
 }
 
@@ -160,58 +152,36 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
 
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
-    match distance_between(self.end, self.start) {
-      0 => None,
-      _ => unsafe {
-        let res = Some(&mut *self.start);
-        self.start = match intrinsics::size_of::<T>() {
-          0 => (self.start as usize + 1) as *mut T,
-          _ => self.start.offset(1),
-        };
-        res
-      },
-    }
+    self.iter.next()
   }
 
   #[inline(always)]
   fn size_hint(&self) -> (usize, Option<usize>) {
-    let len = distance_between(self.end, self.start);
-    (len, Some(len))
+    self.iter.size_hint()
   }
 }
 
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
-    match distance_between(self.end, self.start) {
-      0 => None,
-      _ => unsafe {
-        self.end = match intrinsics::size_of::<T>() {
-          0 => (self.end as usize - 1) as *mut T,
-          _ => self.end.offset(-1),
-        };
-        Some(&mut *self.end)
-      },
-    }
+    self.iter.next_back()
   }
 }
 
 impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
-    distance_between(self.end, self.start)
+    self.iter.len()
   }
 
   #[inline(always)]
   fn is_empty(&self) -> bool {
-    distance_between(self.end, self.start) == 0
+    self.iter.is_empty()
   }
 }
 
 impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecIterMut<'a, T, N> {}
 unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecIterMut<'a, T, N> {}
-unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecIterMut<'a, T, N> {}
-unsafe impl<'a, T: 'a + Sync, const N: usize> Send for StaticVecIterMut<'a, T, N> {}
 
 impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterMut<'a, T, N> {
   #[inline(always)]

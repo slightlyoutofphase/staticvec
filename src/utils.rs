@@ -1,20 +1,7 @@
 use crate::StaticVec;
 use core::cmp::{Ordering, PartialOrd};
-use core::intrinsics;
 use core::mem::MaybeUninit;
 use core::ptr;
-
-/// An internal function for calculating pointer offsets as usizes, while accounting
-/// directly for possible ZSTs. This is used specifically in the iterator implementations.
-#[inline(always)]
-pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
-  match intrinsics::size_of::<T>() {
-    0 => unsafe { (dest as usize).wrapping_sub(origin as usize) },
-    // Safety: this function is used strictly with linear inputs
-    // where dest is known to come after origin.
-    _ => unsafe { intrinsics::ptr_offset_from(dest, origin) as usize },
-  }
-}
 
 /// A simple reversal function that returns a new array, called in
 /// [`StaticVec::reversed`](crate::StaticVec::reversed).
