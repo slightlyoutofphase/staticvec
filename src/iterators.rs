@@ -6,6 +6,7 @@ use core::iter::{FusedIterator, TrustedLen};
 use core::marker::{PhantomData, Send, Sync};
 use core::mem::MaybeUninit;
 use core::ptr;
+use core::slice;
 
 #[cfg(feature = "std")]
 use alloc::string::String;
@@ -14,10 +15,9 @@ use alloc::string::String;
 use alloc::format;
 
 /// Similar to [`Iter`](core::slice::Iter), but specifically implemented with StaticVecs in mind.
+#[derive(Clone)]
 pub struct StaticVecIterConst<'a, T: 'a, const N: usize> {
-  pub(crate) start: *const T,
-  pub(crate) end: *const T,
-  pub(crate) marker: PhantomData<&'a T>,
+  pub(crate) iter: slice::Iter<'a, T>,
 }
 
 /// Similar to [`IterMut`](core::slice::IterMut), but specifically implemented with StaticVecs in
@@ -58,25 +58,21 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   pub fn bounds_to_string(&self) -> String
   where T: Debug {
-    match self.len() {
-      0 => String::from("Empty iterator!"),
-      _ => unsafe {
-        // Safety: `start` and `end` are never null.
-        format!(
-          "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
-          &*self.start,
-          &*self.end.offset(-1)
-        )
-      },
+    let slice = self.as_slice();
+    match (slice.first(), slice.last()) {
+      (Some(first), Some(last)) => format!(
+        "Current value of element at `start`: {:?}\nCurrent value of element at `end`: {:?}",
+        first, last
+      ),
+      _ => String::from("Empty iterator!"),
     }
   }
 
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` pointers.
   #[inline(always)]
-  pub const fn as_slice(&self) -> &'a [T] {
-    // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    slice_from_raw_parts(self.start, distance_between(self.end, self.start))
+  pub fn as_slice(&self) -> &'a [T] {
+    self.iter.as_slice()
   }
 }
 
@@ -85,22 +81,12 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
 
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
-    match distance_between(self.end, self.start) {
-      0 => None,
-      _ => unsafe {
-        let res = Some(&*self.start);
-        self.start = match intrinsics::size_of::<T>() {
-          0 => (self.start as usize + 1) as *const T,
-          _ => self.start.offset(1),
-        };
-        res
-      },
-    }
+    self.iter.next()
   }
 
   #[inline(always)]
   fn size_hint(&self) -> (usize, Option<usize>) {
-    let len = distance_between(self.end, self.start);
+    let len = self.len();
     (len, Some(len))
   }
 }
@@ -108,46 +94,24 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
-    match distance_between(self.end, self.start) {
-      0 => None,
-      _ => unsafe {
-        self.end = match intrinsics::size_of::<T>() {
-          0 => (self.end as usize - 1) as *const T,
-          _ => self.end.offset(-1),
-        };
-        Some(&*self.end)
-      },
-    }
+    self.iter.next_back()
   }
 }
 
 impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
-    distance_between(self.end, self.start)
+    self.iter.len()
   }
 
   #[inline(always)]
   fn is_empty(&self) -> bool {
-    distance_between(self.end, self.start) == 0
+    self.iter.is_empty()
   }
 }
 
 impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecIterConst<'a, T, N> {}
 unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecIterConst<'a, T, N> {}
-unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecIterConst<'a, T, N> {}
-unsafe impl<'a, T: 'a + Sync, const N: usize> Send for StaticVecIterConst<'a, T, N> {}
-
-impl<'a, T: 'a, const N: usize> Clone for StaticVecIterConst<'a, T, N> {
-  #[inline(always)]
-  fn clone(&self) -> Self {
-    Self {
-      start: self.start,
-      end: self.end,
-      marker: self.marker,
-    }
-  }
-}
 
 impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
@@ -382,22 +346,10 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
 }
 
 impl<'a, T: 'a, const N: usize> StaticVecDrain<'a, T, N> {
-  /// Returns a string displaying the current values of the
-  /// iterator's `start` and `end` elements on two separate lines.
-  /// Locally requires that `T` implements [Debug](core::fmt::Debug)
-  /// to make it possible to pretty-print the elements.
-  #[cfg(feature = "std")]
-  #[doc(cfg(feature = "std"))]
-  #[inline(always)]
-  pub fn bounds_to_string(&self) -> String
-  where T: Debug {
-    self.iter.bounds_to_string()
-  }
-
   /// Returns an immutable slice consisting of the current range of elements the iterator has a view
   /// over.
   #[inline(always)]
-  pub const fn as_slice(&self) -> &[T] {
+  pub fn as_slice(&self) -> &[T] {
     self.iter.as_slice()
   }
 }

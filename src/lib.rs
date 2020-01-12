@@ -719,12 +719,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn iter(&self) -> StaticVecIterConst<T, N> {
     StaticVecIterConst {
-      start: self.as_ptr(),
-      end: match intrinsics::size_of::<T>() {
-        0 => (self.as_ptr() as *const u8).wrapping_add(self.length) as *const T,
-        _ => unsafe { self.ptr_at_unchecked(self.length) },
-      },
-      marker: PhantomData,
+      iter: slice_from_raw_parts(self.as_ptr(), self.length).iter(),
     }
   }
 
@@ -1192,12 +1187,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         start: end,
         length: length - end,
         iter: StaticVecIterConst {
-          start: self.ptr_at_unchecked(start),
-          end: match intrinsics::size_of::<T>() {
-            0 => (self.as_ptr() as *const u8).wrapping_add(end) as *const T,
-            _ => self.ptr_at_unchecked(end),
-          },
-          marker: PhantomData,
+          iter: slice_from_raw_parts(self.ptr_at_unchecked(start), end - start).iter(),
         },
         vec: self,
       }
