@@ -309,6 +309,13 @@ fn replace_range() {
 
 #[test]
 #[should_panic]
+fn replace_range_backwards_range() {
+  let mut s = MyString::from("12345");
+  s.replace_range(3..0, "789");
+}
+
+#[test]
+#[should_panic]
 fn replace_range_char_boundary() {
   let mut s = MyString::from("Hello, 世界!");
   s.replace_range(..8, "");
