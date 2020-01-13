@@ -74,7 +74,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` pointers.
   #[inline(always)]
-  pub const fn as_slice(&self) -> &[T] {
+  pub const fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     slice_from_raw_parts(self.start, distance_between(self.end, self.start))
   }
@@ -288,6 +288,17 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     slice_from_raw_parts(
       unsafe { StaticVec::first_ptr(&self.data).add(self.start) },
+      self.len(),
+    )
+  }
+
+  /// Returns a mutable slice consisting of the elements in the range between the iterator's
+  /// `start` and `end` indices.
+  #[inline(always)]
+  pub fn as_mut_slice(&mut self) -> &mut [T] {
+    // Safety: `start` is never null. This function will "at worst" return an empty slice.
+    slice_from_raw_parts_mut(
+      unsafe { StaticVec::first_ptr_mut(&mut self.data).add(self.start) },
       self.len(),
     )
   }
