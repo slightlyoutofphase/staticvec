@@ -560,9 +560,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
       let res = self_ptr.read();
-      self_ptr
-        .offset(1)
-        .copy_to(self_ptr, old_length - index - 1);
+      self_ptr.offset(1).copy_to(self_ptr, old_length - index - 1);
       self.set_len(old_length - 1);
       res
     }
