@@ -555,16 +555,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// that exist in later positions are shifted to the left.
   #[inline]
   pub fn remove(&mut self, index: usize) -> T {
-    // This is mostly the same as how normal Vec implements it.
-    let current_length = self.length;
-    assert!(index < current_length);
+    let old_length = self.length;
+    assert!(index < old_length);
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
       let res = self_ptr.read();
       self_ptr
         .offset(1)
-        .copy_to(self_ptr, current_length - index - 1);
-      self.set_len(current_length - 1);
+        .copy_to(self_ptr, old_length - index - 1);
+      self.set_len(old_length - 1);
       res
     }
   }
@@ -1134,7 +1133,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   // question.
   where R: RangeBounds<usize> {
     // Borrowed this part from normal Vec's implementation.
-    let current_length = self.length;
+    let old_length = self.length;
     let start = match range.start_bound() {
       Included(&idx) => idx,
       Excluded(&idx) => idx + 1,
@@ -1143,9 +1142,9 @@ impl<T, const N: usize> StaticVec<T, N> {
     let end = match range.end_bound() {
       Included(&idx) => idx + 1,
       Excluded(&idx) => idx,
-      Unbounded => current_length,
+      Unbounded => old_length,
     };
-    assert!(start <= end && end <= current_length);
+    assert!(start <= end && end <= old_length);
     let res_length = end - start;
     Self {
       data: {
@@ -1156,8 +1155,8 @@ impl<T, const N: usize> StaticVec<T, N> {
             .copy_to_nonoverlapping(Self::first_ptr_mut(&mut res), res_length);
           self
             .ptr_at_unchecked(end)
-            .copy_to(self.mut_ptr_at_unchecked(start), current_length - end);
-          self.set_len(current_length - res_length);
+            .copy_to(self.mut_ptr_at_unchecked(start), old_length - end);
+          self.set_len(old_length - res_length);
           res
         }
       },
