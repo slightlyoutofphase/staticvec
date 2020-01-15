@@ -1,4 +1,4 @@
-//! A fixed-capacity [`String`](std::string::String)-like struct built around an instance of
+//! A fixed-capacity [`String`](alloc::string::String)-like struct built around an instance of
 //! `StaticVec<u8, N>`.
 //!
 //! ## Examples
@@ -33,12 +33,15 @@ use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
 use core::ops::*;
 use core::str::{self, from_utf8, from_utf8_unchecked};
 
+#[cfg(all(feature = "std", rustdoc))]
+use alloc::string::String;
+
 mod string_errors;
 mod string_trait_impls;
 #[doc(hidden)]
 pub mod string_utils;
 
-/// A fixed-capacity [`String`](std::string::String)-like struct built around an instance of
+/// A fixed-capacity [`String`](alloc::string::String)-like struct built around an instance of
 /// `StaticVec<u8, N>`.
 #[derive(Clone)]
 pub struct StaticString<const N: usize> {

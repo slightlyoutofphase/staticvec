@@ -141,6 +141,22 @@ impl<'a, const N: usize> From<&'a str> for StaticString<N> {
   }
 }
 
+impl<const N1: usize, const N2: usize> From<StaticVec<u8, N1>> for StaticString<N2> {
+  #[inline(always)]
+  default fn from(vec: StaticVec<u8, N1>) -> Self {
+    Self::from_utf8(vec.as_slice()).expect("Invalid UTF-8!")
+  }
+}
+
+impl<const N: usize> From<StaticVec<u8, N>> for StaticString<N> {
+  #[inline(always)]
+  fn from(vec: StaticVec<u8, N>) -> Self {
+    unsafe {
+      Self::from_str_unchecked(core::str::from_utf8(vec.as_slice()).expect("Invalid UTF-8!"))
+    }
+  }
+}
+
 #[cfg(feature = "std")]
 impl<const N: usize> From<String> for StaticString<N> {
   #[inline(always)]

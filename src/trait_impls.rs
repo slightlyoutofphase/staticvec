@@ -1,6 +1,6 @@
 use crate::iterators::*;
 use crate::utils::{partial_compare, slice_from_raw_parts, slice_from_raw_parts_mut};
-use crate::StaticVec;
+use crate::{StaticString, StaticVec};
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
@@ -349,6 +349,20 @@ impl<T: Copy, const N: usize> From<&mut [T; N]> for StaticVec<T, N> {
   #[inline(always)]
   fn from(values: &mut [T; N]) -> Self {
     Self::new_from_slice(values)
+  }
+}
+
+impl<const N1: usize, const N2: usize> From<StaticString<N1>> for StaticVec<u8, N2> {
+  #[inline(always)]
+  default fn from(string: StaticString<N1>) -> Self {
+    Self::new_from_slice(string.as_bytes())
+  }
+}
+
+impl<const N: usize> From<StaticString<N>> for StaticVec<u8, N> {
+  #[inline(always)]
+  fn from(string: StaticString<N>) -> Self {
+    string.into_bytes()
   }
 }
 
