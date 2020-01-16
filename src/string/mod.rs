@@ -93,7 +93,6 @@ impl<const N: usize> StaticString<N> {
   /// # use staticvec::StaticString;
   /// let string = StaticString::<20>::from_str("My String");
   /// assert_eq!(string, "My String");
-  /// println!("{}", string);
   /// let truncate = "0".repeat(21);
   /// let truncated = "0".repeat(20);
   /// let string = StaticString::<20>::from_str(&truncate);
@@ -119,15 +118,12 @@ impl<const N: usize> StaticString<N> {
   /// 
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, CapacityError};
-  /// # fn main() -> Result<(), CapacityError> {
-  /// let string = StaticString::<20>::try_from_str("My String")?;
+  /// # use staticvec::StaticString;
+  /// let string = StaticString::<20>::from("My String");
   /// assert_eq!(string.as_str(), "My String");
-  /// assert_eq!(StaticString::<20>::try_from_str("")?.as_str(), "");
+  /// assert_eq!(StaticString::<20>::try_from_str("").unwrap().as_str(), "");
   /// let out_of_bounds = "0".repeat(21);
   /// assert!(StaticString::<20>::try_from_str(out_of_bounds).is_err());
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline(always)]
   pub fn try_from_str<S: AsRef<str>>(string: S) -> Result<Self, CapacityError<N>> {
@@ -172,14 +168,13 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, CapacityError};
-  /// # fn main() -> Result<(), CapacityError> {
-  /// let string = StaticString::<300>::try_from_iterator(&["My String", " My Other String"][..])?;
+  /// # use staticvec::StaticString;
+  /// let string = StaticString::<300>::try_from_iterator(
+  ///   &["My String", " My Other String"][..]
+  /// ).unwrap();
   /// assert_eq!(string.as_str(), "My String My Other String");
   /// let out_of_bounds = (0..100).map(|_| "000");
   /// assert!(StaticString::<20>::try_from_iterator(out_of_bounds).is_err());
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline]
   pub fn try_from_iterator<U: AsRef<str>, I: IntoIterator<Item = U>>(
@@ -592,14 +587,11 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, CapacityError};
-  /// # fn main() -> Result<(), CapacityError> {
-  /// let mut s = StaticString::<300>::try_from_str("My String")?;
-  /// s.try_push_str(" My other String")?;
+  /// # use staticvec::StaticString;
+  /// let mut s = StaticString::<300>::from("My String");
+  /// s.try_push_str(" My other String").unwrap();
   /// assert_eq!(s.as_str(), "My String My other String");
   /// assert!(s.try_push_str("0".repeat(300)).is_err());
-  /// # Ok(())
-  /// # }
   /// ```
   #[inline(always)]
   pub fn try_push_str<S: AsRef<str>>(&mut self, string: S) -> Result<(), CapacityError<N>> {
