@@ -119,7 +119,7 @@ impl<const N: usize> StaticString<N> {
   /// 
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, errors::CapacityError};
+  /// # use staticvec::{StaticString, CapacityError};
   /// # fn main() -> Result<(), CapacityError> {
   /// let string = StaticString::<20>::try_from_str("My String")?;
   /// assert_eq!(string.as_str(), "My String");
@@ -172,7 +172,7 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, errors::CapacityError};
+  /// # use staticvec::{StaticString, CapacityError};
   /// # fn main() -> Result<(), CapacityError> {
   /// let string = StaticString::<300>::try_from_iterator(&["My String", " My Other String"][..])?;
   /// assert_eq!(string.as_str(), "My String My Other String");
@@ -592,7 +592,7 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, errors::CapacityError};
+  /// # use staticvec::{StaticString, CapacityError};
   /// # fn main() -> Result<(), CapacityError> {
   /// let mut s = StaticString::<300>::try_from_str("My String")?;
   /// s.try_push_str(" My other String")?;
