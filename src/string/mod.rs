@@ -114,12 +114,13 @@ impl<const N: usize> StaticString<N> {
   }
 
   /// Creates a new StaticString from `string` if the length of `string` is less than or equal
-  /// to the StaticString's declared capacity, or returns [`StringError::OutOfBounds`] otherwise.
-  ///
+  /// to the StaticString's declared capacity, or returns a
+  /// [`CapacityError`](crate::errors::CapacityError) otherwise.
+  /// 
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
+  /// # use staticvec::{StaticString, errors::CapacityError};
+  /// # fn main() -> Result<(), CapacityError> {
   /// let string = StaticString::<20>::try_from_str("My String")?;
   /// assert_eq!(string.as_str(), "My String");
   /// assert_eq!(StaticString::<20>::try_from_str("")?.as_str(), "");
@@ -166,13 +167,13 @@ impl<const N: usize> StaticString<N> {
   }
 
   /// Creates a new StaticString from the contents of an iterator if the iterator has a length less
-  /// than or equal to the StaticString's declared capacity, or returns
-  /// [`StringError::OutOfBounds`] otherwise.
+  /// than or equal to the StaticString's declared capacity, or returns a
+  /// [`CapacityError`](crate::errors::CapacityError) otherwise.
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
+  /// # use staticvec::{StaticString, errors::CapacityError};
+  /// # fn main() -> Result<(), CapacityError> {
   /// let string = StaticString::<300>::try_from_iterator(&["My String", " My Other String"][..])?;
   /// assert_eq!(string.as_str(), "My String My Other String");
   /// let out_of_bounds = (0..100).map(|_| "000");
@@ -591,8 +592,8 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
-  /// # fn main() -> Result<(), StringError> {
+  /// # use staticvec::{StaticString, errors::CapacityError};
+  /// # fn main() -> Result<(), CapacityError> {
   /// let mut s = StaticString::<300>::try_from_str("My String")?;
   /// s.try_push_str(" My other String")?;
   /// assert_eq!(s.as_str(), "My String My other String");
