@@ -115,7 +115,7 @@ impl<const N: usize> StaticString<N> {
   /// Creates a new StaticString from `string` if the length of `string` is less than or equal
   /// to the StaticString's declared capacity, or returns a
   /// [`CapacityError`](crate::errors::CapacityError) otherwise.
-  /// 
+  ///
   /// Example usage:
   /// ```
   /// # use staticvec::StaticString;
