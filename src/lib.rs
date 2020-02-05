@@ -784,8 +784,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// Unlike [`sorted`](crate::StaticVec::sorted) and
   /// [`sorted_unstable`](crate::StaticVec::sorted_unstable), this function does not make use of
-  /// Rust's built-in sorting methods, but instead makes direct use of a fairly unsophisticated
-  /// recursive quicksort algorithm implemented in this crate.
+  /// Rust's built-in sorting methods, but instead makes direct use of a comparatively
+  /// unsophisticated recursive quicksort algorithm implemented in this crate.
   ///
   /// This has the advantage of only needing to have [`PartialOrd`](core::cmp::PartialOrd) as a
   /// constraint as opposed to [`Ord`](core::cmp::Ord), but is very likely less performant for
@@ -801,12 +801,15 @@ impl<T, const N: usize> StaticVec<T, N> {
       return self.clone();
     }
     let mut res = Self::new_data_uninit();
+    let res_ptr = Self::first_ptr_mut(&mut res);
+    // Copy the inhabited part of `self` into the array we'll use for the returned StaticVec.
     unsafe {
       self
         .as_ptr()
-        .copy_to_nonoverlapping(Self::first_ptr_mut(&mut res), length);
+        .copy_to_nonoverlapping(res_ptr, length);
     }
-    quicksort_internal(Self::first_ptr_mut(&mut res), 0, (length - 1) as isize);
+    // Sort the array, and then build and return a new StaticVec from it.
+    quicksort_internal(res_ptr, 0, (length - 1) as isize);
     Self { data: res, length }
   }
 
