@@ -17,5 +17,7 @@ cache:
   - '%USERPROFILE%\.cargo'
 build: false
 test_script:
+  # We run the suite once with all functionality enabled, and then once without
+  # the default features to make sure `no_std` support has not been broken
   - cargo test --features="std" --target=%target%
   - cargo test --no-default-features --target=%target%
