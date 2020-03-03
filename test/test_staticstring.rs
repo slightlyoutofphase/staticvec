@@ -1,5 +1,11 @@
 #![allow(clippy::all)]
 
+// In case you're wondering, the instances of `#[cfg_attr(all(windows, miri), ignore)]` in this
+// file above the `#[should_panic]` tests are there simply because Miri only supports catching
+// panics on Unix-like OSes and ignores `#[should_panic]` everywhere else, so without the
+// configuration attributes those tests just panic normally under Miri on Windows, which we don't
+// want.
+
 use staticvec::*;
 
 type MyString = StaticString<255>;
