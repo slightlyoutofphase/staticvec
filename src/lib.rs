@@ -278,12 +278,18 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a constant pointer to the first element of the StaticVec's internal array.
+  /// It is up to the caller to ensure that the StaticVec outlives the returned pointer,
+  /// as once the StaticVec is dropped the pointer will point to uninitialized or "garbage"
+  /// memory.
   #[inline(always)]
   pub const fn as_ptr(&self) -> *const T {
     Self::first_ptr(&self.data)
   }
 
   /// Returns a mutable pointer to the first element of the StaticVec's internal array.
+  /// It is up to the caller to ensure that the StaticVec outlives the returned pointer,
+  /// as once the StaticVec is dropped the pointer will point to uninitialized or "garbage"
+  /// memory.
   #[inline(always)]
   pub const fn as_mut_ptr(&mut self) -> *mut T {
     Self::first_ptr_mut(&mut self.data)
