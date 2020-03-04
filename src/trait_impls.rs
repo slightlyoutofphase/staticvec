@@ -865,9 +865,7 @@ where T: Deserialize<'de>
         let mut res = Self::Value::new();
         while res.length < N {
           if let Some(val) = seq.next_element()? {
-            unsafe {
-              res.push_unchecked(val);
-            }
+            unsafe { res.push_unchecked(val) };
           } else {
             break;
           }
