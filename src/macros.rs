@@ -17,9 +17,6 @@
 /// ```
 #[macro_export]
 macro_rules! staticvec {
-  ($val:ident) => (
-    $crate::StaticVec::new_from_array($val)
-  );
   ($($val:expr),*) => (
     $crate::StaticVec::new_from_const_array([$($val),*])
   );
