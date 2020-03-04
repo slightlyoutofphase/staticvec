@@ -941,6 +941,12 @@ fn macros() {
   assert_eq!(V3, [1, 2, 3, 4]);
   const V4: StaticVec<i32, 128> = staticvec![27; 128];
   assert!(V4 == [27; 128]);
+  const V5: [i32; 4] = [1, 2, 3, 4];
+  let v6 = staticvec!(V5);
+  assert_eq!(v6, [1, 2, 3, 4]);
+  let v7 = [1, 2, 3, 4];
+  let v8 = staticvec!(v7);
+  assert_eq!(v8, [1, 2, 3, 4]);
   static V: StaticVec<f64, 3> = sortedstaticvec!(f64, [16.0, 15.0, 14.0]);
   assert_eq!(V, [14.0, 15.0, 16.0]);
   assert_eq!(V.reversed().drain(0..1), [16.0]);
