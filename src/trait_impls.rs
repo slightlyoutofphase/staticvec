@@ -1,6 +1,7 @@
 use crate::iterators::*;
+use crate::string::StaticString;
 use crate::utils::{partial_compare, slice_from_raw_parts, slice_from_raw_parts_mut};
-use crate::{StaticString, StaticVec};
+use crate::StaticVec;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
