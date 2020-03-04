@@ -17,12 +17,12 @@
 /// ```
 #[macro_export]
 macro_rules! staticvec {
-  ($($val:expr),*) => (
+  ($($val:expr),* $(,)*) => {
     $crate::StaticVec::new_from_const_array([$($val),*])
-  );
-  ($val:expr; $n:expr) => (
+  };
+  ($val:expr; $n:expr) => {
     $crate::StaticVec::new_from_const_array([$val; $n])
-  );
+  };
 }
 
 /// Accepts an array of any primitive [`Copy`](core::marker::Copy) type that has a
