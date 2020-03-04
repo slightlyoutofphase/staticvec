@@ -14,9 +14,6 @@
 /// assert_eq!(V3, [1, 2, 3, 4]);
 /// const V4: StaticVec<i32, 128> = staticvec![27; 128];
 /// assert!(V4 == [27; 128]);
-/// static V5: [i32; 4] = [1, 2, 3, 4];
-/// let v6 = staticvec!(V5);
-/// assert_eq!(v6, [1, 2, 3, 4]);
 /// ```
 #[macro_export]
 macro_rules! staticvec {
@@ -26,9 +23,9 @@ macro_rules! staticvec {
   ($val:expr; $n:expr) => {
     $crate::StaticVec::new_from_const_array([$val; $n])
   };
-  ($val:ident) => {
-    $crate::StaticVec::from($val)
-  };
+  //($val:ident) => {
+    //$crate::StaticVec::from($val)
+  //};
 }
 
 /// Accepts an array of any primitive [`Copy`](core::marker::Copy) type that has a
