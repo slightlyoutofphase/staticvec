@@ -155,7 +155,10 @@ impl<T, const N: usize> StaticVec<T, N> {
               .as_ptr()
               .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), N2.min(N));
             // Wrap the values in a MaybeUninit to inhibit their destructors (if any),
-            // then manually drop any excess ones.
+            // then manually drop any excess ones. From the assembly output I've looked
+            // at, the compiler interprets this whole sequence in a way that doesn't result
+            // in any excess copying, so there should be no performance concerns for larger
+            // input arrays.
             let mut forgotten = MaybeUninit::new(values);
             ptr::drop_in_place(forgotten.get_mut().get_unchecked_mut(N2.min(N)..N2));
             data
@@ -481,9 +484,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn try_push(&mut self, value: T) -> Result<(), PushCapacityError<T, N>> {
     if self.is_not_full() {
-      unsafe {
-        self.push_unchecked(value);
-      };
+      unsafe { self.push_unchecked(value) };
       Ok(())
     } else {
       Err(PushCapacityError::new(value))
@@ -711,9 +712,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Removes all contents from the StaticVec and sets its length back to 0.
   #[inline(always)]
   pub fn clear(&mut self) {
-    unsafe {
-      ptr::drop_in_place(self.as_mut_slice());
-    }
+    unsafe { ptr::drop_in_place(self.as_mut_slice()) };
     self.length = 0;
   }
 
@@ -1003,11 +1002,11 @@ impl<T, const N: usize> StaticVec<T, N> {
     T: Clone,
   {
     let mut res = StaticVec::new();
-    for i in 0..self.length {
-      unsafe { res.push_unchecked(self.get_unchecked(i).clone()) };
+    for item in self {
+      unsafe { res.push_unchecked(item.clone()) };
     }
-    for i in 0..other.length {
-      unsafe { res.push_unchecked(other.get_unchecked(i).clone()) };
+    for item in other {
+      unsafe { res.push_unchecked(item.clone()) };
     }
     res
   }
@@ -1093,6 +1092,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let item_count = vec_len.min(N);
     Self {
       data: {
+        // Set the length of `vec` to 0 to prevent double-drops.
         unsafe { vec.set_len(0) };
         let mut data = Self::new_data_uninit();
         unsafe {
@@ -1128,6 +1128,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         .as_ptr()
         .copy_to_nonoverlapping(res.as_mut_ptr(), length);
       res.set_len(length);
+      // Set the length of `self` to 0 to prevent double-drops.
       self.set_len(0);
       res
     }

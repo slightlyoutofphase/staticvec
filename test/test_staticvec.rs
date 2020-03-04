@@ -946,6 +946,8 @@ fn macros() {
   assert_eq!(V.reversed().drain(0..1), [16.0]);
   static VV: StaticVec<f64, 0> = sortedstaticvec!(f64, []);
   assert_eq!(VV, []);
+  // Test trailing commas
+  assert_eq!(staticvec![1, 2, 3, 4,], staticvec![1, 2, 3, 4]);
 }
 
 #[test]
