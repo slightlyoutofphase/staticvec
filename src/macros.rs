@@ -1,7 +1,7 @@
 /// Creates a new [`StaticVec`](crate::StaticVec) from a [`vec!`](alloc::vec::Vec)-style
 /// pseudo-slice. The newly created [`StaticVec`](crate::StaticVec) will have a capacity and length
-/// exactly equal to the number of elements in the slice. The "array-like" `[value; N]` syntax is
-/// also supported, and both forms can be used in const contexts.
+/// exactly equal to the number of elements in the so-called slice. The "array-like" `[value; N]`
+/// syntax is also supported, and both forms can be used in const contexts.
 ///
 /// Example usage:
 /// ```
@@ -14,6 +14,9 @@
 /// assert_eq!(V3, [1, 2, 3, 4]);
 /// const V4: StaticVec<i32, 128> = staticvec![27; 128];
 /// assert!(V4 == [27; 128]);
+/// const V5: [i32; 4] = [1, 2, 3, 4];
+/// let v6 = staticvec!(V5);
+/// assert_eq!(v6, [1, 2, 3, 4]);
 /// ```
 #[macro_export]
 macro_rules! staticvec {
@@ -22,6 +25,9 @@ macro_rules! staticvec {
   };
   ($($val:expr),* $(,)*) => {
     $crate::StaticVec::new_from_const_array([$($val),*])
+  };
+  ($val:expr) => {
+    $crate::StaticVec::new_from_const_array($val)
   };
 }
 
