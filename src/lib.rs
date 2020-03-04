@@ -278,18 +278,18 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a constant pointer to the first element of the StaticVec's internal array.
-  /// It is up to the caller to ensure that the StaticVec outlives the returned pointer,
-  /// as once the StaticVec is dropped the pointer will point to uninitialized or "garbage"
-  /// memory.
+  /// It is up to the caller to ensure that the StaticVec lives for as long as they intend
+  /// to make use of the returned pointer, as once the StaticVec is dropped the pointer will
+  /// point to uninitialized or "garbage" memory.
   #[inline(always)]
   pub const fn as_ptr(&self) -> *const T {
     Self::first_ptr(&self.data)
   }
 
   /// Returns a mutable pointer to the first element of the StaticVec's internal array.
-  /// It is up to the caller to ensure that the StaticVec outlives the returned pointer,
-  /// as once the StaticVec is dropped the pointer will point to uninitialized or "garbage"
-  /// memory.
+  /// It is up to the caller to ensure that the StaticVec lives for as long as they intend
+  /// to make use of the returned pointer, as once the StaticVec is dropped the pointer will
+  /// point to uninitialized or "garbage" memory.
   #[inline(always)]
   pub const fn as_mut_ptr(&mut self) -> *mut T {
     Self::first_ptr_mut(&mut self.data)
@@ -1270,9 +1270,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// and the new one will contain elements `at..self.len()`.
   #[inline]
   pub fn split_off(&mut self, at: usize) -> Self {
-    let length = self.length;
-    assert!(at <= length);
-    let split_length = length - at;
+    let old_length = self.length;
+    assert!(at <= old_length);
+    let split_length = old_length - at;
     Self {
       data: unsafe {
         self.set_len(at);
