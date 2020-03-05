@@ -21,9 +21,15 @@ pub struct StaticHeapIter<'a, T: 'a, const N: usize> {
 ///
 /// [`into_iter`]: struct.StaticHeap.html#method.into_iter
 /// [`StaticHeap`]: struct.StaticHeap.html
-//#[derive(Clone)]
+#[derive(Clone)]
 pub struct StaticHeapIntoIter<T, const N: usize> {
   pub(crate) iter: StaticVecIntoIter<T, N>,
+}
+
+/// A sorted "consuming" iterator over the elements of a [`StaticHeap`].
+#[derive(Clone, Debug)]
+pub struct StaticHeapIntoIterSorted<T, const N: usize> {
+  pub(crate) inner: StaticHeap<T, N>,
 }
 
 /// A "draining" iterator over the elements of a [`StaticHeap`].
@@ -78,15 +84,20 @@ impl<'a, T, const N: usize> DoubleEndedIterator for StaticHeapIter<'a, T, N> {
 
 impl<T, const N: usize> ExactSizeIterator for StaticHeapIter<'_, T, N> {
   #[inline(always)]
+  fn len(&self) -> usize {
+    self.iter.len()
+  }
+
+  #[inline(always)]
   fn is_empty(&self) -> bool {
     self.iter.is_empty()
   }
 }
 
 impl<T, const N: usize> FusedIterator for StaticHeapIter<'_, T, N> {}
-
-// To be uncommented later
-// unsafe impl<T, const N: usize> TrustedLen for StaticHeapIter<'_, T, N> {}
+unsafe impl<T, const N: usize> TrustedLen for StaticHeapIter<'_, T, N> {}
+unsafe impl<T: Sync, const N: usize> Sync for StaticHeapIter<'_, T, N> {}
+unsafe impl<T: Sync, const N: usize> Send for StaticHeapIter<'_, T, N> {}
 
 impl<T, const N: usize> Clone for StaticHeapIter<'_, T, N> {
   #[inline(always)]
@@ -129,15 +140,20 @@ impl<T, const N: usize> DoubleEndedIterator for StaticHeapIntoIter<T, N> {
 
 impl<T, const N: usize> ExactSizeIterator for StaticHeapIntoIter<T, N> {
   #[inline(always)]
+  fn len(&self) -> usize {
+    self.iter.len()
+  }
+
+  #[inline(always)]
   fn is_empty(&self) -> bool {
     self.iter.is_empty()
   }
 }
 
 impl<T, const N: usize> FusedIterator for StaticHeapIntoIter<T, N> {}
-
-// To be uncommented later
-// unsafe impl<T, const N: usize> TrustedLen for StaticHeapIntoIter<'_, T, N> {}
+unsafe impl<T, const N: usize> TrustedLen for StaticHeapIntoIter<T, N> {}
+unsafe impl<T: Sync, const N: usize> Sync for StaticHeapIntoIter<T, N> {}
+unsafe impl<T: Sync, const N: usize> Send for StaticHeapIntoIter<T, N> {}
 
 impl<T: Debug, const N: usize> Debug for StaticHeapIntoIter<T, N> {
   #[inline(always)]
@@ -146,12 +162,6 @@ impl<T: Debug, const N: usize> Debug for StaticHeapIntoIter<T, N> {
       .field(&self.iter.as_slice())
       .finish()
   }
-}
-
-/// A sorted "consuming" iterator over the elements of a [`StaticHeap`].
-#[derive(Clone, Debug)]
-pub struct StaticHeapIntoIterSorted<T, const N: usize> {
-  pub(crate) inner: StaticHeap<T, N>,
 }
 
 impl<T: Ord, const N: usize> Iterator for StaticHeapIntoIterSorted<T, N> {
@@ -169,11 +179,22 @@ impl<T: Ord, const N: usize> Iterator for StaticHeapIntoIterSorted<T, N> {
   }
 }
 
-impl<T: Ord, const N: usize> ExactSizeIterator for StaticHeapIntoIterSorted<T, N> {}
+impl<T: Ord, const N: usize> ExactSizeIterator for StaticHeapIntoIterSorted<T, N> {
+  #[inline(always)]
+  fn len(&self) -> usize {
+    self.inner.len()
+  }
+
+  #[inline(always)]
+  fn is_empty(&self) -> bool {
+    self.inner.is_empty()
+  }
+}
 
 impl<T: Ord, const N: usize> FusedIterator for StaticHeapIntoIterSorted<T, N> {}
-
 unsafe impl<T: Ord, const N: usize> TrustedLen for StaticHeapIntoIterSorted<T, N> {}
+unsafe impl<T: Ord + Sync, const N: usize> Sync for StaticHeapIntoIterSorted<T, N> {}
+unsafe impl<T: Ord + Sync, const N: usize> Send for StaticHeapIntoIterSorted<T, N> {}
 
 impl<T, const N: usize> Iterator for StaticHeapDrain<'_, T, N> {
   type Item = T;
@@ -198,12 +219,20 @@ impl<T, const N: usize> DoubleEndedIterator for StaticHeapDrain<'_, T, N> {
 
 impl<T, const N: usize> ExactSizeIterator for StaticHeapDrain<'_, T, N> {
   #[inline(always)]
+  fn len(&self) -> usize {
+    self.iter.len()
+  }
+
+  #[inline(always)]
   fn is_empty(&self) -> bool {
     self.iter.is_empty()
   }
 }
 
 impl<T, const N: usize> FusedIterator for StaticHeapDrain<'_, T, N> {}
+unsafe impl<T, const N: usize> TrustedLen for StaticHeapDrain<'_, T, N> {}
+unsafe impl<T: Sync, const N: usize> Sync for StaticHeapDrain<'_, T, N> {}
+unsafe impl<T: Sync, const N: usize> Send for StaticHeapDrain<'_, T, N> {}
 
 impl<T: Ord, const N: usize> Iterator for StaticHeapDrainSorted<'_, T, N> {
   type Item = T;
@@ -220,11 +249,22 @@ impl<T: Ord, const N: usize> Iterator for StaticHeapDrainSorted<'_, T, N> {
   }
 }
 
-impl<T: Ord, const N: usize> ExactSizeIterator for StaticHeapDrainSorted<'_, T, N> {}
+impl<T: Ord, const N: usize> ExactSizeIterator for StaticHeapDrainSorted<'_, T, N> {
+  #[inline(always)]
+  fn len(&self) -> usize {
+    self.inner.len()
+  }
+
+  #[inline(always)]
+  fn is_empty(&self) -> bool {
+    self.inner.is_empty()
+  }
+}
 
 impl<T: Ord, const N: usize> FusedIterator for StaticHeapDrainSorted<'_, T, N> {}
-
 unsafe impl<T: Ord, const N: usize> TrustedLen for StaticHeapDrainSorted<'_, T, N> {}
+unsafe impl<T: Ord + Sync, const N: usize> Sync for StaticHeapDrainSorted<'_, T, N> {}
+unsafe impl<T: Ord + Sync, const N: usize> Send for StaticHeapDrainSorted<'_, T, N> {}
 
 impl<'a, T: Ord, const N: usize> Drop for StaticHeapDrainSorted<'a, T, N> {
   /// Removes heap elements in heap order.
