@@ -271,9 +271,10 @@ fn into_iter_sorted_collect() {
 #[test]
 fn panic_safe() {
   use core::cmp;
-  use rand::{seq::SliceRandom, thread_rng};
+  use oorandom::Rand32;
   use std::panic::{self, AssertUnwindSafe};
   use std::sync::atomic::{AtomicUsize, Ordering};
+  use std::time::SystemTime;
 
   static DROP_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
@@ -297,8 +298,14 @@ fn panic_safe() {
   }
 
   type PanicVec = StaticVec<PanicOrd<i32>, 64>;
-
-  let mut rng = thread_rng();
+  
+  let rng = Rand32::new(
+    SystemTime::now()
+    .duration_since(SystemTime::UNIX_EPOCH)
+    .unwrap()
+    .as_secs()
+  );
+  
   const DATASZ: i32 = 32;
   #[cfg(not(miri))] // Miri is too slow
   const NTEST: i32 = 10;
@@ -321,7 +328,10 @@ fn panic_safe() {
       let panic_item = PanicOrd(i, true);
 
       // heapify the sane items
-      panic_ords.shuffle(&mut rng);
+      for i in (1..panic_ords.len()).rev() {
+        panic_ords.swap(i, rng.rand_range(0u32..((i + 1) as u32)) as usize);
+      }
+      
       let mut heap = StaticHeap::from(panic_ords);
       let inner_data;
 
