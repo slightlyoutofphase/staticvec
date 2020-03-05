@@ -416,7 +416,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// }
   /// ```
   #[inline(always)]
-  pub fn iter(&self) -> crate::StaticVecIterConst<'_, T, N> {
+  pub fn iter(&self) -> StaticVecIterConst<'_, T, N> {
     self.data.iter()
   }
 
