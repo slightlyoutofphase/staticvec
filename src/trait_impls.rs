@@ -1,3 +1,4 @@
+use crate::heap::StaticHeap;
 use crate::iterators::*;
 use crate::string::StaticString;
 use crate::utils::{partial_compare, slice_from_raw_parts, slice_from_raw_parts_mut};
@@ -162,9 +163,7 @@ impl<T, const N: usize> DerefMut for StaticVec<T, N> {
 impl<T, const N: usize> Drop for StaticVec<T, N> {
   #[inline(always)]
   fn drop(&mut self) {
-    unsafe {
-      ptr::drop_in_place(self.as_mut_slice());
-    }
+    unsafe { ptr::drop_in_place(self.as_mut_slice()) };
   }
 }
 
@@ -172,7 +171,7 @@ impl<T: Eq, const N: usize> Eq for StaticVec<T, N> {}
 
 /// A helper trait for specialization-based implementations of [`Extend`](core::iter::Extend) and
 /// ['FromIterator`](core::iter::FromIterator).
-trait ExtendEx<T, I> {
+pub(crate) trait ExtendEx<T, I> {
   fn extend_ex(&mut self, iter: I);
   fn from_iter_ex(iter: I) -> Self;
 }
@@ -350,6 +349,13 @@ impl<T: Copy, const N: usize> From<&mut [T; N]> for StaticVec<T, N> {
   #[inline(always)]
   fn from(values: &mut [T; N]) -> Self {
     Self::new_from_slice(values)
+  }
+}
+
+impl<T, const N: usize> From<StaticHeap<T, N>> for StaticVec<T, N> {
+  #[inline(always)]
+  fn from(heap: StaticHeap<T, N>) -> StaticVec<T, N> {
+    heap.data
   }
 }
 

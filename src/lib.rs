@@ -27,9 +27,9 @@
 #![feature(untagged_unions)]
 
 pub use crate::errors::{CapacityError, PushCapacityError};
+pub use crate::heap::{heap_helpers::StaticHeapPeekMut, heap_iterators::*, StaticHeap};
 pub use crate::iterators::*;
-pub use crate::string::string_utils;
-pub use crate::string::{StaticString, StringError};
+pub use crate::string::{string_utils, StaticString, StringError};
 use crate::utils::{
   quicksort_internal, reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut,
 };
@@ -62,8 +62,10 @@ mod macros;
 #[doc(hidden)]
 mod errors;
 #[doc(hidden)]
+mod heap;
+#[doc(hidden)]
 mod string;
-mod trait_impls;
+pub(crate) mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
 
@@ -809,9 +811,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let res_ptr = Self::first_ptr_mut(&mut res);
     // Copy the inhabited part of `self` into the array we'll use for the returned StaticVec.
     unsafe {
-      self
-        .as_ptr()
-        .copy_to_nonoverlapping(res_ptr, length);
+      self.as_ptr().copy_to_nonoverlapping(res_ptr, length);
     }
     // Sort the array, and then build and return a new StaticVec from it.
     quicksort_internal(res_ptr, 0, (length - 1) as isize);

@@ -70,6 +70,10 @@ path = "test/test_staticvec.rs"
 name = "test_staticstring"
 path = "test/test_staticstring.rs"
 
+[[test]]
+name = "test_staticheap"
+path = "test/test_staticheap.rs"
+
 [[bench]]
 name = "arrayvec_arraystring_suite"
 path = "benchmark/arrayvec_arraystring_suite.rs"
@@ -113,3 +117,4 @@ serde_json = { optional = true, version = "1.0" }
 [dev-dependencies]
 # This is used in the test suite.
 cool_asserts = "1.0.0"
+rand = "0.7.3"
