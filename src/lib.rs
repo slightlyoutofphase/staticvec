@@ -27,7 +27,10 @@
 #![feature(untagged_unions)]
 
 pub use crate::errors::{CapacityError, PushCapacityError};
-pub use crate::heap::{heap_helpers::StaticHeapPeekMut, heap_iterators::*, StaticHeap};
+pub use crate::heap::{
+  StaticHeap, StaticHeapDrain, StaticHeapDrainSorted, StaticHeapIter, StaticHeapIntoIter,
+  StaticHeapPeekMut,
+};
 pub use crate::iterators::*;
 pub use crate::string::{string_utils, StaticString, StringError};
 use crate::utils::{
