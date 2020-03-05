@@ -727,14 +727,16 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn iter(&self) -> StaticVecIterConst<T, N> {
     let start_ptr = self.as_ptr();
-    intrinsics::assume(!is_null_const(start_ptr));
-    StaticVecIterConst {
-      start: start_ptr,
-      end: match intrinsics::size_of::<T>() {
-        0 => (start_ptr as *const u8).wrapping_add(self.length) as *const T,
-        _ => unsafe { start_ptr.add(self.length) },
-      },
-      marker: PhantomData,
+    unsafe {
+      intrinsics::assume(!is_null_const(start_ptr));
+      StaticVecIterConst {
+        start: start_ptr,
+        end: match intrinsics::size_of::<T>() {
+          0 => (start_ptr as *const u8).wrapping_add(self.length) as *const T,
+          _ => start_ptr.add(self.length),
+        },
+        marker: PhantomData,
+      }
     }
   }
 
@@ -743,14 +745,16 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn iter_mut(&mut self) -> StaticVecIterMut<T, N> {
     let start_ptr = self.as_mut_ptr();
-    intrinsics::assume(!is_null_mut(start_ptr));
-    StaticVecIterMut {
-      start: start_ptr,
-      end: match intrinsics::size_of::<T>() {
-        0 => (start_ptr as *mut u8).wrapping_add(self.length) as *mut T,
-        _ => unsafe { start_ptr.add(self.length) },
-      },
-      marker: PhantomData,
+    unsafe {
+      intrinsics::assume(!is_null_mut(start_ptr));
+      StaticVecIterMut {
+        start: start_ptr,
+        end: match intrinsics::size_of::<T>() {
+          0 => (start_ptr as *mut u8).wrapping_add(self.length) as *mut T,
+          _ => start_ptr.add(self.length),
+        },
+        marker: PhantomData,
+      }
     }
   }
 
