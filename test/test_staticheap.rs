@@ -299,7 +299,7 @@ fn panic_safe() {
 
   type PanicVec = StaticVec<PanicOrd<i32>, 64>;
   
-  let rng = Rand32::new(
+  let mut rng = Rand32::new(
     SystemTime::now()
     .duration_since(SystemTime::UNIX_EPOCH)
     .unwrap()
