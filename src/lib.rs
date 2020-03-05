@@ -34,7 +34,8 @@ pub use crate::heap::{
 pub use crate::iterators::*;
 pub use crate::string::{string_utils, StaticString, StringError};
 use crate::utils::{
-  quicksort_internal, reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut,
+  is_null_const, is_null_mut, quicksort_internal, reverse_copy, slice_from_raw_parts,
+  slice_from_raw_parts_mut,
 };
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics;
@@ -725,11 +726,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// inhabited area.
   #[inline(always)]
   pub fn iter(&self) -> StaticVecIterConst<T, N> {
+    let start_ptr = self.as_ptr();
+    intrinsics::assume(!is_null_const(start_ptr));
     StaticVecIterConst {
-      start: self.as_ptr(),
+      start: start_ptr,
       end: match intrinsics::size_of::<T>() {
-        0 => (self.as_ptr() as *const u8).wrapping_add(self.length) as *const T,
-        _ => unsafe { self.ptr_at_unchecked(self.length) },
+        0 => (start_ptr as *const u8).wrapping_add(self.length) as *const T,
+        _ => unsafe { start_ptr.add(self.length) },
       },
       marker: PhantomData,
     }
@@ -739,11 +742,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// inhabited area.
   #[inline(always)]
   pub fn iter_mut(&mut self) -> StaticVecIterMut<T, N> {
+    let start_ptr = self.as_mut_ptr();
+    intrinsics::assume(!is_null_mut(start_ptr));
     StaticVecIterMut {
-      start: self.as_mut_ptr(),
+      start: start_ptr,
       end: match intrinsics::size_of::<T>() {
-        0 => (self.as_mut_ptr() as *mut u8).wrapping_add(self.length) as *mut T,
-        _ => unsafe { self.mut_ptr_at_unchecked(self.length) },
+        0 => (start_ptr as *mut u8).wrapping_add(self.length) as *mut T,
+        _ => unsafe { start_ptr.add(self.length) },
       },
       marker: PhantomData,
     }
