@@ -1,4 +1,5 @@
 use self::{heap_helpers::*, heap_iterators::*};
+use crate::iterators::StaticVecIterConst;
 use crate::StaticVec;
 use core::intrinsics::size_of;
 use core::mem::swap;
