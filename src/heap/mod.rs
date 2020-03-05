@@ -8,6 +8,7 @@ pub mod heap_iterators;
 mod heap_trait_impls;
 
 /// A priority queue implemented with a binary heap, built around an instance of `StaticVec<T, N>`.
+///
 /// `StaticHeap`, as well as the associated iterator and helper structs for it are direct
 /// adaptations of the ones found in the `std::collections::binary_heap` module (including the
 /// documentation).
@@ -96,7 +97,7 @@ pub struct StaticHeap<T, const N: usize> {
 }
 
 impl<T: Ord, const N: usize> StaticHeap<T, N> {
-  /// Creates an empty `StaticHeap` as a max-heap.
+  /// Creates an empty StaticHeap as a max-heap.
   ///
   /// # Examples
   ///
@@ -113,7 +114,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     }
   }
 
-  /// Returns a mutable reference to the greatest item in the binary heap, or
+  /// Returns a mutable reference to the greatest item in the StaticHeap, or
   /// `None` if it is empty.
   ///
   /// Note: If the `StaticHeapPeekMut` value is leaked, the heap may be in an
@@ -179,7 +180,8 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     })
   }
 
-  /// Pushes an item onto the binary heap.
+  /// Pushes an item onto the StaticHeap, panicking if the underlying StaticVec
+  /// instance is already at maximum capacity.
   ///
   /// # Examples
   ///
@@ -216,7 +218,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     self.sift_up(0, old_len);
   }
 
-  /// Consumes the `StaticHeap` and returns a vector in sorted (ascending) order.
+  /// Consumes the StaticHeap and returns a StaticVec in sorted (ascending) order.
   ///
   /// # Examples
   ///
@@ -264,7 +266,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     }
   }
 
-  /// Take an element at `position` and move it down the heap,
+  /// Takes an element from `position` and moves it down the heap,
   /// while its children are larger.
   #[inline]
   fn sift_down_range(&mut self, position: usize, end: usize) {
@@ -293,8 +295,8 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     self.sift_down_range(position, len);
   }
 
-  /// Take an element at `position` and move it all the way down the heap,
-  /// then sift it up to its position.
+  /// Takes an element from `position` and moves it all the way down the heap,
+  /// then sifts it up to its position.
   ///
   /// Note: This is faster when the element is known to be large / should
   /// be closer to the bottom.
@@ -401,7 +403,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
 }
 
 impl<T, const N: usize> StaticHeap<T, N> {
-  /// Returns an iterator visiting all values in the underlying vector, in
+  /// Returns an iterator visiting all values in the underlying StaticVec, in
   /// arbitrary order.
   ///
   /// # Examples
@@ -421,7 +423,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
   }
 
   /// Returns an iterator which retrieves elements in heap order.
-  /// This method consumes the original heap.
+  /// This method consumes the original StaticHeap.
   ///
   /// # Examples
   ///
@@ -438,7 +440,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
     StaticHeapIntoIterSorted { inner: self }
   }
 
-  /// Returns the greatest item in the binary heap, or `None` if it is empty.
+  /// Returns the greatest item in the StaticHeap, or `None` if it is empty.
   ///
   /// # Examples
   ///
@@ -461,7 +463,8 @@ impl<T, const N: usize> StaticHeap<T, N> {
     self.data.get(0)
   }
 
-  /// Returns the number of elements the binary heap can hold without reallocating.
+  /// Returns the maximum number of elements the StaticHeap can hold.
+  /// This is always equivalent to its constant generic `N` parameter.
   ///
   /// # Examples
   ///
@@ -477,7 +480,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
     self.data.capacity()
   }
 
-  /// Consumes the `StaticHeap` and returns the underlying vector
+  /// Consumes the StaticHeap and returns the underlying StaticVec
   /// in arbitrary order.
   ///
   /// # Examples
@@ -497,7 +500,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
     self.into()
   }
 
-  /// Returns the length of the binary heap.
+  /// Returns the length of the StaticHeap.
   ///
   /// # Examples
   ///
