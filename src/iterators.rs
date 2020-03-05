@@ -103,6 +103,11 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
     let len = distance_between(self.end, self.start);
     (len, Some(len))
   }
+  
+  #[inline(always)]
+  fn count(self) -> usize {
+    self.len()
+  }
 }
 
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
