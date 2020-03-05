@@ -436,6 +436,9 @@ fn to_vec() {
 #[test]
 fn trusted_len() {
   let heap = StaticHeap::from(staticvec![2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]);
+  check_trusted_len(heap.len(), heap.clone().iter());
+  check_trusted_len(heap.len(), heap.clone().into_iter());
   check_trusted_len(heap.len(), heap.clone().into_iter_sorted());
+  check_trusted_len(heap.len(), heap.clone().drain());
   check_trusted_len(heap.len(), heap.clone().drain_sorted());
 }
