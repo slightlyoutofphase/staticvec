@@ -6,4 +6,4 @@ rustup set profile minimal
 rustup default "$MIRI_NIGHTLY"
 rustup component add miri
 cargo miri setup
-cargo miri test --features="std"
+cargo miri test --features="std" -- -Zmiri-disable-isolation
