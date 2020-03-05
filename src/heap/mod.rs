@@ -504,7 +504,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// }
   /// ```
   #[inline(always)]
-  pub const fn into_vec(self) -> StaticVec<T, N> {
+  pub fn into_vec(self) -> StaticVec<T, N> {
     self.data
   }
 
