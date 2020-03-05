@@ -1,11 +1,13 @@
-use self::{heap_helpers::*, heap_iterators::*};
+use self::heap_helpers::StaticHeapHole;
+pub use self::heap_helpers::StaticHeapPeekMut;
+pub use self::heap_iterators::*;
 use crate::iterators::StaticVecIterConst;
 use crate::StaticVec;
 use core::intrinsics::size_of;
 use core::mem::swap;
 
-pub mod heap_helpers;
-pub mod heap_iterators;
+mod heap_helpers;
+mod heap_iterators;
 mod heap_trait_impls;
 
 /// A priority queue implemented with a binary heap, built around an instance of `StaticVec<T, N>`.
@@ -142,7 +144,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
   ///
   /// Cost is O(1) in the worst case.
   #[inline(always)]
-  pub fn peek_mut(&mut self) -> Option<StaticHeapPeekMut<'_, T, N>> {
+  pub const fn peek_mut(&mut self) -> Option<StaticHeapPeekMut<'_, T, N>> {
     if self.is_empty() {
       None
     } else {
@@ -348,6 +350,11 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
   /// ```
   #[inline]
   pub fn append(&mut self, other: &mut Self) {
+    // TODO: Investigate further whether the below calculations are
+    // actually applicable the same way they are for normal BinaryHeap,
+    // as our `Extend` and `Append` implementations are somewhat different
+    // (we have more specializations for `Extend`, for example.
+    
     if self.len() < other.len() {
       swap(self, other);
     }
@@ -398,7 +405,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
   /// assert_eq!(heap.len(), 0);
   /// ```
   #[inline(always)]
-  pub fn drain_sorted(&mut self) -> StaticHeapDrainSorted<'_, T, N> {
+  pub const fn drain_sorted(&mut self) -> StaticHeapDrainSorted<'_, T, N> {
     StaticHeapDrainSorted { inner: self }
   }
 }
@@ -437,7 +444,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// );
   /// ```
   #[inline(always)]
-  pub fn into_iter_sorted(self) -> StaticHeapIntoIterSorted<T, N> {
+  pub const fn into_iter_sorted(self) -> StaticHeapIntoIterSorted<T, N> {
     StaticHeapIntoIterSorted { inner: self }
   }
 
@@ -497,8 +504,8 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// }
   /// ```
   #[inline(always)]
-  pub fn into_vec(self) -> StaticVec<T, N> {
-    self.into()
+  pub const fn into_vec(self) -> StaticVec<T, N> {
+    self.data
   }
 
   /// Returns the length of the StaticHeap.
@@ -532,6 +539,26 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// ```
   #[inline(always)]
   pub const fn is_empty(&self) -> bool {
+    self.len() == 0
+  }
+  
+  /// Checks if the StaticHeap is full (that is, if `self.len() == N`).
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut heap = StaticHeap::<i32, 4>::new();
+  /// assert!(!heap.is_full());
+  /// heap.push(3);
+  /// heap.push(5);
+  /// heap.push(1);
+  /// heap.push(2);
+  /// assert!(heap.is_full());
+  /// ```
+  #[inline(always)]
+  pub const fn is_full(&self) -> bool {
     self.len() == 0
   }
 
