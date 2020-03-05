@@ -434,25 +434,19 @@ fn push_unique() {
 
 #[test]
 fn to_vec() {
-  check_to_vec(StaticVec::from([]));
-  check_to_vec(StaticVec::from([5]));
-  check_to_vec(StaticVec::from([3, 2]));
-  check_to_vec(StaticVec::from([2, 3]));
-  check_to_vec(StaticVec::from([5, 1, 2]));
-  check_to_vec(StaticVec::from([1, 100, 2, 3]));
-  check_to_vec(StaticVec::from([1, 3, 5, 7, 9, 2, 4, 6, 8, 0]));
-  check_to_vec(StaticVec::from([2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]));
-  check_to_vec(StaticVec::from([
-    9, 11, 9, 9, 9, 9, 11, 2, 3, 4, 11, 9, 0, 0, 0, 0,
-  ]));
-  check_to_vec(StaticVec::from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
-  check_to_vec(StaticVec::from([10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
-  check_to_vec(StaticVec::from([
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 1, 2,
-  ]));
-  check_to_vec(StaticVec::from([
-    5, 4, 3, 2, 1, 5, 4, 3, 2, 1, 5, 4, 3, 2, 1,
-  ]));
+  check_to_vec(staticvec![]);
+  check_to_vec(staticvec![5]);
+  check_to_vec(staticvec![3, 2]);
+  check_to_vec(staticvec![2, 3]);
+  check_to_vec(staticvec![5, 1, 2]);
+  check_to_vec(staticvec![1, 100, 2, 3]);
+  check_to_vec(staticvec![1, 3, 5, 7, 9, 2, 4, 6, 8, 0]);
+  check_to_vec(staticvec![2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]);
+  check_to_vec(staticvec![9, 11, 9, 9, 9, 9, 11, 2, 3, 4, 11, 9, 0, 0, 0, 0]);
+  check_to_vec(staticvec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  check_to_vec(staticvec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
+  check_to_vec(staticvec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 1, 2]);
+  check_to_vec(staticvec![5, 4, 3, 2, 1, 5, 4, 3, 2, 1, 5, 4, 3, 2, 1]);
 }
 
 #[test]
