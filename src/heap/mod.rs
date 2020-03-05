@@ -351,9 +351,9 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
   #[inline]
   pub fn append(&mut self, other: &mut Self) {
     // TODO: Investigate further whether the below calculations are
-    // actually applicable the same way they are for normal BinaryHeap,
-    // as our `Extend` and `Append` implementations are somewhat different
-    // (we have more specializations for `Extend`, for example.
+    // actually applicable the same way they are for normal `BinaryHeap`,
+    // as our `extend` and `append` implementations are somewhat different
+    // (we have more specializations of `extend`, for example).
     
     if self.len() < other.len() {
       swap(self, other);
