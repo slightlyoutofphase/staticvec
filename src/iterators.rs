@@ -1,4 +1,6 @@
-use crate::utils::{distance_between, slice_from_raw_parts, slice_from_raw_parts_mut};
+use crate::utils::{
+  distance_between, is_null_const, is_null_mut, slice_from_raw_parts, slice_from_raw_parts_mut
+};
 use crate::StaticVec;
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics;
@@ -85,16 +87,22 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
 
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
-    match distance_between(self.end, self.start) {
-      0 => None,
-      _ => unsafe {
-        let res = Some(&*self.start);
-        self.start = match intrinsics::size_of::<T>() {
-          0 => (self.start as usize + 1) as *const T,
-          _ => self.start.offset(1),
-        };
-        res
-      },
+    unsafe {
+      intrinsics::assume(!is_null_const(self.start));
+      if intrinsics::size_of::<T>() != 0 {
+        intrinsics::assume(!is_null_const(self.end));
+      }
+      match distance_between(self.end, self.start) {
+        0 => None,
+        _ => {
+          let res = Some(&*self.start);
+          self.start = match intrinsics::size_of::<T>() {
+            0 => (self.start as usize + 1) as *const T,
+            _ => self.start.offset(1),
+          };
+          res
+        },
+      }
     }
   }
 
@@ -118,15 +126,21 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
-    match distance_between(self.end, self.start) {
-      0 => None,
-      _ => unsafe {
-        self.end = match intrinsics::size_of::<T>() {
-          0 => (self.end as usize - 1) as *const T,
-          _ => self.end.offset(-1),
-        };
-        Some(&*self.end)
-      },
+    unsafe {
+      intrinsics::assume(!is_null_const(self.start));
+      if intrinsics::size_of::<T>() != 0 {
+        intrinsics::assume(!is_null_const(self.end));
+      }
+      match distance_between(self.end, self.start) {
+        0 => None,
+        _ => {
+          self.end = match intrinsics::size_of::<T>() {
+            0 => (self.end as usize - 1) as *const T,
+            _ => self.end.offset(-1),
+          };
+          Some(&*self.end)
+        },
+      }
     }
   }
 }
@@ -206,16 +220,22 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
 
   #[inline(always)]
   fn next(&mut self) -> Option<Self::Item> {
-    match distance_between(self.end, self.start) {
-      0 => None,
-      _ => unsafe {
-        let res = Some(&mut *self.start);
-        self.start = match intrinsics::size_of::<T>() {
-          0 => (self.start as usize + 1) as *mut T,
-          _ => self.start.offset(1),
-        };
-        res
-      },
+    unsafe {
+      intrinsics::assume(!is_null_mut(self.start));
+      if intrinsics::size_of::<T>() != 0 {
+        intrinsics::assume(!is_null_mut(self.end));
+      }
+      match distance_between(self.end, self.start) {
+        0 => None,
+        _ => {
+          let res = Some(&mut *self.start);
+          self.start = match intrinsics::size_of::<T>() {
+            0 => (self.start as usize + 1) as *mut T,
+            _ => self.start.offset(1),
+          };
+          res
+        },
+      }
     }
   }
 
@@ -239,15 +259,21 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<Self::Item> {
-    match distance_between(self.end, self.start) {
-      0 => None,
-      _ => unsafe {
-        self.end = match intrinsics::size_of::<T>() {
-          0 => (self.end as usize - 1) as *mut T,
-          _ => self.end.offset(-1),
-        };
-        Some(&mut *self.end)
-      },
+    unsafe {
+      intrinsics::assume(!is_null_mut(self.start));
+      if intrinsics::size_of::<T>() != 0 {
+        intrinsics::assume(!is_null_mut(self.end));
+      }
+      match distance_between(self.end, self.start) {
+        0 => None,
+        _ => {
+          self.end = match intrinsics::size_of::<T>() {
+            0 => (self.end as usize - 1) as *mut T,
+            _ => self.end.offset(-1),
+          };
+          Some(&mut *self.end)
+        },
+      }
     }
   }
 }
