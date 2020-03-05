@@ -1,14 +1,14 @@
 #![feature(box_syntax)]
-#![feature(trusted_len)]
 #![feature(exact_size_is_empty)]
+#![feature(trusted_len)]
 
 use core::iter::TrustedLen;
 use staticvec::*;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::atomic::{AtomicU32, Ordering};
 
-type MyStaticVec = StaticVec<i32, 255>;
-type MyStaticHeap = StaticHeap<i32, 255>;
+type MyStaticVec = StaticVec<i32, 64>;
+type MyStaticHeap = StaticHeap<i32, 64>;
 
 #[test]
 fn append() {
@@ -274,7 +274,7 @@ fn panic_safe() {
     }
   }
 
-  type PanicVec = StaticVec<PanicOrd<i32>, 255>;
+  type PanicVec = StaticVec<PanicOrd<i32>, 64>;
 
   let mut rng = thread_rng();
   const DATASZ: i32 = 32;
@@ -390,7 +390,7 @@ fn push() {
 
 #[test]
 fn push_unique() {
-  let mut heap = StaticHeap::<Box<_>, 255>::from(staticvec![box 2, box 4, box 9]);
+  let mut heap = StaticHeap::<Box<_>, 12>::from(staticvec![box 2, box 4, box 9]);
   assert_eq!(heap.len(), 3);
   assert!(**heap.peek().unwrap() == 9);
   heap.push(box 11);
