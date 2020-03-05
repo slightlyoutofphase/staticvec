@@ -108,6 +108,11 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
   fn count(self) -> usize {
     self.len()
   }
+  
+  #[inline(always)]
+  fn last(mut self) -> Option<Self::Item> {
+    self.next_back()
+  }
 }
 
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
@@ -224,6 +229,11 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
   fn count(self) -> usize {
     self.len()
   }
+  
+  #[inline(always)]
+  fn last(mut self) -> Option<Self::Item> {
+    self.next_back()
+  }
 }
 
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
@@ -339,6 +349,11 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
   fn count(self) -> usize {
     self.len()
   }
+  
+  #[inline(always)]
+  fn last(mut self) -> Option<Self::Item> {
+    self.next_back()
+  }
 }
 
 impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
@@ -436,6 +451,11 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
   #[inline(always)]
   fn count(self) -> usize {
     self.len()
+  }
+  
+  #[inline(always)]
+  fn last(mut self) -> Option<Self::Item> {
+    self.next_back()
   }
 }
 
