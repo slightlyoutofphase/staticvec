@@ -904,7 +904,7 @@ fn into_iter() {
   let mut i4 = v4.into_iter();
   // We do this so Miri can make sure it drops the remaining values properly.
   i4.next();
-  let mut v5 = staticvec![ZST{}, ZST{}, ZST{}, ZST{}];
+  let v5 = staticvec![ZST{}, ZST{}, ZST{}, ZST{}];
   let mut it5 = v5.into_iter();
   assert_eq!(it5.as_slice(), &[ZST{}, ZST{}, ZST{}, ZST{}]);
   assert_eq!(it5.as_mut_slice(), &mut [ZST{}, ZST{}, ZST{}, ZST{}]);
