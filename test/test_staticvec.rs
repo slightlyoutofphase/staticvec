@@ -848,6 +848,9 @@ fn iter() {
   assert_eq!("StaticVecIterConst([3])", format!("{:?}", i));
   assert_eq!(*i.next().unwrap(), 3);
   assert_eq!("StaticVecIterConst([])", format!("{:?}", i));
+  let v2 = staticvec![ZST{}, ZST{}, ZST{}, ZST{}];
+  let it2 = v2.iter();
+  assert_eq!(it2.as_slice(), &[ZST{}, ZST{}, ZST{}, ZST{}]);
 }
 
 #[test]
@@ -862,6 +865,9 @@ fn iter_mut() {
   assert_eq!("StaticVecIterMut([3])", format!("{:?}", i));
   assert_eq!(*i.next().unwrap(), 3);
   assert_eq!("StaticVecIterMut([])", format!("{:?}", i));
+  let mut v2 = staticvec![ZST{}, ZST{}, ZST{}, ZST{}];
+  let it2 = v2.iter_mut();
+  assert_eq!(it2.as_slice(), &[ZST{}, ZST{}, ZST{}, ZST{}]);
 }
 
 #[test]
@@ -898,6 +904,10 @@ fn into_iter() {
   let mut i4 = v4.into_iter();
   // We do this so Miri can make sure it drops the remaining values properly.
   i4.next();
+  let mut v5 = staticvec![ZST{}, ZST{}, ZST{}, ZST{}];
+  let mut it5 = v5.into_iter();
+  assert_eq!(it5.as_slice(), &[ZST{}, ZST{}, ZST{}, ZST{}]);
+  assert_eq!(it5.as_mut_slice(), &mut [ZST{}, ZST{}, ZST{}, ZST{}]);
 }
 
 #[cfg(feature = "std")]
