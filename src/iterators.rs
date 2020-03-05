@@ -386,6 +386,17 @@ unsafe impl<T, const N: usize> TrustedLen for StaticVecIntoIter<T, N> {}
 unsafe impl<T: Sync, const N: usize> Sync for StaticVecIntoIter<T, N> {}
 unsafe impl<T: Sync, const N: usize> Send for StaticVecIntoIter<T, N> {}
 
+impl<T: Clone, const N: usize> Clone for StaticVecIntoIter<T, N> {
+  #[inline(always)]
+  fn clone(&self) -> StaticVecIntoIter<T, N> {
+    let mut res = StaticVec::new();
+    for item in self.as_slice() {
+      unsafe { res.push_unchecked(item.clone()) };
+    }
+    res.into_iter()
+  }
+}
+
 impl<T: Debug, const N: usize> Debug for StaticVecIntoIter<T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
