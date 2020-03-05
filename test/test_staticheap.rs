@@ -1,4 +1,6 @@
+#![allow(incomplete_features)]
 #![feature(box_syntax)]
+#![feature(const_generics)]
 #![feature(exact_size_is_empty)]
 #![feature(trusted_len)]
 
@@ -41,7 +43,7 @@ fn check_exact_size_iterator<I: ExactSizeIterator>(len: usize, it: I) {
   assert!(it.is_empty());
 }
 
-fn check_to_vec(mut data: MyStaticVec) {
+fn check_to_vec<const N: usize>(mut data: StaticVec<i32, N>) {
   let heap = StaticHeap::from(data.clone());
   let mut v = heap.clone().into_vec();
   v.sort();
@@ -432,23 +434,23 @@ fn push_unique() {
 
 #[test]
 fn to_vec() {
-  check_to_vec(MyStaticVec::from([]));
-  check_to_vec(MyStaticVec::from([5]));
-  check_to_vec(MyStaticVec::from([3, 2]));
-  check_to_vec(MyStaticVec::from([2, 3]));
-  check_to_vec(MyStaticVec::from([5, 1, 2]));
-  check_to_vec(MyStaticVec::from([1, 100, 2, 3]));
-  check_to_vec(MyStaticVec::from([1, 3, 5, 7, 9, 2, 4, 6, 8, 0]));
-  check_to_vec(MyStaticVec::from([2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]));
-  check_to_vec(MyStaticVec::from([
+  check_to_vec(StaticVec::from([]));
+  check_to_vec(StaticVec::from([5]));
+  check_to_vec(StaticVec::from([3, 2]));
+  check_to_vec(StaticVec::from([2, 3]));
+  check_to_vec(StaticVec::from([5, 1, 2]));
+  check_to_vec(StaticVec::from([1, 100, 2, 3]));
+  check_to_vec(StaticVec::from([1, 3, 5, 7, 9, 2, 4, 6, 8, 0]));
+  check_to_vec(StaticVec::from([2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]));
+  check_to_vec(StaticVec::from([
     9, 11, 9, 9, 9, 9, 11, 2, 3, 4, 11, 9, 0, 0, 0, 0,
   ]));
-  check_to_vec(MyStaticVec::from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
-  check_to_vec(MyStaticVec::from([10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
-  check_to_vec(MyStaticVec::from([
+  check_to_vec(StaticVec::from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]));
+  check_to_vec(StaticVec::from([10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
+  check_to_vec(StaticVec::from([
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 1, 2,
   ]));
-  check_to_vec(MyStaticVec::from([
+  check_to_vec(StaticVec::from([
     5, 4, 3, 2, 1, 5, 4, 3, 2, 1, 5, 4, 3, 2, 1,
   ]));
 }
