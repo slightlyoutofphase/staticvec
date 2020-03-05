@@ -115,6 +115,6 @@ serde = { optional = true, version = "1.0", features = ["derive"] }
 serde_json = { optional = true, version = "1.0" }
 
 [dev-dependencies]
-# This is used in the test suite.
+# These are used in the test suite.
 cool_asserts = "1.0.0"
-rand = "0.7.3"
+oorandom = "11.1.0"
