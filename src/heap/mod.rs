@@ -153,7 +153,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     }
   }
 
-  /// Removes the greatest item from the binary heap and returns it, or `None` if it
+  /// Removes the greatest item from the StaticHeap and returns it, or `None` if it
   /// is empty.
   ///
   /// # Examples
