@@ -274,7 +274,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
       while child < end {
         let right = child + 1;
         // compare with the greater of the two children
-        if right < end && !(hole.get(child) > hole.get(right)) {
+        if right < end && hole.get(child) <= hole.get(right) {
           child = right;
         }
         // if we are already in order, stop.
@@ -293,7 +293,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     self.sift_down_range(position, len);
   }
 
-  /// Take an element at `pos` and move it all the way down the heap,
+  /// Take an element at `position` and move it all the way down the heap,
   /// then sift it up to its position.
   ///
   /// Note: This is faster when the element is known to be large / should
