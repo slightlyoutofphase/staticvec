@@ -559,7 +559,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// ```
   #[inline(always)]
   pub const fn is_full(&self) -> bool {
-    self.len() == 0
+    self.len() == N
   }
 
   /// Clears the StaticHeap, returning an iterator over the removed elements.
