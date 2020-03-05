@@ -183,6 +183,26 @@ fn from_iter() {
 }
 
 #[test]
+fn is_empty() {
+  let mut a = StaticHeap::<i32, 4>::new();
+  assert!(a.is_empty());
+  a.push(1);
+  a.push(2);
+  assert!(!a.is_empty());
+}
+
+#[test]
+fn is_full() {
+  let mut a = StaticHeap::<i32, 4>::new();
+  assert!(!a.is_full());
+  a.push(1);
+  a.push(2);
+  a.push(3);
+  a.push(4);
+  assert!(a.is_full());
+}
+
+#[test]
 fn iterator() {
   let data = staticvec![5, 9, 3];
   let iterout = [9, 5, 3];
