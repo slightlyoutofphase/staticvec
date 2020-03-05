@@ -219,6 +219,11 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
     let len = distance_between(self.end, self.start);
     (len, Some(len))
   }
+  
+  #[inline(always)]
+  fn count(self) -> usize {
+    self.len()
+  }
 }
 
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
@@ -329,6 +334,11 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     let len = self.end - self.start;
     (len, Some(len))
   }
+  
+  #[inline(always)]
+  fn count(self) -> usize {
+    self.len()
+  }
 }
 
 impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
@@ -421,6 +431,11 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
   #[inline(always)]
   fn size_hint(&self) -> (usize, Option<usize>) {
     self.iter.size_hint()
+  }
+  
+  #[inline(always)]
+  fn count(self) -> usize {
+    self.len()
   }
 }
 
