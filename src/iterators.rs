@@ -458,6 +458,10 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
       unsafe {
         let res_index = self.start + n;
         let res = StaticVec::first_ptr(&self.data).add(res_index);
+        ptr::drop_in_place(slice_from_raw_parts_mut(
+          StaticVec::first_ptr_mut(&mut self.data).add(self.start),
+          res_index - self.start,
+        ));
         self.start = res_index + 1;
         Some(res.read())
       }
@@ -487,8 +491,16 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
     if n >= self.len() {
       None
     } else {
-      self.end = self.end - (n + 1);
-      Some(unsafe { StaticVec::first_ptr(&self.data).add(self.end).read() })
+      let old_end = self.end;
+      let res_index = old_end - n;
+      self.end = res_index - 1;
+      unsafe {
+        ptr::drop_in_place(slice_from_raw_parts_mut(
+          StaticVec::first_ptr_mut(&mut self.data).add(res_index),
+          old_end - res_index,
+        ));
+        Some(StaticVec::first_ptr(&self.data).add(self.end).read())
+      }
     }
   }
 }
