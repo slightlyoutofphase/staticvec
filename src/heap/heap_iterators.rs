@@ -1,6 +1,4 @@
 use super::StaticHeap;
-use crate::iterators::{StaticVecDrain, StaticVecIntoIter, StaticVecIterConst};
-use core::fmt::{self, Debug, Formatter};
 use core::iter::{FusedIterator, TrustedLen};
 
 /// A sorted "consuming" iterator over the elements of a [`StaticHeap`].
