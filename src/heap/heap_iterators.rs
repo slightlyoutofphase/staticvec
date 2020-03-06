@@ -3,19 +3,24 @@ use core::fmt::{self, Debug, Formatter};
 use core::iter::{FusedIterator, TrustedLen};
 
 /// A sorted "consuming" iterator over the elements of a [`StaticHeap`].
-#[derive(Clone, Debug)]
+///
+/// This struct is created by the [`into_iter_sorted`] method on [`StaticHeap`]. See its
+/// documentation for more.
+///
+/// [`into_iter_sorted`]: struct.StaticHeap.html#method.into_iter_sorted
+/// [`StaticHeap`]: struct.StaticHeap.html
+#[derive(Clone)]
 pub struct StaticHeapIntoIterSorted<T, const N: usize> {
   pub(crate) inner: StaticHeap<T, N>,
 }
 
 /// A sorted "draining" iterator over the elements of a [`StaticHeap`].
 ///
-/// This `struct` is created by the [`drain_sorted`] method on [`StaticHeap`]. See its
+/// This struct is created by the [`drain_sorted`] method on [`StaticHeap`]. See its
 /// documentation for more.
 ///
 /// [`drain_sorted`]: struct.StaticHeap.html#method.drain_sorted
 /// [`StaticHeap`]: struct.StaticHeap.html
-#[derive(Debug)]
 pub struct StaticHeapDrainSorted<'a, T: Ord, const N: usize> {
   pub(crate) inner: &'a mut StaticHeap<T, N>,
 }
