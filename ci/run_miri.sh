@@ -6,4 +6,5 @@ rustup set profile minimal
 rustup default "$MIRI_NIGHTLY"
 rustup component add miri
 cargo miri setup
+# The `-Zmiri-disable-isolation` is so Miri can access the system clock in one of the tests.
 cargo miri test --features="std" -- -Zmiri-disable-isolation
