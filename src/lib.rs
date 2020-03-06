@@ -28,8 +28,7 @@
 
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::heap::{
-  StaticHeap, StaticHeapDrain, StaticHeapDrainSorted, StaticHeapIntoIter, StaticHeapIter,
-  StaticHeapPeekMut,
+  StaticHeap, StaticHeapDrainSorted, StaticHeapIntoIterSorted, StaticHeapPeekMut,
 };
 pub use crate::iterators::*;
 pub use crate::string::{string_utils, StaticString, StringError};
