@@ -485,6 +485,21 @@ impl<T, const N: usize> StaticHeap<T, N> {
   pub const fn capacity(&self) -> usize {
     self.data.capacity()
   }
+  
+  /// Returns the remaining capacity (which is to say, `self.capacity() - self.len()`) of the
+  /// StaticHeap.
+  #[inline(always)]
+  pub const fn remaining_capacity(&self) -> usize {
+    self.data.remaining_capacity()
+  }
+
+  /// Returns the total size of the inhabited part of the StaticHeap (which may be zero if it has a
+  /// length of zero or contains ZSTs) in bytes. Specifically, the return value of this function
+  /// amounts to a calculation of `size_of::<T>() * self.length`.
+  #[inline(always)]
+  pub const fn size_in_bytes(&self) -> usize {
+    self.data.size_in_bytes()
+  }
 
   /// Consumes the StaticHeap and returns the underlying StaticVec
   /// in arbitrary order.
