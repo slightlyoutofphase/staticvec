@@ -15,14 +15,14 @@ use alloc::string::String;
 #[cfg(feature = "std")]
 use alloc::format;
 
-/// Similar to [`Iter`](core::slice::Iter), but specifically implemented with StaticVecs in mind.
+/// Similar to [`Iter`](core::slice::Iter), but specifically implemented with [`StaticVec`]s in mind.
 pub struct StaticVecIterConst<'a, T: 'a, const N: usize> {
   pub(crate) start: *const T,
   pub(crate) end: *const T,
   pub(crate) marker: PhantomData<&'a T>,
 }
 
-/// Similar to [`IterMut`](core::slice::IterMut), but specifically implemented with StaticVecs in
+/// Similar to [`IterMut`](core::slice::IterMut), but specifically implemented with [`StaticVec`]s in
 /// mind.
 pub struct StaticVecIterMut<'a, T: 'a, const N: usize> {
   pub(crate) start: *mut T,
@@ -30,8 +30,7 @@ pub struct StaticVecIterMut<'a, T: 'a, const N: usize> {
   pub(crate) marker: PhantomData<&'a mut T>,
 }
 
-/// A "consuming" iterator that reads each element out of
-/// a source StaticVec by value.
+/// A "consuming" iterator that reads each element out of a source [`StaticVec`] by value.
 pub struct StaticVecIntoIter<T, const N: usize> {
   pub(crate) start: usize,
   pub(crate) end: usize,
@@ -456,12 +455,17 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
       None
     } else {
       unsafe {
+        // Get the index in `self.data` of the item to be returned.
         let res_index = self.start + n;
+        // Get a pointer to the item, using the above index.
         let res = StaticVec::first_ptr(&self.data).add(res_index);
+        // Drop whatever range of values may exist in earlier positions
+        // to avoid memory leaks.
         ptr::drop_in_place(slice_from_raw_parts_mut(
           StaticVec::first_ptr_mut(&mut self.data).add(self.start),
           res_index - self.start,
         ));
+        // Adjust our starting index.
         self.start = res_index + 1;
         Some(res.read())
       }
