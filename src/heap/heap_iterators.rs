@@ -108,7 +108,7 @@ unsafe impl<T: Ord, const N: usize> TrustedLen for StaticHeapDrainSorted<'_, T, 
 unsafe impl<T: Ord + Sync, const N: usize> Sync for StaticHeapDrainSorted<'_, T, N> {}
 unsafe impl<T: Ord + Send, const N: usize> Send for StaticHeapDrainSorted<'_, T, N> {}
 
-impl<'a, T: 'a + Debug, const N: usize> Debug for StaticHeapDrainSorted<'a, T, N> {
+impl<'a, T: 'a + Ord + Debug, const N: usize> Debug for StaticHeapDrainSorted<'a, T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     f.debug_tuple("StaticHeapDrainSorted")
