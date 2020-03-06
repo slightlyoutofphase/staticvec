@@ -1130,6 +1130,7 @@ fn into_iter_nth() {
   let (i, x) = xs4.into_iter().enumerate().nth(3).unwrap();
   assert_eq!(i, x);
   assert_eq!(i, 3);
+  // We use "StaticVecs of Vec" below to test the functionality for non-trivial "need Drop" types.
   let xs5 = staticvec![vec![1], vec![2], vec![3], vec![4], vec![5]];
   let mut it5 = xs5.into_iter();
   assert_eq!(it5.nth(2).unwrap(), vec![3]);
@@ -1137,6 +1138,11 @@ fn into_iter_nth() {
   assert_eq!(it5.next().unwrap(), vec![4]);
   assert_eq!(it5.next_back().unwrap(), vec![5]);
   assert_eq!(it5.nth(0), None);
+  let xs6 = staticvec![vec![1, 1], vec![2, 2], vec![3, 3], vec![4, 4], vec![5, 5], vec![6, 6]];
+  let mut it6 = xs6.into_iter();
+  let o = it6.nth(2);
+  assert_eq!(format!("{:?}", o), "Some([3, 3])");
+  assert_eq!(format!("{:?}", it6), "StaticVecIntoIter([[4, 4], [5, 5], [6, 6]])");
 }
 
 #[test]
@@ -1169,6 +1175,7 @@ fn into_iter_nth_back() {
   let (i, x) = xs3.into_iter().enumerate().nth_back(3).unwrap();
   assert_eq!(i, x);
   assert_eq!(i, 2);
+  // We use "StaticVecs of Vec" below to test the functionality for non-trivial "need Drop" types.
   let xs5 = staticvec![vec![1], vec![2], vec![3], vec![4], vec![5]];
   let mut it5 = xs5.into_iter();
   assert_eq!(it5.nth_back(1).unwrap(), vec![4]);
@@ -1176,6 +1183,11 @@ fn into_iter_nth_back() {
   assert_eq!(it5.next().unwrap(), vec![1]);
   assert_eq!(it5.next_back().unwrap(), vec![3]);
   assert_eq!(it5.nth_back(0).unwrap(), vec![2]);
+  let xs6 = staticvec![vec![1, 1], vec![2, 2], vec![3, 3], vec![4, 4], vec![5, 5], vec![6, 6]];
+  let mut it6 = xs6.into_iter();
+  let o = it6.nth_back(2);
+  assert_eq!(format!("{:?}", o), "Some([4, 4])");
+  assert_eq!(format!("{:?}", it6), "StaticVecIntoIter([[1, 1], [2, 2], [3, 3]])");
 }
 
 #[cfg(feature = "std")]
