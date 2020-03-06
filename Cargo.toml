@@ -10,7 +10,7 @@ authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec", "array", "no_std", "vector", "stack"]
 categories = ["data-structures", "no-std"]
 edition = "2018"
-include = ["Cargo.toml", "rustfmt.toml", "src/**/*.rs", "demo/**/*.rs", "benchmark/**/*.rs", "test/**/*.rs", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
+include = ["Cargo.toml", "rustfmt.toml", "src/**/*.rs", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
 
 [badges.maintenance]
 status = "actively-developed"
