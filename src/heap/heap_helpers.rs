@@ -84,11 +84,11 @@ impl<'a, T> StaticHeapHole<'a, T> {
     // TODO (SlightlyOutOfPhase): This whole struct is kinda weird if you ask
     // me... there's gotta be a better way to do what it does.
     debug_assert!(position < data.len());
-    let element = data.as_ptr().add(position);
+    let element = data.as_ptr().add(position).read();
     StaticHeapHole {
       data,
       // SAFE: position should be inside the slice
-      element: ManuallyDrop::new(element.read()),
+      element: ManuallyDrop::new(element),
       position,
     }
   }
