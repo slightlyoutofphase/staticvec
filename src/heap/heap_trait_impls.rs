@@ -1,6 +1,7 @@
-use super::{StaticHeap, StaticHeapIntoIter, StaticHeapIter};
+use super::StaticHeap;
 use crate::trait_impls::ExtendEx;
 use crate::StaticVec;
+use crate::iterators::{StaticVecIntoIter, StaticVecIterConst};
 use core::fmt::{self, Debug, Formatter};
 use core::iter::FromIterator;
 
@@ -141,7 +142,7 @@ impl<'a, T: 'a + Copy + Ord, const N: usize> FromIterator<&'a T> for StaticHeap<
 
 impl<T, const N: usize> IntoIterator for StaticHeap<T, N> {
   type Item = T;
-  type IntoIter = StaticHeapIntoIter<T, N>;
+  type IntoIter = StaticVecIntoIter<T, N>;
 
   /// Creates a consuming iterator, that is, one that moves each value out of
   /// the binary heap in arbitrary order. The binary heap cannot be used
@@ -160,19 +161,17 @@ impl<T, const N: usize> IntoIterator for StaticHeap<T, N> {
   /// }
   /// ```
   #[inline(always)]
-  fn into_iter(self) -> StaticHeapIntoIter<T, N> {
-    StaticHeapIntoIter {
-      iter: self.data.into_iter(),
-    }
+  fn into_iter(self) -> StaticVecIntoIter<T, N> {
+    self.data.into_iter()
   }
 }
 
 impl<'a, T, const N: usize> IntoIterator for &'a StaticHeap<T, N> {
   type Item = &'a T;
-  type IntoIter = StaticHeapIter<'a, T, N>;
+  type IntoIter = StaticVecIterConst<'a, T, N>;
 
   #[inline(always)]
-  fn into_iter(self) -> StaticHeapIter<'a, T, N> {
-    StaticHeapIter { iter: self.iter() }
+  fn into_iter(self) -> StaticVecIterConst<'a, T, N> {
+    self.iter()
   }
 }
