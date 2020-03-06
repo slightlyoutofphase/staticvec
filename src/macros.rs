@@ -6,12 +6,16 @@
 /// Example usage:
 /// ```
 /// use staticvec::{staticvec, StaticVec};
+///
 /// // The type of the StaticVec on the next line is `StaticVec<Vec<StaticVec<i32, 4>>, 1>`.
 /// let v = staticvec![vec![staticvec![1, 2, 3, 4]]];
+///
 /// // The type of the StaticVec on the next line is `StaticVec<f64, 64>`.
 /// let v2 = staticvec![12.0; 64];
+///
 /// const V3: StaticVec<i32, 4> = staticvec![1, 2, 3, 4];
 /// assert_eq!(V3, [1, 2, 3, 4]);
+///
 /// const V4: StaticVec<i32, 128> = staticvec![27; 128];
 /// assert!(V4 == [27; 128]);
 /// ```
@@ -33,10 +37,13 @@ macro_rules! staticvec {
 /// Example usage:
 /// ```
 /// #![feature(const_fn, const_if_match, const_loop)]
+///
 /// use staticvec::{sortedstaticvec, StaticVec};
+///
 /// // Currently, it's necessary to have the type specified in the macro itself.
 /// static V: StaticVec<f64, 3> = sortedstaticvec!(f64, [16.0, 15.0, 14.0]);
 /// assert_eq!(V, [14.0, 15.0, 16.0]);
+///
 /// const V2: StaticVec<usize, 4> = sortedstaticvec!(usize, [16, 15, 14, 13]);
 /// assert_eq!(V2, [13, 14, 15, 16]);
 /// ```

@@ -370,14 +370,14 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
+  /// # use staticvec::{StaticVec, StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
   /// let music = [0xD834, 0xDD1E, 0x006d, 0x0075, 0x0073, 0x0069, 0x0063];
   /// let string = StaticString::<20>::try_from_utf16(music)?;
   /// assert_eq!(string.as_str(), "𝄞music");
   /// let invalid_utf16 = [0xD834, 0xDD1E, 0x006d, 0x0075, 0xD800, 0x0069, 0x0063];
   /// assert!(StaticString::<20>::try_from_utf16(invalid_utf16).unwrap_err().is_utf16());
-  /// let out_of_bounds: Vec<_> = (0..300).map(|_| 0).collect();
+  /// let out_of_bounds: StaticVec<u16, 300> = (0..300).map(|_| 0).collect();
   /// assert!(StaticString::<20>::try_from_utf16(out_of_bounds).unwrap_err().is_out_of_bounds());
   /// # Ok(())
   /// # }
