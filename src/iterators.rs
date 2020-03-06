@@ -496,8 +496,12 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
       None
     } else {
       let old_end = self.end;
+      // Get the index in `self.data` of the item to be returned.
       let res_index = old_end - n;
+      // Adjust our ending index.
       self.end = res_index - 1;
+      // Drop whatever range of values may exist in later positions
+      // to avoid memory leaks.
       unsafe {
         ptr::drop_in_place(slice_from_raw_parts_mut(
           StaticVec::first_ptr_mut(&mut self.data).add(res_index),
