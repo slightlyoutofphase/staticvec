@@ -1143,6 +1143,11 @@ fn into_iter_nth() {
   let o = it6.nth(2);
   assert_eq!(format!("{:?}", o), "Some([3, 3])");
   assert_eq!(format!("{:?}", it6), "StaticVecIntoIter([[4, 4], [5, 5], [6, 6]])");
+  let xs7 = staticvec![vec![1, 1], vec![2, 2], vec![3, 3], vec![4, 4], vec![5, 5], vec![6, 6]];
+  let mut it7 = xs7.into_iter();
+  let o = it7.nth(5);
+  assert_eq!(format!("{:?}", o), "Some([6, 6])");
+  assert_eq!(format!("{:?}", it7), "StaticVecIntoIter([])");
 }
 
 #[test]
@@ -1188,6 +1193,11 @@ fn into_iter_nth_back() {
   let o = it6.nth_back(2);
   assert_eq!(format!("{:?}", o), "Some([4, 4])");
   assert_eq!(format!("{:?}", it6), "StaticVecIntoIter([[1, 1], [2, 2], [3, 3]])");
+  let xs7 = staticvec![vec![1, 1], vec![2, 2], vec![3, 3], vec![4, 4], vec![5, 5], vec![6, 6]];
+  let mut it7 = xs7.into_iter();
+  let o = it7.nth_back(5);
+  assert_eq!(format!("{:?}", o), "Some([1, 1])");
+  assert_eq!(format!("{:?}", it7), "StaticVecIntoIter([])");
 }
 
 #[cfg(feature = "std")]
