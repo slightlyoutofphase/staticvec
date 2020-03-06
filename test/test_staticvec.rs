@@ -884,6 +884,13 @@ fn iter_nth() {
   let (i, &x) = xs.iter().enumerate().nth(3).unwrap();
   assert_eq!(i, x);
   assert_eq!(i, 3);
+  let xs5 = staticvec![vec![1], vec![2], vec![3], vec![4], vec![5]];
+  let mut it5 = xs5.iter();
+  assert_eq!(it5.nth(2).unwrap(), &vec![3]);
+  assert_eq!(it5.as_slice(), &[vec![4], vec![5]]);
+  assert_eq!(it5.next().unwrap(), &vec![4]);
+  assert_eq!(it5.next_back().unwrap(), &vec![5]);
+  assert_eq!(it5.nth(0), None);
 }
 
 #[test]
@@ -914,6 +921,13 @@ fn iter_nth_back() {
   let (i, &x) = xs.iter().enumerate().nth_back(3).unwrap();
   assert_eq!(i, x);
   assert_eq!(i, 2);
+  let xs5 = staticvec![vec![1], vec![2], vec![3], vec![4], vec![5]];
+  let mut it5 = xs5.iter();
+  assert_eq!(it5.nth_back(1).unwrap(), &vec![4]);
+  assert_eq!(it5.as_slice(), &[vec![1], vec![2], vec![3]]);
+  assert_eq!(it5.next().unwrap(), &vec![1]);
+  assert_eq!(it5.next_back().unwrap(), &vec![3]);
+  assert_eq!(it5.nth_back(0).unwrap(), &vec![2]);
 }
 
 #[test]
@@ -998,6 +1012,13 @@ fn iter_mut_nth() {
   let (i, &mut x) = xs.iter_mut().enumerate().nth(3).unwrap();
   assert_eq!(i, x);
   assert_eq!(i, 3);
+  let mut xs5 = staticvec![vec![1], vec![2], vec![3], vec![4], vec![5]];
+  let mut it5 = xs5.iter_mut();
+  assert_eq!(it5.nth(2).unwrap(), &mut vec![3]);
+  assert_eq!(it5.as_slice(), &[vec![4], vec![5]]);
+  assert_eq!(it5.next().unwrap(), &mut vec![4]);
+  assert_eq!(it5.next_back().unwrap(), &mut vec![5]);
+  assert_eq!(it5.nth(0), None);
 }
 
 #[test]
@@ -1026,6 +1047,13 @@ fn iter_mut_nth_back() {
   let (i, &mut x) = xs.iter_mut().enumerate().nth_back(3).unwrap();
   assert_eq!(i, x);
   assert_eq!(i, 2);
+  let mut xs5 = staticvec![vec![1], vec![2], vec![3], vec![4], vec![5]];
+  let mut it5 = xs5.iter_mut();
+  assert_eq!(it5.nth_back(1).unwrap(), &mut vec![4]);
+  assert_eq!(it5.as_slice(), &[vec![1], vec![2], vec![3]]);
+  assert_eq!(it5.next().unwrap(), &mut vec![1]);
+  assert_eq!(it5.next_back().unwrap(), &mut vec![3]);
+  assert_eq!(it5.nth_back(0).unwrap(), &mut vec![2]);
 }
 
 #[test]
