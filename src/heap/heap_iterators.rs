@@ -1,4 +1,5 @@
 use super::StaticHeap;
+use core::fmt::{self, Debug, Formatter};
 use core::iter::{FusedIterator, TrustedLen};
 
 /// A sorted "consuming" iterator over the elements of a [`StaticHeap`].
@@ -32,6 +33,11 @@ impl<T: Ord, const N: usize> Iterator for StaticHeapIntoIterSorted<T, N> {
     let exact = self.inner.len();
     (exact, Some(exact))
   }
+  
+  #[inline(always)]
+  fn count(self) -> usize {
+    self.len()
+  }
 }
 
 impl<T: Ord, const N: usize> ExactSizeIterator for StaticHeapIntoIterSorted<T, N> {
@@ -51,6 +57,15 @@ unsafe impl<T: Ord, const N: usize> TrustedLen for StaticHeapIntoIterSorted<T, N
 unsafe impl<T: Ord + Sync, const N: usize> Sync for StaticHeapIntoIterSorted<T, N> {}
 unsafe impl<T: Ord + Send, const N: usize> Send for StaticHeapIntoIterSorted<T, N> {}
 
+impl<T: Debug, const N: usize> Debug for StaticHeapIntoIterSorted<T, N> {
+  #[inline(always)]
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    f.debug_tuple("StaticHeapIntoIterSorted")
+      .field(&self.inner.data.as_slice())
+      .finish()
+  }
+}
+
 impl<T: Ord, const N: usize> Iterator for StaticHeapDrainSorted<'_, T, N> {
   type Item = T;
 
@@ -63,6 +78,11 @@ impl<T: Ord, const N: usize> Iterator for StaticHeapDrainSorted<'_, T, N> {
   fn size_hint(&self) -> (usize, Option<usize>) {
     let exact = self.inner.len();
     (exact, Some(exact))
+  }
+  
+  #[inline(always)]
+  fn count(self) -> usize {
+    self.len()
   }
 }
 
@@ -82,6 +102,15 @@ impl<T: Ord, const N: usize> FusedIterator for StaticHeapDrainSorted<'_, T, N> {
 unsafe impl<T: Ord, const N: usize> TrustedLen for StaticHeapDrainSorted<'_, T, N> {}
 unsafe impl<T: Ord + Sync, const N: usize> Sync for StaticHeapDrainSorted<'_, T, N> {}
 unsafe impl<T: Ord + Send, const N: usize> Send for StaticHeapDrainSorted<'_, T, N> {}
+
+impl<'a, T: 'a + Debug, const N: usize> Debug for StaticHeapDrainSorted<'a, T, N> {
+  #[inline(always)]
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    f.debug_tuple("StaticHeapDrainSorted")
+      .field(&self.inner.data.as_slice())
+      .finish()
+  }
+}
 
 impl<'a, T: Ord, const N: usize> Drop for StaticHeapDrainSorted<'a, T, N> {
   /// Removes heap elements in heap order.
