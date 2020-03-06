@@ -1,6 +1,6 @@
 use self::heap_helpers::StaticHeapHole;
 pub use self::heap_helpers::StaticHeapPeekMut;
-pub use self::heap_iterators::*;
+pub use self::heap_iterators::{StaticHeapDrainSorted, StaticHeapIntoIterSorted};
 use crate::iterators::StaticVecIterConst;
 use crate::StaticVec;
 use core::intrinsics::size_of;
@@ -621,10 +621,8 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// assert!(heap.is_empty());
   /// ```
   #[inline(always)]
-  pub fn drain(&mut self) -> StaticHeapDrain<'_, T, N> {
-    StaticHeapDrain {
-      iter: self.data.drain_iter(..),
-    }
+  pub fn drain(&mut self) -> StaticVecDrain<'_, T, N> {
+    self.data.drain_iter(..)
   }
 
   /// Drops all items from the StaticHeap.
