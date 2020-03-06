@@ -3,7 +3,7 @@ use crate::iterators::{StaticVecDrain, StaticVecIntoIter, StaticVecIterConst};
 use core::fmt::{self, Debug, Formatter};
 use core::iter::{FusedIterator, TrustedLen};
 
-/// An iterator over the elements of a [`StaticHeap`].
+/// An iterator backed by a [`StaticVecIterConst`] over the elements of a [`StaticHeap`].
 ///
 /// This `struct` is created by the [`iter`] method on [`StaticHeap`]. See its
 /// documentation for more.
@@ -97,7 +97,7 @@ impl<T, const N: usize> ExactSizeIterator for StaticHeapIter<'_, T, N> {
 impl<T, const N: usize> FusedIterator for StaticHeapIter<'_, T, N> {}
 unsafe impl<T, const N: usize> TrustedLen for StaticHeapIter<'_, T, N> {}
 unsafe impl<T: Sync, const N: usize> Sync for StaticHeapIter<'_, T, N> {}
-unsafe impl<T: Sync, const N: usize> Send for StaticHeapIter<'_, T, N> {}
+unsafe impl<T: Send, const N: usize> Send for StaticHeapIter<'_, T, N> {}
 
 impl<T, const N: usize> Clone for StaticHeapIter<'_, T, N> {
   #[inline(always)]
@@ -153,7 +153,7 @@ impl<T, const N: usize> ExactSizeIterator for StaticHeapIntoIter<T, N> {
 impl<T, const N: usize> FusedIterator for StaticHeapIntoIter<T, N> {}
 unsafe impl<T, const N: usize> TrustedLen for StaticHeapIntoIter<T, N> {}
 unsafe impl<T: Sync, const N: usize> Sync for StaticHeapIntoIter<T, N> {}
-unsafe impl<T: Sync, const N: usize> Send for StaticHeapIntoIter<T, N> {}
+unsafe impl<T: Send, const N: usize> Send for StaticHeapIntoIter<T, N> {}
 
 impl<T: Debug, const N: usize> Debug for StaticHeapIntoIter<T, N> {
   #[inline(always)]
@@ -194,7 +194,7 @@ impl<T: Ord, const N: usize> ExactSizeIterator for StaticHeapIntoIterSorted<T, N
 impl<T: Ord, const N: usize> FusedIterator for StaticHeapIntoIterSorted<T, N> {}
 unsafe impl<T: Ord, const N: usize> TrustedLen for StaticHeapIntoIterSorted<T, N> {}
 unsafe impl<T: Ord + Sync, const N: usize> Sync for StaticHeapIntoIterSorted<T, N> {}
-unsafe impl<T: Ord + Sync, const N: usize> Send for StaticHeapIntoIterSorted<T, N> {}
+unsafe impl<T: Ord + Send, const N: usize> Send for StaticHeapIntoIterSorted<T, N> {}
 
 impl<T, const N: usize> Iterator for StaticHeapDrain<'_, T, N> {
   type Item = T;
@@ -232,7 +232,7 @@ impl<T, const N: usize> ExactSizeIterator for StaticHeapDrain<'_, T, N> {
 impl<T, const N: usize> FusedIterator for StaticHeapDrain<'_, T, N> {}
 unsafe impl<T, const N: usize> TrustedLen for StaticHeapDrain<'_, T, N> {}
 unsafe impl<T: Sync, const N: usize> Sync for StaticHeapDrain<'_, T, N> {}
-unsafe impl<T: Sync, const N: usize> Send for StaticHeapDrain<'_, T, N> {}
+unsafe impl<T: Send, const N: usize> Send for StaticHeapDrain<'_, T, N> {}
 
 impl<T: Ord, const N: usize> Iterator for StaticHeapDrainSorted<'_, T, N> {
   type Item = T;
@@ -264,7 +264,7 @@ impl<T: Ord, const N: usize> ExactSizeIterator for StaticHeapDrainSorted<'_, T, 
 impl<T: Ord, const N: usize> FusedIterator for StaticHeapDrainSorted<'_, T, N> {}
 unsafe impl<T: Ord, const N: usize> TrustedLen for StaticHeapDrainSorted<'_, T, N> {}
 unsafe impl<T: Ord + Sync, const N: usize> Sync for StaticHeapDrainSorted<'_, T, N> {}
-unsafe impl<T: Ord + Sync, const N: usize> Send for StaticHeapDrainSorted<'_, T, N> {}
+unsafe impl<T: Ord + Send, const N: usize> Send for StaticHeapDrainSorted<'_, T, N> {}
 
 impl<'a, T: Ord, const N: usize> Drop for StaticHeapDrainSorted<'a, T, N> {
   /// Removes heap elements in heap order.

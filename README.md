@@ -26,6 +26,9 @@ where `[T]` is expected.
 As of version 0.8.0, this crate additionally provides a fixed-capacity `StaticString` struct, which is built
 around an instance of `StaticVec<u8, N>`.
 
+As of version 0.8.5, a fixed-capacity `StaticHeap` struct based on the standard library `BinaryHeap` and built
+around an instance of `StaticVec<T, N>` has been added as well.
+
 Contributions/suggestions/etc. very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.

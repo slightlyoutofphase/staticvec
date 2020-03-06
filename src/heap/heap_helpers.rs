@@ -3,8 +3,7 @@ use core::fmt::{self, Debug, Formatter};
 use core::mem::ManuallyDrop;
 use core::ops::{Deref, DerefMut};
 
-/// Structure wrapping a mutable reference to the greatest item on a
-/// [`StaticHeap`].
+/// A struct wrapping a mutable reference to the greatest (or "maximal") item in a [`StaticHeap`].
 ///
 /// This struct is created by the [`peek_mut`] method on [`StaticHeap`]. See
 /// its documentation for more.
@@ -50,7 +49,7 @@ impl<T: Ord, const N: usize> Deref for StaticHeapPeekMut<'_, T, N> {
 
   #[inline(always)]
   fn deref(&self) -> &T {
-    debug_assert!(!self.heap.is_empty());
+    debug_assert!(self.heap.is_not_empty());
     // SAFE: StaticHeapPeekMut is only instantiated for non-empty heaps
     unsafe { self.heap.data.get_unchecked(0) }
   }
@@ -59,7 +58,7 @@ impl<T: Ord, const N: usize> Deref for StaticHeapPeekMut<'_, T, N> {
 impl<T: Ord, const N: usize> DerefMut for StaticHeapPeekMut<'_, T, N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut T {
-    debug_assert!(!self.heap.is_empty());
+    debug_assert!(self.heap.is_not_empty());
     // SAFE: StaticHeapPeekMut is only instantiated for non-empty heaps
     unsafe { self.heap.data.get_unchecked_mut(0) }
   }
@@ -90,13 +89,13 @@ impl<'a, T> StaticHeapHole<'a, T> {
   }
 
   #[inline(always)]
-  pub(crate) fn pos(&self) -> usize {
+  pub(crate) const fn pos(&self) -> usize {
     self.position
   }
 
   /// Returns a reference to the element removed.
   #[inline(always)]
-  pub(crate) fn element(&self) -> &T {
+  pub(crate) fn elt(&self) -> &T {
     &self.element
   }
 

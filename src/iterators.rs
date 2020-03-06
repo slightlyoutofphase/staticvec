@@ -1,5 +1,5 @@
 use crate::utils::{
-  distance_between, is_null_const, is_null_mut, slice_from_raw_parts, slice_from_raw_parts_mut
+  distance_between, is_null_const, is_null_mut, slice_from_raw_parts, slice_from_raw_parts_mut,
 };
 use crate::StaticVec;
 use core::fmt::{self, Debug, Formatter};
@@ -101,7 +101,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
             _ => self.start.offset(1),
           };
           res
-        },
+        }
       }
     }
   }
@@ -111,12 +111,34 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
     let len = distance_between(self.end, self.start);
     (len, Some(len))
   }
-  
+
   #[inline(always)]
   fn count(self) -> usize {
     self.len()
   }
-  
+
+  #[inline(always)]
+  fn nth(&mut self, n: usize) -> Option<Self::Item> {
+    if n >= self.len() {
+      None
+    } else {
+      unsafe {
+        match intrinsics::size_of::<T>() {
+          0 => {
+            let res = (self.start as usize + n) as *const T;
+            self.start = (res as usize + 1) as *const T;
+            Some(&*res)
+          }
+          _ => {
+            let res = self.start.add(n);
+            self.start = res.offset(1);
+            Some(&*res)
+          }
+        }
+      }
+    }
+  }
+
   #[inline(always)]
   fn last(mut self) -> Option<Self::Item> {
     self.next_back()
@@ -139,7 +161,22 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T
             _ => self.end.offset(-1),
           };
           Some(&*self.end)
-        },
+        }
+      }
+    }
+  }
+
+  #[inline(always)]
+  fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+    if n >= self.len() {
+      None
+    } else {
+      unsafe {
+        self.end = match intrinsics::size_of::<T>() {
+          0 => (self.end as *const u8).wrapping_offset(-((n as isize) + 1)) as *const T,
+          _ => self.end.offset(-((n as isize) + 1)),
+        };
+        Some(&*self.end)
       }
     }
   }
@@ -234,7 +271,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
             _ => self.start.offset(1),
           };
           res
-        },
+        }
       }
     }
   }
@@ -244,12 +281,34 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
     let len = distance_between(self.end, self.start);
     (len, Some(len))
   }
-  
+
   #[inline(always)]
   fn count(self) -> usize {
     self.len()
   }
-  
+
+  #[inline(always)]
+  fn nth(&mut self, n: usize) -> Option<Self::Item> {
+    if n >= self.len() {
+      None
+    } else {
+      unsafe {
+        match intrinsics::size_of::<T>() {
+          0 => {
+            let res = (self.start as usize + n) as *mut T;
+            self.start = (res as usize + 1) as *mut T;
+            Some(&mut *res)
+          }
+          _ => {
+            let res = self.start.add(n);
+            self.start = res.offset(1);
+            Some(&mut *res)
+          }
+        }
+      }
+    }
+  }
+
   #[inline(always)]
   fn last(mut self) -> Option<Self::Item> {
     self.next_back()
@@ -272,7 +331,22 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, 
             _ => self.end.offset(-1),
           };
           Some(&mut *self.end)
-        },
+        }
+      }
+    }
+  }
+
+  #[inline(always)]
+  fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+    if n >= self.len() {
+      None
+    } else {
+      unsafe {
+        self.end = match intrinsics::size_of::<T>() {
+          0 => (self.end as *mut u8).wrapping_offset(-((n as isize) + 1)) as *mut T,
+          _ => self.end.offset(-((n as isize) + 1)),
+        };
+        Some(&mut *self.end)
       }
     }
   }
@@ -293,7 +367,7 @@ impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecIterMut<'a, T, N>
 impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecIterMut<'a, T, N> {}
 unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecIterMut<'a, T, N> {}
 unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecIterMut<'a, T, N> {}
-unsafe impl<'a, T: 'a + Sync, const N: usize> Send for StaticVecIterMut<'a, T, N> {}
+unsafe impl<'a, T: 'a + Send, const N: usize> Send for StaticVecIterMut<'a, T, N> {}
 
 impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
@@ -370,12 +444,26 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     let len = self.end - self.start;
     (len, Some(len))
   }
-  
+
   #[inline(always)]
   fn count(self) -> usize {
     self.len()
   }
-  
+
+  #[inline(always)]
+  fn nth(&mut self, n: usize) -> Option<Self::Item> {
+    if n >= self.len() {
+      None
+    } else {
+      unsafe {
+        let res_index = self.start + n;
+        let res = StaticVec::first_ptr(&self.data).add(res_index);
+        self.start = res_index + 1;
+        Some(res.read())
+      }
+    }
+  }
+
   #[inline(always)]
   fn last(mut self) -> Option<Self::Item> {
     self.next_back()
@@ -391,6 +479,16 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
         self.end -= 1;
         Some(unsafe { StaticVec::first_ptr(&self.data).add(self.end).read() })
       }
+    }
+  }
+
+  #[inline(always)]
+  fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+    if n >= self.len() {
+      None
+    } else {
+      self.end = self.end - (n + 1);
+      Some(unsafe { StaticVec::first_ptr(&self.data).add(self.end).read() })
     }
   }
 }
@@ -410,7 +508,7 @@ impl<T, const N: usize> ExactSizeIterator for StaticVecIntoIter<T, N> {
 impl<T, const N: usize> FusedIterator for StaticVecIntoIter<T, N> {}
 unsafe impl<T, const N: usize> TrustedLen for StaticVecIntoIter<T, N> {}
 unsafe impl<T: Sync, const N: usize> Sync for StaticVecIntoIter<T, N> {}
-unsafe impl<T: Sync, const N: usize> Send for StaticVecIntoIter<T, N> {}
+unsafe impl<T: Send, const N: usize> Send for StaticVecIntoIter<T, N> {}
 
 impl<T: Clone, const N: usize> Clone for StaticVecIntoIter<T, N> {
   #[inline(always)]
@@ -484,12 +582,12 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
   fn size_hint(&self) -> (usize, Option<usize>) {
     self.iter.size_hint()
   }
-  
+
   #[inline(always)]
   fn count(self) -> usize {
     self.len()
   }
-  
+
   #[inline(always)]
   fn last(mut self) -> Option<Self::Item> {
     self.next_back()
@@ -521,7 +619,7 @@ impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecDrain<'a, T, N> {
 impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecDrain<'a, T, N> {}
 unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecDrain<'a, T, N> {}
 unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecDrain<'a, T, N> {}
-unsafe impl<'a, T: 'a + Sync, const N: usize> Send for StaticVecDrain<'a, T, N> {}
+unsafe impl<'a, T: 'a + Send, const N: usize> Send for StaticVecDrain<'a, T, N> {}
 
 impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecDrain<'a, T, N> {
   #[inline(always)]

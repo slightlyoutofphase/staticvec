@@ -848,9 +848,108 @@ fn iter() {
   assert_eq!("StaticVecIterConst([3])", format!("{:?}", i));
   assert_eq!(*i.next().unwrap(), 3);
   assert_eq!("StaticVecIterConst([])", format!("{:?}", i));
-  let v2 = staticvec![ZST{}, ZST{}, ZST{}, ZST{}];
+  let v2 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
   let it2 = v2.iter();
-  assert_eq!(it2.as_slice(), &[ZST{}, ZST{}, ZST{}, ZST{}]);
+  assert_eq!(it2.as_slice(), &[ZST {}, ZST {}, ZST {}, ZST {}]);
+}
+
+#[test]
+fn iter_nth() {
+  let v3 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut i3 = v3.iter();
+  assert_eq!(i3.nth(2).unwrap(), &ZST {});
+  assert_eq!(i3.as_slice(), &[ZST {}]);
+  assert_eq!(i3.nth(0).unwrap(), &ZST {});
+  assert_eq!(i3.nth(0), None);
+  assert_eq!(i3.nth(0), None);
+  let v4 = staticvec![1, 2, 3, 4];
+  let mut i4 = v4.iter();
+  assert_eq!(i4.nth(2).unwrap(), &3);
+  assert_eq!(i4.as_slice(), &[4]);
+  assert_eq!(i4.nth(0).unwrap(), &4);
+  assert_eq!(i4.nth(0), None);
+  assert_eq!(i4.nth(0), None);
+  let xs = staticvec![0, 1, 2, 3, 4, 5];
+  for (i, &x) in xs.iter().enumerate() {
+    assert_eq!(i, x);
+  }
+  let mut it = xs.iter().enumerate();
+  while let Some((i, &x)) = it.nth(0) {
+    assert_eq!(i, x);
+  }
+  let mut it = xs.iter().enumerate();
+  while let Some((i, &x)) = it.nth(1) {
+    assert_eq!(i, x);
+  }
+  let (i, &x) = xs.iter().enumerate().nth(3).unwrap();
+  assert_eq!(i, x);
+  assert_eq!(i, 3);
+}
+
+#[test]
+fn iter_nth_back() {
+  let v3 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut i3 = v3.iter();
+  assert_eq!(i3.nth_back(2).unwrap(), &ZST {});
+  assert_eq!(i3.as_slice(), &[ZST {}]);
+  assert_eq!(i3.nth_back(0).unwrap(), &ZST {});
+  assert_eq!(i3.nth_back(0), None);
+  assert_eq!(i3.nth_back(0), None);
+  let v4 = staticvec![1, 2, 3, 4];
+  let mut i4 = v4.iter();
+  assert_eq!(i4.nth_back(2).unwrap(), &2);
+  assert_eq!(i4.as_slice(), &[1]);
+  assert_eq!(i4.nth_back(0).unwrap(), &1);
+  assert_eq!(i4.nth_back(0), None);
+  assert_eq!(i4.nth_back(0), None);
+  let xs = staticvec![0, 1, 2, 3, 4, 5];
+  let mut it = xs.iter().enumerate();
+  while let Some((i, &x)) = it.nth_back(0) {
+    assert_eq!(i, x);
+  }
+  let mut it = xs.iter().enumerate();
+  while let Some((i, &x)) = it.nth_back(1) {
+    assert_eq!(i, x);
+  }
+  let (i, &x) = xs.iter().enumerate().nth_back(3).unwrap();
+  assert_eq!(i, x);
+  assert_eq!(i, 2);
+}
+
+#[test]
+fn iter_nth2() {
+  let v = staticvec![0, 1, 2, 3, 4];
+  for i in 0..v.len() {
+    assert_eq!(v.iter().nth(i).unwrap(), &v[i]);
+  }
+  assert_eq!(v.iter().nth(v.len()), None);
+}
+
+#[test]
+fn iter_nth_back2() {
+  let v = staticvec![0, 1, 2, 3, 4];
+  for i in 0..v.len() {
+    assert_eq!(v.iter().nth_back(i).unwrap(), &v[v.len() - 1 - i]);
+  }
+  assert_eq!(v.iter().nth_back(v.len()), None);
+}
+
+#[test]
+fn iter_rev_nth() {
+  let v = staticvec![0, 1, 2, 3, 4];
+  for i in 0..v.len() {
+    assert_eq!(v.iter().rev().nth(i).unwrap(), &v[v.len() - 1 - i]);
+  }
+  assert_eq!(v.iter().rev().nth(v.len()), None);
+}
+
+#[test]
+fn iter_rev_nth_back() {
+  let v = staticvec![0, 1, 2, 3, 4];
+  for i in 0..v.len() {
+    assert_eq!(v.iter().rev().nth_back(i).unwrap(), &v[i]);
+  }
+  assert_eq!(v.iter().rev().nth_back(v.len()), None);
 }
 
 #[test]
@@ -865,9 +964,68 @@ fn iter_mut() {
   assert_eq!("StaticVecIterMut([3])", format!("{:?}", i));
   assert_eq!(*i.next().unwrap(), 3);
   assert_eq!("StaticVecIterMut([])", format!("{:?}", i));
-  let mut v2 = staticvec![ZST{}, ZST{}, ZST{}, ZST{}];
+  let mut v2 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
   let it2 = v2.iter_mut();
-  assert_eq!(it2.as_slice(), &[ZST{}, ZST{}, ZST{}, ZST{}]);
+  assert_eq!(it2.as_slice(), &[ZST {}, ZST {}, ZST {}, ZST {}]);
+}
+
+#[test]
+fn iter_mut_nth() {
+  let mut v3 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut i3 = v3.iter_mut();
+  assert_eq!(i3.nth(2).unwrap(), &mut ZST {});
+  assert_eq!(i3.as_slice(), &mut [ZST {}]);
+  assert_eq!(i3.nth(0).unwrap(), &mut ZST {});
+  assert_eq!(i3.nth(0), None);
+  let mut v4 = staticvec![1, 2, 3, 4];
+  let mut i4 = v4.iter_mut();
+  assert_eq!(i4.nth(2).unwrap(), &mut 3);
+  assert_eq!(i4.as_slice(), &mut [4]);
+  assert_eq!(i4.nth(0).unwrap(), &mut 4);
+  assert_eq!(i4.nth(0), None);
+  let mut xs = staticvec![0, 1, 2, 3, 4, 5];
+  for (i, &mut x) in xs.iter_mut().enumerate() {
+    assert_eq!(i, x);
+  }
+  let mut it = xs.iter_mut().enumerate();
+  while let Some((i, &mut x)) = it.nth(0) {
+    assert_eq!(i, x);
+  }
+  let mut it = xs.iter_mut().enumerate();
+  while let Some((i, &mut x)) = it.nth(1) {
+    assert_eq!(i, x);
+  }
+  let (i, &mut x) = xs.iter_mut().enumerate().nth(3).unwrap();
+  assert_eq!(i, x);
+  assert_eq!(i, 3);
+}
+
+#[test]
+fn iter_mut_nth_back() {
+  let mut v3 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut i3 = v3.iter_mut();
+  assert_eq!(i3.nth_back(2).unwrap(), &mut ZST {});
+  assert_eq!(i3.as_slice(), &mut [ZST {}]);
+  assert_eq!(i3.nth_back(0).unwrap(), &mut ZST {});
+  assert_eq!(i3.nth_back(0), None);
+  let mut v4 = staticvec![1, 2, 3, 4];
+  let mut i4 = v4.iter_mut();
+  assert_eq!(i4.nth_back(2).unwrap(), &mut 2);
+  assert_eq!(i4.as_slice(), &[1]);
+  assert_eq!(i4.nth_back(0).unwrap(), &mut 1);
+  assert_eq!(i4.nth_back(0), None);
+  let mut xs = staticvec![0, 1, 2, 3, 4, 5];
+  let mut it = xs.iter_mut().enumerate();
+  while let Some((i, &mut x)) = it.nth_back(0) {
+    assert_eq!(i, x);
+  }
+  let mut it = xs.iter_mut().enumerate();
+  while let Some((i, &mut x)) = it.nth_back(1) {
+    assert_eq!(i, x);
+  }
+  let (i, &mut x) = xs.iter_mut().enumerate().nth_back(3).unwrap();
+  assert_eq!(i, x);
+  assert_eq!(i, 2);
 }
 
 #[test]
@@ -904,10 +1062,92 @@ fn into_iter() {
   let mut i4 = v4.into_iter();
   // We do this so Miri can make sure it drops the remaining values properly.
   i4.next();
-  let v5 = staticvec![ZST{}, ZST{}, ZST{}, ZST{}];
+  let v5 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
   let mut it5 = v5.into_iter();
-  assert_eq!(it5.as_slice(), &[ZST{}, ZST{}, ZST{}, ZST{}]);
-  assert_eq!(it5.as_mut_slice(), &mut [ZST{}, ZST{}, ZST{}, ZST{}]);
+  assert_eq!(it5.as_slice(), &[ZST {}, ZST {}, ZST {}, ZST {}]);
+  assert_eq!(it5.as_mut_slice(), &mut [ZST {}, ZST {}, ZST {}, ZST {}]);
+}
+
+#[test]
+fn into_iter_nth() {
+  let v3 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut i3 = v3.into_iter();
+  assert_eq!(i3.nth(2).unwrap(), ZST {});
+  assert_eq!(i3.as_slice(), [ZST {}]);
+  assert_eq!(i3.nth(0).unwrap(), ZST {});
+  assert_eq!(i3.nth(0), None);
+  assert_eq!(i3.nth(0), None);
+  let v4 = staticvec![1, 2, 3, 4];
+  let mut i4 = v4.into_iter();
+  assert_eq!(i4.nth(2).unwrap(), 3);
+  assert_eq!(i4.as_slice(), [4]);
+  assert_eq!(i4.nth(0).unwrap(), 4);
+  assert_eq!(i4.nth(0), None);
+  assert_eq!(i4.nth(0), None);
+  let xs1 = staticvec![0, 1, 2, 3, 4, 5];
+  for (i, x) in xs1.into_iter().enumerate() {
+    assert_eq!(i, x);
+  }
+  let xs2 = staticvec![0, 1, 2, 3, 4, 5];
+  let mut it2 = xs2.into_iter().enumerate();
+  while let Some((i, x)) = it2.nth(0) {
+    assert_eq!(i, x);
+  }
+  let xs3 = staticvec![0, 1, 2, 3, 4, 5];
+  let mut it3 = xs3.into_iter().enumerate();
+  while let Some((i, x)) = it3.nth(1) {
+    assert_eq!(i, x);
+  }
+  let xs4 = staticvec![0, 1, 2, 3, 4, 5];
+  let (i, x) = xs4.into_iter().enumerate().nth(3).unwrap();
+  assert_eq!(i, x);
+  assert_eq!(i, 3);
+  let xs5 = staticvec![vec![1], vec![2], vec![3], vec![4], vec![5]];
+  let mut it5 = xs5.into_iter();
+  assert_eq!(it5.nth(2).unwrap(), vec![3]);
+  assert_eq!(it5.as_slice(), &[vec![4], vec![5]]);
+  assert_eq!(it5.next().unwrap(), vec![4]);
+  assert_eq!(it5.next_back().unwrap(), vec![5]);
+  assert_eq!(it5.nth(0), None);
+}
+
+#[test]
+fn into_iter_nth_back() {
+  let v3 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut i3 = v3.into_iter();
+  assert_eq!(i3.nth_back(2).unwrap(), ZST {});
+  assert_eq!(i3.as_slice(), [ZST {}]);
+  assert_eq!(i3.nth_back(0).unwrap(), ZST {});
+  assert_eq!(i3.nth_back(0), None);
+  assert_eq!(i3.nth_back(0), None);
+  let v4 = staticvec![1, 2, 3, 4];
+  let mut i4 = v4.into_iter();
+  assert_eq!(i4.nth_back(2).unwrap(), 2);
+  assert_eq!(i4.as_slice(), [1]);
+  assert_eq!(i4.nth_back(0).unwrap(), 1);
+  assert_eq!(i4.nth_back(0), None);
+  assert_eq!(i4.nth_back(0), None);
+  let xs1 = staticvec![0, 1, 2, 3, 4, 5];
+  let mut it1 = xs1.into_iter().enumerate();
+  while let Some((i, x)) = it1.nth_back(0) {
+    assert_eq!(i, x);
+  }
+  let xs2 = staticvec![0, 1, 2, 3, 4, 5];
+  let mut it2 = xs2.into_iter().enumerate();
+  while let Some((i, x)) = it2.nth_back(1) {
+    assert_eq!(i, x);
+  }
+  let xs3 = staticvec![0, 1, 2, 3, 4, 5];
+  let (i, x) = xs3.into_iter().enumerate().nth_back(3).unwrap();
+  assert_eq!(i, x);
+  assert_eq!(i, 2);
+  let xs5 = staticvec![vec![1], vec![2], vec![3], vec![4], vec![5]];
+  let mut it5 = xs5.into_iter();
+  assert_eq!(it5.nth_back(1).unwrap(), vec![4]);
+  assert_eq!(it5.as_slice(), &[vec![1], vec![2], vec![3]]);
+  assert_eq!(it5.next().unwrap(), vec![1]);
+  assert_eq!(it5.next_back().unwrap(), vec![3]);
+  assert_eq!(it5.nth_back(0).unwrap(), vec![2]);
 }
 
 #[cfg(feature = "std")]

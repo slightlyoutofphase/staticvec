@@ -1,6 +1,7 @@
 // So we don't get "function complexity" lints and such since it's a demo.
 #![allow(clippy::all)]
 #![feature(const_fn, const_if_match, const_loop)]
+
 use staticvec::*;
 
 #[derive(Copy, Clone, Debug)]
@@ -421,4 +422,6 @@ fn main() {
   assert_eq!(V.reversed().drain(0..1), [16.0]);
   static VV: StaticVec<f64, 0> = sortedstaticvec!(f64, []);
   assert_eq!(VV, []);
+  let filled = StaticVec::<usize, 50>::filled_with_by_index(|i| (i + 1) * 4);
+  println!("{:?}", filled);
 }

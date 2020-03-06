@@ -4,6 +4,14 @@
 #![feature(exact_size_is_empty)]
 #![feature(trusted_len)]
 
+// In case you're wondering, the instances of `#[cfg_attr(all(windows, miri), ignore)]` in this
+// file above the `#[should_panic]` tests are there simply because Miri only supports catching
+// panics on Unix-like OSes and ignores `#[should_panic]` everywhere else, so without the
+// configuration attributes those tests just panic normally under Miri on Windows, which we don't
+// want.
+
+// A note: This is literally the actual liballoc `BinaryHeap` test suite adapted for `StaticHeap`.
+
 use core::iter::TrustedLen;
 use staticvec::*;
 use std::panic::{catch_unwind, AssertUnwindSafe};
@@ -17,7 +25,7 @@ fn append() {
   let mut a = MyStaticHeap::from(staticvec![-10, 1, 2, 3, 3]);
   let mut b = MyStaticHeap::from(staticvec![-20, 5, 43]);
   a.append(&mut b);
-  assert_eq!(a.into_sorted_vec(), [-20, -10, 1, 2, 3, 3, 5, 43]);
+  assert_eq!(a.into_sorted_staticvec(), [-20, -10, 1, 2, 3, 3, 5, 43]);
   assert!(b.is_empty());
 }
 
@@ -26,7 +34,7 @@ fn append_to_empty() {
   let mut a = StaticHeap::new();
   let mut b = StaticHeap::from(staticvec![-20, 5, 43]);
   a.append(&mut b);
-  assert_eq!(a.into_sorted_vec(), [-20, 5, 43]);
+  assert_eq!(a.into_sorted_staticvec(), [-20, 5, 43]);
   assert!(b.is_empty());
 }
 
@@ -45,11 +53,11 @@ fn check_exact_size_iterator<I: ExactSizeIterator>(len: usize, it: I) {
 
 fn check_to_vec<const N: usize>(mut data: StaticVec<i32, N>) {
   let heap = StaticHeap::from(data.clone());
-  let mut v = heap.clone().into_vec();
+  let mut v = heap.clone().into_staticvec();
   v.sort();
   data.sort();
   assert_eq!(v, data);
-  assert_eq!(heap.into_sorted_vec(), data);
+  assert_eq!(heap.into_sorted_staticvec(), data);
 }
 
 fn check_trusted_len<I: TrustedLen>(len: usize, it: I) {
@@ -89,6 +97,7 @@ fn drain_sorted_collect() {
   assert_eq!(sorted, staticvec![10, 9, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0]);
 }
 
+#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 fn drain_sorted_leak() {
   static DROPS: AtomicU32 = AtomicU32::new(0);
@@ -154,7 +163,7 @@ fn extend_ref() {
   a.push(2);
   a.extend(&[3, 4, 5]);
   assert_eq!(a.len(), 5);
-  assert_eq!(a.into_sorted_vec(), [1, 2, 3, 4, 5]);
+  assert_eq!(a.into_sorted_staticvec(), [1, 2, 3, 4, 5]);
   let mut a = MyStaticHeap::new();
   a.push(1);
   a.push(2);
@@ -164,7 +173,7 @@ fn extend_ref() {
   b.push(5);
   a.extend(b);
   assert_eq!(a.len(), 5);
-  assert_eq!(a.into_sorted_vec(), [1, 2, 3, 4, 5]);
+  assert_eq!(a.into_sorted_staticvec(), [1, 2, 3, 4, 5]);
 }
 
 #[test]
@@ -172,7 +181,7 @@ fn extend_specialization() {
   let mut a = MyStaticHeap::from(staticvec![-10, 1, 2, 3, 3]);
   let b = MyStaticHeap::from(staticvec![-20, 5, 43]);
   a.extend(b);
-  assert_eq!(a.into_sorted_vec(), [-20, -10, 1, 2, 3, 3, 5, 43]);
+  assert_eq!(a.into_sorted_staticvec(), [-20, -10, 1, 2, 3, 3, 5, 43]);
 }
 
 #[test]
@@ -186,22 +195,33 @@ fn from_iter() {
 
 #[test]
 fn is_empty() {
-  let mut a = StaticHeap::<i32, 4>::new();
+  let a = StaticHeap::<i32, 4>::new();
   assert!(a.is_empty());
+}
+
+#[test]
+fn is_not_empty() {
+  let mut a = StaticHeap::<i32, 4>::new();
   a.push(1);
-  a.push(2);
-  assert!(!a.is_empty());
+  assert!(a.is_not_empty());
 }
 
 #[test]
 fn is_full() {
   let mut a = StaticHeap::<i32, 4>::new();
-  assert!(!a.is_full());
   a.push(1);
   a.push(2);
   a.push(3);
   a.push(4);
   assert!(a.is_full());
+}
+
+#[test]
+fn is_not_full() {
+  let mut a = StaticHeap::<i32, 4>::new();
+  a.push(1);
+  a.push(2);
+  assert!(a.is_not_full());
 }
 
 #[test]
@@ -268,6 +288,7 @@ fn into_iter_sorted_collect() {
 // even if the order may not be correct.
 //
 // Destructors must be called exactly once per element.
+#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 fn panic_safe() {
   use core::cmp;
@@ -298,14 +319,14 @@ fn panic_safe() {
   }
 
   type PanicVec = StaticVec<PanicOrd<i32>, 64>;
-  
+
   let mut rng = Rand32::new(
     SystemTime::now()
-    .duration_since(SystemTime::UNIX_EPOCH)
-    .unwrap()
-    .as_secs()
+      .duration_since(SystemTime::UNIX_EPOCH)
+      .unwrap()
+      .as_secs(),
   );
-  
+
   const DATASZ: i32 = 32;
   #[cfg(not(miri))] // Miri is too slow
   const NTEST: i32 = 10;
@@ -331,7 +352,7 @@ fn panic_safe() {
       for i in (1..panic_ords.len()).rev() {
         panic_ords.swap(i, rng.rand_range(0u32..((i + 1) as u32)) as usize);
       }
-      
+
       let mut heap = StaticHeap::from(panic_ords);
       let inner_data;
 
@@ -348,7 +369,7 @@ fn panic_safe() {
         // Assert no elements were dropped
         let drops = DROP_COUNTER.load(Ordering::SeqCst);
         assert!(drops == 0, "Must not drop items. drops={}", drops);
-        inner_data = heap.clone().into_vec();
+        inner_data = heap.clone().into_staticvec();
         drop(heap);
       }
       let drops = DROP_COUNTER.load(Ordering::SeqCst);
@@ -452,7 +473,9 @@ fn to_vec() {
   check_to_vec(staticvec![1, 100, 2, 3]);
   check_to_vec(staticvec![1, 3, 5, 7, 9, 2, 4, 6, 8, 0]);
   check_to_vec(staticvec![2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]);
-  check_to_vec(staticvec![9, 11, 9, 9, 9, 9, 11, 2, 3, 4, 11, 9, 0, 0, 0, 0]);
+  check_to_vec(staticvec![
+    9, 11, 9, 9, 9, 9, 11, 2, 3, 4, 11, 9, 0, 0, 0, 0
+  ]);
   check_to_vec(staticvec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   check_to_vec(staticvec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0]);
   check_to_vec(staticvec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 1, 2]);
