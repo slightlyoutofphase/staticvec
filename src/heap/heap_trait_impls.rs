@@ -1,7 +1,7 @@
 use super::StaticHeap;
+use crate::iterators::{StaticVecIntoIter, StaticVecIterConst};
 use crate::trait_impls::ExtendEx;
 use crate::StaticVec;
-use crate::iterators::{StaticVecIntoIter, StaticVecIterConst};
 use core::fmt::{self, Debug, Formatter};
 use core::iter::FromIterator;
 

@@ -485,7 +485,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
   pub const fn capacity(&self) -> usize {
     self.data.capacity()
   }
-  
+
   /// Returns the remaining capacity (which is to say, `self.capacity() - self.len()`) of the
   /// StaticHeap.
   #[inline(always)]

@@ -39,7 +39,7 @@ impl<T: Ord + Debug, const N: usize> Debug for StaticHeapPeekMut<'_, T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
     unsafe {
-      // SAFE: StaticHeapPeekMut is only instantiated for non-empty heaps
+      // Safe: StaticHeapPeekMut is only instantiated for non-empty heaps
       f.debug_tuple("StaticHeapPeekMut")
         .field(self.heap.data.get_unchecked(0))
         .finish()
@@ -53,7 +53,7 @@ impl<T: Ord, const N: usize> Deref for StaticHeapPeekMut<'_, T, N> {
   #[inline(always)]
   fn deref(&self) -> &T {
     debug_assert!(self.heap.is_not_empty());
-    // SAFE: StaticHeapPeekMut is only instantiated for non-empty heaps
+    // Safe: StaticHeapPeekMut is only instantiated for non-empty heaps
     unsafe { self.heap.data.get_unchecked(0) }
   }
 }
@@ -62,7 +62,7 @@ impl<T: Ord, const N: usize> DerefMut for StaticHeapPeekMut<'_, T, N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut T {
     debug_assert!(self.heap.is_not_empty());
-    // SAFE: StaticHeapPeekMut is only instantiated for non-empty heaps
+    // Safe: StaticHeapPeekMut is only instantiated for non-empty heaps.
     unsafe { self.heap.data.get_unchecked_mut(0) }
   }
 }
@@ -81,13 +81,11 @@ impl<'a, T> StaticHeapHole<'a, T> {
   /// Unsafe because position must be within the data slice.
   #[inline(always)]
   pub(crate) unsafe fn new(data: &'a mut [T], position: usize) -> Self {
-    // TODO (SlightlyOutOfPhase): This whole struct is kinda weird if you ask
-    // me... there's gotta be a better way to do what it does.
     debug_assert!(position < data.len());
     let element = data.as_ptr().add(position).read();
     StaticHeapHole {
       data,
-      // SAFE: position should be inside the slice
+      // Safe: position should be inside the slice.
       element: ManuallyDrop::new(element),
       position,
     }

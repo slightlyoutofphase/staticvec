@@ -38,7 +38,7 @@ impl<T: Ord, const N: usize> Iterator for StaticHeapIntoIterSorted<T, N> {
     let exact = self.inner.len();
     (exact, Some(exact))
   }
-  
+
   #[inline(always)]
   fn count(self) -> usize {
     self.len()
@@ -84,7 +84,7 @@ impl<T: Ord, const N: usize> Iterator for StaticHeapDrainSorted<'_, T, N> {
     let exact = self.inner.len();
     (exact, Some(exact))
   }
-  
+
   #[inline(always)]
   fn count(self) -> usize {
     self.len()
