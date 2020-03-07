@@ -77,15 +77,31 @@ impl<'a, T: 'a + Copy + Ord, I: IntoIterator<Item = &'a T>, const N: usize> Exte
   }
 }
 
+impl<T: Ord, const N1: usize, const N2: usize> ExtendEx<T, StaticHeap<T, N1>>
+  for StaticHeap<T, N2>
+{
+  #[inline(always)]
+  default fn extend_ex(&mut self, other: StaticHeap<T, N1>) {
+    self.data.extend(other.data);
+    self.rebuild();
+  }
+
+  #[inline(always)]
+  default fn from_iter_ex(iter: StaticHeap<T, N1>) -> Self {
+    Self::from(iter.data)
+  }
+}
+
 impl<T: Ord, const N: usize> ExtendEx<T, StaticHeap<T, N>> for StaticHeap<T, N> {
   #[inline(always)]
-  fn extend_ex(&mut self, ref mut other: StaticHeap<T, N>) {
-    self.append(other);
+  fn extend_ex(&mut self, other: StaticHeap<T, N>) {
+    self.data.extend(other.data);
+    self.rebuild();
   }
 
   #[inline(always)]
   fn from_iter_ex(iter: StaticHeap<T, N>) -> Self {
-    StaticHeap::from(iter.into_iter().collect::<StaticVec<_, N>>())
+    Self::from(iter.data)
   }
 }
 
@@ -109,7 +125,7 @@ impl<T: Ord, const N1: usize, const N2: usize> From<StaticVec<T, N1>> for Static
   #[inline(always)]
   default fn from(vec: StaticVec<T, N1>) -> StaticHeap<T, N2> {
     let mut heap = StaticHeap {
-      data: StaticVec::from_iter(vec.into_iter()),
+      data: StaticVec::from_iter(vec),
     };
     heap.rebuild();
     heap

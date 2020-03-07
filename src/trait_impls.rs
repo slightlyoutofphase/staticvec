@@ -3,6 +3,7 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
+use core::mem::MaybeUninit;
 use core::ops::{
   Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo,
   RangeToInclusive,
@@ -189,15 +190,36 @@ impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&
   impl_from_iter_ex!(val, (*val));
 }
 
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, &StaticVec<T, N>> for StaticVec<T, N> {
+impl<T, const N1: usize, const N2: usize> ExtendEx<T, StaticVec<T, N1>> for StaticVec<T, N2> {
   #[inline(always)]
-  default fn extend_ex(&mut self, iter: &StaticVec<T, N>) {
-    self.extend_from_slice(iter);
+  default fn extend_ex(&mut self, ref mut iter: StaticVec<T, N1>) {
+    self.append(iter);
   }
 
-  #[inline(always)]
-  default fn from_iter_ex(iter: &StaticVec<T, N>) -> Self {
-    Self::new_from_slice(iter)
+  #[inline]
+  default fn from_iter_ex(iter: StaticVec<T, N1>) -> Self {
+    Self {
+      data: {
+        unsafe {
+          let mut data = Self::new_data_uninit();
+          iter
+            .as_ptr()
+            .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), N1.min(N2));
+          // We use the same sort of sequence here as in `new_from_array`.
+          if N1 != N2 {
+            let mut forgotten = MaybeUninit::new(iter);
+            ptr::drop_in_place(
+              forgotten
+                .get_mut()
+                .as_mut_slice()
+                .get_unchecked_mut(N1.min(N2)..N1),
+            );
+          }
+          data
+        }
+      },
+      length: N1.min(N2),
+    }
   }
 }
 
@@ -215,17 +237,15 @@ impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> ExtendEx<&'a T, &Static
   }
 }
 
-impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N>>
-  for StaticVec<T, N>
-{
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, &StaticVec<T, N>> for StaticVec<T, N> {
   #[inline(always)]
-  default fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N>) {
-    self.extend_from_slice(iter.as_slice());
+  fn extend_ex(&mut self, iter: &StaticVec<T, N>) {
+    self.extend_from_slice(iter);
   }
 
   #[inline(always)]
-  default fn from_iter_ex(iter: StaticVecIterConst<'a, T, N>) -> Self {
-    Self::new_from_slice(iter.as_slice())
+  fn from_iter_ex(iter: &StaticVec<T, N>) -> Self {
+    Self::new_from_slice(iter)
   }
 }
 
@@ -239,6 +259,20 @@ impl<'a, T: 'a + Copy, const N1: usize, const N2: usize>
 
   #[inline(always)]
   default fn from_iter_ex(iter: StaticVecIterConst<'a, T, N2>) -> Self {
+    Self::new_from_slice(iter.as_slice())
+  }
+}
+
+impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, StaticVecIterConst<'a, T, N>>
+  for StaticVec<T, N>
+{
+  #[inline(always)]
+  fn extend_ex(&mut self, iter: StaticVecIterConst<'a, T, N>) {
+    self.extend_from_slice(iter.as_slice());
+  }
+
+  #[inline(always)]
+  fn from_iter_ex(iter: StaticVecIterConst<'a, T, N>) -> Self {
     Self::new_from_slice(iter.as_slice())
   }
 }
@@ -350,6 +384,13 @@ impl<T: Copy, const N: usize> From<&mut [T; N]> for StaticVec<T, N> {
   #[inline(always)]
   fn from(values: &mut [T; N]) -> Self {
     Self::new_from_slice(values)
+  }
+}
+
+impl<T, const N1: usize, const N2: usize> From<StaticHeap<T, N1>> for StaticVec<T, N2> {
+  #[inline(always)]
+  default fn from(heap: StaticHeap<T, N1>) -> StaticVec<T, N2> {
+    StaticVec::from_iter(heap.data)
   }
 }
 

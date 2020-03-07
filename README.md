@@ -77,6 +77,16 @@ fn main() {
   .iter() {
     println!("{}", i);
   }
+  let filled = StaticVec::<StaticVec<f64, 8>, 128>::filled_with_by_index(|i| {
+    staticvec![
+      (i + 1) as f64,
+      (i + 2) as f64,
+      (i + 3) as f64,
+      (i + 4) as f64
+    ]
+    .intersperse(((i + 4) * 4) as f64)
+  });
+  println!("{:?}", filled);
 }
 ```
 

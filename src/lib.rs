@@ -1070,10 +1070,12 @@ impl<T, const N: usize> StaticVec<T, N> {
       return StaticVec::new();
     }
     let mut res = StaticVec::new();
-    // The `as *mut T` cast here is necessary to make the type
-    // inference work properly (at the moment at least.) `rustc` still gets
-    // a bit confused by math operations done on const generic values
-    // in return types it seems.
+    // The `as *mut T` cast below is necessary to make the type inference work properly (at the
+    // moment at least). `rustc` still gets a bit confused by math operations done on const generic
+    // values in return types it seems.
+    // Note that the `StaticVec::new()` calls above *have* to be written without any constraints,
+    // as otherwise we'll hit a particular bug where `rustc` says:
+    // "expected struct `StaticVec<_, { N * 2 }>`, found struct `StaticVec<_, { N * 2 }>`".
     let mut res_ptr = res.as_mut_ptr() as *mut T;
     let mut i = 0;
     let length = self.length;
@@ -1082,8 +1084,8 @@ impl<T, const N: usize> StaticVec<T, N> {
         res_ptr.write(self.ptr_at_unchecked(i).read());
         res_ptr.offset(1).write(separator);
         res_ptr = res_ptr.offset(2);
-        i += 1
       }
+      i += 1;
     }
     unsafe {
       res_ptr.write(self.ptr_at_unchecked(i).read());

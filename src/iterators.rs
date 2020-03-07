@@ -87,8 +87,11 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
   type Item = &'a T;
 
   #[inline(always)]
-  fn next(&mut self) -> Option<Self::Item> {
+  fn next(&mut self) -> Option<&'a T> {
     unsafe {
+      // Safety: `self.start` and `self.end` are never null if `T` is not a ZST,
+      // and the possibility that `self.end` specifically is null if `T` *is* a ZST
+      // is accounted for.
       intrinsics::assume(!is_null_const(self.start));
       if intrinsics::size_of::<T>() != 0 {
         intrinsics::assume(!is_null_const(self.end));
@@ -119,7 +122,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
   }
 
   #[inline(always)]
-  fn nth(&mut self, n: usize) -> Option<Self::Item> {
+  fn nth(&mut self, n: usize) -> Option<&'a T> {
     if n >= self.len() {
       None
     } else {
@@ -141,15 +144,18 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
   }
 
   #[inline(always)]
-  fn last(mut self) -> Option<Self::Item> {
+  fn last(mut self) -> Option<&'a T> {
     self.next_back()
   }
 }
 
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
-  fn next_back(&mut self) -> Option<Self::Item> {
+  fn next_back(&mut self) -> Option<&'a T> {
     unsafe {
+      // Safety: `self.start` and `self.end` are never null if `T` is not a ZST,
+      // and the possibility that `self.end` specifically is null if `T` *is* a ZST
+      // is accounted for.
       intrinsics::assume(!is_null_const(self.start));
       if intrinsics::size_of::<T>() != 0 {
         intrinsics::assume(!is_null_const(self.end));
@@ -168,7 +174,7 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T
   }
 
   #[inline(always)]
-  fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+  fn nth_back(&mut self, n: usize) -> Option<&'a T> {
     if n >= self.len() {
       None
     } else {
@@ -257,8 +263,11 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
   type Item = &'a mut T;
 
   #[inline(always)]
-  fn next(&mut self) -> Option<Self::Item> {
+  fn next(&mut self) -> Option<&'a mut T> {
     unsafe {
+      // Safety: `self.start` and `self.end` are never null if `T` is not a ZST,
+      // and the possibility that `self.end` specifically is null if `T` *is* a ZST
+      // is accounted for.
       intrinsics::assume(!is_null_mut(self.start));
       if intrinsics::size_of::<T>() != 0 {
         intrinsics::assume(!is_null_mut(self.end));
@@ -289,7 +298,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
   }
 
   #[inline(always)]
-  fn nth(&mut self, n: usize) -> Option<Self::Item> {
+  fn nth(&mut self, n: usize) -> Option<&'a mut T> {
     if n >= self.len() {
       None
     } else {
@@ -311,15 +320,18 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
   }
 
   #[inline(always)]
-  fn last(mut self) -> Option<Self::Item> {
+  fn last(mut self) -> Option<&'a mut T> {
     self.next_back()
   }
 }
 
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
-  fn next_back(&mut self) -> Option<Self::Item> {
+  fn next_back(&mut self) -> Option<&'a mut T> {
     unsafe {
+      // Safety: `self.start` and `self.end` are never null if `T` is not a ZST,
+      // and the possibility that `self.end` specifically is null if `T` *is* a ZST
+      // is accounted for.
       intrinsics::assume(!is_null_mut(self.start));
       if intrinsics::size_of::<T>() != 0 {
         intrinsics::assume(!is_null_mut(self.end));
@@ -338,7 +350,7 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, 
   }
 
   #[inline(always)]
-  fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+  fn nth_back(&mut self, n: usize) -> Option<&'a mut T> {
     if n >= self.len() {
       None
     } else {
@@ -429,7 +441,7 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
   type Item = T;
 
   #[inline(always)]
-  fn next(&mut self) -> Option<Self::Item> {
+  fn next(&mut self) -> Option<T> {
     match self.end - self.start {
       0 => None,
       _ => {
@@ -452,7 +464,7 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
   }
 
   #[inline(always)]
-  fn nth(&mut self, n: usize) -> Option<Self::Item> {
+  fn nth(&mut self, n: usize) -> Option<T> {
     if n >= self.len() {
       None
     } else {
@@ -475,14 +487,14 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
   }
 
   #[inline(always)]
-  fn last(mut self) -> Option<Self::Item> {
+  fn last(mut self) -> Option<T> {
     self.next_back()
   }
 }
 
 impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
   #[inline(always)]
-  fn next_back(&mut self) -> Option<Self::Item> {
+  fn next_back(&mut self) -> Option<T> {
     match self.end - self.start {
       0 => None,
       _ => {
@@ -493,7 +505,7 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
   }
 
   #[inline(always)]
-  fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+  fn nth_back(&mut self, n: usize) -> Option<T> {
     if n >= self.len() {
       None
     } else {
@@ -611,7 +623,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
   }
 
   #[inline(always)]
-  fn last(mut self) -> Option<Self::Item> {
+  fn last(mut self) -> Option<T> {
     self.next_back()
   }
 }

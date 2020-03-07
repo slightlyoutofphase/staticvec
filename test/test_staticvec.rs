@@ -568,8 +568,15 @@ fn extend() {
   assert_eq!(c.len(), 0);
   c.extend([1].iter());
   assert_eq!(c.len(), 1);
-  c.extend(staticvec![1, 2, 3, 4, 5, 6, 7].iter());
+  c.extend(staticvec![1, 2, 3, 4, 5, 6, 7].into_iter());
   assert_eq!(c.len(), 6);
+  c.clear();
+  c.extend(staticvec![1, 2, 3, 4, 5, 6, 7]);
+  assert_eq!(c.len(), 6);
+  let c2 = staticvec![vec![1, 1], vec![1, 2], vec![1, 3], vec![1, 4]];
+  let mut c3 = StaticVec::<Vec<u8>, 2>::new();
+  c3.extend(c2);
+  assert_eq!(c3, [vec![1, 1], vec![1, 2]]);
 }
 
 #[test]
