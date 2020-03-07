@@ -13,9 +13,10 @@
 // A note: This is literally the actual liballoc `BinaryHeap` test suite adapted for `StaticHeap`.
 
 use core::iter::TrustedLen;
-use staticvec::*;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::atomic::{AtomicU32, Ordering};
+
+use staticvec::*;
 
 type MyStaticVec = StaticVec<i32, 64>;
 type MyStaticHeap = StaticHeap<i32, 64>;
@@ -461,6 +462,25 @@ fn push_unique() {
   heap.push(box 103);
   assert_eq!(heap.len(), 8);
   assert!(**heap.peek().unwrap() == 103);
+}
+
+#[test]
+fn remaining_capacity() {
+  let mut heap = StaticHeap::<i32, 100>::new();
+  heap.push(1);
+  assert_eq!(heap.remaining_capacity(), 99);
+}
+
+#[test]
+fn size_in_bytes() {
+  let x = StaticHeap::<u8, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(x.size_in_bytes(), 8);
+  let y = StaticHeap::<u16, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(y.size_in_bytes(), 16);
+  let z = StaticHeap::<u32, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(z.size_in_bytes(), 32);
+  let w = StaticHeap::<u64, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  assert_eq!(w.size_in_bytes(), 64);
 }
 
 #[test]

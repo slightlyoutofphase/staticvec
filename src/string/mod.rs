@@ -1,3 +1,7 @@
+use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
+use core::ops::*;
+use core::str::{self, from_utf8, from_utf8_unchecked};
+
 pub use self::string_errors::StringError;
 use self::string_utils::{
   encode_char_utf8_unchecked, is_char_boundary, is_inside_boundary, never, shift_left_unchecked,
@@ -5,9 +9,6 @@ use self::string_utils::{
 };
 use crate::errors::CapacityError;
 use crate::StaticVec;
-use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
-use core::ops::*;
-use core::str::{self, from_utf8, from_utf8_unchecked};
 
 #[cfg(all(feature = "std", rustdoc))]
 use alloc::string::String;

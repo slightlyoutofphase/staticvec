@@ -1,6 +1,7 @@
-use super::StaticHeap;
 use core::fmt::{self, Debug, Formatter};
 use core::iter::{FusedIterator, TrustedLen};
+
+use super::StaticHeap;
 
 /// A sorted "consuming" iterator over the elements of a [`StaticHeap`].
 ///

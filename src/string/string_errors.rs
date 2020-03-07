@@ -1,7 +1,8 @@
-use crate::errors::CapacityError;
 use core::char::DecodeUtf16Error;
 use core::fmt::{self, Debug, Display, Formatter};
 use core::str::Utf8Error;
+
+use crate::errors::CapacityError;
 
 /// This enum represents several different possible "error states" that may be encountered
 /// while using a [`StaticString`](crate::string::StaticString).

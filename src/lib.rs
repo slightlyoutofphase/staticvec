@@ -1,30 +1,45 @@
 #![no_std]
-#![allow(clippy::doc_markdown)]
-#![allow(clippy::inline_always)]
-#![allow(clippy::match_bool)]
-#![allow(incomplete_features)]
-#![feature(const_compare_raw_pointers)]
-#![feature(const_fn)]
-#![feature(const_fn_union)]
-#![feature(const_generics)]
-#![feature(const_if_match)]
-#![feature(const_loop)]
-#![feature(const_mut_refs)]
-#![feature(const_panic)]
-#![feature(const_ptr_offset_from)]
-#![feature(const_raw_ptr_deref)]
-#![feature(const_raw_ptr_to_usize_cast)]
-#![feature(core_intrinsics)]
-#![feature(doc_cfg)]
-#![feature(exact_size_is_empty)]
-#![feature(maybe_uninit_extra)]
-#![feature(maybe_uninit_ref)]
-#![feature(maybe_uninit_uninit_array)]
+#![allow(
+  clippy::doc_markdown,
+  clippy::inline_always,
+  clippy::match_bool,
+  incomplete_features
+)]
+#![feature(
+  const_compare_raw_pointers,
+  const_fn,
+  const_fn_union,
+  const_generics,
+  const_if_match,
+  const_loop,
+  const_mut_refs,
+  const_panic,
+  const_ptr_offset_from,
+  const_raw_ptr_deref,
+  const_raw_ptr_to_usize_cast,
+  core_intrinsics,
+  doc_cfg,
+  exact_size_is_empty,
+  maybe_uninit_extra,
+  maybe_uninit_ref,
+  maybe_uninit_uninit_array,
+  slice_partition_dedup,
+  specialization,
+  trusted_len,
+  untagged_unions
+)]
 #![cfg_attr(feature = "std", feature(read_initializer))]
-#![feature(slice_partition_dedup)]
-#![feature(specialization)]
-#![feature(trusted_len)]
-#![feature(untagged_unions)]
+
+use core::cmp::{Ord, PartialEq};
+use core::intrinsics;
+#[doc(hidden)]
+pub use core::iter::FromIterator;
+use core::marker::PhantomData;
+use core::mem::MaybeUninit;
+use core::ops::{
+  Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub,
+};
+use core::ptr;
 
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::heap::{
@@ -36,16 +51,6 @@ use crate::utils::{
   is_null_const, is_null_mut, quicksort_internal, reverse_copy, slice_from_raw_parts,
   slice_from_raw_parts_mut,
 };
-use core::cmp::{Ord, PartialEq};
-use core::intrinsics;
-#[doc(hidden)]
-pub use core::iter::FromIterator;
-use core::marker::PhantomData;
-use core::mem::MaybeUninit;
-use core::ops::{
-  Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub,
-};
-use core::ptr;
 
 #[doc(hidden)]
 pub use staticsort::staticsort as __staticsort;

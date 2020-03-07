@@ -1,9 +1,10 @@
+use core::fmt::{self, Debug, Formatter};
+use core::iter::FromIterator;
+
 use super::StaticHeap;
 use crate::iterators::{StaticVecIntoIter, StaticVecIterConst};
 use crate::trait_impls::ExtendEx;
 use crate::StaticVec;
-use core::fmt::{self, Debug, Formatter};
-use core::iter::FromIterator;
 
 impl<T: Clone, const N: usize> Clone for StaticHeap<T, N> {
   #[inline(always)]

@@ -1,13 +1,14 @@
-use crate::utils::{
-  distance_between, is_null_const, is_null_mut, slice_from_raw_parts, slice_from_raw_parts_mut,
-};
-use crate::StaticVec;
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics;
 use core::iter::{FusedIterator, TrustedLen};
 use core::marker::{PhantomData, Send, Sync};
 use core::mem::MaybeUninit;
 use core::ptr;
+
+use crate::utils::{
+  distance_between, is_null_const, is_null_mut, slice_from_raw_parts, slice_from_raw_parts_mut,
+};
+use crate::StaticVec;
 
 #[cfg(feature = "std")]
 use alloc::string::String;

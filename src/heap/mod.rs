@@ -1,10 +1,11 @@
+use core::intrinsics::size_of;
+use core::mem::swap;
+
 use self::heap_helpers::StaticHeapHole;
 pub use self::heap_helpers::StaticHeapPeekMut;
 pub use self::heap_iterators::{StaticHeapDrainSorted, StaticHeapIntoIterSorted};
 use crate::iterators::{StaticVecDrain, StaticVecIterConst};
 use crate::StaticVec;
-use core::intrinsics::size_of;
-use core::mem::swap;
 
 mod heap_helpers;
 mod heap_iterators;

@@ -1,8 +1,9 @@
-use crate::StaticVec;
 use core::cmp::{Ordering, PartialOrd};
 use core::intrinsics;
 use core::mem::MaybeUninit;
 use core::ptr;
+
+use crate::StaticVec;
 
 /// An internal function for calculating pointer offsets as usizes, while accounting
 /// directly for possible ZSTs. This is used specifically in the iterator implementations.

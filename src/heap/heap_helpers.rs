@@ -1,7 +1,8 @@
-use super::StaticHeap;
 use core::fmt::{self, Debug, Formatter};
 use core::mem::ManuallyDrop;
 use core::ops::{Deref, DerefMut};
+
+use super::StaticHeap;
 
 /// A struct wrapping a mutable reference to the greatest (or "maximal") item in a [`StaticHeap`].
 ///

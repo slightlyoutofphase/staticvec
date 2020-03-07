@@ -1,8 +1,3 @@
-use crate::heap::StaticHeap;
-use crate::iterators::*;
-use crate::string::StaticString;
-use crate::utils::{partial_compare, slice_from_raw_parts, slice_from_raw_parts_mut};
-use crate::StaticVec;
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
@@ -13,6 +8,12 @@ use core::ops::{
   RangeToInclusive,
 };
 use core::ptr;
+
+use crate::heap::StaticHeap;
+use crate::iterators::*;
+use crate::string::StaticString;
+use crate::utils::{partial_compare, slice_from_raw_parts, slice_from_raw_parts_mut};
+use crate::StaticVec;
 
 #[cfg(feature = "std")]
 use core::str;
