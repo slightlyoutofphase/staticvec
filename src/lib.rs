@@ -226,6 +226,14 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns the remaining capacity (which is to say, `self.capacity() - self.len()`) of the
   /// StaticVec.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut vec = StaticVec::<i32, 100>::new();
+  /// vec.push(1);
+  /// assert_eq!(vec.remaining_capacity(), 99);
+  /// ```
   #[inline(always)]
   pub const fn remaining_capacity(&self) -> usize {
     N - self.length
@@ -234,6 +242,19 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns the total size of the inhabited part of the StaticVec (which may be zero if it has a
   /// length of zero or contains ZSTs) in bytes. Specifically, the return value of this function
   /// amounts to a calculation of `size_of::<T>() * self.length`.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let x = StaticVec::<u8, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  /// assert_eq!(x.size_in_bytes(), 8);
+  /// let y = StaticVec::<u16, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  /// assert_eq!(y.size_in_bytes(), 16);
+  /// let z = StaticVec::<u32, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  /// assert_eq!(z.size_in_bytes(), 32);
+  /// let w = StaticVec::<u64, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
+  /// assert_eq!(w.size_in_bytes(), 64);
+  /// ```
   #[inline(always)]
   pub const fn size_in_bytes(&self) -> usize {
     intrinsics::size_of::<T>() * self.length

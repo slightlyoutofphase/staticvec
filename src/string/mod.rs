@@ -1,27 +1,3 @@
-//! A fixed-capacity [`String`](alloc::string::String)-like struct built around an instance of
-//! `StaticVec<u8, N>`.
-//!
-//! ## Examples
-//!
-//! ```
-//! use staticvec::{StaticString, StringError};
-//!
-//! #[derive(Debug)]
-//! pub struct User {
-//!   pub username: StaticString<20>,
-//!   pub role: StaticString<5>,
-//! }
-//!
-//! fn main() -> Result<(), StringError> {
-//!   let user = User {
-//!     username: StaticString::try_from_str("user")?,
-//!     role: StaticString::try_from_str("admin")?,
-//!   };
-//!   println!("{:?}", user);
-//!   Ok(())
-//! }
-//! ```
-
 pub use self::string_errors::StringError;
 use self::string_utils::{
   encode_char_utf8_unchecked, is_char_boundary, is_inside_boundary, never, shift_left_unchecked,
@@ -43,6 +19,27 @@ pub mod string_utils;
 
 /// A fixed-capacity [`String`](alloc::string::String)-like struct built around an instance of
 /// `StaticVec<u8, N>`.
+///
+/// ## Examples
+///
+/// ```
+/// use staticvec::{StaticString, StringError};
+///
+/// #[derive(Debug)]
+/// pub struct User {
+///   pub username: StaticString<20>,
+///   pub role: StaticString<5>,
+/// }
+///
+/// fn main() -> Result<(), StringError> {
+///   let user = User {
+///     username: StaticString::try_from_str("user")?,
+///     role: StaticString::try_from_str("admin")?,
+///   };
+///   println!("{:?}", user);
+///   Ok(())
+/// }
+/// ```
 #[derive(Clone)]
 pub struct StaticString<const N: usize> {
   pub(crate) vec: StaticVec<u8, N>,

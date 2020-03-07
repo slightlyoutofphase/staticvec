@@ -488,6 +488,16 @@ impl<T, const N: usize> StaticHeap<T, N> {
 
   /// Returns the remaining capacity (which is to say, `self.capacity() - self.len()`) of the
   /// StaticHeap.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut heap = StaticHeap::<i32, 100>::new();
+  /// heap.push(1);
+  /// assert_eq!(heap.remaining_capacity(), 99);
+  /// ```
   #[inline(always)]
   pub const fn remaining_capacity(&self) -> usize {
     self.data.remaining_capacity()
@@ -496,6 +506,21 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// Returns the total size of the inhabited part of the StaticHeap (which may be zero if it has a
   /// length of zero or contains ZSTs) in bytes. Specifically, the return value of this function
   /// amounts to a calculation of `size_of::<T>() * self.length`.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let x = StaticHeap::<u8, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  /// assert_eq!(x.size_in_bytes(), 8);
+  /// let y = StaticHeap::<u16, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  /// assert_eq!(y.size_in_bytes(), 16);
+  /// let z = StaticHeap::<u32, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  /// assert_eq!(z.size_in_bytes(), 32);
+  /// let w = StaticHeap::<u64, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  /// assert_eq!(w.size_in_bytes(), 64);
+  /// ```
   #[inline(always)]
   pub const fn size_in_bytes(&self) -> usize {
     self.data.size_in_bytes()
