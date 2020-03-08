@@ -1,8 +1,15 @@
 #![no_std]
 #![allow(
+  // Clippy wants every single instance of the word "StaticVec" to be in syntax-highlight
+  // backticks, which IMO looks way too "noisy" when actually rendered.
   clippy::doc_markdown,
+  // Clippy thinks inline always is a bad idea even for the most simple of one-liners, so
+  // IMO it's just not a particularly helpful lint.
   clippy::inline_always,
+  // The "if-let" syntax Clippy recommends as an alternative to "match" in this lint is
+  // generally way less readable IMO.
   clippy::match_bool,
+  // Without this, every single use of const generics is warned against.
   incomplete_features
 )]
 #![feature(
