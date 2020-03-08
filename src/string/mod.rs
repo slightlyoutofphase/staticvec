@@ -1,5 +1,5 @@
 use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
-use core::ops::*;
+use core::ops::{Bound, RangeBounds};
 use core::str::{self, from_utf8, from_utf8_unchecked};
 
 pub use self::string_errors::StringError;

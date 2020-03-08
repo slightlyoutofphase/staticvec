@@ -588,6 +588,10 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// heap.push(1);
   /// assert!(heap.is_not_empty());
   /// ```
+  // Clippy wants `!is_empty()` for this, but I prefer it as-is. My question is though, does it
+  // actually know that we have an applicable `is_empty()` function, or is it just guessing? I'm not
+  // sure.
+  #[allow(clippy::len_zero)]
   #[inline(always)]
   pub const fn is_not_empty(&self) -> bool {
     self.len() > 0

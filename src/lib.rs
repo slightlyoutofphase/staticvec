@@ -53,7 +53,9 @@ pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::heap::{
   StaticHeap, StaticHeapDrainSorted, StaticHeapIntoIterSorted, StaticHeapPeekMut,
 };
-pub use crate::iterators::*;
+pub use crate::iterators::{
+  StaticVecDrain, StaticVecIntoIter, StaticVecIterConst, StaticVecIterMut,
+};
 pub use crate::string::{string_utils, StaticString, StringError};
 use crate::utils::{
   is_null_const, is_null_mut, quicksort_internal, reverse_copy, slice_from_raw_parts,
@@ -302,6 +304,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns true if the current length of the StaticVec is greater than 0.
+  // Clippy wants `!is_empty()` for this, but I prefer it as-is. My question is though, does it
+  // actually know that we have an applicable `is_empty()` function, or is it just guessing? I'm not
+  // sure.
+  #[allow(clippy::len_zero)]
   #[inline(always)]
   pub const fn is_not_empty(&self) -> bool {
     self.length > 0

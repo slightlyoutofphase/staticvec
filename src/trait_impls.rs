@@ -11,7 +11,7 @@ use core::ops::{
 use core::ptr;
 
 use crate::heap::StaticHeap;
-use crate::iterators::*;
+use crate::iterators::{StaticVecIntoIter, StaticVecIterConst, StaticVecIterMut};
 use crate::string::StaticString;
 use crate::utils::{partial_compare, slice_from_raw_parts, slice_from_raw_parts_mut};
 use crate::StaticVec;
@@ -191,6 +191,8 @@ impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&
 }
 
 impl<T, const N1: usize, const N2: usize> ExtendEx<T, StaticVec<T, N1>> for StaticVec<T, N2> {
+  // Clippy's recommendation to use a normal reference type isn't actually possible here.
+  #[allow(clippy::toplevel_ref_arg)]
   #[inline(always)]
   default fn extend_ex(&mut self, ref mut iter: StaticVec<T, N1>) {
     self.append(iter);
