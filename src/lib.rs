@@ -17,6 +17,7 @@
   const_ptr_offset_from,
   const_raw_ptr_deref,
   const_raw_ptr_to_usize_cast,
+  const_saturating_int_methods,
   core_intrinsics,
   doc_cfg,
   exact_size_is_empty,

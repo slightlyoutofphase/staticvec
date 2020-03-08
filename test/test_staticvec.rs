@@ -577,6 +577,10 @@ fn extend() {
   let mut c3 = StaticVec::<Vec<u8>, 2>::new();
   c3.extend(c2);
   assert_eq!(c3, [vec![1, 1], vec![1, 2]]);
+  let c4 = staticvec![vec![1, 1], vec![1, 2], vec![1, 3], vec![1, 4]];
+  let mut c5 = StaticVec::<Vec<u8>, 4>::new();
+  c5.extend(c4);
+  assert_eq!(c5, [vec![1, 1], vec![1, 2], vec![1, 3], vec![1, 4]]);
 }
 
 #[test]

@@ -157,6 +157,7 @@ pub(crate) union Repr<T> {
 #[allow(clippy::cmp_null)]
 #[inline(always)]
 pub(crate) const fn is_null_const<T>(p: *const T) -> bool {
+  // Same code as in the original.
   unsafe { (p as *const u8) == ptr::null() }
 }
 
@@ -164,15 +165,38 @@ pub(crate) const fn is_null_const<T>(p: *const T) -> bool {
 #[allow(clippy::cmp_null)]
 #[inline(always)]
 pub(crate) const fn is_null_mut<T>(p: *mut T) -> bool {
+  // Same code as in the original.
   unsafe { (p as *mut u8) == ptr::null_mut() }
+}
+
+/// A local `const fn` version of the (private) `core::intrinsics::is_aligned_and_not_null` utility
+/// function, recreated here for the sake of wanting to be able to do exactly the same debug
+/// assertions in the slice methods below.
+#[inline(always)]
+pub(crate) const fn is_aligned_and_not_null_const<T>(ptr: *const T) -> bool {
+  // Same code as in the original, just using our local `const` function to do the null check.
+  unsafe { !is_null_const(ptr) && ptr as usize % core::mem::align_of::<T>() == 0 }
+}
+
+/// A `mut` version of the above. Of course, you can pass `mut` pointers to functions taking `const`
+/// ones, but what the heck, it feels more symmetrical this way.
+#[inline(always)]
+pub(crate) const fn is_aligned_and_not_null_mut<T>(ptr: *mut T) -> bool {
+  // Same code as in the original, just using our local `const` function to do the null check.
+  unsafe { !is_null_mut(ptr) && ptr as usize % core::mem::align_of::<T>() == 0 }
 }
 
 /// A local `const fn` version of `ptr::slice_from_raw_parts`.
 #[inline(always)]
 pub(crate) const fn ptr_slice_from_raw_parts<T>(data: *const T, len: usize) -> *const [T] {
+  // Same code as in the original, just using our local `const` functions where necessary.
   debug_assert!(
-    !is_null_const(data),
-    "A null pointer was passed to `staticvec::utils::ptr_slice_from_raw_parts`!"
+    is_aligned_and_not_null_const(data),
+    "A null or unaligned pointer was passed to `staticvec::utils::ptr_slice_from_raw_parts`!"
+  );
+  debug_assert!(
+    core::mem::size_of::<T>().saturating_mul(len) <= isize::MAX as usize,
+    "Attempted to create a slice covering at least half the address space!"
   );
   unsafe {
     Repr {
@@ -185,9 +209,14 @@ pub(crate) const fn ptr_slice_from_raw_parts<T>(data: *const T, len: usize) -> *
 /// A local `const fn` version of `ptr::slice_from_raw_parts_mut`.
 #[inline(always)]
 pub(crate) const fn ptr_slice_from_raw_parts_mut<T>(data: *mut T, len: usize) -> *mut [T] {
+  // Same code as in the original, just using our local `const` functions where necessary.
   debug_assert!(
-    !is_null_mut(data),
-    "A null pointer was passed to `staticvec::utils::ptr_slice_from_raw_parts_mut`!"
+    is_aligned_and_not_null_mut(data),
+    "A null or unaligned pointer was passed to `staticvec::utils::ptr_slice_from_raw_parts_mut`!"
+  );
+  debug_assert!(
+    core::mem::size_of::<T>().saturating_mul(len) <= isize::MAX as usize,
+    "Attempted to create a slice covering at least half the address space!"
   );
   unsafe {
     Repr {
@@ -200,11 +229,15 @@ pub(crate) const fn ptr_slice_from_raw_parts_mut<T>(data: *mut T, len: usize) ->
 /// A local `const fn` version of `slice::from_raw_parts`.
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -> &'a [T] {
+  // Same code as in the original, except we do the debug assertions in the function that this one
+  // calls, rather than the other way around.
   unsafe { &*ptr_slice_from_raw_parts(data, length) }
 }
 
 /// A local `const fn` version of `slice::from_raw_parts_mut`.
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts_mut<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
+  // Same code as in the original, except we do the debug assertions in the function that this one
+  // calls, rather than the other way around.
   unsafe { &mut *ptr_slice_from_raw_parts_mut(data, length) }
 }
