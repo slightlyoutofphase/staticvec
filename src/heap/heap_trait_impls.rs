@@ -120,7 +120,7 @@ impl<'a, T: 'a + Copy + Ord, const N: usize> Extend<&'a T> for StaticHeap<T, N> 
 }
 
 impl<T: Ord, const N1: usize, const N2: usize> From<StaticVec<T, N1>> for StaticHeap<T, N2> {
-  /// Converts a `StaticVec<T, N>` into a `StaticHeap<T, N>`.
+  /// Converts a `StaticVec<T, N1>` into a `StaticHeap<T, N2>`.
   /// This conversion happens in-place, and has `O(n)` time complexity.
   #[inline(always)]
   default fn from(vec: StaticVec<T, N1>) -> StaticHeap<T, N2> {
