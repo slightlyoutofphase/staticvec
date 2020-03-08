@@ -925,6 +925,33 @@ fn iter_nth() {
   assert_eq!(it5.next().unwrap(), &vec![4]);
   assert_eq!(it5.next_back().unwrap(), &vec![5]);
   assert_eq!(it5.nth(0), None);
+  let xs6 = staticvec![
+    vec![1, 1],
+    vec![2, 2],
+    vec![3, 3],
+    vec![4, 4],
+    vec![5, 5],
+    vec![6, 6]
+  ];
+  let mut it6 = xs6.iter();
+  let o = it6.nth(2);
+  assert_eq!(format!("{:?}", o), "Some([3, 3])");
+  assert_eq!(
+    format!("{:?}", it6),
+    "StaticVecIterConst([[4, 4], [5, 5], [6, 6]])"
+  );
+  let xs7 = staticvec![
+    vec![1, 1],
+    vec![2, 2],
+    vec![3, 3],
+    vec![4, 4],
+    vec![5, 5],
+    vec![6, 6]
+  ];
+  let mut it7 = xs7.iter();
+  let o = it7.nth(5);
+  assert_eq!(format!("{:?}", o), "Some([6, 6])");
+  assert_eq!(format!("{:?}", it7), "StaticVecIterConst([])");
 }
 
 #[test]
@@ -962,6 +989,33 @@ fn iter_nth_back() {
   assert_eq!(it5.next().unwrap(), &vec![1]);
   assert_eq!(it5.next_back().unwrap(), &vec![3]);
   assert_eq!(it5.nth_back(0).unwrap(), &vec![2]);
+  let xs6 = staticvec![
+    vec![1, 1],
+    vec![2, 2],
+    vec![3, 3],
+    vec![4, 4],
+    vec![5, 5],
+    vec![6, 6]
+  ];
+  let mut it6 = xs6.iter();
+  let o = it6.nth_back(2);
+  assert_eq!(format!("{:?}", o), "Some([4, 4])");
+  assert_eq!(
+    format!("{:?}", it6),
+    "StaticVecIterConst([[1, 1], [2, 2], [3, 3]])"
+  );
+  let xs7 = staticvec![
+    vec![1, 1],
+    vec![2, 2],
+    vec![3, 3],
+    vec![4, 4],
+    vec![5, 5],
+    vec![6, 6]
+  ];
+  let mut it7 = xs7.iter();
+  let o = it7.nth_back(5);
+  assert_eq!(format!("{:?}", o), "Some([1, 1])");
+  assert_eq!(format!("{:?}", it7), "StaticVecIterConst([])");
 }
 
 #[test]
@@ -1053,6 +1107,33 @@ fn iter_mut_nth() {
   assert_eq!(it5.next().unwrap(), &mut vec![4]);
   assert_eq!(it5.next_back().unwrap(), &mut vec![5]);
   assert_eq!(it5.nth(0), None);
+  let mut xs6 = staticvec![
+    vec![1, 1],
+    vec![2, 2],
+    vec![3, 3],
+    vec![4, 4],
+    vec![5, 5],
+    vec![6, 6]
+  ];
+  let mut it6 = xs6.iter_mut();
+  let o = it6.nth(2);
+  assert_eq!(format!("{:?}", o), "Some([3, 3])");
+  assert_eq!(
+    format!("{:?}", it6),
+    "StaticVecIterMut([[4, 4], [5, 5], [6, 6]])"
+  );
+  let mut xs7 = staticvec![
+    vec![1, 1],
+    vec![2, 2],
+    vec![3, 3],
+    vec![4, 4],
+    vec![5, 5],
+    vec![6, 6]
+  ];
+  let mut it7 = xs7.iter_mut();
+  let o = it7.nth(5);
+  assert_eq!(format!("{:?}", o), "Some([6, 6])");
+  assert_eq!(format!("{:?}", it7), "StaticVecIterMut([])");
 }
 
 #[test]
@@ -1088,6 +1169,33 @@ fn iter_mut_nth_back() {
   assert_eq!(it5.next().unwrap(), &mut vec![1]);
   assert_eq!(it5.next_back().unwrap(), &mut vec![3]);
   assert_eq!(it5.nth_back(0).unwrap(), &mut vec![2]);
+  let mut xs6 = staticvec![
+    vec![1, 1],
+    vec![2, 2],
+    vec![3, 3],
+    vec![4, 4],
+    vec![5, 5],
+    vec![6, 6]
+  ];
+  let mut it6 = xs6.iter_mut();
+  let o = it6.nth_back(2);
+  assert_eq!(format!("{:?}", o), "Some([4, 4])");
+  assert_eq!(
+    format!("{:?}", it6),
+    "StaticVecIterMut([[1, 1], [2, 2], [3, 3]])"
+  );
+  let mut xs7 = staticvec![
+    vec![1, 1],
+    vec![2, 2],
+    vec![3, 3],
+    vec![4, 4],
+    vec![5, 5],
+    vec![6, 6]
+  ];
+  let mut it7 = xs7.iter_mut();
+  let o = it7.nth_back(5);
+  assert_eq!(format!("{:?}", o), "Some([1, 1])");
+  assert_eq!(format!("{:?}", it7), "StaticVecIterMut([])");
 }
 
 #[test]
