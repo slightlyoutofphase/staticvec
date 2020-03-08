@@ -3,7 +3,6 @@ use core::cmp::{Eq, Ord, Ordering, PartialEq};
 use core::fmt::{self, Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
-use core::mem::MaybeUninit;
 use core::ops::{
   Deref, DerefMut, Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo,
   RangeToInclusive,
@@ -196,8 +195,8 @@ impl<T, const N1: usize, const N2: usize> ExtendEx<T, StaticVec<T, N1>> for Stat
     self.append(iter);
   }
 
-  #[inline]
-  default fn from_iter_ex(iter: StaticVec<T, N1>) -> Self {
+  #[inline(always)]
+  default fn from_iter_ex(mut iter: StaticVec<T, N1>) -> Self {
     Self {
       data: {
         unsafe {
@@ -205,16 +204,8 @@ impl<T, const N1: usize, const N2: usize> ExtendEx<T, StaticVec<T, N1>> for Stat
           iter
             .as_ptr()
             .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), N1.min(N2));
-          // We use the same sort of sequence here as in `new_from_array`.
-          if N1 != N2 {
-            let mut forgotten = MaybeUninit::new(iter);
-            ptr::drop_in_place(
-              forgotten
-                .get_mut()
-                .as_mut_slice()
-                .get_unchecked_mut(N1.min(N2)..N1),
-            );
-          }
+          // Set the length of the input StaticVec to 0 to avoid double-drops.
+          iter.length = 0;
           data
         }
       },

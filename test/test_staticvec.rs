@@ -663,6 +663,29 @@ fn from_iter() {
     ),
     [Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]
   );
+  assert_eq!(
+    StaticVec::<Box<Struct>, 2>::from_iter(staticvec![
+      Box::new(Struct { s: "A" }),
+      Box::new(Struct { s: "B" }),
+      Box::new(Struct { s: "C" }),
+      Box::new(Struct { s: "C" })
+    ]),
+    [Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]
+  );
+  assert_eq!(
+    StaticVec::<Box<Struct>, 4>::from_iter(staticvec![
+      Box::new(Struct { s: "A" }),
+      Box::new(Struct { s: "B" }),
+      Box::new(Struct { s: "C" }),
+      Box::new(Struct { s: "C" })
+    ]),
+    [
+      Box::new(Struct { s: "A" }),
+      Box::new(Struct { s: "B" }),
+      Box::new(Struct { s: "C" }),
+      Box::new(Struct { s: "C" })
+    ]
+  );
 }
 
 #[cfg(feature = "std")]
