@@ -1219,7 +1219,7 @@ fn into_inner() {
   assert_eq!(
     zz.unwrap(),
     [vec![vec![1]], vec![vec![2]], vec![vec![3]], vec![vec![4]]]
-  )
+  );
   let mut vvv = staticvec![box 9, box 1, box 1];
   vvv.pop();
   let zzz = vvv.into_inner();
