@@ -14,7 +14,7 @@ mod heap_trait_impls;
 ///
 /// `StaticHeap`, as well as the associated iterator and helper structs for it are direct
 /// adaptations of the ones found in the `std::collections::binary_heap` module (including
-/// most of the documentation).
+/// most of the documentation, at least for the functions that exist in both implementations).
 ///
 /// It is a logic error for an item to be modified in such a way that the
 /// item's ordering relative to any other item, as determined by the `Ord`
@@ -154,7 +154,41 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
       })
     }
   }
-
+  
+  /// Pops a value from the end of the StaticHeap and returns it directly without asserting that
+  /// the StaticHeap's current length is greater than 0.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that the StaticHeap contains at least one
+  /// element prior to using this function. Failure to do so will result in reading
+  /// from uninitialized memory.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut heap = StaticHeap::from(staticvec![1, 3]);
+  /// unsafe {
+  ///   assert_eq!(heap.pop_unchecked(), 3);
+  ///   assert_eq!(heap.pop_unchecked(), 1);
+  /// }
+  /// ```
+  ///
+  /// # Time complexity
+  ///
+  /// The worst case cost of `pop_unchecked` on a heap containing *n* elements is O(log n).
+  #[inline(always)]
+  pub unsafe fn pop_unchecked(&mut self) -> T {
+    let mut res = self.data.pop_unchecked();
+    if self.is_not_empty() {
+      swap(&mut res, self.data.get_unchecked_mut(0));
+      self.sift_down_to_bottom(0);
+    }
+    res
+  }
+  
   /// Removes the greatest item from the StaticHeap and returns it, or `None` if it
   /// is empty.
   ///
@@ -174,15 +208,57 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
   /// The worst case cost of `pop` on a heap containing *n* elements is O(log n).
   #[inline(always)]
   pub fn pop(&mut self) -> Option<T> {
-    self.data.pop().map(|mut item| {
-      if self.is_not_empty() {
-        swap(&mut item, unsafe { self.data.get_unchecked_mut(0) });
-        self.sift_down_to_bottom(0);
-      }
-      item
-    })
+    if self.is_empty() {
+      None
+    } else {
+      Some(unsafe { self.pop_unchecked() })
+    }
   }
-
+  
+  /// Pushes a value onto the StaticHeap without asserting that
+  /// its current length is less than `N` / `self.capacity()`.
+  ///
+  /// # Safety
+  ///
+  /// It is up to the caller to ensure that the length of the StaticVec
+  /// prior to using this function is less than `N` / `self.capacity()`.
+  /// Failure to do so will result in writing to an out-of-bounds memory region.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  /// ```
+  /// # use staticvec::StaticHeap;
+  /// let mut heap = StaticHeap::<i32, 12>::new();
+  /// unsafe {
+  ///   heap.push_unchecked(3);
+  ///   heap.push_unchecked(5);
+  ///   heap.push_unchecked(1);
+  /// }
+  /// assert_eq!(heap.len(), 3);
+  /// assert_eq!(heap.peek(), Some(&5));
+  /// ```
+  ///
+  /// # Time complexity
+  ///
+  /// The expected cost of `push_unchecked`, averaged over every possible ordering of
+  /// the elements being pushed, and over a sufficiently large number of
+  /// pushes, is O(1). This is the most meaningful cost metric when pushing
+  /// elements that are *not* already in any sorted pattern.
+  ///
+  /// The time complexity degrades if elements are pushed in predominantly
+  /// ascending order. In the worst case, elements are pushed in ascending
+  /// sorted order and the amortized cost per push is O(log n) against a heap
+  /// containing *n* elements.
+  ///
+  /// The worst case cost of a *single* call to `push_unchecked` is O(n).
+  #[inline(always)]
+  pub unsafe fn push_unchecked(&mut self, item: T) {
+    let old_length = self.len();
+    self.data.push_unchecked(item);
+    self.sift_up(0, old_length);
+  }
+  
   /// Pushes an item onto the StaticHeap, panicking if the underlying StaticVec
   /// instance is already at maximum capacity.
   ///
@@ -214,9 +290,11 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
   /// The worst case cost of a *single* call to `push` is O(n).
   #[inline(always)]
   pub fn push(&mut self, item: T) {
-    let old_len = self.len();
-    self.data.push(item);
-    self.sift_up(0, old_len);
+    assert!(
+      self.is_not_full(),
+      "`StaticHeap::push` was called through a StaticHeap already at maximum capacity!"
+    );
+    unsafe { self.push_unchecked(item) };
   }
 
   /// Consumes the StaticHeap and returns a StaticVec in sorted (ascending) order.
