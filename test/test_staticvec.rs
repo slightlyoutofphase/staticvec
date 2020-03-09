@@ -1207,6 +1207,7 @@ fn into_inner() {
     box 1, box 2, box 3, box 4, box 5, box 6, box 7, box 8, box 9, box 10, box 11, box 12
   ];
   let z = v.into_inner();
+  assert!(z.is_ok());
   assert_eq!(
     z.unwrap(),
     [box 1, box 2, box 3, box 4, box 5, box 6, box 7, box 8, box 9, box 10, box 11, box 12]
@@ -1214,10 +1215,15 @@ fn into_inner() {
   let vv: StaticVec<Vec<Vec<u32>>, 4> =
     staticvec![vec![vec![1]], vec![vec![2]], vec![vec![3]], vec![vec![4]]];
   let zz = vv.into_inner();
+  assert!(zz.is_ok());
   assert_eq!(
     zz.unwrap(),
     [vec![vec![1]], vec![vec![2]], vec![vec![3]], vec![vec![4]]]
   )
+  let mut vvv = staticvec![box 9, box 1, box 1];
+  vvv.pop();
+  let zzz = vvv.into_inner();
+  assert!(zzz.is_err());
 }
 
 #[test]
