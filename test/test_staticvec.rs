@@ -1,7 +1,7 @@
 #![allow(clippy::all)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
-#![feature(const_fn, const_if_match, const_loop)]
+#![feature(box_syntax, const_fn, const_if_match, const_loop)]
 
 // In case you're wondering, the instances of `#[cfg_attr(all(windows, miri), ignore)]` in this
 // file above the `#[should_panic]` tests are there simply because Miri only supports catching
@@ -1196,6 +1196,28 @@ fn iter_mut_nth_back() {
   let o = it7.nth_back(5);
   assert_eq!(format!("{:?}", o), "Some([1, 1])");
   assert_eq!(format!("{:?}", it7), "StaticVecIterMut([])");
+}
+
+#[test]
+fn into_inner() {
+  // Someone ELI5 why "box syntax" isn't more widely used... If I'd have known about it sooner I'd
+  // have never once used `Box::new()` in any of these tests (something I now feel like I'm
+  // ultimately gonna want to go back and change to just `box` at some point for each of them.)
+  let v: StaticVec<Box<i32>, 12> = staticvec![
+    box 1, box 2, box 3, box 4, box 5, box 6, box 7, box 8, box 9, box 10, box 11, box 12
+  ];
+  let z = v.into_inner();
+  assert_eq!(
+    z.unwrap(),
+    [box 1, box 2, box 3, box 4, box 5, box 6, box 7, box 8, box 9, box 10, box 11, box 12]
+  );
+  let vv: StaticVec<Vec<Vec<u32>>, 4> =
+    staticvec![vec![vec![1]], vec![vec![2]], vec![vec![3]], vec![vec![4]]];
+  let zz = vv.into_inner();
+  assert_eq!(
+    zz.unwrap(),
+    [vec![vec![1]], vec![vec![2]], vec![vec![3]], vec![vec![4]]]
+  )
 }
 
 #[test]

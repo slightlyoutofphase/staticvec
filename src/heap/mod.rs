@@ -1,4 +1,3 @@
-use core::intrinsics::size_of;
 use core::mem::swap;
 
 use self::heap_helpers::StaticHeapHole;
@@ -332,57 +331,30 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     }
   }
 
-  /// Moves all the elements of `other` into `self`, leaving `other` empty.
+  /// Appends `self.remaining_capacity()` (or as many as available) items from `other` to `self`.
+  /// The appended items (if any) will no longer exist in `other` afterwards (which is to say,
+  /// `other` will be left empty.)
+  ///
+  /// The `N2` parameter does not need to be provided explicitly, and can be inferred directly from
+  /// the constant `N2` constraint of `other` (which may or may not be the same as the `N`
+  /// constraint of `self`.)
   ///
   /// # Examples
   ///
   /// Basic usage:
   /// ```
   /// # use staticvec::*;
-  /// let v = staticvec![-10, 1, 2];
-  /// let mut a = StaticHeap::<i32, 6>::from(v);
-  /// let v = staticvec![-20, 5, 43];
-  /// let mut b = StaticHeap::from(v);
+  /// // We give the two heaps arbitrary capacities for the sake of the example.
+  /// let mut a = StaticHeap::<i32, 9>::from(staticvec![-10, 1, 2, 3, 3]);
+  /// let mut b = StaticHeap::<i32, 18>::from(staticvec![-20, 5, 43]);
   /// a.append(&mut b);
-  /// assert_eq!(a.into_sorted_staticvec(), [-20, -10, 1, 2, 5, 43]);
+  /// assert_eq!(a.into_sorted_staticvec(), [-20, -10, 1, 2, 3, 3, 5, 43]);
   /// assert!(b.is_empty());
   /// ```
-  #[inline]
-  pub fn append(&mut self, other: &mut Self) {
-    // TODO: Investigate further whether the below calculations are
-    // actually applicable the same way they are for normal `BinaryHeap`,
-    // as our `extend` and `append` implementations are somewhat different
-    // (we have more specializations of `extend`, for example).
-
-    if self.len() < other.len() {
-      swap(self, other);
-    }
-
-    if other.is_empty() {
-      return;
-    }
-
-    #[inline(always)]
-    fn log2_fast(x: usize) -> usize {
-      8 * size_of::<usize>() - (x.leading_zeros() as usize) - 1
-    }
-
-    // `rebuild` takes O(len1 + len2) operations
-    // and about 2 * (len1 + len2) comparisons in the worst case
-    // while `extend` takes O(len2 * log_2(len1)) operations
-    // and about 1 * len2 * log_2(len1) comparisons in the worst case,
-    // assuming len1 >= len2.
-    #[inline]
-    fn better_to_rebuild(len1: usize, len2: usize) -> bool {
-      2 * (len1 + len2) < len2 * log2_fast(len1)
-    }
-
-    if better_to_rebuild(self.len(), other.len()) {
-      self.data.append(&mut other.data);
-      self.rebuild();
-    } else {
-      self.extend(other.drain());
-    }
+  #[inline(always)]
+  pub fn append<const N2: usize>(&mut self, other: &mut StaticHeap<T, N2>) {
+    self.data.append(&mut other.data);
+    self.rebuild();
   }
 
   /// Returns an iterator which retrieves elements in heap order.

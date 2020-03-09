@@ -1187,6 +1187,20 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
+  /// Inspired by the function of the same name from `ArrayVec`, this function directly returns
+  /// the StaticVec's backing array (as a "normal" array not wrapped in an instance of
+  /// `MaybeUninit`) in `Ok` if and only if the StaticVec is at maximum capacity. Otherwise, the
+  /// StaticVec itself is returned in `Err`.
+  #[inline(always)]
+  pub fn into_inner(mut self) -> Result<[T; N], Self> {
+    if self.length < N {
+      Err(self)
+    } else {
+      self.length = 0;
+      unsafe { Ok(self.data.read()) }
+    }
+  }
+
   /// Removes the specified range of elements from the StaticVec and returns them in a new one.
   #[inline]
   pub fn drain<R>(&mut self, range: R) -> Self

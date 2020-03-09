@@ -23,8 +23,8 @@ type MyStaticHeap = StaticHeap<i32, 64>;
 
 #[test]
 fn append() {
-  let mut a = MyStaticHeap::from(staticvec![-10, 1, 2, 3, 3]);
-  let mut b = MyStaticHeap::from(staticvec![-20, 5, 43]);
+  let mut a = StaticHeap::<i32, 8>::from(staticvec![-10, 1, 2, 3, 3]);
+  let mut b = StaticHeap::<i32, 3>::from(staticvec![-20, 5, 43]);
   a.append(&mut b);
   assert_eq!(a.into_sorted_staticvec(), [-20, -10, 1, 2, 3, 3, 5, 43]);
   assert!(b.is_empty());
@@ -32,9 +32,10 @@ fn append() {
 
 #[test]
 fn append_to_empty() {
-  let mut a = StaticHeap::new();
+  let mut a = StaticHeap::<i32, 24>::new();
   let mut b = StaticHeap::from(staticvec![-20, 5, 43]);
   a.append(&mut b);
+  assert_eq!(a.remaining_capacity(), 21);
   assert_eq!(a.into_sorted_staticvec(), [-20, 5, 43]);
   assert!(b.is_empty());
 }
