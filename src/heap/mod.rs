@@ -331,7 +331,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
   // Using a hole reduces the constant factor compared to using swaps,
   // which involves twice as many moves.
   #[inline]
-  fn sift_up(&mut self, start: usize, position: usize) -> usize {
+  fn sift_up(&mut self, start: usize, position: usize) {
     unsafe {
       // Take out the value at `position` and create a hole.
       let mut hole = StaticHeapHole::new(&mut self.data, position);
@@ -342,7 +342,6 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
         }
         hole.move_to(parent);
       }
-      hole.pos()
     }
   }
 
