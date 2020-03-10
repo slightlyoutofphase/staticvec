@@ -191,11 +191,28 @@ impl<'a, T: 'a + Copy, I: IntoIterator<Item = &'a T>, const N: usize> ExtendEx<&
 }
 
 impl<T, const N1: usize, const N2: usize> ExtendEx<T, StaticVec<T, N1>> for StaticVec<T, N2> {
-  // Clippy's recommendation to use a normal reference type isn't actually possible here.
-  #[allow(clippy::toplevel_ref_arg)]
-  #[inline(always)]
-  default fn extend_ex(&mut self, ref mut iter: StaticVec<T, N1>) {
-    self.append(iter);
+  #[inline]
+  default fn extend_ex(&mut self, iter: StaticVec<T, N1>) {
+    // We just reuse most of the `extend_from_slice` code here.
+    let old_length = self.length;
+    let added_length = iter.len().min(N2 - old_length);
+    // Safety: added_length is <= our remaining capacity and `iter.len()`.
+    unsafe {
+      iter
+        .as_ptr()
+        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
+      self.set_len(old_length + added_length);
+      // Wrap the values in a MaybeUninit to inhibit their destructors (if any),
+      // then manually drop any excess ones. This is the same kind of "trick" as
+      // is used in `new_from_array`, as you may or may not have noticed.
+      let mut forgotten = MaybeUninit::new(iter);
+      ptr::drop_in_place(
+        forgotten
+          .get_mut()
+          .as_mut_slice()
+          .get_unchecked_mut(N1.min(N2)..N1),
+      );
+    }
   }
 
   #[inline]
@@ -207,9 +224,7 @@ impl<T, const N1: usize, const N2: usize> ExtendEx<T, StaticVec<T, N1>> for Stat
           iter
             .as_ptr()
             .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), N1.min(N2));
-          // Wrap the values in a MaybeUninit to inhibit their destructors (if any),
-          // then manually drop any excess ones. This is the same kind of "trick" as
-          // is used in `new_from_array`, as you may or may not have noticed.
+          // Same thing as above here.
           let mut forgotten = MaybeUninit::new(iter);
           ptr::drop_in_place(
             forgotten

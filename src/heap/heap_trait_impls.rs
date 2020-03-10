@@ -125,6 +125,9 @@ impl<T: Ord, const N1: usize, const N2: usize> From<StaticVec<T, N1>> for Static
   #[inline(always)]
   default fn from(vec: StaticVec<T, N1>) -> StaticHeap<T, N2> {
     let mut heap = StaticHeap {
+      // We take advantage of one of StaticVec's `FromIter` specializations here, which
+      // basically works like a `From<StaticVec<T, N1>> for StaticVec<T, N2>` impl would if
+      // it could be implemented directly.
       data: StaticVec::from_iter(vec),
     };
     heap.rebuild();

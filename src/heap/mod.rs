@@ -154,7 +154,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
       })
     }
   }
-  
+
   /// Pops a value from the end of the StaticHeap and returns it directly without asserting that
   /// the StaticHeap's current length is greater than 0.
   ///
@@ -188,7 +188,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     }
     res
   }
-  
+
   /// Removes the greatest item from the StaticHeap and returns it, or `None` if it
   /// is empty.
   ///
@@ -214,14 +214,14 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
       Some(unsafe { self.pop_unchecked() })
     }
   }
-  
+
   /// Pushes a value onto the StaticHeap without asserting that
-  /// its current length is less than `N` / `self.capacity()`.
+  /// its current length is less than `self.capacity()`.
   ///
   /// # Safety
   ///
-  /// It is up to the caller to ensure that the length of the StaticVec
-  /// prior to using this function is less than `N` / `self.capacity()`.
+  /// It is up to the caller to ensure that the length of the StaticHeap
+  /// prior to using this function is less than `self.capacity()`.
   /// Failure to do so will result in writing to an out-of-bounds memory region.
   ///
   /// # Examples
@@ -258,7 +258,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     self.data.push_unchecked(item);
     self.sift_up(0, old_length);
   }
-  
+
   /// Pushes an item onto the StaticHeap, panicking if the underlying StaticVec
   /// instance is already at maximum capacity.
   ///
@@ -368,12 +368,6 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     }
   }
 
-  #[inline(always)]
-  fn sift_down(&mut self, position: usize) {
-    let len = self.len();
-    self.sift_down_range(position, len);
-  }
-
   /// Takes an element from `position` and moves it all the way down the heap,
   /// then sifts it up to its position.
   ///
@@ -405,7 +399,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
     let mut n = self.len() / 2;
     while n > 0 {
       n -= 1;
-      self.sift_down(n);
+      self.sift_down_range(n, self.len());
     }
   }
 
@@ -431,6 +425,9 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
   /// ```
   #[inline(always)]
   pub fn append<const N2: usize>(&mut self, other: &mut StaticHeap<T, N2>) {
+    if other.is_empty() {
+      return;
+    }
     self.data.append(&mut other.data);
     self.rebuild();
   }

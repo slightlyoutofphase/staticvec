@@ -72,7 +72,7 @@ impl<T: Ord, const N: usize> Drop for StaticHeapPeekMut<'_, T, N> {
   #[inline(always)]
   fn drop(&mut self) {
     if self.sift {
-      self.heap.sift_down(0);
+      self.heap.sift_down_range(0, self.heap.len());
     }
   }
 }
