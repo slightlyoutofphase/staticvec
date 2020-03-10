@@ -767,6 +767,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn iter(&self) -> StaticVecIterConst<T, N> {
     let start_ptr = self.as_ptr();
     unsafe {
+      // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
+      // Note that this is something also done in the `iter()` method for slices, additionally.
       intrinsics::assume(!is_null_const(start_ptr));
       StaticVecIterConst {
         start: start_ptr,
@@ -785,6 +787,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub fn iter_mut(&mut self) -> StaticVecIterMut<T, N> {
     let start_ptr = self.as_mut_ptr();
     unsafe {
+      // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
+      // Note that this is something also done in the `iter_mut()` method for slices, additionally.
       intrinsics::assume(!is_null_mut(start_ptr));
       StaticVecIterMut {
         start: start_ptr,
@@ -986,15 +990,24 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, N2>) {
     let old_length = self.length;
+    // Get the maximum number of items both within our capacity and within
+    // what `other` actually has to offer.
     let item_count = (N - old_length).min(other.length);
+    // Calculate what the length of `other` should be changed to once we've
+    // moved the items from it into self.
     let other_new_length = other.length - item_count;
     unsafe {
+      // Copy over the items.
       self
         .mut_ptr_at_unchecked(old_length)
         .copy_from_nonoverlapping(other.as_ptr(), item_count);
+      // Shift the items leftwards in `other` if / as necessary. This only
+      // really does anything if it's the case that the remaining capacity
+      // of `self` was less than the number of items `other` had available.
       other
         .as_mut_ptr()
         .copy_from(other.ptr_at_unchecked(item_count), other_new_length);
+      // Adjust the lengths of `other` and `self`.
       other.set_len(other_new_length);
       self.set_len(old_length + item_count);
     }
@@ -1027,12 +1040,16 @@ impl<T, const N: usize> StaticVec<T, N> {
     let other_length = other.length;
     let mut res = StaticVec::new();
     unsafe {
+      // Copy over all of `self`.
       self
         .as_ptr()
         .copy_to_nonoverlapping(res.as_mut_ptr(), length);
+      // Copy over all of `other` starting at the position immediately following
+      // the last occupied position of the copy we just did from `self`.
       other
         .as_ptr()
         .copy_to_nonoverlapping(res.mut_ptr_at_unchecked(length), other_length);
+      // Set the length of the resulting StaticVec before we return it.
       res.set_len(length + other_length);
     }
     res
