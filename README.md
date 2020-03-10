@@ -77,7 +77,8 @@ fn main() {
   .iter() {
     println!("{}", i);
   }
-  let filled = StaticVec::<StaticVec<usize, 8>, 128>::filled_with_by_index(|i| {
+  // The type parameter is inferred as `StaticVec<usize, 8>`.
+  let filled = StaticVec::<_, 128>::filled_with_by_index(|i| {
     staticvec![
       i + 1,
       i + 2,
