@@ -20,6 +20,8 @@ impl<T: Clone, const N: usize> Clone for StaticHeap<T, N> {
   }
 }
 
+// This allows `StaticHeap` to benefit from the optimized
+// "Clone for Copy types" impl that `StaticVec` has.
 impl<T: Copy, const N: usize> Clone for StaticHeap<T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
@@ -199,7 +201,7 @@ impl<T, const N: usize> IntoIterator for StaticHeap<T, N> {
   /// Basic usage:
   /// ```
   /// # use staticvec::*;
-  /// let heap = StaticHeap::from(staticvec![1, 2, 3, 4]);
+  /// let heap = StaticHeap::from([1, 2, 3, 4]);
   /// // Print 1, 2, 3, 4 in arbitrary order
   /// for x in heap.into_iter() {
   ///   // x has type i32, not &i32
