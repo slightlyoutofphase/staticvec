@@ -290,11 +290,12 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
   /// The worst case cost of a *single* call to `push` is O(n).
   #[inline(always)]
   pub fn push(&mut self, item: T) {
-    assert!(
-      self.is_not_full(),
-      "`StaticHeap::push` was called through a StaticHeap already at maximum capacity!"
-    );
-    unsafe { self.push_unchecked(item) };
+    // Deferring to our own `push_unchecked` which defers to `StaticVec::push_unchecked`
+    // is slower here than just calling `StaticVec::push` which calls `StaticVec::push_unchecked`
+    // anyways.
+    let old_length = self.len();
+    self.data.push(item);
+    self.sift_up(0, old_length);
   }
 
   /// Consumes the StaticHeap and returns a StaticVec in sorted (ascending) order.
@@ -716,6 +717,6 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// ```
   #[inline(always)]
   pub fn clear(&mut self) {
-    self.drain();
+    self.data.clear();
   }
 }
