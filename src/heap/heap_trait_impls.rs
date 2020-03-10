@@ -47,7 +47,7 @@ impl<T: Ord, const N: usize> Default for StaticHeap<T, N> {
 impl<T: Debug, const N: usize> Debug for StaticHeap<T, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    f.debug_list().entries(self.iter()).finish()
+    f.debug_list().entries(self.data.as_slice()).finish()
   }
 }
 
@@ -221,5 +221,15 @@ impl<'a, T, const N: usize> IntoIterator for &'a StaticHeap<T, N> {
   #[inline(always)]
   fn into_iter(self) -> StaticVecIterConst<'a, T, N> {
     self.iter()
+  }
+}
+
+impl<'a, T, const N: usize> IntoIterator for &'a mut StaticHeap<T, N> {
+  type Item = &'a mut T;
+  type IntoIter = StaticVecIterMut<'a, T, N>;
+
+  #[inline(always)]
+  fn into_iter(self) -> StaticVecIterMut<'a, T, N> {
+    self.iter_mut()
   }
 }
