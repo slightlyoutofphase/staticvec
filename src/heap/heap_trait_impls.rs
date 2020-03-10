@@ -146,6 +146,32 @@ impl<T: Ord, const N: usize> From<StaticVec<T, N>> for StaticHeap<T, N> {
   }
 }
 
+impl<T: Ord, const N1: usize, const N2: usize> From<[T; N1]> for StaticHeap<T, N2> {
+  /// Converts a `[T; N1]` into a `StaticHeap<T, N2>`.
+  /// This conversion happens in-place, and has `O(n)` time complexity.
+  #[inline(always)]
+  default fn from(array: [T; N1]) -> StaticHeap<T, N2> {
+    let mut heap = StaticHeap {
+      data: StaticVec::new_from_array(array),
+    };
+    heap.rebuild();
+    heap
+  }
+}
+
+impl<T: Ord, const N: usize> From<[T; N]> for StaticHeap<T, N> {
+  /// Converts a `[T; N]` into a `StaticHeap<T, N>`.
+  /// This conversion happens in-place, and has `O(n)` time complexity.
+  #[inline(always)]
+  fn from(array: [T; N]) -> StaticHeap<T, N> {
+    let mut heap = StaticHeap {
+      data: StaticVec::new_from_const_array(array),
+    };
+    heap.rebuild();
+    heap
+  }
+}
+
 impl<T: Ord, const N: usize> FromIterator<T> for StaticHeap<T, N> {
   #[inline(always)]
   fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> StaticHeap<T, N> {
