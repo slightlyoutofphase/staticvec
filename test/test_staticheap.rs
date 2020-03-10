@@ -150,8 +150,9 @@ fn empty_pop() {
 
 #[test]
 fn exact_size_iterator() {
-  let heap = StaticHeap::from(staticvec![2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]);
+  let mut heap = StaticHeap::from([2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]);
   check_exact_size_iterator(heap.len(), heap.iter());
+  check_exact_size_iterator(heap.len(), heap.iter_mut());
   check_exact_size_iterator(heap.len(), heap.clone().into_iter());
   check_exact_size_iterator(heap.len(), heap.clone().into_iter_sorted());
   check_exact_size_iterator(heap.len(), heap.clone().drain());
@@ -180,8 +181,8 @@ fn extend_ref() {
 
 #[test]
 fn extend_specialization() {
-  let mut a = MyStaticHeap::from(staticvec![-10, 1, 2, 3, 3]);
-  let b = MyStaticHeap::from(staticvec![-20, 5, 43]);
+  let mut a = MyStaticHeap::from([-10, 1, 2, 3, 3]);
+  let b = MyStaticHeap::from([-20, 5, 43]);
   a.extend(b);
   assert_eq!(a.into_sorted_staticvec(), [-20, -10, 1, 2, 3, 3, 5, 43]);
 }
@@ -227,32 +228,20 @@ fn is_not_full() {
 }
 
 #[test]
-fn iterator() {
-  let data = staticvec![5, 9, 3];
-  let iterout = [9, 5, 3];
-  let heap = StaticHeap::from(data);
-  let mut i = 0;
-  for el in &heap {
-    assert_eq!(*el, iterout[i]);
-    i += 1;
-  }
-}
-
-#[test]
-fn iter_rev_cloned_collect() {
-  let data = staticvec![5, 9, 3];
-  let iterout = staticvec![3, 5, 9];
-  let pq = StaticHeap::from(data);
-  let v: MyStaticVec = pq.iter().rev().cloned().collect();
-  assert_eq!(v, iterout);
-}
-
-#[test]
 fn into_iter_collect() {
   let data = staticvec![5, 9, 3];
   let iterout = staticvec![9, 5, 3];
   let pq = StaticHeap::from(data);
   let v: MyStaticVec = pq.into_iter().collect();
+  assert_eq!(v, iterout);
+}
+
+#[test]
+fn into_iter_rev_collect() {
+  let data = staticvec![5, 9, 3];
+  let iterout = staticvec![3, 5, 9];
+  let pq = StaticHeap::from(data);
+  let v: MyStaticVec = pq.into_iter().rev().collect();
   assert_eq!(v, iterout);
 }
 
@@ -270,20 +259,44 @@ fn into_iter_size_hint() {
 }
 
 #[test]
-fn into_iter_rev_collect() {
-  let data = staticvec![5, 9, 3];
-  let iterout = staticvec![3, 5, 9];
-  let pq = StaticHeap::from(data);
-  let v: MyStaticVec = pq.into_iter().rev().collect();
-  assert_eq!(v, iterout);
-}
-
-#[test]
 fn into_iter_sorted_collect() {
   let heap = StaticHeap::from(staticvec![2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]);
   let it = heap.into_iter_sorted();
   let sorted = it.collect::<MyStaticVec>();
   assert_eq!(sorted, staticvec![10, 9, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0]);
+}
+
+#[test]
+fn iterator() {
+  let data = staticvec![5, 9, 3];
+  let iterout = [9, 5, 3];
+  let heap = StaticHeap::from(data);
+  let mut i = 0;
+  for el in &heap {
+    assert_eq!(*el, iterout[i]);
+    i += 1;
+  }
+}
+
+#[test]
+fn iterator_mut() {
+  let data = staticvec![5, 9, 3];
+  let iterout = [9, 5, 3];
+  let mut heap = StaticHeap::from(data);
+  let mut i = 0;
+  for el in &mut heap {
+    assert_eq!(*el, iterout[i]);
+    i += 1;
+  }
+}
+
+#[test]
+fn iter_rev_cloned_collect() {
+  let data = staticvec![5, 9, 3];
+  let iterout = staticvec![3, 5, 9];
+  let pq = StaticHeap::from(data);
+  let v: MyStaticVec = pq.iter().rev().cloned().collect();
+  assert_eq!(v, iterout);
 }
 
 // Integrity means that all elements are present after a comparison panics,
@@ -474,13 +487,13 @@ fn remaining_capacity() {
 
 #[test]
 fn size_in_bytes() {
-  let x = StaticHeap::<u8, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  let x = StaticHeap::<u8, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
   assert_eq!(x.size_in_bytes(), 8);
-  let y = StaticHeap::<u16, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  let y = StaticHeap::<u16, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
   assert_eq!(y.size_in_bytes(), 16);
-  let z = StaticHeap::<u32, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  let z = StaticHeap::<u32, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
   assert_eq!(z.size_in_bytes(), 32);
-  let w = StaticHeap::<u64, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8]);
+  let w = StaticHeap::<u64, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
   assert_eq!(w.size_in_bytes(), 64);
 }
 
@@ -505,8 +518,9 @@ fn to_vec() {
 
 #[test]
 fn trusted_len() {
-  let heap = StaticHeap::from(staticvec![2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]);
+  let heap = StaticHeap::from([2, 4, 6, 2, 1, 8, 10, 3, 5, 7, 0, 9, 1]);
   check_trusted_len(heap.len(), heap.clone().iter());
+  check_trusted_len(heap.len(), heap.clone().iter_mut());
   check_trusted_len(heap.len(), heap.clone().into_iter());
   check_trusted_len(heap.len(), heap.clone().into_iter_sorted());
   check_trusted_len(heap.len(), heap.clone().drain());

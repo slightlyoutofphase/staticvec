@@ -1,5 +1,8 @@
 use core::mem::swap;
 
+#[cfg(feature = "serde_support")]
+use serde::{Deserialize, Serialize};
+
 use self::heap_helpers::StaticHeapHole;
 pub use self::heap_helpers::StaticHeapPeekMut;
 pub use self::heap_iterators::{StaticHeapDrainSorted, StaticHeapIntoIterSorted};
@@ -95,6 +98,7 @@ mod heap_trait_impls;
 /// [pop]: #method.pop
 /// [peek]: #method.peek
 /// [peek\_mut]: #method.peek_mut
+#[cfg_attr(feature = "serde_support", derive(Deserialize, Serialize))]
 pub struct StaticHeap<T, const N: usize> {
   pub(crate) data: StaticVec<T, N>,
 }
@@ -475,7 +479,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
   pub fn iter(&self) -> StaticVecIterConst<'_, T, N> {
     self.data.iter()
   }
-  
+
   /// Returns a mutable iterator visiting all values in the StaticHeap's underlying StaticVec, in
   /// arbitrary order.
   ///

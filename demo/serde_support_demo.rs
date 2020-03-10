@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
-use staticvec::*;
+
+use staticvec::{staticvec, StaticHeap, StaticString, StaticVec};
 
 #[derive(Debug, Deserialize, Serialize)]
 struct MyStruct {
@@ -47,9 +48,11 @@ fn main() {
     structs_b
   );
 
-  let json = serde_json::to_string_pretty(&StaticString::<8>::from("abcdefg")).unwrap();
+  let string_json = serde_json::to_string_pretty(&StaticString::<8>::from("abcdefg")).unwrap();
 
-  let string: StaticString<8> = serde_json::from_str(&json).unwrap();
+  let static_string: StaticString<8> = serde_json::from_str(&string_json).unwrap();
 
-  println!("{} \n\n{:?}", json, string);
+  let heap_json = serde_json::to_string_pretty(&StaticHeap::from([1, 2, 3, 4, 5])).unwrap();
+
+  println!("{} \n\n{:?}\n\n{}", string_json, static_string, heap_json);
 }
