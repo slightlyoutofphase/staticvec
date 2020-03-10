@@ -3,7 +3,7 @@ use core::mem::swap;
 use self::heap_helpers::StaticHeapHole;
 pub use self::heap_helpers::StaticHeapPeekMut;
 pub use self::heap_iterators::{StaticHeapDrainSorted, StaticHeapIntoIterSorted};
-use crate::iterators::{StaticVecDrain, StaticVecIterConst};
+use crate::iterators::{StaticVecDrain, StaticVecIterConst, StaticVecIterMut};
 use crate::StaticVec;
 
 mod heap_helpers;
@@ -457,7 +457,7 @@ impl<T: Ord, const N: usize> StaticHeap<T, N> {
 }
 
 impl<T, const N: usize> StaticHeap<T, N> {
-  /// Returns an iterator visiting all values in the underlying StaticVec, in
+  /// Returns an iterator visiting all values in the StaticHeap's underlying StaticVec, in
   /// arbitrary order.
   ///
   /// # Examples
@@ -474,6 +474,28 @@ impl<T, const N: usize> StaticHeap<T, N> {
   #[inline(always)]
   pub fn iter(&self) -> StaticVecIterConst<'_, T, N> {
     self.data.iter()
+  }
+  
+  /// Returns a mutable iterator visiting all values in the StaticHeap's underlying StaticVec, in
+  /// arbitrary order.
+  ///
+  /// **Note:** Mutating the elements in a StaticHeap may cause it to become unbalanced.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut heap = StaticHeap::from([1, 2, 3, 4]);
+  /// for i in heap.iter_mut() {
+  ///   *i *= 2;
+  /// }
+  /// // Prints "[2, 4, 6, 8]", but in arbitrary order
+  /// println!("{:?}", heap);
+  /// ```
+  #[inline(always)]
+  pub fn iter_mut(&mut self) -> StaticVecIterMut<'_, T, N> {
+    self.data.iter_mut()
   }
 
   /// Returns an iterator which retrieves elements in heap order.
