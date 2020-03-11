@@ -3,11 +3,11 @@
 #![feature(test)]
 #![feature(const_generics)]
 
-use staticvec::StaticVec;
-
 extern crate test;
 
 use test::{black_box, Bencher};
+
+use staticvec::StaticVec;
 
 #[bench]
 fn staticvec_of_vecs_bench_clone(b: &mut Bencher) {

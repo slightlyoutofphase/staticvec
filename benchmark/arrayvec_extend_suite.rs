@@ -5,8 +5,9 @@
 
 extern crate test;
 
-use std::io::Write;
 use test::{black_box, Bencher};
+
+use std::io::Write;
 
 use staticvec::StaticVec;
 
