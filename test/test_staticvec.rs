@@ -145,6 +145,11 @@ fn append() {
   d.append(&mut e);
   assert_eq!(e, [box 2, box 3]);
   assert_eq!(d, [box 12, box 1]);
+  let mut f = StaticVec::<Box<Struct>, 0>::new();
+  let mut g = staticvec![box Struct { s: "A" }, box Struct { s: "B" }];
+  f.append(&mut g);
+  assert_eq!(f, []);
+  assert_eq!(g, [box Struct { s: "A" }, box Struct { s: "B" }]);
 }
 
 #[test]
