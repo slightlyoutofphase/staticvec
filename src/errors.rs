@@ -17,6 +17,7 @@ impl<const N: usize> Display for CapacityError<N> {
 }
 
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> Error for CapacityError<N> {}
 
 /// This error indicates that a push was attempted into a
@@ -87,7 +88,9 @@ impl<T: Debug, const N: usize> Debug for PushCapacityError<T, N> {
 }
 
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<T: Debug, const N: usize> Error for PushCapacityError<T, N> {
+  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn source(&self) -> Option<&(dyn Error + 'static)> {
     Some(&CapacityError::<N>)
