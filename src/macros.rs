@@ -32,6 +32,7 @@ macro_rules! staticvec {
 // This is the same macro available in my actual `staticsort` crate, which I previously had as
 // a dependency for this crate but decided to "inline" here as considering I wrote it myself it
 // seems silly to have a mandatory dependency for no real reason.
+#[doc(hidden)]
 #[macro_export]
 macro_rules! __staticsort {
   ($type:ty, $low:expr, $high:expr, $len:expr, $values:expr) => {{
