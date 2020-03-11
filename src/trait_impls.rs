@@ -436,6 +436,7 @@ impl<const N: usize> From<StaticString<N>> for StaticVec<u8, N> {
 #[doc(cfg(feature = "std"))]
 impl<T, const N: usize> From<Vec<T>> for StaticVec<T, N> {
   /// Functionally equivalent to [`from_vec`](crate::StaticVec::from_vec).
+  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn from(vec: Vec<T>) -> Self {
     Self::from_vec(vec)
@@ -654,6 +655,7 @@ impl<T, const N: usize> IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
 #[doc(cfg(feature = "std"))]
 impl<T, const N: usize> Into<Vec<T>> for StaticVec<T, N> {
   /// Functionally equivalent to [`into_vec`](crate::StaticVec::into_vec).
+  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn into(self) -> Vec<T> {
     self.into_vec()
@@ -751,12 +753,15 @@ impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, N>);
 /// Read from a StaticVec. This implementation operates by copying bytes into the destination
 /// buffers, then shifting the remaining bytes over.
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> Read for StaticVec<u8, N> {
+  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   unsafe fn initializer(&self) -> io::Initializer {
     io::Initializer::nop()
   }
-
+  
+  #[doc(cfg(feature = "std"))]
   #[inline]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     let current_length = self.length;
@@ -780,7 +785,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     unsafe { self.set_len(current_length - read_length) };
     Ok(read_length)
   }
-
+  
+  #[doc(cfg(feature = "std"))]
   #[inline]
   fn read_to_end(&mut self, buf: &mut Vec<u8>) -> io::Result<usize> {
     let read_length = self.length;
@@ -788,7 +794,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     self.length = 0;
     Ok(read_length)
   }
-
+  
+  #[doc(cfg(feature = "std"))]
   #[inline]
   fn read_to_string(&mut self, buf: &mut String) -> io::Result<usize> {
     let read_length = self.length;
@@ -800,6 +807,7 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     Ok(read_length)
   }
 
+  #[doc(cfg(feature = "std"))]
   #[inline]
   fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
     if buf.len() > self.length {
@@ -812,7 +820,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
       self.read(buf).and(Ok(()))
     }
   }
-
+  
+  #[doc(cfg(feature = "std"))]
   #[inline]
   fn read_vectored(&mut self, bufs: &mut [IoSliceMut]) -> io::Result<usize> {
     // Minimize copies: copy to each output buf in sequence, then shift the
@@ -852,15 +861,18 @@ impl<const N: usize> Read for StaticVec<u8, N> {
   }
 }
 
+#[doc(cfg(feature = "std"))]
 #[cfg(feature = "std")]
 impl<const N: usize> Write for StaticVec<u8, N> {
+  #[doc(cfg(feature = "std"))]
   #[inline]
   fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
     let old_length = self.length;
     self.extend_from_slice(buf);
     Ok(self.length - old_length)
   }
-
+  
+  #[doc(cfg(feature = "std"))]
   #[inline]
   fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> io::Result<usize> {
     let old_length = self.length;
@@ -872,7 +884,8 @@ impl<const N: usize> Write for StaticVec<u8, N> {
     }
     Ok(self.length - old_length)
   }
-
+  
+  #[doc(cfg(feature = "std"))]
   #[inline]
   fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
     if buf.len() <= self.remaining_capacity() {
@@ -885,7 +898,8 @@ impl<const N: usize> Write for StaticVec<u8, N> {
       ))
     }
   }
-
+  
+  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn flush(&mut self) -> io::Result<()> {
     Ok(())
@@ -893,12 +907,15 @@ impl<const N: usize> Write for StaticVec<u8, N> {
 }
 
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> BufRead for StaticVec<u8, N> {
+  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn fill_buf(&mut self) -> io::Result<&[u8]> {
     Ok(&**self)
   }
-
+  
+  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn consume(&mut self, amt: usize) {
     *self = Self::new_from_slice(&self[amt..]);
@@ -906,9 +923,11 @@ impl<const N: usize> BufRead for StaticVec<u8, N> {
 }
 
 #[cfg(feature = "serde_support")]
+#[doc(cfg(feature = "serde_support"))]
 impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, N>
 where T: Deserialize<'de>
 {
+  #[doc(cfg(feature = "serde_support"))]
   #[inline]
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where D: Deserializer<'de> {
@@ -943,9 +962,11 @@ where T: Deserialize<'de>
 }
 
 #[cfg(feature = "serde_support")]
+#[doc(cfg(feature = "serde_support"))]
 impl<T, const N: usize> Serialize for StaticVec<T, N>
 where T: Serialize
 {
+  #[doc(cfg(feature = "serde_support"))]
   #[inline(always)]
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where S: Serializer {
