@@ -62,9 +62,6 @@ use crate::utils::{
   slice_from_raw_parts_mut,
 };
 
-#[doc(hidden)]
-pub use staticsort::staticsort as __staticsort;
-
 #[cfg(any(feature = "std", rustdoc))]
 extern crate alloc;
 

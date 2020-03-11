@@ -29,6 +29,72 @@ macro_rules! staticvec {
   };
 }
 
+// This is the same macro available in my actual `staticsort` crate, which I previously had as
+// a dependency for this crate but decided to "inline" here as considering I wrote it myself it
+// seems silly to have a mandatory dependency for no real reason.
+#[macro_export]
+macro_rules! __staticsort {
+  ($type:ty, $low:expr, $high:expr, $len:expr, $values:expr) => {{
+    match $len {
+      0 => $values,
+      _ => {
+        #[inline]
+        const fn static_sort(
+          mut values: [$type; $len],
+          mut low: isize,
+          mut high: isize,
+        ) -> [$type; $len]
+        {
+          if high - low <= 0 {
+            return values;
+          }
+          loop {
+            let mut i = low;
+            let mut j = high;
+            let p = values[(low + ((high - low) >> 1)) as usize];
+            loop {
+              while values[i as usize] < p {
+                i += 1;
+              }
+              while values[j as usize] > p {
+                j -= 1;
+              }
+              if i <= j {
+                if i != j {
+                  let q = values[i as usize];
+                  values[i as usize] = values[j as usize];
+                  values[j as usize] = q;
+                }
+                i += 1;
+                j -= 1;
+              }
+              if i > j {
+                break;
+              }
+            }
+            if j - low < high - i {
+              if low < j {
+                values = static_sort(values, low, j);
+              }
+              low = i;
+            } else {
+              if i < high {
+                values = static_sort(values, i, high)
+              }
+              high = j;
+            }
+            if low >= high {
+              break;
+            }
+          }
+          values
+        }
+        static_sort($values, $low, $high)
+      }
+    }
+  };};
+}
+
 /// Accepts an array of any primitive [`Copy`](core::marker::Copy) type that has a
 /// [`PartialOrd`](core::cmp::PartialOrd) implementation, sorts it, and creates a new
 /// [`StaticVec`](crate::StaticVec) instance from the result in a fully const context compatible
@@ -51,14 +117,15 @@ macro_rules! staticvec {
 macro_rules! sortedstaticvec {
   (@put_one $val:expr) => (1);
   ($type: ty, [$($val:expr),* $(,)*]) => {{
-    match 0$(+sortedstaticvec!(@put_one $val))* {
+    const LEN: usize = 0$(+sortedstaticvec!(@put_one $val))*;
+    match LEN {
       0 => $crate::StaticVec::new(),
       _ => $crate::StaticVec::new_from_const_array(
              $crate::__staticsort!(
                $type,
                0,
-               0$(+sortedstaticvec!(@put_one $val))* - 1,
-               0$(+sortedstaticvec!(@put_one $val))*,
+               (LEN as isize) - 1,
+               LEN,
                [$($val),*]
              )
            ),
