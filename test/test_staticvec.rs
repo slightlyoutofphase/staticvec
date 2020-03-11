@@ -13,7 +13,7 @@
 // (something that would probably not be that common in the sense of normal use of this crate) in 
 // this file: it's done for the sake of wanting to be as "Miri detectable" as possible, by which I mean,
 // "weird stuff done with heap memory" is significantly more likely to set Miri off than "weird stuff done
-// with stack memory.
+// with stack memory".
 
 use staticvec::*;
 
