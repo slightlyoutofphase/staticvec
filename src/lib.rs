@@ -765,7 +765,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     let start_ptr = self.as_ptr();
     unsafe {
       // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
-      // Note that this is something also done in the `iter()` method for slices, additionally.
       intrinsics::assume(!is_null_const(start_ptr));
       StaticVecIterConst {
         start: start_ptr,
@@ -785,7 +784,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     let start_ptr = self.as_mut_ptr();
     unsafe {
       // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
-      // Note that this is something also done in the `iter_mut()` method for slices, additionally.
       intrinsics::assume(!is_null_mut(start_ptr));
       StaticVecIterMut {
         start: start_ptr,
