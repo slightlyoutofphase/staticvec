@@ -9,6 +9,12 @@
 // configuration attributes those tests just panic normally under Miri on Windows, which we don't
 // want.
 
+// Also, in case you're wondering why there's extensive use of "StaticVecs that contain boxed items" 
+// (something that would probably not be that common in the sense of normal use of this crate) in 
+// this file: it's done for the sake of wanting to be as "Miri detectable" as possible, by which I mean,
+// "weird stuff done with heap memory" is significantly more likely to set Miri off than "weird stuff done
+// with stack memory.
+
 use staticvec::*;
 
 use core::cell;
@@ -110,12 +116,12 @@ impl Drop for ZST {
 
 #[test]
 fn append() {
-  let mut a = staticvec![Struct { s: "A" }, Struct { s: "B" }, Struct { s: "C" }];
+  let mut a = staticvec![box Struct { s: "A" }, box Struct { s: "B" }, box Struct { s: "C" }];
   let mut b = staticvec![
-    Struct { s: "D" },
-    Struct { s: "E" },
-    Struct { s: "F" },
-    Struct { s: "G" }
+    box Struct { s: "D" },
+    box Struct { s: "E" },
+    box Struct { s: "F" },
+    box Struct { s: "G" }
   ];
   let mut c = StaticVec::<Struct, 6>::new();
   c.append(&mut a);
@@ -125,20 +131,20 @@ fn append() {
   assert_eq!(
     c,
     staticvec![
-      Struct { s: "A" },
-      Struct { s: "B" },
-      Struct { s: "C" },
-      Struct { s: "D" },
-      Struct { s: "E" },
-      Struct { s: "F" }
+      box Struct { s: "A" },
+      box Struct { s: "B" },
+      box Struct { s: "C" },
+      box Struct { s: "D" },
+      box Struct { s: "E" },
+      box Struct { s: "F" }
     ]
   );
-  let mut d = staticvec![12, 24];
-  let mut e = staticvec![1, 2, 3];
+  let mut d = staticvec![box 12, box 24];
+  let mut e = staticvec![box 1, box 2, box 3];
   d.pop().unwrap();
   d.append(&mut e);
-  assert_eq!(e, [2, 3]);
-  assert_eq!(d, [12, 1]);
+  assert_eq!(e, [box 2, box 3]);
+  assert_eq!(d, [box 12, box 1]);
 }
 
 #[test]
@@ -754,6 +760,9 @@ fn index() {
 #[cfg(feature = "std")]
 fn index_panics() {
   let vec = staticvec![0, 1, 2, 3, 4];
+  // Miri can't run this one because the `assert_panics` macro allows *all* of these
+  // expected panics to occur one after another, while Miri can only catch one panic at
+  // a time (and specifically only in `should_panic` tests).
   assert_panics!(vec[10]);
   assert_panics!(&vec[..10]);
   assert_panics!(&vec[10..]);
