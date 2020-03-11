@@ -88,7 +88,9 @@ pub mod utils;
 /// implemented with const generics around an array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
   // We create this field in an uninitialized state, and write to it element-wise as needed
-  // via pointer methods. At no time should `assume_init` *ever* be called through it.
+  // via pointer methods. At no time should `assume_init` *ever* be called through it (except
+  // specifically in `into_inner`, where the StaticVec is known to be at full capacity and is
+  // "consumed" by the call after setting its length to zero to avoid double-drops).
   data: MaybeUninit<[T; N]>,
   // The constant `N` parameter (and thus the total span of `data`) represent capacity for us,
   // while the field below represents, as its name suggests, the current length of a StaticVec
@@ -1209,7 +1211,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       Err(self)
     } else {
       self.length = 0;
-      unsafe { Ok(self.data.read()) }
+      unsafe { Ok(self.data.assume_init()) }
     }
   }
 
