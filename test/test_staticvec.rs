@@ -123,7 +123,7 @@ fn append() {
     box Struct { s: "F" },
     box Struct { s: "G" }
   ];
-  let mut c = StaticVec::<Struct, 6>::new();
+  let mut c = StaticVec::<Box<Struct>, 6>::new();
   c.append(&mut a);
   c.append(&mut b);
   assert_eq!(format!("{:?}", a), "[]");
