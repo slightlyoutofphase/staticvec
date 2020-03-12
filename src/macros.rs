@@ -81,15 +81,19 @@ macro_rules! staticvec {
 macro_rules! staticstring {
   ($val:expr) => {{
     const CAP: usize = $val.len();
-    $crate::StaticString::<CAP>::__new_from_staticvec(
-      $crate::StaticVec::<u8, CAP>::from_const_str($val)
-    )
+    unsafe {
+      $crate::StaticString::<CAP>::__new_from_staticvec(
+        $crate::StaticVec::<u8, CAP>::from_const_str($val)
+      )
+    }
   };};
   ($val:expr, $n:expr) => {{
     const CAP: usize = $n;
-    $crate::StaticString::<CAP>::__new_from_staticvec(
-      $crate::StaticVec::<u8, CAP>::from_const_str($val)
-    )
+    unsafe {
+      $crate::StaticString::<CAP>::__new_from_staticvec(
+        $crate::StaticVec::<u8, CAP>::from_const_str($val)
+      )
+    }
   };};
 }
 
