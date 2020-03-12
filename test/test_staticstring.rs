@@ -235,14 +235,14 @@ fn insert_str_invalid2() {
 fn macro_constructor() {
   let s1 = staticstring!("ABCDEFGHIJ");
   assert_eq!(s1, "ABCDEFGHIJ");
-  const S2: StaticString<20> = staticstring!("ABCDEFGHIJ", 10);
+  const S2: StaticString<20> = staticstring!("ABCDEFGHIJ", 20);
   assert_eq!(S2, "ABCDEFGHIJ");
   assert_eq!(S2.len(), 10);
   assert_eq!(S2.capacity(), 20);
   static S3: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔");
   assert_eq!(S3, "BC🤔BC🤔BC🤔");
   // The next line should panic.
-  let s5: StaticString<1> = staticstring!("AAAAA");
+  let s5: StaticString<1> = staticstring!("AAAAA", 1);
 }
 
 #[test]
