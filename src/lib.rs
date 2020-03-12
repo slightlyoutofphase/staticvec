@@ -1732,3 +1732,59 @@ impl<T, const N: usize> StaticVec<T, N> {
     this as *mut MaybeUninit<[T; N]> as *mut T
   }
 }
+
+impl<const N: usize> StaticVec<u8, N> {
+  /// Called solely in `bytes_to_data`, where the input `MaybeUninit` is guaranteed to have
+  /// been properly initialized starting at the beginning with the bytes of an `&str` literal,
+  /// and the input `length` is the known-at-compile-time length of said literal.
+  #[doc(hidden)]
+  #[inline(always)]
+  pub(crate) const fn new_from_str_data(data: MaybeUninit<[u8; N]>, length: usize) -> Self {
+    Self { data, length }
+  }
+
+  /// Called solely in `from_const_str`, where `values` is guaranteed to be the slice
+  /// representation of a proper `&str` literal.
+  #[doc(hidden)]
+  #[inline(always)]
+  pub(crate) const fn bytes_to_data(values: &[u8]) -> MaybeUninit<[u8; N]> {
+    // What follows is an idea partially arrived at from reading the source of
+    // the `const-concat` crate. Note that it amounts to effectively a `const fn`
+    // compatible implementation of what `mem::uninitialized()` does, and is *only*
+    // used here due to there being no other way to get an instance of `[u8; N]` that
+    // we can actually write to (and to be clear, *not* read from) using regular indexing
+    // in conjunction with the `const_loop` feature (which is itself the only way at this
+    // time to write an arbitrary number of bytes from `values` to the result array).
+    union Convert<From: Copy, To: Copy> {
+      from: From,
+      to: To,
+    }
+    // In most other cases I do think the next line would be objectively UB. However,
+    // based on the fact that it's specifically and always an array of `u8` (basically
+    // the "safest" type in existence) and on the fact that we properly initialize it
+    // starting from the beginning with known-good input and then place it back into an
+    // instance of `MaybeUninit` immediately afterwards, I'm simply 100% sure that it's
+    // physically impossible for anything to "go wrong" here.
+    let mut res = unsafe {
+      Convert::<MaybeUninit<[u8; N]>, [u8; N]>{ from: MaybeUninit::uninit() }.to
+    };
+    // Move `values.len()` worth of bytes from `values` to `res`. I'm unaware of any other
+    // way that this could be done currently that would leave us with something usable to
+    // create a StaticVec for which the generic `N` could be *different* from `values.len()`,
+    // so thank you, `const_loop`!
+    let mut i = 0;
+    while i < values.len() {
+      res[i] = values[i];
+      i += 1;
+    }
+    MaybeUninit::new(res)
+  }
+
+  /// Called solely in the `staticstring!` macro, and so must be public, which is not an issue
+  /// as it is guaranteed to return a correctly initialized `StaticVec<u8, N>`.
+  #[doc(hidden)]
+  #[inline(always)]
+  pub const fn from_const_str(values: &str) -> Self {
+    Self::new_from_str_data(Self::bytes_to_data(values.as_bytes()), values.len())
+  }
+}
