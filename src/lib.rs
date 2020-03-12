@@ -1754,7 +1754,8 @@ impl<const N: usize> StaticVec<u8, N> {
     // used here due to there being no other way to get an instance of `[u8; N]` that
     // we can actually write to (and to be clear, *not* read from) using regular indexing
     // in conjunction with the `const_loop` feature (which is itself the only way at this
-    // time to write an arbitrary number of bytes from `values` to the result array).
+    // time to write an arbitrary number of bytes from `values` to the result array at
+    // compile time).
     union Convert<From: Copy, To: Copy> {
       from: From,
       to: To,
