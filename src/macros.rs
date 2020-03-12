@@ -16,7 +16,7 @@
 /// const V3: StaticVec<i32, 4> = staticvec![1, 2, 3, 4];
 /// assert_eq!(V3, [1, 2, 3, 4]);
 ///
-/// const V4: StaticVec<i32, 128> = staticvec![27; 128];
+/// static V4: StaticVec<i32, 128> = staticvec![27; 128];
 /// assert!(V4 == [27; 128]);
 /// ```
 #[macro_export]
@@ -29,9 +29,46 @@ macro_rules! staticvec {
   };
 }
 
-// This is the same macro available in my actual `staticsort` crate, which I previously had as
-// a dependency for this crate but decided to "inline" here as considering I wrote it myself it
-// seems silly to have a mandatory dependency for no real reason.
+/// Creates a new [`StaticString`] from an `&str` literal. Unlike the [`From`] implementations
+/// for [`StaticString`], this macro can be used in const contexts (and is likely slightly more
+/// performant even when used at runtime) so it is generally recommended as the best way to create
+/// a [`StaticString`] from literal input in any case where you do not need to specify a capacity
+/// larger than what the input actually requires (which is when you *should* use [`From`]).
+///
+/// Example usage:
+/// ```
+/// # use staticvec::*;
+/// // Runtime, type-inferred:
+/// let S1 = staticstring!("ABCDEFGHIJ");
+///
+/// // Compile time, with a specified capacity equal to the number of simple ASCII characters:
+/// const S2: StaticString<10> = staticstring!("ABCDEFGHIJ");
+///
+/// // Compile time, with a specified capacity that accounts for the emoji character "widths":
+/// static S3: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔");
+///
+/// ```
+/// Note that if you "get it wrong" with specifying the capacity, there's not too much to worry about as it
+/// just means you'll get a simple compiler error stating the particular byte length `rustc` was expecting.
+#[macro_export]
+#[rustfmt::skip]
+macro_rules! staticstring {
+  ($a:expr) => {{
+    unsafe {
+      $crate::StaticString::__new_from_staticvec(
+        $crate::StaticVec::new_from_const_array(
+          $crate::utils::__slice_to_array::<[u8; $a.len()]>(
+            $a.as_bytes()
+          ),
+        )
+      )
+    }
+  };};
+}
+
+/// This is the same macro available in my actual `staticsort` crate, which I previously had as
+/// a dependency for this crate but decided to "inline" here as considering I wrote it myself it
+/// seems silly to have a mandatory dependency for no real reason.
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __staticsort {

@@ -9,11 +9,11 @@
 // configuration attributes those tests just panic normally under Miri on Windows, which we don't
 // want.
 
-// Also, in case you're wondering why there's extensive use of "StaticVecs that contain boxed items" 
-// (something that would probably not be that common in the sense of normal use of this crate) in 
-// this file: it's done for the sake of wanting to be as "Miri detectable" as possible, by which I mean,
-// "weird stuff done with heap memory" is significantly more likely to set Miri off than "weird stuff done
-// with stack memory".
+// Also, in case you're wondering why there's extensive use of "StaticVecs that contain boxed items"
+// (something that would probably not be that common in the sense of normal use of this crate) in
+// this file: it's done for the sake of wanting to be as "Miri detectable" as possible, by which I
+// mean, "weird stuff done with heap memory" is significantly more likely to set Miri off than
+// "weird stuff done with stack memory".
 
 use staticvec::*;
 
@@ -116,7 +116,11 @@ impl Drop for ZST {
 
 #[test]
 fn append() {
-  let mut a = staticvec![box Struct { s: "A" }, box Struct { s: "B" }, box Struct { s: "C" }];
+  let mut a = staticvec![
+    box Struct { s: "A" },
+    box Struct { s: "B" },
+    box Struct { s: "C" }
+  ];
   let mut b = staticvec![
     box Struct { s: "D" },
     box Struct { s: "E" },

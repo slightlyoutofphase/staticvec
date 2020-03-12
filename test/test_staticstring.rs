@@ -230,6 +230,20 @@ fn insert_str_invalid2() {
 }
 
 #[test]
+fn macro_constructor() {
+  let s1 = staticstring!("ABCDEFGHIJ");
+  assert_eq!(s1, "ABCDEFGHIJ");
+  const S2: StaticString<10> = staticstring!("ABCDEFGHIJ");
+  assert_eq!(S2, "ABCDEFGHIJ");
+  static S3: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔");
+  assert_eq!(S3, "BC🤔BC🤔BC🤔");
+  static S4: StaticString<0> = staticstring!("");
+  assert_eq!(S4, "");
+  let s5 = staticstring!("");
+  assert_eq!(s5, "");
+}
+
+#[test]
 fn pop() {
   let mut data = MyString::from("ประเทศไทย中华b¢€𤭢");
   assert_eq!(data.pop().unwrap(), '𤭢');

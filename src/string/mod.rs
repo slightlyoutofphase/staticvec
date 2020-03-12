@@ -62,6 +62,17 @@ impl<const N: usize> StaticString<N> {
     }
   }
 
+  /// An internal "const constructor" helper function that exists to support the `staticstring!`
+  /// macro. This is only used in one place at the moment, where the input `StaticVec` is known to
+  /// have been built from a valid-UTF8 `&'static str` literal. Since this has to be accessible from
+  /// the macro when invoked from external crates, and so can't be `pub(crate)`, we hide it from the
+  /// docs and give it a two-underscore prefix as the next best thing.
+  #[doc(hidden)]
+  #[inline(always)]
+  pub const unsafe fn __new_from_staticvec(vec: StaticVec<u8, N>) -> Self {
+    Self { vec }
+  }
+
   /// Creates a new StaticString instance from `string`, without doing any checking to ensure that
   /// the length of `string` does not exceed the resulting StaticString's declared capacity.
   ///
@@ -1030,9 +1041,9 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
+  /// # use staticvec::{staticstring, StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<20>::try_from_str("ABCD")?;
+  /// let mut s = staticstring!("ABCD");
   /// assert!(!s.is_empty());
   /// s.clear();
   /// assert!(s.is_empty());
@@ -1048,9 +1059,9 @@ impl<const N: usize> StaticString<N> {
   ///
   /// Example usage:
   /// ```
-  /// # use staticvec::{StaticString, StringError};
+  /// # use staticvec::{staticstring, StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
-  /// let mut s = StaticString::<4>::try_from_str("ABCD")?;
+  /// let mut s = staticstring!("ABCD");
   /// assert!(s.is_full());
   /// s.clear();
   /// assert!(!s.is_full());

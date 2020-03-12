@@ -156,10 +156,9 @@ impl<const N: usize> From<StaticVec<u8, N>> for StaticString<N> {
   }
 }
 
+/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
-#[doc(cfg(feature = "std"))]
 impl<const N: usize> From<String> for StaticString<N> {
-  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn from(string: String) -> Self {
     Self {
@@ -329,10 +328,9 @@ impl<const N: usize> PartialEq<&str> for StaticString<N> {
   }
 }
 
+/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
-#[doc(cfg(feature = "std"))]
 impl<const N: usize> PartialEq<String> for StaticString<N> {
-  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn eq(&self, other: &String) -> bool {
     self.as_str().eq(other.as_str())
@@ -360,10 +358,9 @@ impl<const N: usize> PartialOrd<&str> for StaticString<N> {
   }
 }
 
+/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
-#[doc(cfg(feature = "std"))]
 impl<const N: usize> PartialOrd<String> for StaticString<N> {
-  #[doc(cfg(feature = "std"))]
   #[inline(always)]
   fn partial_cmp(&self, other: &String) -> Option<Ordering> {
     Some(self.as_str().cmp(other.as_str()))
