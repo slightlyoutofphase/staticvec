@@ -32,11 +32,11 @@ macro_rules! staticvec {
 /// Creates a new [`StaticString`] from an `&str` literal. This macro can be used in const
 /// contexts, in keeping with the other ones in this crate.
 ///
-/// The `staticstring!` macro comes in two forms: and comes in two forms: one that solely
-/// takes an `&str` literal, where the resulting [`StaticString`] will have a total
-/// capacity exactly equal to the number of bytes in the literal, and one that takes an
-/// additional integral constant which is then used to specify the capacity independently
-/// from the length of the input string.
+/// The `staticstring!` macro comes in two forms: one that solely takes an `&str` literal,
+/// where the resulting [`StaticString`] will have a total capacity exactly equal to the
+/// number of bytes in the literal, and one that takes an additional integral constant
+/// which is then used to specify the capacity independently from the length of the input
+/// string.
 ///
 /// Implemententing it as such allows the macro be more flexible than would otherwise
 /// be possible due to the required level of type inference being beyond what the compiler
