@@ -1778,7 +1778,9 @@ impl<const N: usize> StaticVec<u8, N> {
     // Convert `res` from an instance of `[MaybeUninit<u8>; N]` to one of `[u8; N]`, and then
     // return it as an instance of `MaybeUninit<[u8; N]>` that can be used to construct a
     // `StaticVec`.
-    MaybeUninit::new(Convert::<[MaybeUninit<u8>; N], [u8; N]>{ from: res }.to)
+    MaybeUninit::new(unsafe {
+      Convert::<[MaybeUninit<u8>; N], [u8; N]>{ from: res }.to
+    })
   }
 
   /// Called solely in the `staticstring!` macro, and so must be public, which is not an issue
