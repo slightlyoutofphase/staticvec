@@ -232,6 +232,7 @@ fn insert_str_invalid2() {
 #[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
+#[allow(unused_variables)]
 fn macro_constructor() {
   let s1 = staticstring!("ABCDEFGHIJ");
   assert_eq!(s1, "ABCDEFGHIJ");
@@ -242,7 +243,7 @@ fn macro_constructor() {
   static S3: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔");
   assert_eq!(S3, "BC🤔BC🤔BC🤔");
   // The next line should panic.
-  let s5: StaticString<1> = staticstring!("AAAAA", 1);
+  let s5: StaticString<1> = staticstring!("AAAAAA", 1);
 }
 
 #[test]
