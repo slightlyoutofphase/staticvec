@@ -47,16 +47,20 @@ macro_rules! staticvec {
 /// # use staticvec::*;
 /// // Usage at runtime, creating a `StaticString` with both a length and capacity of 10:
 /// let s1 = staticstring!("ABCDEFGHIJ");
+/// assert_eq!(s1, "ABCDEFGHIJ");
 ///
 /// // Usage at runtime, creating a `StaticString` with a length of 10 but a capacity of 20:
 /// let s2 = staticstring!("ABCDEFGHIJ", 20);
+/// assert_eq!(s2, "ABCDEFGHIJ");
 ///
 /// // Usage at compile time, creating a `StaticString` with both a length and capacity of 10:
 /// const S3: StaticString<10> = staticstring!("ABCDEFGHIJ");
+/// assert_eq!(S3, "ABCDEFGHIJ"); 
 ///
 /// // Usage at compile time, creating a `StaticString` with a length of 18 but a capacity of 36,
 /// // keeping in mind that length is measured in bytes and not characters of course:
-/// const S4: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔", 36);
+/// const S4: StaticString<36> = staticstring!("BC🤔BC🤔BC🤔", 36);
+/// assert_eq!(S4, "BC🤔BC🤔BC🤔");
 /// ```
 ///
 /// Note that attempting to explicitly provide a capacity that is less than the number of bytes
