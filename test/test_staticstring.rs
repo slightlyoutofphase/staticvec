@@ -229,18 +229,20 @@ fn insert_str_invalid2() {
   assert_eq!(s.as_str(), "0".repeat(20).as_str());
 }
 
+#[cfg_attr(all(windows, miri), ignore)]
 #[test]
+#[should_panic]
 fn macro_constructor() {
   let s1 = staticstring!("ABCDEFGHIJ");
   assert_eq!(s1, "ABCDEFGHIJ");
-  const S2: StaticString<10> = staticstring!("ABCDEFGHIJ");
+  const S2: StaticString<20> = staticstring!("ABCDEFGHIJ", 10);
   assert_eq!(S2, "ABCDEFGHIJ");
+  assert_eq!(S2.len(), 10);
+  assert_eq!(S2.capacity(), 20);
   static S3: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔");
   assert_eq!(S3, "BC🤔BC🤔BC🤔");
-  static S4: StaticString<0> = staticstring!("");
-  assert_eq!(S4, "");
-  let s5 = staticstring!("");
-  assert_eq!(s5, "");
+  // The next line should panic.
+  let s5: StaticString<1> = staticstring!("AAAAA");
 }
 
 #[test]
