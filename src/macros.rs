@@ -32,49 +32,64 @@ macro_rules! staticvec {
 /// Creates a new [`StaticString`] from an `&str` literal. This macro can be used in const
 /// contexts, in keeping with the other ones in this crate.
 ///
-/// This macro is generally recommended as the best way to create a [`StaticString`] from
-/// literal input in any case where you do not need or intend to specify a capacity larger
-/// than what the input string actually requires.
+/// The `staticstring!` macro comes in two forms: and comes in two forms: one that solely
+/// takes an `&str` literal, where the resulting [`StaticString`] will have a total
+/// capacity exactly equal to the number of bytes in the literal, and one that takes an
+/// additional integral constant which is then used to specify the capacity independently
+/// from the length of the input string.
 ///
-/// If you do need flexibility and a higher degree of type inference with regards to the
-/// capacity, it's recommended that you instead use either the [`From`] implementations
-/// for [`StaticString`] or one of its own `from_`-prefixed member methods.
+/// Implemententing it as such allows the macro be more flexible than would otherwise
+/// be possible due to the required level of type inference being beyond what the compiler
+/// is (currently at least) capable of.
 ///
 /// Example usage:
 /// ```
 /// # use staticvec::*;
-/// // Runtime, type-inferred:
+/// // Usage at runtime, creating a `StaticString` with both a length and capacity of 10:
 /// let s1 = staticstring!("ABCDEFGHIJ");
 ///
-/// // Compile time, with a specified capacity equal to the number of simple ASCII characters:
-/// const S2: StaticString<10> = staticstring!("ABCDEFGHIJ");
+/// // Usage at runtime, creating a `StaticString` with a length of 10 but a capacity of 20:
+/// let s2 = staticstring!("ABCDEFGHIJ", 20);
 ///
-/// // Compile time, with a specified capacity that accounts for the emoji character "widths":
-/// static S3: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔");
+/// // Usage at compile time, creating a `StaticString` with both a length and capacity of 10:
+/// const S3: StaticString<10> = staticstring!("ABCDEFGHIJ");
 ///
+/// // Usage at compile time, creating a `StaticString` with a length of 18 but a capacity of 36,
+/// // keeping in mind that length is measured in bytes and not characters of course:
+/// const S4: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔", 36);
 /// ```
-/// Note that if you "get it wrong" with specifying the capacity in a compile-time usage, there's
-/// not too much to worry about as it just means you'll get a simple compiler error stating the
-/// particular byte length `rustc` was expecting. Also, if type inference ever becomes available
-/// for `const` and `static` declarations, this macro will of course be internally reworked as
-/// necessary to account for it, which would make things even easier overall.
+///
+/// Note that attempting to explicitly provide a capacity that is less than the number of bytes
+/// in the input string will give a *compile-time* index error in const contexts, and a regular
+/// index error panic in the context of runtime usage.
+///
+/// For example, this would give a compile-time error:
+/// ```
+/// const S5: StaticString<1> = staticstring!("ABCDEFG");
+/// ```
+/// And this would panic with an index error at runtime:
+/// ```
+/// let s6: StaticString<0> = staticstring!("🤔🤔🤔🤔🤔🤔");
+/// ```
+///
+/// In the future, it may be possible to somehow catch everything at compile time directly within
+/// the macro invocation, but for the time being allowing the index error to occur is the safest
+/// route to take with the implementation as it does properly prevent `StaticString` instances
+/// containing invalid UTF-8 from ever being constructed via the macro.
 #[macro_export]
 #[rustfmt::skip]
 macro_rules! staticstring {
-  // TODO: I can't really think of anything other than a proper string literal that would compile
-  // in the position of `$a` here, but to be on the safe side I think I should somehow statically
-  // assert that it is in in fact an `&str`. Most likely using `type_name` or `type_id` or
-  // something, hackish as that may be.
-  ($a:expr) => {{
-    unsafe {
-      $crate::StaticString::__new_from_staticvec(
-        $crate::StaticVec::new_from_const_array(
-          $crate::utils::__slice_to_array::<[u8; $a.len()]>(
-            $a.as_bytes()
-          ),
-        )
-      )
-    }
+  ($val:expr) => {{
+    const CAP: usize = $val.len();
+    $crate::StaticString::<CAP>::__new_from_staticvec(
+      $crate::StaticVec::<u8, CAP>::from_const_str($val)
+    )
+  };};
+  ($val:expr, $n:expr) => {{
+    const CAP: usize = $n;
+    $crate::StaticString::<CAP>::__new_from_staticvec(
+      $crate::StaticVec::<u8, CAP>::from_const_str($val)
+    )
   };};
 }
 
