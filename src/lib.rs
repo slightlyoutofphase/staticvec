@@ -1750,8 +1750,8 @@ impl<const N: usize> StaticVec<u8, N> {
   pub(crate) const fn bytes_to_data(values: &[u8]) -> MaybeUninit<[u8; N]> {
     // What follows is an idea partially arrived at from reading the source of
     // the `const-concat` crate. Note that it amounts to effectively a `const fn`
-    // compatible implementation of what `mem::uninitialized()` does, and is *only*
-    // used here due to there being no other way to get an instance of `[u8; N]` that
+    // compatible implementation of what `MaybeUninit::assume_uninit()` does, and is *only*
+    // used here due to there being no other way to get an instance of `[MaybeUninit<u8>; N]` that
     // we can actually write to (and to be clear, *not* read from) using regular indexing
     // in conjunction with the `const_loop` feature (which is itself the only way at this
     // time to write an arbitrary number of bytes from `values` to the result array at
@@ -1760,14 +1760,11 @@ impl<const N: usize> StaticVec<u8, N> {
       from: From,
       to: To,
     }
-    // In most other cases I do think the next line would be objectively UB. However,
-    // based on the fact that it's specifically and always an array of `u8` (basically
-    // the "safest" type in existence) and on the fact that we properly initialize it
-    // starting from the beginning with known-good input and then place it back into an
-    // instance of `MaybeUninit` immediately afterwards, I'm simply 100% sure that it's
-    // physically impossible for anything to "go wrong" here.
+    // As stated above, this is effectively doing what `MaybeUninit::assume_init()` does.
     let mut res = unsafe {
-      Convert::<MaybeUninit<[u8; N]>, [u8; N]>{ from: MaybeUninit::uninit() }.to
+      Convert::<MaybeUninit<[MaybeUninit<u8>; N]>, [MaybeUninit<u8>; N]> {
+        from: MaybeUninit::uninit()
+      }.to
     };
     // Move `values.len()` worth of bytes from `values` to `res`. I'm unaware of any other
     // way that this could be done currently that would leave us with something usable to
@@ -1775,10 +1772,13 @@ impl<const N: usize> StaticVec<u8, N> {
     // so thank you, `const_loop`!
     let mut i = 0;
     while i < values.len() {
-      res[i] = values[i];
+      res[i] = MaybeUninit::new(values[i]);
       i += 1;
     }
-    MaybeUninit::new(res)
+    // Convert `res` from an instance of `[MaybeUninit<u8>; N]` to one of `[u8; N]`, and then
+    // return it as an instance of `MaybeUninit<[u8; N]>` that can be used to construct a
+    // `StaticVec`.
+    MaybeUninit::new(Convert::<[MaybeUninit<u8>; N], [u8; N]>{ from: res }.to)
   }
 
   /// Called solely in the `staticstring!` macro, and so must be public, which is not an issue
