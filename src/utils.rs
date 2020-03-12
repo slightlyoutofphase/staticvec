@@ -241,25 +241,3 @@ pub(crate) const fn slice_from_raw_parts_mut<'a, T>(data: *mut T, length: usize)
   // calls, rather than the other way around.
   unsafe { &mut *ptr_slice_from_raw_parts_mut(data, length) }
 }
-
-/// A helper function that exists to support the `staticstring!` macro. Can't be `pub(crate)` as it
-/// needs to be accessible from the macro body, so we go with "marked unsafe with a
-/// double-underscore prefix in a doc-hidden module" as the next best thing.
-#[inline(always)]
-pub const unsafe fn __convert<From: Copy, To: Copy>(from: From) -> To {
-  // The idea behind this and `__slice_to_array` came from the "const-concat"
-  // crate.
-  union Convert<From: Copy, To: Copy> {
-    from: From,
-    to: To,
-  }
-  Convert { from }.to
-}
-
-/// A helper function that exists to support the `staticstring!` macro. Can't be `pub(crate)` as it
-/// needs to be accessible from the macro body, so we go with "marked unsafe with a
-/// double-underscore prefix in a doc-hidden module" as the next best thing.
-#[inline(always)]
-pub const unsafe fn __slice_to_array<ArrayType: Copy>(slice: &[u8]) -> ArrayType {
-  *__convert::<_, *const ArrayType>(slice.as_ptr())
-}
