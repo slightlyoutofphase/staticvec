@@ -29,21 +29,22 @@ macro_rules! staticvec {
   };
 }
 
-/// Creates a new [`StaticString`] from an `&str` literal. This macro can be used in const contexts, in keeping
-/// with the other ones in this crate.
+/// Creates a new [`StaticString`] from an `&str` literal. This macro can be used in const
+/// contexts, in keeping with the other ones in this crate.
 ///
-/// This macro is generally recommended as the best way to create a [`StaticString`] from literal input in any
-/// case where you do not need or intend to specify a capacity larger than what the input string actually requires.
+/// This macro is generally recommended as the best way to create a [`StaticString`] from
+/// literal input in any case where you do not need or intend to specify a capacity larger
+/// than what the input string actually requires.
 ///
-/// If you do need flexibility and a higher degree of type inference with regards to the capacity, it's recommended
-/// that you instead use either the [`From`] implementations for [`StaticString`] or one of its own `from_`-prefixed
-/// member methods.
+/// If you do need flexibility and a higher degree of type inference with regards to the
+/// capacity, it's recommended that you instead use either the [`From`] implementations
+/// for [`StaticString`] or one of its own `from_`-prefixed member methods.
 ///
 /// Example usage:
 /// ```
 /// # use staticvec::*;
 /// // Runtime, type-inferred:
-/// let S1 = staticstring!("ABCDEFGHIJ");
+/// let s1 = staticstring!("ABCDEFGHIJ");
 ///
 /// // Compile time, with a specified capacity equal to the number of simple ASCII characters:
 /// const S2: StaticString<10> = staticstring!("ABCDEFGHIJ");
@@ -52,11 +53,18 @@ macro_rules! staticvec {
 /// static S3: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔");
 ///
 /// ```
-/// Note that if you "get it wrong" with specifying the capacity, there's not too much to worry about as it
-/// just means you'll get a simple compiler error stating the particular byte length `rustc` was expecting.
+/// Note that if you "get it wrong" with specifying the capacity in a compile-time usage, there's
+/// not too much to worry about as it just means you'll get a simple compiler error stating the
+/// particular byte length `rustc` was expecting. Also, if type inference ever becomes available
+/// for `const` and `static` declarations, this macro will of course be internally reworked as
+/// necessary to account for it, which would make things even easier overall.
 #[macro_export]
 #[rustfmt::skip]
 macro_rules! staticstring {
+  // TODO: I can't really think of anything other than a proper string literal that would compile
+  // in the position of `$a` here, but to be on the safe side I think I should somehow statically
+  // assert that it is in in fact an `&str`. Most likely using `type_name` or `type_id` or
+  // something, hackish as that may be.
   ($a:expr) => {{
     unsafe {
       $crate::StaticString::__new_from_staticvec(
