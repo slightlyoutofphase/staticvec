@@ -29,11 +29,15 @@ macro_rules! staticvec {
   };
 }
 
-/// Creates a new [`StaticString`] from an `&str` literal. Unlike the [`From`] implementations
-/// for [`StaticString`], this macro can be used in const contexts (and is likely slightly more
-/// performant even when used at runtime) so it is generally recommended as the best way to create
-/// a [`StaticString`] from literal input in any case where you do not need to specify a capacity
-/// larger than what the input actually requires (which is when you *should* use [`From`]).
+/// Creates a new [`StaticString`] from an `&str` literal. This macro can be used in const contexts, in keeping
+/// with the other ones in this crate.
+///
+/// This macro is generally recommended as the best way to create a [`StaticString`] from literal input in any
+/// case where you do not need or intend to specify a capacity larger than what the input string actually requires.
+///
+/// If you do need flexibility and a higher degree of type inference with regards to the capacity, it's recommended
+/// that you instead use either the [`From`] implementations for [`StaticString`] or one of its own `from_`-prefixed
+/// member methods.
 ///
 /// Example usage:
 /// ```
