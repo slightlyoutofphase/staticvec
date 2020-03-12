@@ -69,11 +69,11 @@ macro_rules! staticvec {
 ///
 /// For example, this would give a compile-time error:
 /// ```
-/// // const S5: StaticString<1> = staticstring!("ABCDEFG");
+/// // const S5: StaticString<1> = staticstring!("ABCDEFG", 1);
 /// ```
 /// And this would panic with an index error at runtime:
 /// ```
-/// // let s6: StaticString<0> = staticstring!("🤔🤔🤔🤔🤔🤔");
+/// // let s6 = staticstring!("🤔🤔🤔🤔🤔🤔", 0);
 /// ```
 ///
 /// In the future, it may be possible to somehow catch everything at compile time directly within
