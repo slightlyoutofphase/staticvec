@@ -13,6 +13,10 @@ const CONST_UNICODE: StaticString<255> = staticstring!("👍🍉🙃👍🍉🙃
 
 static STATIC_UNICODE: StaticString<255> = staticstring!("🙉🙉💣💣🙉🙉💣💣🙉🙉💣💣", 255);
 
+const FAIL1: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0);
+
+static FAIL2: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0);
+
 fn main() {
   let mut s = StaticString::<4>::new();
   s.push_str("🤔");
@@ -94,9 +98,6 @@ fn main() {
   println!("Debug info: {:?}", STATIC_UNICODE);
   println!("Length: {}", STATIC_UNICODE.len());
   println!("Remaining capacity: {}", STATIC_UNICODE.remaining_capacity());
-  const FAIL1: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0);
-  static FAIL2: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0);
-  println!("{}", FAIL1);
-  println!("{}", FAIL2);
-  //let FAIL3: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0); 
+  let FAIL3: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0);
+  println!("{}", FAIL3);
 }
