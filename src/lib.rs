@@ -1769,11 +1769,11 @@ impl<const N: usize> StaticVec<u8, N> {
     // Move `values.len()` worth of bytes from `values` to `res`. I'm unaware of any other way that
     // this could be done currently that would leave us with something usable to create a StaticVec
     // for which the generic `N` could be *different* from `values.len()`, so thank
-    // you,`const_loop`!
+    // you, `const_loop`!
     let mut i = 0;
     while i < values.len() {
       // We've statically asserted that `N <= values.len()` before entering this overall function,
-      // so there's no concern that we're might go of bounds here.
+      // so there's no concern that we might go of bounds here.
       res[i] = MaybeUninit::new(values[i]);
       i += 1;
     }
