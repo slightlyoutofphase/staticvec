@@ -1740,6 +1740,7 @@ impl<const N: usize> StaticVec<u8, N> {
   #[doc(hidden)]
   #[inline(always)]
   pub(crate) const fn new_from_str_data(data: MaybeUninit<[u8; N]>, length: usize) -> Self {
+    assert!(length <= N);
     Self { data, length }
   }
 
