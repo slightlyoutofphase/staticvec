@@ -1750,11 +1750,6 @@ impl<const N: usize> StaticVec<u8, N> {
   #[doc(hidden)]
   #[inline]
   pub(crate) const fn bytes_to_data(values: &[u8]) -> MaybeUninit<[u8; N]> {
-    // This works at compile time too, of course.
-    assert!(
-      values.len() <= N,
-      "Attempted to create a `StaticString` with insufficient capacity from an `&str` literal!"
-    );
     // What follows is an idea partially arrived at from reading the source of the `const-concat`
     // crate. Note that it amounts to effectively a `const fn` compatible implementation of what
     // `MaybeUninit::assume_uninit()` does, and is *only* used here due to there being no other way
@@ -1779,7 +1774,7 @@ impl<const N: usize> StaticVec<u8, N> {
     // you, `const_loop`!
     let mut i = 0;
     while i < values.len() {
-      // We've statically asserted that `values.len() <= N` at the top of this overall function,
+      // We've statically asserted that `values.len() <= N` before entering this overall function,
       // so there's no concern that we might go out of bounds here (although that would still just
       // result in compilation not actually succeeding at all due to the `const` index error).
       res[i] = MaybeUninit::new(values[i]);
@@ -1796,6 +1791,15 @@ impl<const N: usize> StaticVec<u8, N> {
   #[doc(hidden)]
   #[inline(always)]
   pub const fn __new_from_const_str(values: &str) -> Self {
+    // This works at compile time too, of course, thanks to the `const_panic` feature.
+    assert!(
+      values.len() <= N,
+      // At the moment, I don't think this message is actually printed in any context when the
+      // assertion gets triggered (currently it's just "could not evaluate static initializer") but
+      // I feel like it doesn't hurt to have here just in case the compiler-error behavior changes
+      // such that custom messages are actually shown.
+      "Attempted to create a `StaticString` with insufficient capacity from an `&str` literal!"
+    );
     Self::new_from_str_data(Self::bytes_to_data(values.as_bytes()), values.len())
   }
 }

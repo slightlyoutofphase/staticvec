@@ -63,6 +63,8 @@ macro_rules! staticvec {
 /// // keeping in mind that length is measured in bytes and not characters of course:
 /// const S4: StaticString<36> = staticstring!("BC🤔BC🤔BC🤔", 36);
 /// assert_eq!(S4, "BC🤔BC🤔BC🤔");
+/// assert_eq!(S4.len(), 18);
+/// assert_eq!(S4.capacity(), 36);
 /// ```
 ///
 /// Note that attempting to explicitly provide a capacity that is less than the number of bytes
@@ -90,8 +92,8 @@ macro_rules! staticstring {
   };};
   ($val:expr, $n:expr) => {{
     // In this scenario, an actual assertion inside of `StaticVec::bytes_to_data`
-    // (available at compile time thanks to the `const_panic` feature)
-    // handles ensuring that `$val.len() <= N` for us.
+    // (available at compile time thanks to the `const_panic` feature) handles 
+    // ensuring that `$val.len() <= N` for us.
     unsafe {
       $crate::StaticString::<$n>::__new_from_staticvec(
         $crate::StaticVec::<u8, $n>::__new_from_const_str($val)

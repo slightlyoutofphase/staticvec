@@ -93,10 +93,16 @@ fn main() {
   println!("Value: {}", STATIC_UNICODE);
   println!("Debug info: {:?}", STATIC_UNICODE);
   println!("Length: {}", STATIC_UNICODE.len());
-  println!("Remaining capacity: {}", STATIC_UNICODE.remaining_capacity());
+  println!(
+    "Remaining capacity: {}",
+    STATIC_UNICODE.remaining_capacity()
+  );
   let runtime_unicode = staticstring!("🙉🙉💣💣🙉🙉💣💣🙉🙉💣💣", 255);
   println!("Value: {}", runtime_unicode);
   println!("Debug info: {:?}", runtime_unicode);
   println!("Length: {}", runtime_unicode.len());
-  println!("Remaining capacity: {}", runtime_unicode.remaining_capacity());
+  println!(
+    "Remaining capacity: {}",
+    runtime_unicode.remaining_capacity()
+  );
 }
