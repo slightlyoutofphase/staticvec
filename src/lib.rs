@@ -1778,8 +1778,8 @@ impl<const N: usize> StaticVec<u8, N> {
     let mut i = 0;
     while i < values.len() {
       // We've statically asserted that `values.len() <= N` at the top of this overall function,
-      // so there's no concern that we might go of bounds here (although that would still just
-      // result in compilation not actually succeeding at all due to the "const" index error).
+      // so there's no concern that we might go out of bounds here (although that would still just
+      // result in compilation not actually succeeding at all due to the `const` index error).
       res[i] = MaybeUninit::new(values[i]);
       i += 1;
     }
