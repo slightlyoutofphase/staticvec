@@ -1743,19 +1743,18 @@ impl<const N: usize> StaticVec<u8, N> {
     Self { data, length }
   }
 
-  /// Called solely in `from_const_str`, where `values` is guaranteed to be the slice
+  /// Called solely in `__from_const_str`, where `values` is guaranteed to be the slice
   /// representation of a proper `&str` literal.
   #[doc(hidden)]
-  #[inline(always)]
+  #[inline]
   pub(crate) const fn bytes_to_data(values: &[u8]) -> MaybeUninit<[u8; N]> {
-    // What follows is an idea partially arrived at from reading the source of
-    // the `const-concat` crate. Note that it amounts to effectively a `const fn`
-    // compatible implementation of what `MaybeUninit::assume_uninit()` does, and is *only*
-    // used here due to there being no other way to get an instance of `[MaybeUninit<u8>; N]` that
-    // we can actually write to (and to be clear, *not* read from) using regular indexing
-    // in conjunction with the `const_loop` feature (which is itself the only way at this
-    // time to write an arbitrary number of bytes from `values` to the result array at
-    // compile time).
+    // What follows is an idea partially arrived at from reading the source of the `const-concat`
+    // crate. Note that it amounts to effectively a `const fn` compatible implementation of what
+    // `MaybeUninit::assume_uninit()` does, and is *only* used here due to there being no other way
+    // to get an instance of `[MaybeUninit<u8>; N]` that we can actually write to (and to be clear,
+    // *not* read from) using regular indexing in conjunction with the `const_loop` feature (which
+    // is itself the only way at this time to write an arbitrary number of bytes from `values` to
+    // the result array at compile time).
     union Convert<From: Copy, To: Copy> {
       from: From,
       to: To,
@@ -1763,31 +1762,32 @@ impl<const N: usize> StaticVec<u8, N> {
     // As stated above, this is effectively doing what `MaybeUninit::assume_init()` does.
     let mut res = unsafe {
       Convert::<MaybeUninit<[MaybeUninit<u8>; N]>, [MaybeUninit<u8>; N]> {
-        from: MaybeUninit::uninit()
-      }.to
+        from: MaybeUninit::uninit(),
+      }
+      .to
     };
-    // Move `values.len()` worth of bytes from `values` to `res`. I'm unaware of any other
-    // way that this could be done currently that would leave us with something usable to
-    // create a StaticVec for which the generic `N` could be *different* from `values.len()`,
-    // so thank you, `const_loop`!
+    // Move `values.len()` worth of bytes from `values` to `res`. I'm unaware of any other way that
+    // this could be done currently that would leave us with something usable to create a StaticVec
+    // for which the generic `N` could be *different* from `values.len()`, so thank
+    // you,`const_loop`!
     let mut i = 0;
     while i < values.len() {
+      // We've statically asserted that `N <= values.len()` before entering this overall function,
+      // so there's no concern that we're might go of bounds here.
       res[i] = MaybeUninit::new(values[i]);
       i += 1;
     }
-    // Convert `res` from an instance of `[MaybeUninit<u8>; N]` to one of `[u8; N]`, and then
-    // return it as an instance of `MaybeUninit<[u8; N]>` that can be used to construct a
-    // `StaticVec`.
-    MaybeUninit::new(unsafe {
-      Convert::<[MaybeUninit<u8>; N], [u8; N]>{ from: res }.to
-    })
+    // Convert `res` from an instance of `[MaybeUninit<u8>; N]` to one of `[u8; N]`, and then return
+    // it as an instance of `MaybeUninit<[u8; N]>` that can be used to construct a `StaticVec`.
+    MaybeUninit::new(unsafe { Convert::<[MaybeUninit<u8>; N], [u8; N]> { from: res }.to })
   }
 
-  /// Called solely in the `staticstring!` macro, and so must be public, which is not an issue
-  /// as it is guaranteed to return a correctly initialized `StaticVec<u8, N>`.
+  /// Called solely from inside `staticstring!` macro, and so must be public. This is guaranteed to
+  /// return a correctly initialized `StaticVec<u8, N>`, but we give it the two-underscore prefix
+  /// anyways just in case.
   #[doc(hidden)]
   #[inline(always)]
-  pub const fn from_const_str(values: &str) -> Self {
+  pub const fn __from_const_str(values: &str) -> Self {
     Self::new_from_str_data(Self::bytes_to_data(values.as_bytes()), values.len())
   }
 }
