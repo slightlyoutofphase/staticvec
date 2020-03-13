@@ -1777,7 +1777,7 @@ impl<const N: usize> StaticVec<u8, N> {
     // you, `const_loop`!
     let mut i = 0;
     while i < values.len() {
-      // We've statically asserted that `N <= values.len()` before entering this overall function,
+      // We've statically asserted that `values.len() <= N` before entering this overall function,
       // so there's no concern that we might go of bounds here.
       res[i] = MaybeUninit::new(values[i]);
       i += 1;
