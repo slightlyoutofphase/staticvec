@@ -860,9 +860,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let mut res = Self::new_data_uninit();
     let res_ptr = Self::first_ptr_mut(&mut res);
     // Copy the inhabited part of `self` into the array we'll use for the returned StaticVec.
-    unsafe {
-      self.as_ptr().copy_to_nonoverlapping(res_ptr, length);
-    }
+    unsafe { self.as_ptr().copy_to_nonoverlapping(res_ptr, length) };
     // Sort the array, and then build and return a new StaticVec from it.
     quicksort_internal(res_ptr, 0, (length - 1) as isize);
     Self { data: res, length }
@@ -1273,12 +1271,16 @@ impl<T, const N: usize> StaticVec<T, N> {
       // Set the length to 0 to avoid memory issues if anything goes wrong with
       // the Drain.
       self.set_len(start);
+      let start_ptr = self.ptr_at_unchecked(start);
+      // `start_ptr` will never be null, so this is a safe assumption to give to
+      // the optimizer.
+      intrinsics::assume(!is_null_const(start_ptr));
       // Create the StaticVecDrain from the specified range.
       StaticVecDrain {
         start: end,
         length: length - end,
         iter: StaticVecIterConst {
-          start: self.ptr_at_unchecked(start),
+          start: start_ptr,
           end: match intrinsics::size_of::<T>() {
             0 => (self.as_ptr() as *const u8).wrapping_add(end) as *const T,
             _ => self.ptr_at_unchecked(end),
