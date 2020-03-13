@@ -94,7 +94,7 @@ macro_rules! staticstring {
     const CAP: usize = $val.len();
     unsafe {
       $crate::StaticString::<CAP>::__new_from_staticvec(
-        $crate::StaticVec::<u8, CAP>::__from_const_str($val)
+        $crate::StaticVec::<u8, CAP>::__new_from_const_str($val)
       )
     }
   };};
@@ -103,7 +103,7 @@ macro_rules! staticstring {
     $crate::__static_assert!($val.len() <= CAP);
     unsafe {
       $crate::StaticString::<CAP>::__new_from_staticvec(
-        $crate::StaticVec::<u8, CAP>::__from_const_str($val)
+        $crate::StaticVec::<u8, CAP>::__new_from_const_str($val)
       )
     }
   };};

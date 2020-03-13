@@ -1734,7 +1734,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 }
 
 impl<const N: usize> StaticVec<u8, N> {
-  /// Called solely in `bytes_to_data`, where the input `MaybeUninit` is guaranteed to have
+  /// Called solely in `__new_from_const_str`, where the input `MaybeUninit` is guaranteed to have
   /// been properly initialized starting at the beginning with the bytes of an `&str` literal,
   /// and the input `length` is the known-at-compile-time length of said literal.
   #[doc(hidden)]
@@ -1743,7 +1743,7 @@ impl<const N: usize> StaticVec<u8, N> {
     Self { data, length }
   }
 
-  /// Called solely in `__from_const_str`, where `values` is guaranteed to be the slice
+  /// Called solely in `__new_from_const_str`, where `values` is guaranteed to be the slice
   /// representation of a proper `&str` literal.
   #[doc(hidden)]
   #[inline]
@@ -1782,12 +1782,12 @@ impl<const N: usize> StaticVec<u8, N> {
     MaybeUninit::new(unsafe { Convert::<[MaybeUninit<u8>; N], [u8; N]> { from: res }.to })
   }
 
-  /// Called solely from inside `staticstring!` macro, and so must be public. This is guaranteed to
-  /// return a correctly initialized `StaticVec<u8, N>`, but we give it the two-underscore prefix
-  /// anyways just in case.
+  /// Called solely from inside the `staticstring!` macro, and so must be public. This is guaranteed
+  /// to return a correctly initialized `StaticVec<u8, N>`, but we give it the two-underscore
+  /// prefix and hide it from `rustdoc` anyways just so no one thinks it's for general use.
   #[doc(hidden)]
   #[inline(always)]
-  pub const fn __from_const_str(values: &str) -> Self {
+  pub const fn __new_from_const_str(values: &str) -> Self {
     Self::new_from_str_data(Self::bytes_to_data(values.as_bytes()), values.len())
   }
 }
