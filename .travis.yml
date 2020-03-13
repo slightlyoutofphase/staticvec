@@ -17,4 +17,4 @@ script:
   # - bash ./ci/run_miri.sh
   # - cargo clean
   # - cargo test --no-default-features
-  # - cargo run --example string_demo
+  - cargo run --example string_demo
