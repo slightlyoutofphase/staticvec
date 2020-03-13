@@ -94,6 +94,7 @@ fn main() {
   println!("Debug info: {:?}", STATIC_UNICODE);
   println!("Length: {}", STATIC_UNICODE.len());
   println!("Remaining capacity: {}", STATIC_UNICODE.remaining_capacity());
-  let FAIL: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0);
-  const FAIL: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0);
+  const FAIL1: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0);
+  static FAIL2: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0);
+  let FAIL3: StaticString<0> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 0); 
 }
