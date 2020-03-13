@@ -1748,6 +1748,11 @@ impl<const N: usize> StaticVec<u8, N> {
   #[doc(hidden)]
   #[inline]
   pub(crate) const fn bytes_to_data(values: &[u8]) -> MaybeUninit<[u8; N]> {
+    // This works at compile time too, of course.
+    assert!(
+      values.len() <= N,
+      "Attempted to create a `StaticString` with insufficient capacity from an `&str` literal!"
+    );
     // What follows is an idea partially arrived at from reading the source of the `const-concat`
     // crate. Note that it amounts to effectively a `const fn` compatible implementation of what
     // `MaybeUninit::assume_uninit()` does, and is *only* used here due to there being no other way
@@ -1771,7 +1776,6 @@ impl<const N: usize> StaticVec<u8, N> {
     // for which the generic `N` could be *different* from `values.len()`, so thank
     // you, `const_loop`!
     let mut i = 0;
-    assert!(values.len() <= N);
     while i < values.len() {
       // We've statically asserted that `N <= values.len()` before entering this overall function,
       // so there's no concern that we might go of bounds here.
