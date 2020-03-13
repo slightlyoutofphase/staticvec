@@ -30,16 +30,6 @@ macro_rules! staticvec {
   };
 }
 
-/// This is only used in the `staticstring!` macro at the moment.
-#[doc(hidden)]
-#[macro_export]
-macro_rules! __static_assert {
-  ($b:expr) => {{
-    const VERIFIER: [(); 1] = [()];
-    const _: () = VERIFIER[!($b) as usize];
-  };};
-}
-
 /// Creates a new [`StaticString`] from an `&str` literal. This macro can be used in const
 /// contexts, in keeping with the other ones in this crate.
 ///
@@ -99,8 +89,9 @@ macro_rules! staticstring {
     }
   };};
   ($val:expr, $n:expr) => {{
-    //const VERIFIER: [(); 1] = [()];
-    //const _: () = VERIFIER[(!($val.len() <= $n)) as usize];
+    // In this scenario, an actual assertion inside of `StaticVec::bytes_to_data`
+    // (available at compile time thanks to the `const_panic` feature)
+    // handles ensuring that `$val.len() <= N` for us.
     unsafe {
       $crate::StaticString::<$n>::__new_from_staticvec(
         $crate::StaticVec::<u8, $n>::__new_from_const_str($val)
