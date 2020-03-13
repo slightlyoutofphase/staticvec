@@ -14,7 +14,7 @@ script:
   # We run the suite once under Miri with all functionality enabled, and then once
   # normally without the default features just to make sure `no_std` support has
   # not been broken
-  - bash ./ci/run_miri.sh
-  - cargo clean
-  - cargo test --no-default-features
-  - cargo run --example string_demo
+  # - bash ./ci/run_miri.sh
+  # - cargo clean
+  # - cargo test --no-default-features
+  # - cargo run --example string_demo
