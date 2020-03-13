@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 #![allow(incomplete_features)]
 
+use core::iter::FromIterator;
 use staticvec::{staticstring, staticvec, StaticString};
 
 // There'll eventually be more stuff here probably, but for now it just tries
