@@ -6,7 +6,7 @@
 // configuration attributes those tests just panic normally under Miri on Windows, which we don't
 // want.
 
-use staticvec::*;
+use staticvec::{staticstring, staticvec, StaticString, StaticVec};
 
 type MyString = StaticString<255>;
 
@@ -229,21 +229,35 @@ fn insert_str_invalid2() {
   assert_eq!(s.as_str(), "0".repeat(20).as_str());
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
-#[should_panic]
-#[allow(unused_variables)]
 fn macro_constructor() {
   let s1 = staticstring!("ABCDEFGHIJ");
   assert_eq!(s1, "ABCDEFGHIJ");
+  assert_eq!(s1.len(), 10);
+  assert_eq!(s1.capacity(), 10);
   const S2: StaticString<20> = staticstring!("ABCDEFGHIJ", 20);
   assert_eq!(S2, "ABCDEFGHIJ");
   assert_eq!(S2.len(), 10);
   assert_eq!(S2.capacity(), 20);
   static S3: StaticString<18> = staticstring!("BC🤔BC🤔BC🤔");
   assert_eq!(S3, "BC🤔BC🤔BC🤔");
-  // The next line should panic.
-  let s5: StaticString<1> = staticstring!("AAAAAA", 1);
+  assert_eq!(S3.len(), 18);
+  assert_eq!(S3.capacity(), 18);
+  const S4: StaticString<36> = staticstring!("BC🤔BC🤔BC🤔", 36);
+  assert_eq!(S4, "BC🤔BC🤔BC🤔");
+  assert_eq!(S4.len(), 18);
+  assert_eq!(S4.capacity(), 36);
+  let s5: StaticString<36> = staticstring!("BC🤔BC🤔BC🤔", 36);
+  assert_eq!(s5, "BC🤔BC🤔BC🤔");
+  assert_eq!(s5.len(), 18);
+  assert_eq!(s5.capacity(), 36);
+  static S6: StaticString<0> = staticstring!("");
+  assert_eq!(S6, "");
+  assert_eq!(S6.len(), 0);
+  assert_eq!(S6.capacity(), 0);
+  // Incorrect capacities like the following just give compile-time `const err` errors
+  // from our static assertion macro:
+  // let s5: StaticString<0> = staticstring!("AAAAAA", 0);
 }
 
 #[test]
