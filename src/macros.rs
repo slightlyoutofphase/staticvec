@@ -29,6 +29,16 @@ macro_rules! staticvec {
   };
 }
 
+/// This is only used in the `staticstring!` macro at the moment.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __static_assert {
+  ($b:expr) => {{
+    const VERIFIER: [(); 1] = [()];
+    const _: () = VERIFIER[!($b) as usize];
+  };};
+}
+
 /// Creates a new [`StaticString`] from an `&str` literal. This macro can be used in const
 /// contexts, in keeping with the other ones in this crate.
 ///
@@ -55,7 +65,7 @@ macro_rules! staticvec {
 ///
 /// // Usage at compile time, creating a `StaticString` with both a length and capacity of 10:
 /// const S3: StaticString<10> = staticstring!("ABCDEFGHIJ");
-/// assert_eq!(S3, "ABCDEFGHIJ"); 
+/// assert_eq!(S3, "ABCDEFGHIJ");
 ///
 /// // Usage at compile time, creating a `StaticString` with a length of 18 but a capacity of 36,
 /// // keeping in mind that length is measured in bytes and not characters of course:
@@ -64,22 +74,17 @@ macro_rules! staticvec {
 /// ```
 ///
 /// Note that attempting to explicitly provide a capacity that is less than the number of bytes
-/// in the input string will give a *compile-time* index error in const contexts, and a regular
-/// index error panic in the context of runtime usage.
+/// in the input string will fail a *compile-time* static assertion in both const and runtime
+/// contexts.
 ///
 /// For example, this would give a compile-time error:
 /// ```
 /// // const S5: StaticString<1> = staticstring!("ABCDEFG", 1);
 /// ```
-/// And this would panic with an index error at runtime:
+/// As would the following:
 /// ```
 /// // let s6 = staticstring!("🤔🤔🤔🤔🤔🤔", 0);
 /// ```
-///
-/// In the future, it may be possible to somehow catch everything at compile time directly within
-/// the macro invocation, but for the time being allowing the index error to occur is the safest
-/// route to take with the implementation as it does properly prevent `StaticString` instances
-/// containing invalid UTF-8 from ever being constructed via the macro.
 #[macro_export]
 #[rustfmt::skip]
 macro_rules! staticstring {
@@ -87,15 +92,16 @@ macro_rules! staticstring {
     const CAP: usize = $val.len();
     unsafe {
       $crate::StaticString::<CAP>::__new_from_staticvec(
-        $crate::StaticVec::<u8, CAP>::from_const_str($val)
+        $crate::StaticVec::<u8, CAP>::__from_const_str($val)
       )
     }
   };};
   ($val:expr, $n:expr) => {{
     const CAP: usize = $n;
+    $crate::__static_assert!($val.len() <= $n);
     unsafe {
       $crate::StaticString::<CAP>::__new_from_staticvec(
-        $crate::StaticVec::<u8, CAP>::from_const_str($val)
+        $crate::StaticVec::<u8, CAP>::__from_const_str($val)
       )
     }
   };};
