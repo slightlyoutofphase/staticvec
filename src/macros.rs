@@ -99,8 +99,8 @@ macro_rules! staticstring {
     }
   };};
   ($val:expr, $n:expr) => {{
-    const VERIFIER: [(); 1] = [()];
-    const _: () = VERIFIER[(!($val.len() <= $n)) as usize];
+    //const VERIFIER: [(); 1] = [()];
+    //const _: () = VERIFIER[(!($val.len() <= $n)) as usize];
     unsafe {
       $crate::StaticString::<$n>::__new_from_staticvec(
         $crate::StaticVec::<u8, $n>::__new_from_const_str($val)
