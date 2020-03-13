@@ -3,10 +3,14 @@
 #![allow(dead_code)]
 #![allow(incomplete_features)]
 
-use staticvec::*;
+use staticvec::{staticstring, staticvec, StaticString};
 
 // There'll eventually be more stuff here probably, but for now it just tries
 // to show the more "interesting" features.
+
+const CONST_UNICODE: StaticString<255> = staticstring!("👍🍉🙃👍🍉🙃👍🍉🙃👍🍉🙃", 255);
+
+static STATIC_UNICODE: StaticString<255> = staticstring!("🙉🙉💣💣🙉🙉💣💣🙉🙉💣💣", 255);
 
 fn main() {
   let mut s = StaticString::<4>::new();
@@ -81,4 +85,12 @@ fn main() {
   println!("Debug info: {:?}", s8);
   println!("Length: {}", s8.len());
   println!("Remaining capacity: {}", s8.remaining_capacity());
+  println!("Value: {}", CONST_UNICODE);
+  println!("Debug info: {:?}", CONST_UNICODE);
+  println!("Length: {}", CONST_UNICODE.len());
+  println!("Remaining capacity: {}", CONST_UNICODE.remaining_capacity());
+  println!("Value: {}", STATIC_UNICODE);
+  println!("Debug info: {:?}", STATIC_UNICODE);
+  println!("Length: {}", STATIC_UNICODE.len());
+  println!("Remaining capacity: {}", STATIC_UNICODE.remaining_capacity());
 }
