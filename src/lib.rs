@@ -1740,7 +1740,6 @@ impl<const N: usize> StaticVec<u8, N> {
   #[doc(hidden)]
   #[inline(always)]
   pub(crate) const fn new_from_str_data(data: MaybeUninit<[u8; N]>, length: usize) -> Self {
-    assert!(length <= N);
     Self { data, length }
   }
 
@@ -1772,6 +1771,7 @@ impl<const N: usize> StaticVec<u8, N> {
     // for which the generic `N` could be *different* from `values.len()`, so thank
     // you, `const_loop`!
     let mut i = 0;
+    assert!(values.len() <= N);
     while i < values.len() {
       // We've statically asserted that `N <= values.len()` before entering this overall function,
       // so there's no concern that we might go of bounds here.
