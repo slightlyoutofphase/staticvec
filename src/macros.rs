@@ -54,7 +54,8 @@ macro_rules! __static_assert {
 ///
 /// Example usage:
 /// ```
-/// # use staticvec::*;
+/// use staticvec::{staticstring, StaticString};
+///
 /// // Usage at runtime, creating a `StaticString` with both a length and capacity of 10:
 /// let s1 = staticstring!("ABCDEFGHIJ");
 /// assert_eq!(s1, "ABCDEFGHIJ");

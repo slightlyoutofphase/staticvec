@@ -469,15 +469,16 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
       None
     } else {
       unsafe {
+        let old_start = self.start;
         // Get the index in `self.data` of the item to be returned.
-        let res_index = self.start + n;
+        let res_index = old_start + n;
         // Get a pointer to the item, using the above index.
         let res = StaticVec::first_ptr(&self.data).add(res_index);
         // Drop whatever range of values may exist in earlier positions
         // to avoid memory leaks.
         ptr::drop_in_place(slice_from_raw_parts_mut(
-          StaticVec::first_ptr_mut(&mut self.data).add(self.start),
-          res_index - self.start,
+          StaticVec::first_ptr_mut(&mut self.data).add(old_start),
+          res_index - old_start,
         ));
         // Adjust our starting index.
         self.start = res_index + 1;
