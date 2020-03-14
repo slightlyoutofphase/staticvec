@@ -61,7 +61,7 @@ impl<T, const N: usize> const AsRef<[T]> for StaticVec<T, N> {
 impl<T, const N: usize> const Borrow<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow(&self) -> &[T] {
-    self.as_slice()
+    &self[..]
   }
 }
 
@@ -69,7 +69,7 @@ impl<T, const N: usize> const Borrow<[T]> for StaticVec<T, N> {
 impl<T, const N: usize> const BorrowMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow_mut(&mut self) -> &mut [T] {
-    self.as_mut_slice()
+    &mut self[..]
   }
 }
 

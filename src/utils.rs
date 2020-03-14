@@ -93,6 +93,8 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
   mut high: isize,
 )
 {
+  // We call this function from exactly one place where `low` and `high` are known to be within an
+  // appropriate range before getting passed into it, so there's no need to check them again here.
   loop {
     let mut i = low;
     let mut j = high;
