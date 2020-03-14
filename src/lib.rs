@@ -123,7 +123,6 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Example usage:
   /// ```
   /// # use staticvec::*;
-  /// ```
   /// let v = StaticVec::<i32, 8>::new_from_slice(&[1, 2, 3]);
   /// assert_eq!(v, [1, 2, 3]);
   /// ```
