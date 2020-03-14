@@ -98,6 +98,14 @@ pub struct StaticVec<T, const N: usize> {
 
 impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a new StaticVec instance.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::StaticVec;
+  /// let v = StaticVec::<i32, 4>::new();
+  /// assert_eq!(v.len(), 0);
+  /// assert_eq!(v.capacity(), 4);
+  /// ```
   #[inline(always)]
   pub const fn new() -> Self {
     Self {
@@ -111,6 +119,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// If the slice has a length greater than the StaticVec's declared capacity,
   /// any contents after that point are ignored.
   /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// ```
+  /// let v = StaticVec::<i32, 8>::new_from_slice(&[1, 2, 3]);
+  /// assert_eq!(v, [1, 2, 3]);
+  /// ```
   #[inline]
   pub fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
@@ -199,6 +215,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Note that both forms of the [`staticvec!`] macro are implemented using
   /// [`new_from_const_array`](crate::StaticVec::new_from_const_array), so you may also prefer
   /// to use them instead of it directly.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::{staticvec, StaticVec};
+  /// const v: StaticVec<i32, 4> = StaticVec::new_from_const_array([1, 2, 3, 4]);
+  /// assert_eq!(v, staticvec![1, 2, 3, 4]);
+  /// ```
   #[inline(always)]
   pub const fn new_from_const_array(values: [T; N]) -> Self {
     Self {
@@ -212,21 +235,39 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// [`push`](crate::StaticVec::push), [`insert`](crate::StaticVec::insert), etc. except in the
   /// case that it has been set directly with the unsafe [`set_len`](crate::StaticVec::set_len)
   /// function.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert_eq!(staticvec![1].len(), 1);
+  /// ```
   #[inline(always)]
   pub const fn len(&self) -> usize {
     self.length
   }
 
   /// Returns the total capacity of the StaticVec.
-  /// This is always equivalent to the generic `N` parameter it was declared with,
-  /// which determines the fixed size of the backing array.
+  /// This is always equivalent to the generic `N` parameter it was declared with, which determines
+  /// the fixed size of the backing array.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert_eq!(StaticVec::<usize, 800>::new().capacity(), 800);
+  /// ```
   #[inline(always)]
   pub const fn capacity(&self) -> usize {
     N
   }
 
-  /// Does the same thing as [`capacity`](crate::StaticVec::capacity), but as an associated
-  /// function rather than a method.
+  /// Does the same thing as [`capacity`](crate::StaticVec::capacity), but as an associated function
+  /// rather than a method.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert_eq!(StaticVec::<f64, 12>::cap(), 12)
+  /// ```
   #[inline(always)]
   pub const fn cap() -> usize {
     N
@@ -234,6 +275,12 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Serves the same purpose as [`capacity`](crate::StaticVec::capacity), but as an associated
   /// constant rather than a method.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert_eq!(StaticVec::<f64, 12>::CAPACITY, 12)
+  /// ```
   pub const CAPACITY: usize = N;
 
   /// Returns the remaining capacity (which is to say, `self.capacity() - self.len()`) of the
@@ -281,6 +328,20 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// It is up to the caller to ensure that `new_len` is less than or equal to the StaticVec's
   /// constant `N` parameter, and that the range of elements covered by a length of `new_len` is
   /// actually initialized. Failure to do so will almost certainly result in undefined behavior.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = StaticVec::<i32, 12>::new();
+  /// let data = staticvec![1, 2, 3, 4];
+  /// unsafe {
+  ///   data.as_ptr().copy_to_nonoverlapping(v.as_mut_ptr(), 4);
+  ///   v.set_len(4);
+  /// }
+  /// assert_eq!(v.len(), 4);
+  /// assert_eq!(v.remaining_capacity(), 8);
+  /// assert_eq!(v, data);
+  /// ```
   #[inline(always)]
   pub unsafe fn set_len(&mut self, new_len: usize) {
     // Most of the `unsafe` functions in this crate that are heavily used internally
@@ -295,12 +356,24 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns true if the current length of the StaticVec is 0.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert!(StaticVec::<i32, 4>::new().is_empty());
+  /// ```
   #[inline(always)]
   pub const fn is_empty(&self) -> bool {
     self.length == 0
   }
 
   /// Returns true if the current length of the StaticVec is greater than 0.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert!(staticvec![staticvec![1, 1], staticvec![2, 2]].is_not_empty());
+  /// ```
   // Clippy wants `!is_empty()` for this, but I prefer it as-is. My question is though, does it
   // actually know that we have an applicable `is_empty()` function, or is it just guessing? I'm not
   // sure.
@@ -311,12 +384,24 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns true if the current length of the StaticVec is equal to its capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert!(StaticVec::<i32, 4>::filled_with(|| 2).is_full());
+  /// ```
   #[inline(always)]
   pub const fn is_full(&self) -> bool {
     self.length == N
   }
 
   /// Returns true if the current length of the StaticVec is less than its capacity.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert!(StaticVec::<i32, 4>::new().is_not_full());
+  /// ```
   #[inline(always)]
   pub const fn is_not_full(&self) -> bool {
     self.length < N
@@ -939,6 +1024,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// coerce implicitly to `&`) to the StaticVec. If the slice has a length greater than the
   /// StaticVec's remaining capacity, any contents after that point are ignored.
   /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = StaticVec::<i32, 8>::new();
+  /// v.extend_from_slice(&[1, 2, 3, 4]);
+  /// v.extend_from_slice(&[5, 6, 7, 8, 9, 10, 11]);
+  /// assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
+  /// ```
   #[inline(always)]
   pub fn extend_from_slice(&mut self, other: &[T])
   where T: Copy {
@@ -980,6 +1074,17 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// The `N2` parameter does not need to be provided explicitly, and can be inferred directly from
   /// the constant `N2` constraint of `other` (which may or may not be the same as the `N`
   /// constraint of `self`.)
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut a = StaticVec::<i32, 8>::from([1, 2, 3, 4]);
+  /// let mut b = staticvec![1, 2, 3, 4, 5, 6, 7, 8];
+  /// a.append(&mut b);
+  /// assert_eq!(a.len(), 8);
+  /// assert_eq!(a, [1, 2, 3, 4, 1, 2, 3, 4]);
+  /// assert_eq!(b, [5, 6, 7, 8]);
+  /// ```
   #[inline]
   pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, N2>) {
     let old_length = self.length;
@@ -1757,6 +1862,7 @@ impl<const N: usize> StaticVec<u8, N> {
     // *not* read from) using regular indexing in conjunction with the `const_loop` feature (which
     // is itself the only way at this time to write an arbitrary number of bytes from `values` to
     // the result array at compile time).
+    #[repr(C)]
     union Convert<From: Copy, To: Copy> {
       from: From,
       to: To,
