@@ -37,31 +37,39 @@ use serde::{
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
-impl<T, const N: usize> AsMut<[T]> for StaticVec<T, N> {
+// The instances of `#[rustfmt::skip]` specifically above the `const`
+// impls below are currently necessary, as otherwise rustfmt just silently
+// deletes the `const` keyword.
+
+#[rustfmt::skip]
+impl<T, const N: usize> const AsMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_mut(&mut self) -> &mut [T] {
     self.as_mut_slice()
   }
 }
 
-impl<T, const N: usize> AsRef<[T]> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const AsRef<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_ref(&self) -> &[T] {
     self.as_slice()
   }
 }
 
-impl<T, const N: usize> Borrow<[T]> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const Borrow<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow(&self) -> &[T] {
-    &self[..]
+    self.as_slice()
   }
 }
 
-impl<T, const N: usize> BorrowMut<[T]> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const BorrowMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow_mut(&mut self) -> &mut [T] {
-    &mut self[..]
+    self.as_mut_slice()
   }
 }
 
@@ -139,7 +147,8 @@ impl<T: Debug, const N: usize> Debug for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> Default for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const Default for StaticVec<T, N> {
   /// Calls `new`.
   #[inline(always)]
   fn default() -> Self {
@@ -147,7 +156,8 @@ impl<T, const N: usize> Default for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> Deref for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const Deref for StaticVec<T, N> {
   type Target = [T];
   #[inline(always)]
   fn deref(&self) -> &[T] {
@@ -155,7 +165,8 @@ impl<T, const N: usize> Deref for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> DerefMut for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const DerefMut for StaticVec<T, N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut [T] {
     self.as_mut_slice()
@@ -361,7 +372,8 @@ impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, N2> {
   }
 }
 
-impl<T, const N: usize> From<[T; N]> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const From<[T; N]> for StaticVec<T, N> {
   #[inline(always)]
   fn from(values: [T; N]) -> Self {
     Self::new_from_const_array(values)
@@ -556,7 +568,8 @@ impl<T, const N: usize> IndexMut<RangeFrom<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> Index<RangeFull> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const Index<RangeFull> for StaticVec<T, N> {
   type Output = [T];
   /// Returns a constant reference to a slice consisting of `0..self.length`
   /// elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
@@ -566,7 +579,8 @@ impl<T, const N: usize> Index<RangeFull> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> IndexMut<RangeFull> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const IndexMut<RangeFull> for StaticVec<T, N> {
   /// Returns a mutable reference to a slice consisting of `0..self.length`
   /// elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
   #[inline(always)]

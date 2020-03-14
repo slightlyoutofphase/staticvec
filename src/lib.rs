@@ -25,6 +25,7 @@
   const_raw_ptr_deref,
   const_raw_ptr_to_usize_cast,
   const_saturating_int_methods,
+  const_trait_impl,
   core_intrinsics,
   doc_cfg,
   exact_size_is_empty,
@@ -331,15 +332,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Example usage:
   /// ```
   /// # use staticvec::*;
-  /// let mut v = StaticVec::<i32, 12>::new();
+  /// let mut vec = StaticVec::<i32, 12>::new();
   /// let data = staticvec![1, 2, 3, 4];
   /// unsafe {
-  ///   data.as_ptr().copy_to_nonoverlapping(v.as_mut_ptr(), 4);
-  ///   v.set_len(4);
+  ///   data.as_ptr().copy_to_nonoverlapping(vec.as_mut_ptr(), 4);
+  ///   vec.set_len(4);
   /// }
-  /// assert_eq!(v.len(), 4);
-  /// assert_eq!(v.remaining_capacity(), 8);
-  /// assert_eq!(v, data);
+  /// assert_eq!(vec.len(), 4);
+  /// assert_eq!(vec.remaining_capacity(), 8);
+  /// assert_eq!(vec, data);
   /// ```
   #[inline(always)]
   pub unsafe fn set_len(&mut self, new_len: usize) {
@@ -410,6 +411,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// It is up to the caller to ensure that the StaticVec lives for as long as they intend
   /// to make use of the returned pointer, as once the StaticVec is dropped the pointer will
   /// point to uninitialized or "garbage" memory.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let v = staticvec!['A', 'B', 'C'];
+  /// let p = v.as_ptr();
+  /// unsafe { assert_eq!(*p, 'A') };
+  /// ```
   #[inline(always)]
   pub const fn as_ptr(&self) -> *const T {
     Self::first_ptr(&self.data)
@@ -419,12 +428,27 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// It is up to the caller to ensure that the StaticVec lives for as long as they intend
   /// to make use of the returned pointer, as once the StaticVec is dropped the pointer will
   /// point to uninitialized or "garbage" memory.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec!['A', 'B', 'C'];
+  /// let p = v.as_mut_ptr();
+  /// unsafe { *p = 'X' };
+  /// assert_eq!(v, ['X', 'B', 'C']);
+  /// ```
   #[inline(always)]
   pub const fn as_mut_ptr(&mut self) -> *mut T {
     Self::first_ptr_mut(&mut self.data)
   }
 
   /// Returns a constant reference to a slice of the StaticVec's inhabited area.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert_eq!(staticvec![1, 2, 3].as_slice(), &[1, 2, 3]);
+  /// ```
   #[inline(always)]
   pub const fn as_slice(&self) -> &[T] {
     // Safety: `self.as_ptr()` is a pointer to an array for which the first `length`
@@ -433,6 +457,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Returns a mutable reference to a slice of the StaticVec's inhabited area.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec![4, 5, 6];
+  /// let s = v.as_mut_slice();
+  /// s[1] = 9;
+  /// assert_eq!(v, [4, 9, 6]);
+  /// ```
   #[inline(always)]
   pub const fn as_mut_slice(&mut self) -> &mut [T] {
     // Safety: See as_slice.
@@ -449,6 +482,16 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// function returns a pointer to a location that falls somewhere inside the full span of the
   /// StaticVec's backing array, and that if reading from the returned pointer, it has *already*
   /// been initialized properly.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let v = staticvec!["I", "am", "a", "StaticVec!"];
+  /// unsafe {
+  ///   let p = v.ptr_at_unchecked(3);
+  ///   assert_eq!(*p, "StaticVec!");
+  /// }
+  /// ```
   #[inline(always)]
   pub unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
     // We check against `N` as opposed to `length` in our debug assertion here, as these
@@ -478,6 +521,17 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// is adjusted to properly reflect whatever range of elements this function may be used to
   /// initialize, and that if reading from the returned pointer, it has *already* been initialized
   /// properly.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec!["I", "am", "not a", "StaticVec!"];
+  /// unsafe {
+  ///   let p = v.mut_ptr_at_unchecked(2);
+  ///   *p = "a";
+  /// }
+  /// assert_eq!(v, ["I", "am", "a", "StaticVec!"]);
+  /// ```
   #[inline(always)]
   pub unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
     // We check against `N` as opposed to `length` in our debug assertion here, as these
@@ -496,6 +550,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a constant pointer to the element of the StaticVec at `index` if `index`
   /// is within the range `0..self.length`, or panics if it is not. The return value of this
   /// function is equivalent to what would be returned from `as_ptr().add(index)`.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let v = staticvec!["I", "am", "a", "StaticVec!"];
+  /// let p = v.ptr_at(3);
+  /// unsafe { assert_eq!(*p, "StaticVec!") };
+  /// ```
   #[inline(always)]
   pub fn ptr_at(&self, index: usize) -> *const T {
     assert!(
@@ -510,6 +572,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a mutable pointer to the element of the StaticVec at `index` if `index`
   /// is within the range `0..self.length`, or panics if it is not. The return value of this
   /// function is equivalent to what would be returned from `as_mut_ptr().add(index)`.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec!["I", "am", "not a", "StaticVec!"];
+  /// let p = v.mut_ptr_at(2);
+  /// unsafe { *p = "a" };
+  /// assert_eq!(v, ["I", "am", "a", "StaticVec!"]);
+  /// ```
   #[inline(always)]
   pub fn mut_ptr_at(&mut self, index: usize) -> *mut T {
     assert!(
@@ -532,6 +603,12 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// # Safety
   ///
   /// It is up to the caller to ensure that `index` is within the range `0..self.length`.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// unsafe { assert_eq!(*staticvec![1, 2, 3].get_unchecked(1), 2) };
+  /// ```
   #[inline(always)]
   pub unsafe fn get_unchecked(&self, index: usize) -> &T {
     // This function is used internally in places where `length` has been intentionally
@@ -554,6 +631,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// # Safety
   ///
   /// It is up to the caller to ensure that `index` is within the range `0..self.length`.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec![1, 2, 3];
+  /// let p = unsafe { v.get_unchecked_mut(1) };
+  /// *p = 9;
+  /// assert_eq!(v, [1, 9, 3]);
+  /// ```
   #[inline(always)]
   pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
     // This function is used internally in places where `length` has been intentionally
@@ -575,6 +661,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// It is up to the caller to ensure that the length of the StaticVec
   /// prior to using this function is less than `N`. Failure to do so will result
   /// in writing to an out-of-bounds memory region.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = StaticVec::<i32, 4>::from([1, 2]);
+  /// unsafe { v.push_unchecked(3) };
+  /// assert_eq!(v, [1, 2, 3]);
+  /// ```
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, value: T) {
     debug_assert!(
@@ -594,6 +688,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// It is up to the caller to ensure that the StaticVec contains at least one
   /// element prior to using this function. Failure to do so will result in reading
   /// from uninitialized memory.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = StaticVec::<i32, 4>::from([1, 2, 3, 4]);
+  /// unsafe { v.pop_unchecked() };
+  /// assert_eq!(v, [1, 2, 3]);
+  /// ```
   #[inline(always)]
   pub unsafe fn pop_unchecked(&mut self) -> T {
     debug_assert!(
@@ -607,6 +709,15 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Pushes `value` to the StaticVec if its current length is less than its capacity,
   /// or returns a [`PushCapacityError`](crate::errors::PushCapacityError) otherwise.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v1 = StaticVec::<usize, 128>::filled_with_by_index(|i| i * 4);
+  /// assert!(v1.try_push(999).is_err());
+  /// let mut v2 = StaticVec::<usize, 128>::new();
+  /// assert!(v2.try_push(1).is_ok());
+  /// ```
   #[inline(always)]
   pub fn try_push(&mut self, value: T) -> Result<(), PushCapacityError<T, N>> {
     if self.is_not_full() {
@@ -619,6 +730,15 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Pushes a value to the end of the StaticVec. Panics if the collection is
   /// full; that is, if `self.len() == self.capacity()`.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = StaticVec::<i32, 8>::new();
+  /// v.push(1);
+  /// v.push(2);
+  /// assert_eq!(v, [1, 2]);
+  /// ```
   #[inline(always)]
   pub fn push(&mut self, value: T) {
     assert!(
@@ -630,6 +750,15 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Removes the value at the last position of the StaticVec and returns it in `Some` if
   /// the StaticVec has a current length greater than 0, and returns `None` otherwise.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec![1, 2, 3, 4];
+  /// assert_eq!(v.pop(), Some(4));
+  /// assert_eq!(v.pop(), Some(3));
+  /// assert_eq!(v, [1, 2]);
+  /// ```
   #[inline(always)]
   pub fn pop(&mut self) -> Option<T> {
     if self.is_empty() {
@@ -641,6 +770,15 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns a constant reference to the first element of the StaticVec in `Some` if the StaticVec
   /// is not empty, or `None` otherwise.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let v1 = staticvec![10, 40, 30];
+  /// assert_eq!(Some(&10), v1.first());
+  /// let v2 = StaticVec::<i32, 0>::new();
+  /// assert_eq!(None, v2.first());
+  /// ```
   #[inline(always)]
   pub fn first(&self) -> Option<&T> {
     if self.is_empty() {
@@ -652,6 +790,16 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns a mutable reference to the first element of the StaticVec in `Some` if the StaticVec
   /// is not empty, or `None` otherwise.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut x = staticvec![0, 1, 2];
+  /// if let Some(first) = x.first_mut() {
+  ///   *first = 5;
+  /// }
+  /// assert_eq!(x, &[5, 1, 2]);
+  /// ```
   #[inline(always)]
   pub fn first_mut(&mut self) -> Option<&mut T> {
     if self.is_empty() {
@@ -663,6 +811,15 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns a constant reference to the last element of the StaticVec in `Some` if the StaticVec
   /// is not empty, or `None` otherwise.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let v = staticvec![10, 40, 30];
+  /// assert_eq!(Some(&30), v.last());
+  /// let w = StaticVec::<i32, 0>::new();
+  /// assert_eq!(None, w.last());
+  /// ```
   #[inline(always)]
   pub fn last(&self) -> Option<&T> {
     if self.is_empty() {
@@ -674,6 +831,16 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns a mutable reference to the last element of the StaticVec in `Some` if the StaticVec is
   /// not empty, or `None` otherwise.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut x = staticvec![0, 1, 2];
+  /// if let Some(last) = x.last_mut() {
+  ///   *last = 10;
+  /// }
+  /// assert_eq!(x, &[0, 1, 10]);
+  /// ```
   #[inline(always)]
   pub fn last_mut(&mut self) -> Option<&mut T> {
     if self.is_empty() {
@@ -686,6 +853,12 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Asserts that `index` is less than the current length of the StaticVec,
   /// and if so removes the value at that position and returns it. Any values
   /// that exist in later positions are shifted to the left.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert_eq!(staticvec![1, 2, 3].remove(1), 2);
+  /// ```
   #[inline]
   pub fn remove(&mut self, index: usize) -> T {
     let old_length = self.length;
@@ -700,6 +873,12 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Removes the first instance of `item` from the StaticVec if the item exists.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert_eq!(staticvec![1, 2, 2, 3].remove_item(&2), Some(2));
+  /// ```
   #[inline(always)]
   pub fn remove_item(&mut self, item: &T) -> Option<T>
   where T: PartialEq {
@@ -714,6 +893,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns `None` if `index` is greater than or equal to the current length of the StaticVec.
   /// Otherwise, removes the value at that position and returns it in `Some`, and then
   /// moves the last value in the StaticVec into the empty slot.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec!["AAA", "BBB", "CCC", "DDD"];
+  /// assert_eq!(v.swap_pop(1).unwrap(), "BBB");
+  /// assert_eq!(v, ["AAA", "DDD", "CCC"]);
+  /// ```
   #[inline(always)]
   pub fn swap_pop(&mut self, index: usize) -> Option<T> {
     if index < self.length {
@@ -731,6 +918,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Asserts that `index` is less than the current length of the StaticVec,
   /// and if so removes the value at that position and returns it, and then
   /// moves the last value in the StaticVec into the empty slot.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec!["AAA", "BBB", "CCC", "DDD"];
+  /// assert_eq!(v.swap_remove(1), "BBB");
+  /// assert_eq!(v, ["AAA", "DDD", "CCC"]);
+  /// ```
   #[inline(always)]
   pub fn swap_remove(&mut self, index: usize) -> T {
     assert!(index < self.length);
@@ -745,6 +940,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Asserts that the current length of the StaticVec is less than `N` and that
   /// `index` is less than the length, and if so inserts `value` at that position.
   /// Any values that exist in positions after `index` are shifted to the right.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = StaticVec::<i32, 5>::from([1, 2, 3]);
+  /// v.insert(1, 4);
+  /// assert_eq!(v, [1, 4, 2, 3]);
+  /// ```
   #[inline]
   pub fn insert(&mut self, index: usize, value: T) {
     let old_length = self.length;
@@ -767,6 +970,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// rather than just [`Iterator`](core::iter::Iterator) (though this function still does
   /// the appropriate checking internally to avoid dangerous outcomes in the event of a blatantly
   /// incorrect [`ExactSizeIterator`](core::iter::ExactSizeIterator) implementation.)
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = StaticVec::<usize, 8>::from([1, 2, 3, 4, 7, 8]);
+  /// v.insert_many(4, staticvec![5, 6].into_iter());
+  /// assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
+  /// ```
   #[inline]
   pub fn insert_many<I: IntoIterator<Item = T>>(&mut self, index: usize, iter: I)
   where I::IntoIter: ExactSizeIterator<Item = T> {
@@ -810,6 +1021,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Inserts `value` at `index` if the current length of the StaticVec is less than `N` and `index`
   /// is less than the length, or returns a [`CapacityError`](crate::errors::CapacityError)
   /// otherwise. Any values that exist in positions after `index` are shifted to the right.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut vec = StaticVec::<i32, 5>::from([1, 2, 3, 4, 5]);
+  /// assert_eq!(vec.try_insert(2, 0), Err(CapacityError::<5> {}));
+  /// ```
   #[inline]
   pub fn try_insert(&mut self, index: usize, value: T) -> Result<(), CapacityError<N>> {
     let old_length = self.length;
@@ -829,6 +1047,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns `true` if `value` is present in the StaticVec.
   /// Locally requires that `T` implements [`PartialEq`](core::cmp::PartialEq)
   /// to make it possible to compare the elements of the StaticVec with `value`.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// assert_eq!(staticvec![1, 2, 3].contains(&2), true);
+  /// assert_eq!(staticvec![1, 2, 3].contains(&4), false)
+  /// ```
   #[inline(always)]
   pub fn contains(&self, value: &T) -> bool
   where T: PartialEq {
@@ -836,6 +1061,17 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Removes all contents from the StaticVec and sets its length back to 0.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec![1, 2, 3];
+  /// assert_eq!(v.len(), 3);
+  /// assert_eq!(v, [1, 2, 3]);
+  /// v.clear();
+  /// assert_eq!(v.len(), 0);
+  /// assert_eq!(v, []);
+  /// ```
   #[inline(always)]
   pub fn clear(&mut self) {
     unsafe { ptr::drop_in_place(self.as_mut_slice()) };
