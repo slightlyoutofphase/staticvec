@@ -64,8 +64,21 @@ macro_rules! staticvec {
 /// assert_eq!(S4, "BC🤔BC🤔BC🤔");
 /// assert_eq!(S4.len(), 18);
 /// assert_eq!(S4.capacity(), 36);
-/// // Differing length and capacity would be mostly useful with `static mut` variables
-/// // rather than `const` or regular `static` variables, obviously.
+///
+/// // Differing length and capacity in the context of compile-time initialization is more useful
+/// // with `static mut` variables than it is `const` or regular `static` variables, obviously. For
+/// // example:
+/// static mut S5: StaticString<8> = staticstring!("ABCD", 8);
+/// unsafe {
+///   assert_eq!(S5, "ABCD");
+///   assert_eq!(S5.len(), 4);
+///   assert_eq!(S5.capacity(), 8);
+///   assert_eq!(S5.remaining_capacity(), 4);
+///   S5.push_str("EFGH");
+///   assert_eq!(S5, "ABCDEFGH");
+///   assert_eq!(S5.len(), 8);
+///   assert_eq!(S5.remaining_capacity(), 0);
+/// }
 /// ```
 ///
 /// Note that attempting to explicitly provide a capacity that is less than the number of bytes

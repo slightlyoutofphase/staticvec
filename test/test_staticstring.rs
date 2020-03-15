@@ -255,6 +255,17 @@ fn macro_constructor() {
   assert_eq!(S6, "");
   assert_eq!(S6.len(), 0);
   assert_eq!(S6.capacity(), 0);
+  static mut S7: StaticString<8> = staticstring!("ABCD", 8);
+  unsafe {
+    assert_eq!(S7, "ABCD");
+    assert_eq!(S7.len(), 4);
+    assert_eq!(S7.capacity(), 8);
+    assert_eq!(S7.remaining_capacity(), 4);
+    S7.push_str("EFGH");
+    assert_eq!(S7, "ABCDEFGH");
+    assert_eq!(S7.len(), 8);
+    assert_eq!(S7.remaining_capacity(), 0);
+  }
   // Incorrect capacities like the following just give compile-time `const err` errors
   // from our static assertion macro:
   // let s5: StaticString<0> = staticstring!("AAAAAA", 0);
