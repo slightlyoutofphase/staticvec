@@ -175,17 +175,35 @@ pub(crate) const fn is_null_mut<T>(p: *mut T) -> bool {
 /// function, recreated here for the sake of wanting to be able to do exactly the same debug
 /// assertions in the slice methods below.
 #[inline(always)]
-pub(crate) const fn is_aligned_and_not_null_const<T>(ptr: *const T) -> bool {
+pub(crate) const fn is_aligned_and_not_null_const<T>(_ptr: *const T) -> bool {
   // Same code as in the original, just using our local `const` function to do the null check.
-  unsafe { !is_null_const(ptr) && ptr as usize % core::mem::align_of::<T>() == 0 }
+  // unsafe { !is_null_const(ptr) && ptr as usize % core::mem::align_of::<T>() == 0 }
+
+  // Currently, the above code is not allowed by the compiler even though we have the appropriate
+  // feature flags set, so for the time being this function is a pass-through.
+  //
+  // IMO, this is perfectly justifiable as we only actually call the below slice methods internally
+  // with pointers we already know are valid, and as such keeping the general-purpose debug
+  // assertions from the original source at all is arguably completely unnecessary in the first
+  // place.
+  true
 }
 
 /// A `mut` version of the above. Of course, you can pass `mut` pointers to functions taking `const`
 /// ones, but what the heck, it feels more symmetrical this way.
 #[inline(always)]
-pub(crate) const fn is_aligned_and_not_null_mut<T>(ptr: *mut T) -> bool {
+pub(crate) const fn is_aligned_and_not_null_mut<T>(_ptr: *mut T) -> bool {
   // Same code as in the original, just using our local `const` function to do the null check.
-  unsafe { !is_null_mut(ptr) && ptr as usize % core::mem::align_of::<T>() == 0 }
+  // unsafe { !is_null_mut(ptr) && ptr as usize % core::mem::align_of::<T>() == 0 }
+
+  // Currently, the above code is not allowed by the compiler even though we have the appropriate
+  // feature flags set, so for the time being this function is a pass-through.
+  //
+  // IMO, this is perfectly justifiable as we only actually call the below slice methods internally
+  // with pointers we already know are valid, and as such keeping the general-purpose debug
+  // assertions from the original source at all is arguably completely unnecessary in the first
+  // place.
+  true
 }
 
 /// A local `const fn` version of `ptr::slice_from_raw_parts`.
