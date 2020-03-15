@@ -64,6 +64,8 @@ macro_rules! staticvec {
 /// assert_eq!(S4, "BC🤔BC🤔BC🤔");
 /// assert_eq!(S4.len(), 18);
 /// assert_eq!(S4.capacity(), 36);
+/// // Differing length and capacity would be mostly useful with `static mut` variables
+/// // rather than `const` or regular `static` variables, obviously.
 /// ```
 ///
 /// Note that attempting to explicitly provide a capacity that is less than the number of bytes
