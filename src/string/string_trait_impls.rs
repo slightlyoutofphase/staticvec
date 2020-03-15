@@ -18,6 +18,9 @@ use alloc::string::String;
 #[cfg(feature = "serde_support")]
 use serde::{de::Deserializer, ser::Serializer, Deserialize, Serialize};
 
+// The instances of `#[rustfmt::skip]` specifically above the `const` impls below are currently
+// necessary, as otherwise rustfmt just silently deletes the `const` keyword.
+
 impl<const N: usize> Add<&str> for StaticString<N> {
   type Output = Self;
 
@@ -35,35 +38,40 @@ impl<const N: usize> AddAssign<&str> for StaticString<N> {
   }
 }
 
-impl<const N: usize> AsMut<str> for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const AsMut<str> for StaticString<N> {
   #[inline(always)]
   fn as_mut(&mut self) -> &mut str {
     self.as_mut_str()
   }
 }
 
-impl<const N: usize> AsRef<str> for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const AsRef<str> for StaticString<N> {
   #[inline(always)]
   fn as_ref(&self) -> &str {
     self.as_str()
   }
 }
 
-impl<const N: usize> AsRef<[u8]> for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const AsRef<[u8]> for StaticString<N> {
   #[inline(always)]
   fn as_ref(&self) -> &[u8] {
     self.as_bytes()
   }
 }
 
-impl<const N: usize> Borrow<str> for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const Borrow<str> for StaticString<N> {
   #[inline(always)]
   fn borrow(&self) -> &str {
     self.as_str()
   }
 }
 
-impl<const N: usize> BorrowMut<str> for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const BorrowMut<str> for StaticString<N> {
   #[inline(always)]
   fn borrow_mut(&mut self) -> &mut str {
     self.as_mut_str()
@@ -80,14 +88,16 @@ impl<const N: usize> Debug for StaticString<N> {
   }
 }
 
-impl<const N: usize> Default for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const Default for StaticString<N> {
   #[inline(always)]
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl<const N: usize> Deref for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const Deref for StaticString<N> {
   type Target = str;
 
   #[inline(always)]
@@ -96,7 +106,8 @@ impl<const N: usize> Deref for StaticString<N> {
   }
 }
 
-impl<const N: usize> DerefMut for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const DerefMut for StaticString<N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut Self::Target {
     self.as_mut_str()
@@ -236,7 +247,8 @@ impl<const N: usize> IndexMut<RangeFrom<usize>> for StaticString<N> {
   }
 }
 
-impl<const N: usize> Index<RangeFull> for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const Index<RangeFull> for StaticString<N> {
   type Output = str;
 
   #[inline(always)]
@@ -245,7 +257,8 @@ impl<const N: usize> Index<RangeFull> for StaticString<N> {
   }
 }
 
-impl<const N: usize> IndexMut<RangeFull> for StaticString<N> {
+#[rustfmt::skip]
+impl<const N: usize> const IndexMut<RangeFull> for StaticString<N> {
   #[inline(always)]
   fn index_mut(&mut self, _index: RangeFull) -> &mut str {
     self.as_mut_str()

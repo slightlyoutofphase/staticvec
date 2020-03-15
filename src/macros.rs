@@ -30,18 +30,17 @@ macro_rules! staticvec {
   };
 }
 
-/// Creates a new [`StaticString`] from an `&str` literal. This macro can be used in const
-/// contexts, in keeping with the other ones in this crate.
+/// Creates a new [`StaticString`] from an `&str` literal. This macro can be used in const contexts,
+/// in keeping with the other ones in this crate.
 ///
-/// The `staticstring!` macro comes in two forms: one that solely takes an `&str` literal,
-/// where the resulting [`StaticString`] will have a total capacity exactly equal to the
-/// number of bytes in the literal, and one that takes an additional integral constant
-/// which is then used to specify the capacity independently from the length of the input
-/// string.
+/// The `staticstring!` macro comes in two forms: one that solely takes an `&str` literal, where the
+/// resulting [`StaticString`] will have a total capacity and initial length exactly equal to the
+/// number of bytes in the literal, and one that takes an additional integral constant which is then
+/// used to specify the constant-generic capacity independently from the length of the input string.
 ///
-/// Implemententing it as such allows the macro be more flexible than would otherwise
-/// be possible due to the required level of type inference being beyond what the compiler
-/// is (currently at least) capable of.
+/// Implementing it this way allows the macro to be more flexible than would otherwise be possible due
+/// to the required level of type inference being beyond what the compiler is (currently at least)
+/// capable of.
 ///
 /// Example usage:
 /// ```
@@ -92,8 +91,8 @@ macro_rules! staticstring {
   };};
   ($val:expr, $n:expr) => {{
     // In this scenario, an actual assertion inside of `StaticVec::bytes_to_data`
-    // (available at compile time thanks to the `const_panic` feature) handles 
-    // ensuring that `$val.len() <= N` for us.
+    // (available at compile time thanks to the `const_panic` feature) handles
+    // ensuring that `$val.len() <= $n` for us.
     unsafe {
       $crate::StaticString::<$n>::__new_from_staticvec(
         $crate::StaticVec::<u8, $n>::__new_from_const_str($val)

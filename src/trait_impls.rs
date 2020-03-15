@@ -37,9 +37,8 @@ use serde::{
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
-// The instances of `#[rustfmt::skip]` specifically above the `const`
-// impls below are currently necessary, as otherwise rustfmt just silently
-// deletes the `const` keyword.
+// The instances of `#[rustfmt::skip]` specifically above the `const` impls below are currently
+// necessary, as otherwise rustfmt just silently deletes the `const` keyword.
 
 #[rustfmt::skip]
 impl<T, const N: usize> const AsMut<[T]> for StaticVec<T, N> {
