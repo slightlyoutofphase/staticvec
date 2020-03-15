@@ -266,8 +266,8 @@ fn macro_constructor() {
     assert_eq!(S7.len(), 8);
     assert_eq!(S7.remaining_capacity(), 0);
   }
-  // Incorrect capacities like the following just give compile-time `const err` errors
-  // from our static assertion macro:
+  // Incorrect capacities like the following just give compile-time errors
+  // via our `const_panic`-enabled assertion:
   // let s5: StaticString<0> = staticstring!("AAAAAA", 0);
 }
 
