@@ -5,7 +5,7 @@
 //! - [`StaticVec::from_vec`] (and the corresponding [`From`] impl)
 //! - the implementation of the [`Read`](std::io::Read) trait for [`StaticVec`]
 //! - the implementation of the [`BufRead`](std::io::BufRead) trait for [`StaticVec`]
-//! - the implementation of the [`Write`](std::io::Write) trait for [`StaticVec`]
+//! - the implementation of the [`io::Write`](std::io::Write) trait for [`StaticVec`]
 //! - the implementation of [`From`] for [`StaticString`] from [`String`](alloc::string::String)
 //! - the implementations of [`PartialEq`] and [`PartialOrd`] against
 //!   [`String`](alloc::string::String) for [`StaticString`]
