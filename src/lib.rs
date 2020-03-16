@@ -1260,7 +1260,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     let self_ptr = self.as_mut_ptr();
     // We know self_ptr will never be null, so this is a safe hint to give the optimizer.
-    intrinsics::assume(!is_null_mut(self_ptr));
+    unsafe { intrinsics::assume(!is_null_mut(self_ptr)) };
     quicksort_internal(self_ptr, 0, (length - 1) as isize);
   }
 
