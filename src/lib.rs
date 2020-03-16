@@ -10,6 +10,8 @@
 //! - the implementations of [`PartialEq`] and [`PartialOrd`] against
 //!   [`String`](alloc::string::String) for [`StaticString`]
 //! - the implementation of [`Error`](std::error::Error) for [`StringError`]
+//! - the `bounds_to_string` function unique to this crate and implemented by several of the
+//!   iterators in it
 
 #![no_std]
 #![allow(
