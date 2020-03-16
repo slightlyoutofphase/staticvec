@@ -1239,6 +1239,30 @@ impl<T, const N: usize> StaticVec<T, N> {
     quicksort_internal(res_ptr, 0, (length - 1) as isize);
     Self { data: res, length }
   }
+  
+  /// Provides the same sorting functionality as [`quicksorted_unstable`] (and has the same trait
+  /// bound requirements) but operates in-place on the calling StaticVec instance rather than
+  /// returning the sorted data in a new one.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec![5.0, 4.0, 3.0, 2.0, 1.0];
+  /// v.quicksort_unstable();
+  /// assert_eq!(v, [1.0, 2.0, 3.0, 4.0, 5.0]);
+  /// ```
+  #[inline]
+  pub fn quicksort_unstable(&mut self)
+  where T: Copy + PartialOrd {
+    let length = self.length;
+    if length < 2 {
+      return;
+    }
+    let self_ptr = self.as_mut_ptr();
+    // We know self_ptr will never be null, so this is a safe hint to give the optimizer.
+    intrinsics::assume(!is_null_mut(self_ptr));
+    quicksort_internal(self_ptr, 0, (length - 1) as isize);
+  }
 
   /// Returns a separate, reversed StaticVec of the contents of the StaticVec's inhabited area
   /// without modifying the original data. Locally requires that `T` implements
