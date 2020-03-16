@@ -2315,6 +2315,9 @@ impl<const N: usize> StaticVec<u8, N> {
       to: To,
     }
     // As stated above, this is effectively doing what `MaybeUninit::assume_init()` does.
+    // Note that while it might "look scary", what this function actually does would he incredibly
+    // mundane in basically any other language: you would just declare a very normal static array,
+    // and use it, very normally. That's literally *all* this is.
     let mut res = unsafe {
       Convert::<MaybeUninit<[MaybeUninit<u8>; N]>, [MaybeUninit<u8>; N]> {
         from: MaybeUninit::uninit(),
