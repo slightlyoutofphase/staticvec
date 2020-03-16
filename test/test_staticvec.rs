@@ -1675,6 +1675,20 @@ fn quicksorted_unstable() {
   assert_eq!(staticvec![2, 1].quicksorted_unstable(), [1, 2]);
 }
 
+#[test]
+fn quicksort_unstable() {
+  let v1 = staticvec![staticvec![1, 2, 3], staticvec![6, 5, 4]];
+  let mut v2 = v1.iter().flatten().collect::<StaticVec<i32, 6>>();
+  v2.quicksort_unstable();
+  assert_eq!(v2, [1, 2, 3, 4, 5, 6]);
+  let mut v3 = StaticVec::<i32, 128>::new();
+  v3.quicksort_unstable();
+  assert_eq!(v3, []);
+  let mut v4 = staticvec![2, 1];
+  v4.quicksort_unstable();
+  assert_eq!(v4, [1, 2]);
+}
+
 #[cfg(feature = "std")]
 mod read_tests {
   use staticvec::*;
