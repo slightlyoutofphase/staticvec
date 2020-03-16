@@ -1250,6 +1250,12 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// let mut v = staticvec![5.0, 4.0, 3.0, 2.0, 1.0];
   /// v.quicksort_unstable();
   /// assert_eq!(v, [1.0, 2.0, 3.0, 4.0, 5.0]);
+  /// // Note that if you are actually sorting floating-point numbers as shown above, and the
+  /// // StaticVec contains one or more instances of NAN, the "accuracy" of the sorting will
+  /// // essentially be determined by a combination of how many *consecutive* NANs there are,
+  /// // as well as how "mixed up" the surrounding valid numbers were to begin with. In any case,
+  /// // the outcome of this particular hypothetical scenario will never be any worse than the
+  /// // values simply not being sorted quite as you'd hoped.
   /// ```
   #[inline]
   pub fn quicksort_unstable(&mut self)
