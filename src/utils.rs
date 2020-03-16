@@ -179,8 +179,8 @@ pub(crate) const fn is_aligned_and_not_null_const<T>(_ptr: *const T) -> bool {
   // Same code as in the original, just using our local `const` function to do the null check.
   // unsafe { !is_null_const(ptr) && ptr as usize % core::mem::align_of::<T>() == 0 }
 
-  // Currently, the above code is not allowed by the compiler even though we have the appropriate
-  // feature flags set, so for the time being this function is a pass-through.
+  // Currently, the above code is not allowed in const contexts by the compiler even though we
+  // have the appropriate feature flags set, so for the time being this function is a pass-through.
   //
   // IMO, this is perfectly justifiable as we only actually call the below slice methods internally
   // with pointers we already know are valid, and as such keeping the general-purpose debug
@@ -196,8 +196,8 @@ pub(crate) const fn is_aligned_and_not_null_mut<T>(_ptr: *mut T) -> bool {
   // Same code as in the original, just using our local `const` function to do the null check.
   // unsafe { !is_null_mut(ptr) && ptr as usize % core::mem::align_of::<T>() == 0 }
 
-  // Currently, the above code is not allowed by the compiler even though we have the appropriate
-  // feature flags set, so for the time being this function is a pass-through.
+  // Currently, the above code is not allowed in const contexts by the compiler even though we
+  // have the appropriate feature flags set, so for the time being this function is a pass-through.
   //
   // IMO, this is perfectly justifiable as we only actually call the below slice methods internally
   // with pointers we already know are valid, and as such keeping the general-purpose debug
