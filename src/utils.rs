@@ -31,6 +31,13 @@ where
   let src = StaticVec::first_ptr(this);
   let mut res = StaticVec::new_data_uninit();
   let mut dest = StaticVec::first_ptr_mut(&mut res);
+  // We know these are valid pointers based on how and where this
+  // function is called from, so these are safe hints to give to the
+  // optimizer.
+  unsafe {
+    intrinsics::assume(!is_null_const(src));
+    intrinsics::assume(!is_null_mut(dest));
+  }
   while i > 0 {
     unsafe {
       src.add(i - 1).copy_to_nonoverlapping(dest, 1);
@@ -95,6 +102,8 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
 {
   // We call this function from exactly one place where `low` and `high` are known to be within an
   // appropriate range before getting passed into it, so there's no need to check them again here.
+  // We also know that `values` will never be null, so we can safely give an optimizer hint here.
+  unsafe { intrinsics::assume(!is_null_mut(values)) };
   loop {
     let mut i = low;
     let mut j = high;
