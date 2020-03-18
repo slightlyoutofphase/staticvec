@@ -1240,9 +1240,10 @@ impl<T, const N: usize> StaticVec<T, N> {
     Self { data: res, length }
   }
 
-  /// Provides the same sorting functionality as [`quicksorted_unstable`](crate::StaticVec::quicksorted_unstable)
-  /// (and has the same trait bound requirements) but operates in-place on the calling StaticVec
-  /// instance rather than returning the sorted data in a new one.
+  /// Provides the same sorting functionality as
+  /// [`quicksorted_unstable`](crate::StaticVec::quicksorted_unstable) (and has the same trait
+  /// bound requirements) but operates in-place on the calling StaticVec instance rather than
+  /// returning the sorted data in a new one.
   ///
   /// Example usage:
   /// ```
