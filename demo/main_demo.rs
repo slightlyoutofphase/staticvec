@@ -29,7 +29,19 @@ impl Drop for MyOtherStruct {
   }
 }
 
+// A little demonstration of some of the things you can do at compile time
+static S1: StaticVec<usize, 6> = staticvec![1, 2, 3, 4, 5, 6];
+static S2: StaticVec<usize, 4> = staticvec![1, 2, 3, 4];
+static B: bool = S1.len() + S2.len() == 10;
+static S3: StaticVec<bool, 2> = staticvec![B, !B];
+static SLICE: &[bool] = S3.as_slice();
+
 fn main() {
+  println!("{:?}", S1);
+  println!("{:?}", S2);
+  println!("{:?}", B);
+  println!("{:?}", S3);
+  println!("{:?}", SLICE);
   let mut v = StaticVec::<f32, 24>::new();
   for i in 0..v.capacity() {
     v.push(i as f32);
@@ -55,12 +67,12 @@ fn main() {
   for f in &v {
     println!("{}", f);
   }
-  let mut va = StaticVec::<usize, 8192>::new();
+  let mut va = StaticVec::<usize, 512>::new();
   for i in 0..va.capacity() {
     va.push(i);
   }
-  let ia = va.remove_item(&4096).unwrap();
-  let ib = va.remove_item(&4095).unwrap();
+  let ia = va.remove_item(&256).unwrap();
+  let ib = va.remove_item(&255).unwrap();
   println!("{}", ia);
   println!("{}", ib);
   va.remove(10);
@@ -312,8 +324,8 @@ fn main() {
   }
   println!("{}", twelve.capacity());
   println!("{}", twelve.len());
-  let single_element_macro_test = staticvec!["ABCD"; 26];
-  for s in &single_element_macro_test {
+  let single_element_macro = staticvec!["ABCD"; 26];
+  for s in &single_element_macro {
     println!("{}", s);
   }
   let eight_from = StaticVec::<usize, 8>::from(staticvec![1, 2, 3, 4, 5, 6, 7, 8].as_slice());
@@ -413,15 +425,15 @@ fn main() {
   extended.extend(staticvec![4, 5, 6].into_iter());
   let yyz = StaticVec::<u8, 6>::from_iter(staticvec![4, 5, 6].iter());
   println!("{:?}", yyz);
-  let zzy = StaticVec::<u8, 6>::from_iter(staticvec![4, 5, 6].iter());
+  let zzy = StaticVec::<u8, 6>::from_iter(staticvec![4, 5, 6].iter().copied());
   println!("{:?}", zzy);
-  let zwz = StaticVec::<u8, 3>::from_iter(staticvec![4, 5, 6].iter());
+  let zwz = StaticVec::<u8, 3>::from_iter(staticvec![4, 5, 6].iter().cloned());
   println!("{:?}", zwz);
   static V: StaticVec<f64, 3> = sortedstaticvec!(f64, [16.0, 15.0, 14.0]);
-  assert_eq!(V, [14.0, 15.0, 16.0]);
-  assert_eq!(V.reversed().drain(0..1), [16.0]);
+  println!("{:?}", V);
+  println!("{:?}", V.reversed().drain(0..1));
   static VV: StaticVec<f64, 0> = sortedstaticvec!(f64, []);
-  assert_eq!(VV, []);
+  println!("{:?}", VV);
   let filled = StaticVec::<StaticVec<usize, 8>, 128>::filled_with_by_index(|i| {
     staticvec![i + 1, i + 2, i + 3, i + 4,].intersperse((i + 4) * 4)
   });
