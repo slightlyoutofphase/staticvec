@@ -223,8 +223,8 @@ macro_rules! sortedstaticvec {
 
 macro_rules! impl_extend_ex {
   ($var_a:tt, $var_b:tt) => {
-    /// Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater than
-    /// the StaticVec's capacity, any items after that point are ignored.
+    /// Appends all elements, if any, from `iter` to the StaticVec. If `iter` has a size greater
+    /// than the StaticVec's capacity, any items after that point are ignored.
     #[allow(unused_parens)]
     #[inline]
     default fn extend_ex(&mut self, iter: I) {

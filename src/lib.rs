@@ -1462,8 +1462,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   /// # use staticvec::staticvec;
   /// assert_eq!(
-  ///  staticvec!["A, B"].concat(&staticvec!["C", "D", "E", "F"]),
-  ///  ["A, B", "C", "D", "E", "F"]
+  ///  staticvec![1, 2].concat(&staticvec![3, 4, 5, 6]),
+  ///  [1, 2, 3, 4, 5, 6]
   /// );
   /// ```
   #[inline]
@@ -1499,8 +1499,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   /// # use staticvec::staticvec;
   /// assert_eq!(
-  ///  staticvec!["A, B"].concat_clone(&staticvec!["C", "D", "E", "F"]),
-  ///  ["A, B", "C", "D", "E", "F"]
+  ///  staticvec![1, 2].concat_clone(&staticvec![3, 4, 5, 6]),
+  ///  [1, 2, 3, 4, 5, 6]
   /// );
   /// ```
   #[inline]
