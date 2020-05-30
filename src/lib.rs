@@ -1461,10 +1461,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Example usage:
   /// ```
   /// # use staticvec::staticvec;
-  /// assert_eq!(
-  ///  staticvec![1, 2].concat(&staticvec![3, 4, 5, 6]),
-  ///  [1, 2, 3, 4, 5, 6]
-  /// );
+  /// assert!(staticvec!['a', 'b'].concat(&staticvec!['c', 'd']) == ['a', 'b', 'c', 'd']);
   /// ```
   #[inline]
   pub fn concat<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
@@ -1498,10 +1495,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Example usage:
   /// ```
   /// # use staticvec::staticvec;
-  /// assert_eq!(
-  ///  staticvec![1, 2].concat_clone(&staticvec![3, 4, 5, 6]),
-  ///  [1, 2, 3, 4, 5, 6]
-  /// );
+  /// assert!(staticvec!["a", "b"].concat_clone(&staticvec!["c", "d"]) == ["a", "b", "c", "d"]);
   /// ```
   #[inline]
   pub fn concat_clone<const N2: usize>(
