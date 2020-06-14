@@ -315,6 +315,7 @@ fn panicking_clone() {
   assert_eq!(lifespan_tracker.drop_count(), 11);
 }
 
+/*
 #[test]
 fn concat() {
   assert!(
@@ -361,6 +362,7 @@ fn concat_clone() {
     ]
   );
 }
+*/
 
 #[test]
 fn contains() {
@@ -842,6 +844,7 @@ fn intersection() {
   );
 }
 
+/*
 #[test]
 fn intersperse() {
   assert_eq!(
@@ -867,6 +870,7 @@ fn intersperse_clone() {
   x.clear();
   assert_eq!(x.intersperse_clone("B"), StaticVec::<&str, 0>::new());
 }
+*/
 
 #[test]
 fn is_empty() {
@@ -1956,6 +1960,7 @@ fn split_off_assert() {
   assert_eq!(vec3.split_off(9000), []);
 }
 
+/*
 #[test]
 fn symmetric_difference() {
   assert_eq!(
@@ -1967,6 +1972,7 @@ fn symmetric_difference() {
     [501, 505]
   );
 }
+*/
 
 #[test]
 fn swap_pop() {
@@ -2046,6 +2052,7 @@ fn try_push() {
   assert_eq!(vec2, [1, 2, 3, 3]);
 }
 
+/*
 #[test]
 fn union() {
   assert_eq!(
@@ -2053,6 +2060,7 @@ fn union() {
     [1, 2, 3, 4],
   );
 }
+*/
 
 #[cfg(feature = "std")]
 mod write_tests {
