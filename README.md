@@ -6,22 +6,6 @@
 [![Build Status](https://travis-ci.com/slightlyoutofphase/staticvec.svg?branch=master)](https://travis-ci.com/slightlyoutofphase/staticvec)
 [![Build status](https://ci.appveyor.com/api/projects/status/qb40my4v3rr63st2/branch/master?svg=true)](https://ci.appveyor.com/project/slightlyoutofphase/staticvec/branch/master)
 
-**Important note regarding version 0.10.0 of this crate:**
-
-It exists *solely* because of the fact that the following list of functions:
-
-- `concat`
-- `concat_clone`
-- `intersperse`
-- `intersperse_clone`
-- `symmetric_difference`
-- `union`
-
-were broken in a way by `rust-lang` PR #70107 that simply cannot be worked around at this time. If you rely on anything
-of those functions, please continue using version 0.9.3 with a released-prior-to-June-3 copy of the nightly compiler. Again,
-that would still be the latest version of this crate if it were the case that I were able to do something to fix the compilation error,
-but unfortunately that simply is not the case right now.
-
 Implements a fixed-capacity stack-allocated Vec alternative backed by an array, using const generics.
 
 Note: the word "static" here is meant by the traditional definition of "unchanging" / "not dynamic" etc.
@@ -48,6 +32,22 @@ around an instance of `StaticVec<T, N>` has been added as well.
 Contributions/suggestions/etc. very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
+
+**Important note regarding version 0.10.0 of this crate:**
+
+It exists *solely* because of the fact that the following list of functions:
+
+- `concat`
+- `concat_clone`
+- `intersperse`
+- `intersperse_clone`
+- `symmetric_difference`
+- `union`
+
+were broken in a way by `rust-lang` PR #70107 that simply cannot be worked around at this time. If you rely on any of those functions,
+please continue using version 0.9.3 with a released-prior-to-June-3 copy of the nightly compiler. Again, 0.9.3 would still be the latest
+version of this crate if it were the case that it were actually possible to do anything to fix the compilation error, but unfortunately
+that just is not the case right now.
 
 A basic usage example:
 
