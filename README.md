@@ -45,7 +45,7 @@ It exists *solely* because of the fact that the following list of functions:
 - `union`
 
 were broken in a way by `rust-lang` PR #70107 that simply cannot be worked around at this time. If you rely on any of those functions,
-please continue using version 0.9.3 with a released-prior-to-June-3 copy of the nightly compiler. Again, 0.9.3 would still be the latest
+please continue using version 0.9.3 with a released-prior-to-June-3-2020 copy of the nightly compiler. Again, 0.9.3 would still be the latest
 version of this crate if it were the case that it were actually possible to do anything to fix the compilation error, but unfortunately
 that just is not the case right now.
 
