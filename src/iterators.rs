@@ -5,9 +5,7 @@ use core::marker::{PhantomData, Send, Sync};
 use core::mem::MaybeUninit;
 use core::ptr;
 
-use crate::utils::{
-  distance_between, is_null_const, is_null_mut, slice_from_raw_parts, slice_from_raw_parts_mut,
-};
+use crate::utils::{distance_between, slice_from_raw_parts, slice_from_raw_parts_mut};
 use crate::StaticVec;
 
 #[cfg(feature = "std")]
@@ -92,9 +90,9 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
       // Safety: `self.start` and `self.end` are never null if `T` is not a ZST,
       // and the possibility that `self.end` specifically is null if `T` *is* a ZST
       // is accounted for.
-      intrinsics::assume(!is_null_const(self.start));
+      intrinsics::assume(!self.start.is_null());
       if intrinsics::size_of::<T>() != 0 {
-        intrinsics::assume(!is_null_const(self.end));
+        intrinsics::assume(!self.end.is_null());
       }
       match distance_between(self.end, self.start) {
         0 => None,
@@ -156,9 +154,9 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T
       // Safety: `self.start` and `self.end` are never null if `T` is not a ZST,
       // and the possibility that `self.end` specifically is null if `T` *is* a ZST
       // is accounted for.
-      intrinsics::assume(!is_null_const(self.start));
+      intrinsics::assume(!self.start.is_null());
       if intrinsics::size_of::<T>() != 0 {
-        intrinsics::assume(!is_null_const(self.end));
+        intrinsics::assume(!self.end.is_null());
       }
       match distance_between(self.end, self.start) {
         0 => None,
@@ -268,9 +266,9 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
       // Safety: `self.start` and `self.end` are never null if `T` is not a ZST,
       // and the possibility that `self.end` specifically is null if `T` *is* a ZST
       // is accounted for.
-      intrinsics::assume(!is_null_mut(self.start));
+      intrinsics::assume(!self.start.is_null());
       if intrinsics::size_of::<T>() != 0 {
-        intrinsics::assume(!is_null_mut(self.end));
+        intrinsics::assume(!self.end.is_null());
       }
       match distance_between(self.end, self.start) {
         0 => None,
@@ -332,9 +330,9 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, 
       // Safety: `self.start` and `self.end` are never null if `T` is not a ZST,
       // and the possibility that `self.end` specifically is null if `T` *is* a ZST
       // is accounted for.
-      intrinsics::assume(!is_null_mut(self.start));
+      intrinsics::assume(!self.start.is_null());
       if intrinsics::size_of::<T>() != 0 {
-        intrinsics::assume(!is_null_mut(self.end));
+        intrinsics::assume(!self.end.is_null());
       }
       match distance_between(self.end, self.start) {
         0 => None,

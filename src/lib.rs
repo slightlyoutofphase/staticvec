@@ -28,7 +28,6 @@
   incomplete_features
 )]
 #![feature(
-  const_compare_raw_pointers,
   const_fn,
   const_fn_union,
   const_generics,
@@ -74,8 +73,7 @@ pub use crate::iterators::{
 };
 pub use crate::string::{string_utils, StaticString, StringError};
 use crate::utils::{
-  is_null_const, is_null_mut, quicksort_internal, reverse_copy, slice_from_raw_parts,
-  slice_from_raw_parts_mut,
+  quicksort_internal, reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut,
 };
 
 #[cfg(any(feature = "std", rustdoc))]
@@ -1109,7 +1107,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let start_ptr = self.as_ptr();
     unsafe {
       // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
-      intrinsics::assume(!is_null_const(start_ptr));
+      intrinsics::assume(!start_ptr.is_null());
       StaticVecIterConst {
         start: start_ptr,
         end: match intrinsics::size_of::<T>() {
@@ -1138,7 +1136,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let start_ptr = self.as_mut_ptr();
     unsafe {
       // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
-      intrinsics::assume(!is_null_mut(start_ptr));
+      intrinsics::assume(!start_ptr.is_null());
       StaticVecIterMut {
         start: start_ptr,
         end: match intrinsics::size_of::<T>() {
@@ -1267,7 +1265,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     let self_ptr = self.as_mut_ptr();
     // We know self_ptr will never be null, so this is a safe hint to give the optimizer.
-    unsafe { intrinsics::assume(!is_null_mut(self_ptr)) };
+    unsafe { intrinsics::assume(!self_ptr.is_null()) };
     quicksort_internal(self_ptr, 0, (length - 1) as isize);
   }
 
@@ -1778,7 +1776,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       let start_ptr = self.ptr_at_unchecked(start);
       // `start_ptr` will never be null, so this is a safe assumption to give to
       // the optimizer.
-      intrinsics::assume(!is_null_const(start_ptr));
+      intrinsics::assume(!start_ptr.is_null());
       // Create the StaticVecDrain from the specified range.
       StaticVecDrain {
         start: end,
