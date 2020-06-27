@@ -516,7 +516,7 @@ impl<T, const N: usize> Index<Range<usize>> for StaticVec<T, N> {
   /// and if so returns a constant reference to a slice of elements `index.start..index.end`.
   #[inline(always)]
   fn index(&self, index: Range<usize>) -> &Self::Output {
-    assert!(index.start < index.end && index.end <= self.length);
+    assert!(index.start <= index.end && index.end <= self.length);
     slice_from_raw_parts(
       unsafe { self.ptr_at_unchecked(index.start) },
       index.end - index.start,
@@ -530,7 +530,7 @@ impl<T, const N: usize> IndexMut<Range<usize>> for StaticVec<T, N> {
   /// and if so returns a mutable reference to a slice of elements `index.start..index.end`.
   #[inline(always)]
   fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
-    assert!(index.start < index.end && index.end <= self.length);
+    assert!(index.start <= index.end && index.end <= self.length);
     slice_from_raw_parts_mut(
       unsafe { self.mut_ptr_at_unchecked(index.start) },
       index.end - index.start,

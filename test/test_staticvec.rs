@@ -2052,6 +2052,15 @@ fn try_push() {
   assert_eq!(vec2, [1, 2, 3, 3]);
 }
 
+#[test]
+fn empty_slice() {
+  let mut vec = staticvec![1, 2, 3, 4, 5];
+  let s = &vec[0..0];
+  assert_eq!(0, s.len());
+  let s = &mut vec[0..0];
+  assert_eq!(0, s.len());
+}
+
 /*
 #[test]
 fn union() {
