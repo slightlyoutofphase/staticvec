@@ -190,7 +190,7 @@ macro_rules! __staticsort {
 ///
 /// Example usage:
 /// ```
-/// #![feature(const_fn, const_if_match, const_loop)]
+/// #![feature(const_fn)]
 ///
 /// use staticvec::{sortedstaticvec, StaticVec};
 ///

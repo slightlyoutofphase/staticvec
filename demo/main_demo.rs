@@ -1,6 +1,6 @@
 // So we don't get "function complexity" lints and such since it's a demo.
 #![allow(clippy::all)]
-#![feature(const_fn, const_if_match, const_loop)]
+#![feature(const_fn)]
 
 use staticvec::*;
 
