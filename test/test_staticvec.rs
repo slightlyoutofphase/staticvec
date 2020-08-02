@@ -572,6 +572,15 @@ fn drain_filter() {
 }
 
 #[test]
+fn empty_slice() {
+  let mut vec = staticvec![1, 2, 3, 4, 5];
+  let s = &vec[0..0];
+  assert_eq!(0, s.len());
+  let s = &mut vec[0..0];
+  assert_eq!(0, s.len());
+}
+
+#[test]
 fn extend() {
   let mut c = StaticVec::<i32, 6>::new();
   c.push(5);
@@ -2050,15 +2059,6 @@ fn try_push() {
   let mut vec2 = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
   assert_eq!(vec2.try_push(3), Ok(()));
   assert_eq!(vec2, [1, 2, 3, 3]);
-}
-
-#[test]
-fn empty_slice() {
-  let mut vec = staticvec![1, 2, 3, 4, 5];
-  let s = &vec[0..0];
-  assert_eq!(0, s.len());
-  let s = &mut vec[0..0];
-  assert_eq!(0, s.len());
 }
 
 /*
