@@ -203,7 +203,7 @@ impl<T, const N: usize> StaticVec<T, N> {
             // in any excess copying, so there should be no performance concerns for larger
             // input arrays.
             let mut forgotten = MaybeUninit::new(values);
-            ptr::drop_in_place(forgotten.get_mut().get_unchecked_mut(N2.min(N)..N2));
+            ptr::drop_in_place(forgotten.assume_init_mut().get_unchecked_mut(N2.min(N)..N2));
             data
           }
         },

@@ -218,7 +218,7 @@ impl<T, const N1: usize, const N2: usize> ExtendEx<T, StaticVec<T, N1>> for Stat
       let mut forgotten = MaybeUninit::new(iter);
       ptr::drop_in_place(
         forgotten
-          .get_mut()
+          .assume_init_mut()
           .as_mut_slice()
           .get_unchecked_mut(N1.min(N2)..N1),
       );
@@ -238,7 +238,7 @@ impl<T, const N1: usize, const N2: usize> ExtendEx<T, StaticVec<T, N1>> for Stat
           let mut forgotten = MaybeUninit::new(iter);
           ptr::drop_in_place(
             forgotten
-              .get_mut()
+              .assume_init_mut()
               .as_mut_slice()
               .get_unchecked_mut(N1.min(N2)..N1),
           );
