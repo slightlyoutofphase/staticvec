@@ -797,7 +797,68 @@ fn insert() {
   assert_eq!(vec, [1, 4, 2, 3, 5]);
 }
 
-// The next couple of tests for `insert_many` are adapted from the SmallVec testsuite.
+// The next couple of tests for `insert_from_slice` and `insert_many` and are adapted from the
+// SmallVec testsuite.
+
+#[test]
+fn insert_from_slice() {
+  let mut v: StaticVec<u8, 8> = StaticVec::new();
+  for x in 0..4 {
+    v.push(x);
+  }
+  assert_eq!(v.len(), 4);
+  v.insert_from_slice(1, &[5, 6]);
+  assert_eq!(
+    &v.iter().map(|v| *v).collect::<StaticVec<_, 8>>(),
+    &[0, 5, 6, 1, 2, 3]
+  );
+  v.clear();
+  for x in 0..4 {
+    v.push(x);
+  }
+  assert_eq!(v.len(), 4);
+  v.insert_from_slice(1, &[5, 6]);
+  assert_eq!(
+    &v.iter().map(|v| *v).collect::<StaticVec<_, 8>>(),
+    &[0, 5, 6, 1, 2, 3]
+  );
+  v.clear();
+  for i in 0..6 {
+    v.push(i + 1);
+  }
+  v.insert_from_slice(6, &[1]);
+  assert_eq!(
+    &v.iter().map(|v| *v).collect::<StaticVec<_, 8>>(),
+    &[1, 2, 3, 4, 5, 6, 1]
+  );
+  let mut v2: StaticVec<u8, 1> = StaticVec::new();
+  v2.insert_from_slice(0, &[12]);
+  assert_eq!(v2, [12]);
+}
+
+#[cfg_attr(all(windows, miri), ignore)]
+#[test]
+#[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
+fn insert_from_slice_panic_a() {
+  let mut v: StaticVec<u8, 4> = StaticVec::from([1, 2, 3, 4]);
+  v.insert_from_slice(0, &[4]);
+}
+
+#[cfg_attr(all(windows, miri), ignore)]
+#[test]
+#[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
+fn insert_from_slice_panic_b() {
+  let mut v: StaticVec<u8, 8> = StaticVec::new();
+  v.insert_from_slice(19, &[4]);
+}
+
+#[cfg_attr(all(windows, miri), ignore)]
+#[test]
+#[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
+fn insert_from_slice_panic_c() {
+  let mut v: StaticVec<u8, 8> = StaticVec::<u8, 8>::from(&[1, 2, 3, 4, 5, 6]);
+  v.insert_from_slice(0, &[7, 8, 9, 10, 11]);
+}
 
 #[test]
 fn insert_many() {

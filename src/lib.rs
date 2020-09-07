@@ -311,7 +311,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns the total size of the inhabited part of the StaticVec (which may be zero if it has a
   /// length of zero or contains ZSTs) in bytes. Specifically, the return value of this function
-  /// amounts to a calculation of `size_of::<T>() * self.length`.
+  /// amounts to a calculation of `size_of::<T>() * self.len()`.
   ///
   /// Example usage:
   /// ```
@@ -972,9 +972,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Functionally equivalent to [`insert`](crate::StaticVec::insert), except with multiple
-  /// items provided by an iterator as opposed to just one. This function will return immediately
-  /// if / when the StaticVec reaches maximum capacity, regardless of whether the iterator still has
-  /// more items to yield.
+  /// items provided by an iterator as opposed to just one. This function will panic up-front if
+  /// `index` is out of bounds or if the StaticVec does not have a sufficient amount of remaining
+  /// capacity, but once the iteration has started will just return immediately if / when the
+  /// StaticVec reaches maximum capacity, regardless of whether the iterator still has more items
+  /// to yield.
   ///
   /// For safety reasons, as StaticVec cannot increase in capacity, the
   /// iterator is required to implement [`ExactSizeIterator`](core::iter::ExactSizeIterator)
@@ -1025,7 +1027,35 @@ impl<T, const N: usize> StaticVec<T, N> {
           break;
         }
       }
-      self.length = old_length + item_count;
+      self.set_len(old_length + item_count);
+    }
+  }
+
+  /// Functionally equivalent to [`insert_many`](crate::StaticVec::insert_many), except with
+  /// multiple items provided by a slice reference as opposed to an arbitrary iterator. Locally
+  /// requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = StaticVec::<usize, 8>::from([1, 2, 3, 4, 7, 8]);
+  /// v.insert_from_slice(4, &[5, 6]);
+  /// assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
+  /// ```
+  #[inline]
+  pub fn insert_from_slice(&mut self, index: usize, values: &[T])
+  where T: Copy {
+    let old_length = self.length;
+    let values_length = values.len();
+    assert!(
+      old_length < N && index <= old_length && values_length <= self.remaining_capacity(),
+      "Insufficient remaining capacity / out of bounds!"
+    );
+    unsafe {
+      let self_ptr = self.mut_ptr_at_unchecked(index);
+      self_ptr.copy_to(self_ptr.add(values_length), old_length - index);
+      self_ptr.copy_from_nonoverlapping(values.as_ptr(), values_length);
+      self.set_len(old_length + values_length);
     }
   }
 
@@ -1356,13 +1386,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
   /// ```
   #[inline(always)]
-  pub fn extend_from_slice(&mut self, other: &[T])
+  pub fn extend_from_slice(&mut self, values: &[T])
   where T: Copy {
     let old_length = self.length;
-    let added_length = other.len().min(N - old_length);
-    // Safety: added_length is <= our remaining capacity and other.len.
+    let added_length = values.len().min(N - old_length);
+    // Safety: added_length is <= our remaining capacity and values.len.
     unsafe {
-      other
+      values
         .as_ptr()
         .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
       self.set_len(old_length + added_length);
@@ -1382,15 +1412,15 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 2, 3, 4]);
   /// ```
   #[inline(always)]
-  pub fn try_extend_from_slice(&mut self, other: &[T]) -> Result<(), CapacityError<N>>
+  pub fn try_extend_from_slice(&mut self, values: &[T]) -> Result<(), CapacityError<N>>
   where T: Copy {
     let old_length = self.length;
-    let added_length = other.len();
+    let added_length = values.len();
     if N - old_length < added_length {
       return Err(CapacityError {});
     }
     unsafe {
-      other
+      values
         .as_ptr()
         .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
       self.set_len(old_length + added_length);
