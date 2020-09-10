@@ -1078,8 +1078,45 @@ impl<T, const N: usize> StaticVec<T, N> {
         self_ptr.copy_to(self_ptr.offset(1), old_length - index);
         self_ptr.write(value);
         self.set_len(old_length + 1);
-        Ok(())
       }
+      Ok(())
+    } else {
+      Err(CapacityError {})
+    }
+  }
+
+  /// Does the same thing as [`insert_from_slice`](crate::StaticVec::insert_from_slice), but returns
+  /// a [`CapacityError`](crate::errors::CapacityError) in the event that something goes wrong as
+  /// opposed to relying on internal assertions.
+  ///
+  /// Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v1 = StaticVec::<usize, 8>::from([1, 2, 3, 4, 7, 8]);
+  /// assert!(v1.try_insert_from_slice(4, &[5, 6]).is_ok());
+  /// assert_eq!(v1, [1, 2, 3, 4, 5, 6, 7, 8]);
+  /// let mut v2 = StaticVec::<usize, 8>::from([1, 2, 3, 4, 7, 8]);
+  /// assert!(v2.try_insert_from_slice(207, &[5, 6]).is_err());
+  /// ```
+  #[inline]
+  pub fn try_insert_from_slice(
+    &mut self,
+    index: usize,
+    values: &[T],
+  ) -> Result<(), CapacityError<N>>
+  where
+    T: Copy,
+  {
+    let old_length = self.length;
+    let values_length = values.len();
+    if old_length < N && index <= old_length && values_length <= self.remaining_capacity() {
+      unsafe {
+        let self_ptr = self.mut_ptr_at_unchecked(index);
+        self_ptr.copy_to(self_ptr.add(values_length), old_length - index);
+        self_ptr.copy_from_nonoverlapping(values.as_ptr(), values_length);
+        self.set_len(old_length + values_length);
+      }
+      Ok(())
     } else {
       Err(CapacityError {})
     }
@@ -1727,6 +1764,11 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Removes the specified range of elements from the StaticVec and returns them in a new one.
   ///
+  /// # Panics
+  ///
+  /// Panics if the range's starting point is greater than the end point or if the end point is
+  /// greater than the length of the StaticVec.
+  ///
   /// Example usage:
   /// ```
   /// # use staticvec::*;
@@ -1773,6 +1815,11 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Removes the specified range of elements from the StaticVec and returns them in a
   /// [`StaticVecDrain`](crate::iterators::StaticVecDrain).
+  ///
+  /// # Panics
+  ///
+  /// Panics if the range's starting point is greater than the end point or if the end point is
+  /// greater than the length of the StaticVec.
   ///
   /// Example usage:
   /// ```
