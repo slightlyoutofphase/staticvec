@@ -37,6 +37,7 @@
   const_ptr_offset_from,
   const_raw_ptr_deref,
   const_raw_ptr_to_usize_cast,
+  const_slice_from_raw_parts,
   const_trait_impl,
   core_intrinsics,
   doc_cfg,
@@ -1845,8 +1846,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     };
     assert!(start <= end && end <= length);
     unsafe {
-      // Set the length to 0 to avoid memory issues if anything goes wrong with
-      // the Drain.
+      // Set the length to `start` to avoid memory issues if anything goes wrong with the Drain.
       self.set_len(start);
       let start_ptr = self.ptr_at_unchecked(start);
       // `start_ptr` will never be null, so this is a safe assumption to give to

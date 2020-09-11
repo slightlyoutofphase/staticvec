@@ -1,5 +1,7 @@
 // So we don't get "function complexity" lints and such since it's a demo.
 #![allow(clippy::all)]
+// So we don't get warned about intentionally calling `drain_filter()` on a const struct.
+#![allow(const_item_mutation)]
 #![feature(const_fn)]
 
 use staticvec::*;

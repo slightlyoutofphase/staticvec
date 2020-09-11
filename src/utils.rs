@@ -149,65 +149,22 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
   }
 }
 
-/// Copied locally from `core/ptr/mod.rs` so we can use it in `const fn` versions of the slice
-/// creation methods.
-#[repr(C)]
-pub(crate) struct FatPtr<T> {
-  data: *const T,
-  pub(crate) len: usize,
-}
-
-/// Copied locally from `core/ptr/mod.rs` so we can use it in `const fn` versions of the slice
-/// creation methods.
-#[repr(C)]
-pub(crate) union Repr<T> {
-  pub(crate) rust: *const [T],
-  rust_mut: *mut [T],
-  pub(crate) raw: FatPtr<T>,
-}
-
-/// A local `const fn` version of `ptr::slice_from_raw_parts`.
-#[inline(always)]
-pub(crate) const fn ptr_slice_from_raw_parts<T>(data: *const T, len: usize) -> *const [T] {
-  debug_assert!(
-    core::mem::size_of::<T>().saturating_mul(len) <= isize::MAX as usize,
-    "Attempted to create a slice covering at least half the address space!"
-  );
-  unsafe {
-    Repr {
-      raw: FatPtr { data, len },
-    }
-    .rust
-  }
-}
-
-/// A local `const fn` version of `ptr::slice_from_raw_parts_mut`.
-#[inline(always)]
-pub(crate) const fn ptr_slice_from_raw_parts_mut<T>(data: *mut T, len: usize) -> *mut [T] {
-  debug_assert!(
-    core::mem::size_of::<T>().saturating_mul(len) <= isize::MAX as usize,
-    "Attempted to create a slice covering at least half the address space!"
-  );
-  unsafe {
-    Repr {
-      raw: FatPtr { data, len },
-    }
-    .rust_mut
-  }
-}
-
 /// A local `const fn` version of `slice::from_raw_parts`.
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -> &'a [T] {
-  // Same code as in the original, except we do the debug assertions in the function that this one
-  // calls, rather than the other way around.
-  unsafe { &*ptr_slice_from_raw_parts(data, length) }
+  debug_assert!(
+    core::mem::size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
+    "Attempted to create a slice covering at least half the address space!"
+  );
+  unsafe { &*core::ptr::slice_from_raw_parts(data, length) }
 }
 
 /// A local `const fn` version of `slice::from_raw_parts_mut`.
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts_mut<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
-  // Same code as in the original, except we do the debug assertions in the function that this one
-  // calls, rather than the other way around.
-  unsafe { &mut *ptr_slice_from_raw_parts_mut(data, length) }
+  debug_assert!(
+    core::mem::size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
+    "Attempted to create a slice covering at least half the address space!"
+  );
+  unsafe { &mut *core::ptr::slice_from_raw_parts_mut(data, length) }
 }
