@@ -617,7 +617,8 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> Index<RangeTo<usize>> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const Index<RangeTo<usize>> for StaticVec<T, N> {
   type Output = [T];
   /// Asserts that the upper bound of `index` is less than or equal to the
   /// current length of the StaticVec, and if so returns a constant reference
@@ -629,7 +630,8 @@ impl<T, const N: usize> Index<RangeTo<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> IndexMut<RangeTo<usize>> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const IndexMut<RangeTo<usize>> for StaticVec<T, N> {
   /// Asserts that the upper bound of `index` is less than or equal to the
   /// current length of the StaticVec, and if so returns a constant reference
   /// to a slice of elements `0..index.end`.
@@ -640,7 +642,8 @@ impl<T, const N: usize> IndexMut<RangeTo<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> Index<RangeToInclusive<usize>> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const Index<RangeToInclusive<usize>> for StaticVec<T, N> {
   type Output = [T];
   /// Asserts that the upper bound of `index` is less than the
   /// current length of the StaticVec, and if so returns a constant reference
@@ -652,7 +655,8 @@ impl<T, const N: usize> Index<RangeToInclusive<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
+#[rustfmt::skip]
+impl<T, const N: usize> const IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
   /// Asserts that the upper bound of `index` is less than the
   /// current length of the StaticVec, and if so returns a constant reference
   /// to a slice of elements `0..=index.end`.
