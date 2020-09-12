@@ -11,7 +11,7 @@ branches:
     - master
 install:
   - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - cmd: set latest=curl https://rust-lang.github.io/rustup-components-history/x86_64-pc-windows-msvc/rustc
+  - cmd: ci\set_windows_nightly.bat
   - rustup-init -yv --default-toolchain %channel%-%latest% --default-host %target% --profile minimal
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
 cache:
