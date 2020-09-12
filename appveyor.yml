@@ -11,8 +11,7 @@ branches:
     - master
 install:
   - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - cmd: ci\set_windows_nightly.bat
-  - rustup-init -yv --default-toolchain %channel%-%latest% --default-host %target% --profile minimal
+  - rustup-init -yv --default-toolchain %channel% --default-host %target% --profile minimal
   - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
 cache:
   - '%USERPROFILE%\.cargo'
