@@ -874,7 +874,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn remove(&mut self, index: usize) -> T {
     let old_length = self.length;
-    assert!(index < old_length);
+    assert!(
+      index < old_length,
+      "Bounds check failure in `StaticVec::remove`!"
+    );
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
       let res = self_ptr.read();
@@ -940,7 +943,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline(always)]
   pub fn swap_remove(&mut self, index: usize) -> T {
-    assert!(index < self.length);
+    assert!(
+      index < self.length,
+      "Bounds check failure in `StaticVec::swap_remove`!"
+    );
     unsafe {
       let new_length = self.length - 1;
       let last_value = self.ptr_at_unchecked(new_length).read();
@@ -963,7 +969,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn insert(&mut self, index: usize, value: T) {
     let old_length = self.length;
-    assert!(old_length < N && index <= old_length);
+    assert!(
+      old_length < N && index <= old_length,
+      "Insufficient remaining capacity / out of bounds!"
+    );
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
       self_ptr.copy_to(self_ptr.offset(1), old_length - index);
@@ -1753,7 +1762,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline(always)]
   pub fn into_inner(mut self) -> Result<[T; N], Self> {
-    if self.length < N {
+    if self.is_not_full() {
       Err(self)
     } else {
       // Set the length of `self` to 0 to prevent double-drops.
@@ -1794,7 +1803,10 @@ impl<T, const N: usize> StaticVec<T, N> {
       Excluded(&idx) => idx,
       Unbounded => old_length,
     };
-    assert!(start <= end && end <= old_length);
+    assert!(
+      start <= end && end <= old_length,
+      "Bounds check failure in `StaticVec::drain`!"
+    );
     let res_length = end - start;
     Self {
       data: {
@@ -1844,7 +1856,10 @@ impl<T, const N: usize> StaticVec<T, N> {
       Excluded(&idx) => idx,
       Unbounded => length,
     };
-    assert!(start <= end && end <= length);
+    assert!(
+      start <= end && end <= length,
+      "Bounds check failure in `StaticVec::drain_iter`!"
+    );
     unsafe {
       // Set the length to `start` to avoid memory issues if anything goes wrong with the Drain.
       self.set_len(start);
@@ -1966,7 +1981,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline]
   pub fn split_off(&mut self, at: usize) -> Self {
     let old_length = self.length;
-    assert!(at <= old_length);
+    assert!(
+      at <= old_length,
+      "Bounds check failure in `StaticVec::split_off`!"
+    );
     let split_length = old_length - at;
     Self {
       data: unsafe {
@@ -2254,7 +2272,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn added(&self, other: &Self) -> Self
   where T: Copy + Add<Output = T> {
-    assert!(self.is_full() && other.is_full());
+    assert!(
+      self.is_full() && other.is_full(),
+      "In `StaticVec::added`, both `self` and `other` must be at maximum capacity!"
+    );
     let mut res = Self::new();
     for i in 0..N {
       unsafe {
@@ -2288,7 +2309,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn subtracted(&self, other: &Self) -> Self
   where T: Copy + Sub<Output = T> {
-    assert!(self.is_full() && other.is_full());
+    assert!(
+      self.is_full() && other.is_full(),
+      "In `StaticVec::subtracted`, both `self` and `other` must be at maximum capacity!"
+    );
     let mut res = Self::new();
     for i in 0..N {
       unsafe {
@@ -2322,7 +2346,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn multiplied(&self, other: &Self) -> Self
   where T: Copy + Mul<Output = T> {
-    assert!(self.is_full() && other.is_full());
+    assert!(
+      self.is_full() && other.is_full(),
+      "In `StaticVec::multiplied`, both `self` and `other` must be at maximum capacity!"
+    );
     let mut res = Self::new();
     for i in 0..N {
       unsafe {
@@ -2356,7 +2383,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub fn divided(&self, other: &Self) -> Self
   where T: Copy + Div<Output = T> {
-    assert!(self.is_full() && other.is_full());
+    assert!(
+      self.is_full() && other.is_full(),
+      "In `StaticVec::divided`, both `self` and `other` must be at maximum capacity!"
+    );
     let mut res = Self::new();
     for i in 0..N {
       unsafe {
