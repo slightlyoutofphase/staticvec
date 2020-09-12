@@ -70,14 +70,14 @@ fn check_trusted_len<I: TrustedLen>(len: usize, it: I) {
 
 #[test]
 fn drain() {
-  let mut q: StaticHeap<i32, 9> = [9, 8, 7, 6, 5, 4, 3, 2, 1].iter().cloned().collect();
+  let mut q: StaticHeap<i32, 9> = [9, 8, 7, 6, 5, 4, 3, 2, 1].iter().copied().collect();
   assert_eq!(q.drain().take(5).count(), 5);
   assert!(q.is_empty());
 }
 
 #[test]
 fn drain_sorted() {
-  let mut q: StaticHeap<i32, 9> = [9, 8, 7, 6, 5, 4, 3, 2, 1].iter().cloned().collect();
+  let mut q: StaticHeap<i32, 9> = [9, 8, 7, 6, 5, 4, 3, 2, 1].iter().copied().collect();
   assert_eq!(
     q.drain_sorted().take(5).collect::<MyStaticVec>(),
     staticvec![9, 8, 7, 6, 5]
@@ -185,7 +185,7 @@ fn extend_specialization() {
 #[test]
 fn from_iter() {
   let xs = staticvec![9, 8, 7, 6, 5, 4, 3, 2, 1];
-  let mut q: StaticHeap<i32, 9> = xs.iter().rev().cloned().collect();
+  let mut q: StaticHeap<i32, 9> = xs.iter().rev().copied().collect();
   for &x in &xs {
     assert_eq!(q.pop().unwrap(), x);
   }
@@ -290,7 +290,7 @@ fn iter_rev_cloned_collect() {
   let data = staticvec![5, 9, 3];
   let iterout = staticvec![3, 5, 9];
   let pq = StaticHeap::from(data);
-  let v: MyStaticVec = pq.iter().rev().cloned().collect();
+  let v: MyStaticVec = pq.iter().rev().copied().collect();
   assert_eq!(v, iterout);
 }
 
