@@ -7,8 +7,8 @@ jobs:
   include:
   - os: linux
     dist: bionic
-  - os: osx
-    osx_image: xcode12
+  # - os: osx
+    # osx_image: xcode12
 
 script:
   # We run the suite once under Miri with all functionality enabled, and then once
