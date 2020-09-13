@@ -773,8 +773,8 @@ impl<T, I: Iterator<Item = T>, const N: usize> ExactSizeIterator for StaticVecSp
 
 impl<T, I: Iterator<Item = T>, const N: usize> FusedIterator for StaticVecSplice<T, I, N> {}
 unsafe impl<T, I: Iterator<Item = T>, const N: usize> TrustedLen for StaticVecSplice<T, I, N> {}
-unsafe impl<T, I: Iterator<Item = T>, const N: usize> Sync for StaticVecSplice<T, I, N> {}
-unsafe impl<T, I: Iterator<Item = T>, const N: usize> Send for StaticVecSplice<T, I, N> {}
+unsafe impl<T: Sync, I: Iterator<Item = T>, const N: usize> Sync for StaticVecSplice<T, I, N> {}
+unsafe impl<T: Send, I: Iterator<Item = T>, const N: usize> Send for StaticVecSplice<T, I, N> {}
 
 impl<T: Debug, I: Iterator<Item = T>, const N: usize> Debug for StaticVecSplice<T, I, N> {
   #[inline(always)]
