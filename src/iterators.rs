@@ -779,6 +779,8 @@ unsafe impl<T: Send, I: Iterator<Item = T>, const N: usize> Send for StaticVecSp
 impl<T: Debug, I: Iterator<Item = T>, const N: usize> Debug for StaticVecSplice<T, I, N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    // Safety: `self.vec` will never be null, and `self.end` and `self.start` will always be within
+    // an appropriate range.
     unsafe {
       let items = slice_from_raw_parts(
         (&*self.vec).ptr_at_unchecked(self.start),

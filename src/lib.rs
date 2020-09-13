@@ -862,8 +862,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
-  // A crate-local unchecked version of `remove`, currently only used in the implementation of
-  // `StaticVecSplice`.
+  /// A crate-local unchecked version of `remove`, currently only used in the implementation of
+  /// `StaticVecSplice`.
   #[inline]
   pub(crate) fn remove_unchecked(&mut self, index: usize) -> T {
     let old_length = self.length;
@@ -1941,9 +1941,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   }
 
   /// Replaces the specified range in the StaticVec with the contents of `replace_with` and returns
-  /// the removed items in an instance of `StaticVecSplice`. `replace_with` does not need to be the
-  /// same length as range. Returns immediately if and when the StaticVec reaches maximum capacity,
-  /// regardless of whether or not `replace_with` still has more items to yield.
+  /// the removed items in an instance of [`StaticVecSplice`](crate::iterators::StaticVecSplice).
+  /// `replace_with` does not need to be the same length as `range`. Returns immediately if and when
+  /// the StaticVec reaches maximum capacity, regardless of whether or not `replace_with` still has
+  /// more items to yield.
   ///
   /// # Panics
   ///
