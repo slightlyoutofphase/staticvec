@@ -1768,7 +1768,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       // Set the length of `self` to 0 to prevent double-drops.
       self.length = 0;
       // Read out the contents of `data`.
-      unsafe { Ok(self.data.read()) }
+      unsafe { Ok(self.data.assume_init_read()) }
     }
   }
 
