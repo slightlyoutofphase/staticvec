@@ -49,7 +49,7 @@ pub struct StaticString<const N: usize> {
 impl<const N: usize> StaticString<N> {
   /// Returns a new StaticString instance.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let string = StaticString::<20>::new();
@@ -81,7 +81,7 @@ impl<const N: usize> StaticString<N> {
   /// The length of `string` must not exceed the declared capacity of the StaticString being
   /// created, as this would result in writing to an out-of-bounds memory region.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let string = unsafe { StaticString::<20>::from_str_unchecked("My String") };
@@ -97,7 +97,7 @@ impl<const N: usize> StaticString<N> {
   /// Creates a new StaticString from `string`, truncating `string` as necessary if it has
   /// a length greater than the StaticString's declared capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let string = StaticString::<20>::from_str("My String");
@@ -125,7 +125,7 @@ impl<const N: usize> StaticString<N> {
   /// to the StaticString's declared capacity, or returns a
   /// [`CapacityError`](crate::errors::CapacityError) otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let string = StaticString::<20>::from("My String");
@@ -145,7 +145,7 @@ impl<const N: usize> StaticString<N> {
   /// the StaticString reaches maximum capacity regardless of whether or not the iterator still has
   /// more items to yield.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -175,7 +175,7 @@ impl<const N: usize> StaticString<N> {
   /// than or equal to the StaticString's declared capacity, or returns a
   /// [`CapacityError`](crate::errors::CapacityError) otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let string = StaticString::<300>::try_from_iterator(
@@ -225,7 +225,7 @@ impl<const N: usize> StaticString<N> {
   /// less than or equal to the StaticString's declared capacity, or returns
   /// [`StringError::OutOfBounds`] otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -258,7 +258,7 @@ impl<const N: usize> StaticString<N> {
   /// made in the internal implementation of StaticString will be silently invalidated, almost
   /// certainly eventually resulting in undefined behavior.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let string = unsafe { StaticString::<20>::from_utf8_unchecked("My String") };
@@ -277,7 +277,7 @@ impl<const N: usize> StaticString<N> {
   /// [`StringError::Utf8`] on invalid UTF-8 data, and truncating the input slice as necessary if
   /// it has a length greater than the declared capacity of the StaticString being created.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -299,7 +299,7 @@ impl<const N: usize> StaticString<N> {
   /// invalid UTF-8 data or [`StringError::OutOfBounds`] if the slice has a length greater than
   /// the StaticString's declared capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -321,7 +321,7 @@ impl<const N: usize> StaticString<N> {
   /// data with `REPLACEMENT_CHARACTER` (�), and truncating the input slice as necessary if
   /// it has a length greater than the declared capacity of the StaticString being created.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let music = [0xD834, 0xDD1E, 0x006d, 0x0075, 0x0073, 0x0069, 0x0063];
@@ -347,7 +347,7 @@ impl<const N: usize> StaticString<N> {
   /// [`StringError::Utf16`] on invalid UTF-16 data, and truncating the input slice as necessary if
   /// it has a length greater than the declared capacity of the StaticString being created.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -377,7 +377,7 @@ impl<const N: usize> StaticString<N> {
   /// invalid UTF-16 data or [`StringError::OutOfBounds`] if the slice has a length greater than the
   /// declared capacity of the StaticString being created.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticVec, StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -402,7 +402,7 @@ impl<const N: usize> StaticString<N> {
 
   /// Extracts a `str` slice containing the entire contents of the StaticString.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let s = StaticString::<20>::from_str("My String");
@@ -415,7 +415,7 @@ impl<const N: usize> StaticString<N> {
 
   /// Extracts a mutable `str` slice containing the entire contents of the StaticString.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut s = StaticString::<20>::from_str("My String");
@@ -428,7 +428,7 @@ impl<const N: usize> StaticString<N> {
 
   /// Extracts a `u8` slice containing the entire contents of the StaticString.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let s = StaticString::<20>::from_str("My String");
@@ -442,7 +442,7 @@ impl<const N: usize> StaticString<N> {
   /// Returns the StaticString's internal instance of `StaticVec<u8, N>`.
   /// Note that using this function consumes the StaticString.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let s = StaticString::<5>::from("hello");
@@ -461,7 +461,7 @@ impl<const N: usize> StaticString<N> {
   /// Care must be taken to ensure that the returned `u8` slice is not mutated in such a way that
   /// it no longer amounts to valid UTF-8.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -482,7 +482,7 @@ impl<const N: usize> StaticString<N> {
   /// Care must be taken to ensure that the returned StaticVec reference is not mutated in such a
   /// way that it no longer contains valid UTF-8.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -500,7 +500,7 @@ impl<const N: usize> StaticString<N> {
   /// This is always equivalent to the generic `N` parameter it was declared with,
   /// which determines the fixed size of the backing StaticVec instance.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// assert_eq!(StaticString::<32>::new().capacity(), 32);
@@ -513,7 +513,7 @@ impl<const N: usize> StaticString<N> {
   /// Returns the remaining capacity (which is to say, `self.capacity() - self.len()`) of the
   /// StaticString.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// assert_eq!(StaticString::<32>::from("abcd").remaining_capacity(), 28);
@@ -531,7 +531,7 @@ impl<const N: usize> StaticString<N> {
   /// `self.len() + string.len()` must not exceed the total capacity of the StaticString
   /// instance, as this would result in writing to an out-of-bounds memory region.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString};
   /// let mut s = StaticString::<6>::from("foo");
@@ -551,7 +551,7 @@ impl<const N: usize> StaticString<N> {
   /// Attempts to push `string` to the StaticString, panicking if it is the case that `self.len() +
   /// string.len()` exceeds the StaticString's total capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString};
   /// let mut s = StaticString::<6>::from("foo");
@@ -572,7 +572,7 @@ impl<const N: usize> StaticString<N> {
   /// nothing at all) if it is the case that `self.len() + string.len()` exceeds the
   /// StaticString's total capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -594,7 +594,7 @@ impl<const N: usize> StaticString<N> {
   /// the StaticString's total capacity, or returns a
   /// [`CapacityError`](crate::errors::CapacityError) otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut s = StaticString::<300>::from("My String");
@@ -623,7 +623,7 @@ impl<const N: usize> StaticString<N> {
   /// `self.len() + character.len_utf8()` must not exceed the total capacity of the StaticString
   /// instance, as this would result in writing to an out-of-bounds memory region.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -655,7 +655,7 @@ impl<const N: usize> StaticString<N> {
   /// Appends the given char to the end of the StaticString, panicking if the StaticString
   /// is already at maximum capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// let mut string = StaticString::<2>::new();
@@ -675,7 +675,7 @@ impl<const N: usize> StaticString<N> {
   /// Appends the given char to the end of the StaticString, returning [`StringError::OutOfBounds`]
   /// if the StaticString is already at maximum capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -702,7 +702,7 @@ impl<const N: usize> StaticString<N> {
   /// StaticString's current length, or does nothing otherwise. Panics if `new_len` does not lie
   /// at a valid UTF-8 character boundary.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut s = StaticString::<20>::from("My String");
@@ -726,7 +726,7 @@ impl<const N: usize> StaticString<N> {
   /// Returns the last character in the StaticString in `Some` if the StaticString's current length
   /// is greater than zero, or `None` otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -747,7 +747,7 @@ impl<const N: usize> StaticString<N> {
 
   /// Removes all whitespace from the beginning and end of the StaticString, if any is present.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -792,7 +792,7 @@ impl<const N: usize> StaticString<N> {
   /// Removes the char at `index` from the StaticString if `index` is both less than `self.len()`
   /// and also lies at a valid UTF-8 character boundary, or panics otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut s = StaticString::<20>::from("ABCD🤔");
@@ -821,7 +821,7 @@ impl<const N: usize> StaticString<N> {
   /// Removes all characters from the StaticString except for those specified by the predicate
   /// function.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut s = StaticString::<20>::from("ABCD🤔");
@@ -851,7 +851,7 @@ impl<const N: usize> StaticString<N> {
   /// assumptions made in the internal implementation of StaticString will be silently
   /// invalidated, almost certainly eventually resulting in undefined behavior.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -879,7 +879,7 @@ impl<const N: usize> StaticString<N> {
   /// capacity of the StaticString and [`StringError::NotCharBoundary`] if `index` does not lie at
   /// a valid UTF-8 character boundary.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -908,7 +908,7 @@ impl<const N: usize> StaticString<N> {
   /// Panics if `character.len_utf8() + self.len()` exceeds the total capacity of the StaticString
   /// or if `index` does not lie at a valid UTF-8 character boundary.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString};
   /// let mut s = StaticString::<3>::new();
@@ -938,7 +938,7 @@ impl<const N: usize> StaticString<N> {
   /// assumptions made in the internal implementation of StaticString will be silently
   /// invalidated, almost certainly eventually resulting in undefined behavior.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut s = StaticString::<20>::from_str("ABCD🤔");
@@ -968,7 +968,7 @@ impl<const N: usize> StaticString<N> {
   /// at a valid UTF-8 character boundary, as well as if `string.len() + self.len()` exceeds
   /// the total capacity of the StaticString.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut s = StaticString::<20>::from("ABCD🤔");
@@ -994,7 +994,7 @@ impl<const N: usize> StaticString<N> {
   /// capacity of the StaticString and [`StringError::NotCharBoundary`] if `index` does not
   /// lie at a valid UTF-8 character boundary.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -1024,7 +1024,7 @@ impl<const N: usize> StaticString<N> {
 
   /// Returns the current length of the StaticString.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut s = StaticString::<20>::from("ABCD");
@@ -1039,7 +1039,7 @@ impl<const N: usize> StaticString<N> {
 
   /// Returns true if the StaticString has a current length of 0.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticstring, StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -1057,7 +1057,7 @@ impl<const N: usize> StaticString<N> {
 
   /// Returns true if the StaticString's length is equal to its capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticstring, StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -1081,7 +1081,7 @@ impl<const N: usize> StaticString<N> {
   /// Panics if `at` is greater than the length of the StaticString or if it does not
   /// lie at a valid UTF-8 character boundary.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut ab = StaticString::<4>::from("ABCD");
@@ -1104,7 +1104,7 @@ impl<const N: usize> StaticString<N> {
 
   /// Removes all contents from the StaticString and sets its length back to zero.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{StaticString, StringError};
   /// # fn main() -> Result<(), StringError> {
@@ -1125,7 +1125,7 @@ impl<const N: usize> StaticString<N> {
   /// either the high or low bounds of the range exceed `self.len()` or do not lie at valid UTF-8
   /// character boundaries.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticString;
   /// let mut s = StaticString::<20>::from("ABCD🤔");

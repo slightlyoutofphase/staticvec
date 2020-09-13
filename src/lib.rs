@@ -68,7 +68,7 @@ pub use crate::heap::{
   StaticHeap, StaticHeapDrainSorted, StaticHeapIntoIterSorted, StaticHeapPeekMut,
 };
 pub use crate::iterators::{
-  StaticVecDrain, StaticVecIntoIter, StaticVecIterConst, StaticVecIterMut,
+  StaticVecDrain, StaticVecIntoIter, StaticVecIterConst, StaticVecIterMut, StaticVecSplice,
 };
 pub use crate::string::{string_utils, StaticString, StringError};
 use crate::utils::{
@@ -112,7 +112,7 @@ pub struct StaticVec<T, const N: usize> {
 impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a new StaticVec instance.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticVec;
   /// let v = StaticVec::<i32, 4>::new();
@@ -133,7 +133,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// any contents after that point are ignored.
   /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let v = StaticVec::<i32, 8>::new_from_slice(&[1, 2, 3]);
@@ -169,7 +169,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// first wrapped in an instance of [`MaybeUninit`](core::mem::MaybeUninit) to inhibit the
   /// automatic calling of any destructors its contents may have.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticVec;
   /// // Same input length as the declared capacity:
@@ -228,7 +228,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// [`new_from_const_array`](crate::StaticVec::new_from_const_array), so you may also prefer
   /// to use them instead of it directly.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticvec, StaticVec};
   /// const v: StaticVec<i32, 4> = StaticVec::new_from_const_array([1, 2, 3, 4]);
@@ -248,7 +248,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// case that it has been set directly with the unsafe [`set_len`](crate::StaticVec::set_len)
   /// function.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert_eq!(staticvec![1].len(), 1);
@@ -262,7 +262,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// This is always equivalent to the generic `N` parameter it was declared with, which determines
   /// the fixed size of the backing array.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert_eq!(StaticVec::<usize, 800>::new().capacity(), 800);
@@ -275,7 +275,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Does the same thing as [`capacity`](crate::StaticVec::capacity), but as an associated function
   /// rather than a method.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert_eq!(StaticVec::<f64, 12>::cap(), 12)
@@ -288,7 +288,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Serves the same purpose as [`capacity`](crate::StaticVec::capacity), but as an associated
   /// constant rather than a method.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert_eq!(StaticVec::<f64, 12>::CAPACITY, 12)
@@ -298,7 +298,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns the remaining capacity (which is to say, `self.capacity() - self.len()`) of the
   /// StaticVec.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut vec = StaticVec::<i32, 100>::new();
@@ -314,7 +314,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// length of zero or contains ZSTs) in bytes. Specifically, the return value of this function
   /// amounts to a calculation of `size_of::<T>() * self.len()`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let x = StaticVec::<u8, 8>::from([1, 2, 3, 4, 5, 6, 7, 8]);
@@ -341,7 +341,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// constant `N` parameter, and that the range of elements covered by a length of `new_len` is
   /// actually initialized. Failure to do so will almost certainly result in undefined behavior.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut vec = StaticVec::<i32, 12>::new();
@@ -369,7 +369,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns true if the current length of the StaticVec is 0.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert!(StaticVec::<i32, 4>::new().is_empty());
@@ -381,7 +381,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns true if the current length of the StaticVec is greater than 0.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert!(staticvec![staticvec![1, 1], staticvec![2, 2]].is_not_empty());
@@ -397,7 +397,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns true if the current length of the StaticVec is equal to its capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert!(StaticVec::<i32, 4>::filled_with(|| 2).is_full());
@@ -409,7 +409,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns true if the current length of the StaticVec is less than its capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert!(StaticVec::<i32, 4>::new().is_not_full());
@@ -424,7 +424,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// to make use of the returned pointer, as once the StaticVec is dropped the pointer will
   /// point to uninitialized or "garbage" memory.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let v = staticvec!['A', 'B', 'C'];
@@ -441,7 +441,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// to make use of the returned pointer, as once the StaticVec is dropped the pointer will
   /// point to uninitialized or "garbage" memory.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec!['A', 'B', 'C'];
@@ -456,7 +456,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns a constant reference to a slice of the StaticVec's inhabited area.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert_eq!(staticvec![1, 2, 3].as_slice(), &[1, 2, 3]);
@@ -470,7 +470,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Returns a mutable reference to a slice of the StaticVec's inhabited area.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![4, 5, 6];
@@ -495,7 +495,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// StaticVec's backing array, and that if reading from the returned pointer, it has *already*
   /// been initialized properly.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let v = staticvec!["I", "am", "a", "StaticVec!"];
@@ -534,7 +534,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// initialize, and that if reading from the returned pointer, it has *already* been initialized
   /// properly.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec!["I", "am", "not a", "StaticVec!"];
@@ -563,7 +563,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// is within the range `0..self.length`, or panics if it is not. The return value of this
   /// function is equivalent to what would be returned from `as_ptr().add(index)`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let v = staticvec!["I", "am", "a", "StaticVec!"];
@@ -585,7 +585,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// is within the range `0..self.length`, or panics if it is not. The return value of this
   /// function is equivalent to what would be returned from `as_mut_ptr().add(index)`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec!["I", "am", "not a", "StaticVec!"];
@@ -616,7 +616,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// It is up to the caller to ensure that `index` is within the range `0..self.length`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// unsafe { assert_eq!(*staticvec![1, 2, 3].get_unchecked(1), 2) };
@@ -644,7 +644,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// It is up to the caller to ensure that `index` is within the range `0..self.length`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![1, 2, 3];
@@ -674,7 +674,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// prior to using this function is less than `N`. Failure to do so will result
   /// in writing to an out-of-bounds memory region.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = StaticVec::<i32, 4>::from([1, 2]);
@@ -701,7 +701,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// element prior to using this function. Failure to do so will result in reading
   /// from uninitialized memory.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = StaticVec::<i32, 4>::from([1, 2, 3, 4]);
@@ -722,7 +722,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Pushes `value` to the StaticVec if its current length is less than its capacity,
   /// or returns a [`PushCapacityError`](crate::errors::PushCapacityError) otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v1 = StaticVec::<usize, 128>::filled_with_by_index(|i| i * 4);
@@ -743,7 +743,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Pushes a value to the end of the StaticVec. Panics if the collection is
   /// full; that is, if `self.len() == self.capacity()`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = StaticVec::<i32, 8>::new();
@@ -763,7 +763,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Removes the value at the last position of the StaticVec and returns it in `Some` if
   /// the StaticVec has a current length greater than 0, and returns `None` otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![1, 2, 3, 4];
@@ -783,7 +783,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a constant reference to the first element of the StaticVec in `Some` if the StaticVec
   /// is not empty, or `None` otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let v1 = staticvec![10, 40, 30];
@@ -803,7 +803,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a mutable reference to the first element of the StaticVec in `Some` if the StaticVec
   /// is not empty, or `None` otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut x = staticvec![0, 1, 2];
@@ -824,7 +824,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a constant reference to the last element of the StaticVec in `Some` if the StaticVec
   /// is not empty, or `None` otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let v = staticvec![10, 40, 30];
@@ -844,7 +844,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a mutable reference to the last element of the StaticVec in `Some` if the StaticVec is
   /// not empty, or `None` otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut x = staticvec![0, 1, 2];
@@ -862,11 +862,25 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
+  // A crate-local unchecked version of `remove`, currently only used in the implementation of
+  // `StaticVecSplice`.
+  #[inline]
+  pub(crate) fn remove_unchecked(&mut self, index: usize) -> T {
+    let old_length = self.length;
+    unsafe {
+      let self_ptr = self.mut_ptr_at_unchecked(index);
+      let res = self_ptr.read();
+      self_ptr.offset(1).copy_to(self_ptr, old_length - index - 1);
+      self.set_len(old_length - 1);
+      res
+    }
+  }
+
   /// Asserts that `index` is less than the current length of the StaticVec,
   /// and if so removes the value at that position and returns it. Any values
   /// that exist in later positions are shifted to the left.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert_eq!(staticvec![1, 2, 3].remove(1), 2);
@@ -889,7 +903,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Removes the first instance of `item` from the StaticVec if the item exists.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert_eq!(staticvec![1, 2, 2, 3].remove_item(&2), Some(2));
@@ -909,7 +923,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Otherwise, removes the value at that position and returns it in `Some`, and then
   /// moves the last value in the StaticVec into the empty slot.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec!["AAA", "BBB", "CCC", "DDD"];
@@ -934,7 +948,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// and if so removes the value at that position and returns it, and then
   /// moves the last value in the StaticVec into the empty slot.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec!["AAA", "BBB", "CCC", "DDD"];
@@ -959,7 +973,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// `index` is less than the length, and if so inserts `value` at that position.
   /// Any values that exist in positions after `index` are shifted to the right.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = StaticVec::<i32, 5>::from([1, 2, 3]);
@@ -971,7 +985,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let old_length = self.length;
     assert!(
       old_length < N && index <= old_length,
-      "Insufficient remaining capacity / out of bounds!"
+      "Insufficient remaining capacity or bounds check failure in `StaticVec::insert`!"
     );
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
@@ -994,7 +1008,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// the appropriate checking internally to avoid dangerous outcomes in the event of a blatantly
   /// incorrect [`ExactSizeIterator`](core::iter::ExactSizeIterator) implementation.)
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = StaticVec::<usize, 8>::from([1, 2, 3, 4, 7, 8]);
@@ -1007,7 +1021,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let old_length = self.length;
     assert!(
       old_length < N && index <= old_length,
-      "Insufficient remaining capacity / out of bounds!"
+      "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_many`!"
     );
     let mut it = iter.into_iter();
     if index == old_length {
@@ -1016,7 +1030,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let iter_size = it.len();
     assert!(
       index + iter_size >= index && (old_length - index) + iter_size < N,
-      "Insufficient remaining capacity / out of bounds!"
+      "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_many`!"
     );
     unsafe {
       let mut self_ptr = self.mut_ptr_at_unchecked(index);
@@ -1045,7 +1059,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// multiple items provided by a slice reference as opposed to an arbitrary iterator. Locally
   /// requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = StaticVec::<usize, 8>::from([1, 2, 3, 4, 7, 8]);
@@ -1059,7 +1073,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     let values_length = values.len();
     assert!(
       old_length < N && index <= old_length && values_length <= self.remaining_capacity(),
-      "Insufficient remaining capacity / out of bounds!"
+      "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_from_slice`!"
     );
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
@@ -1073,7 +1087,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// is less than the length, or returns a [`CapacityError`](crate::errors::CapacityError)
   /// otherwise. Any values that exist in positions after `index` are shifted to the right.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut vec = StaticVec::<i32, 5>::from([1, 2, 3, 4, 5]);
@@ -1099,7 +1113,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// a [`CapacityError`](crate::errors::CapacityError) in the event that something goes wrong as
   /// opposed to relying on internal assertions.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v1 = StaticVec::<usize, 8>::from([1, 2, 3, 4, 7, 8]);
@@ -1136,7 +1150,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Locally requires that `T` implements [`PartialEq`](core::cmp::PartialEq)
   /// to make it possible to compare the elements of the StaticVec with `value`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert_eq!(staticvec![1, 2, 3].contains(&2), true);
@@ -1150,7 +1164,7 @@ impl<T, const N: usize> StaticVec<T, N> {
 
   /// Removes all contents from the StaticVec and sets its length back to 0.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![1, 2, 3];
@@ -1169,7 +1183,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a [`StaticVecIterConst`](crate::iterators::StaticVecIterConst) over the StaticVec's
   /// inhabited area.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let v = staticvec![4, 3, 2, 1];
@@ -1197,7 +1211,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a [`StaticVecIterMut`](crate::iterators::StaticVecIterMut) over the StaticVec's
   /// inhabited area.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![4, 3, 2, 1];
@@ -1228,7 +1242,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// [`Copy`](core::marker::Copy) to avoid soundness issues, and [`Ord`](core::cmp::Ord) to make
   /// the sorting possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticvec, StaticVec};
   /// const V: StaticVec<StaticVec<i32, 2>, 2> = staticvec![staticvec![1, 3], staticvec![4, 2]];
@@ -1253,7 +1267,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// [`Copy`](core::marker::Copy) to avoid soundness issues, and [`Ord`](core::cmp::Ord) to make
   /// the sorting possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticvec, StaticVec};
   /// const V: StaticVec<StaticVec<i32, 2>, 2> = staticvec![staticvec![1, 3], staticvec![4, 2]];
@@ -1287,7 +1301,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// [`Ord`](core::cmp::Ord) it's recommended that you use [`sorted`](crate::StaticVec::sorted) or
   /// [`sorted_unstable`](crate::StaticVec::sorted_unstable) instead of this function.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticvec, StaticVec};
   /// const V: StaticVec<StaticVec<i32, 2>, 2> = staticvec![staticvec![1, 3], staticvec![4, 2]];
@@ -1318,7 +1332,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// bound requirements) but operates in-place on the calling StaticVec instance rather than
   /// returning the sorted data in a new one.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![5.0, 4.0, 3.0, 2.0, 1.0];
@@ -1348,7 +1362,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// without modifying the original data. Locally requires that `T` implements
   /// [`Copy`](core::marker::Copy) to avoid soundness issues.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// assert_eq!(staticvec![1, 2, 3].reversed(), [3, 2, 1]);
@@ -1365,7 +1379,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Returns a new StaticVec instance filled with the return value of an initializer function.
   /// The length field of the newly created StaticVec will be equal to its capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticVec;
   /// let mut i = 0;
@@ -1396,7 +1410,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// [`filled_with_by_index`](crate::StaticVec::filled_with_by_index) is implemented with
   /// internally. The length field of the newly created StaticVec will be equal to its capacity.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::StaticVec;
   /// let v = StaticVec::<usize, 64>::filled_with_by_index(|i| { i + 1 });
@@ -1424,7 +1438,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// StaticVec's remaining capacity, any contents after that point are ignored.
   /// Locally requires that `T` implements [`Copy`](core::marker::Copy) to avoid soundness issues.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = StaticVec::<i32, 8>::new();
@@ -1450,7 +1464,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// StaticVec's remaining capacity is greater than the length of the slice, or returns
   /// a [`CapacityError`](crate::errors::CapacityError) otherwise.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = StaticVec::<i32, 8>::new();
@@ -1483,7 +1497,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// the constant `N2` constraint of `other` (which may or may not be the same as the `N`
   /// constraint of `self`.)
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut a = StaticVec::<i32, 8>::from([1, 2, 3, 4]);
@@ -1532,7 +1546,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// avoid soundness issues and also allow for a more efficient implementation than would otherwise
   /// be possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::staticvec;
   /// assert!(staticvec!['a', 'b'].concat(&staticvec!['c', 'd']) == ['a', 'b', 'c', 'd']);
@@ -1566,7 +1580,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// function is less efficient than [`concat`](crate::StaticVec::concat), so
   /// [`concat`](crate::StaticVec::concat) should be preferred whenever possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::staticvec;
   /// assert!(staticvec!["a", "b"].concat_clone(&staticvec!["c", "d"]) == ["a", "b", "c", "d"]);
@@ -1598,7 +1612,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// avoid soundness issues and also allow for a more efficient implementation than would otherwise
   /// be possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::staticvec;
   /// assert_eq!(
@@ -1645,7 +1659,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// [`intersperse`](crate::StaticVec::intersperse), so
   /// [`intersperse`](crate::StaticVec::intersperse) should be preferred whenever possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::staticvec;
   /// assert_eq!(
@@ -1677,7 +1691,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// resulting StaticVec, any contents after that point are ignored. Note that using this function
   /// consumes the source [`Vec`](alloc::vec::Vec).
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = vec![1, 2, 3];
@@ -1718,7 +1732,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// [`len`](alloc::vec::Vec::len) and [`capacity`](alloc::vec::Vec::capacity) as the source
   /// StaticVec. Note that using this function consumes the source StaticVec.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut sv = staticvec![1, 2, 3];
@@ -1747,7 +1761,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// `MaybeUninit`) in `Ok` if and only if the StaticVec is at maximum capacity. Otherwise, the
   /// StaticVec itself is returned in `Err`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v1 = StaticVec::<i32, 4>::new();
@@ -1768,7 +1782,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       // Set the length of `self` to 0 to prevent double-drops.
       self.length = 0;
       // Read out the contents of `data`.
-      unsafe { Ok(self.data.read()) }
+      unsafe { Ok(self.data.assume_init_read()) }
     }
   }
 
@@ -1779,7 +1793,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Panics if the range's starting point is greater than the end point or if the end point is
   /// greater than the length of the StaticVec.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![1, 2, 3];
@@ -1834,7 +1848,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Panics if the range's starting point is greater than the end point or if the end point is
   /// greater than the length of the StaticVec.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v1 = staticvec![0, 4, 5, 6, 7];
@@ -1887,7 +1901,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Removes all elements in the StaticVec for which `filter` returns true and returns them in a
   /// new one.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut numbers = staticvec![1, 2, 3, 4, 5, 6, 8, 9, 11, 13, 14, 15];
@@ -1926,9 +1940,56 @@ impl<T, const N: usize> StaticVec<T, N> {
     res
   }
 
+  /// Replaces the specified range in the StaticVec with the contents of `replace_with` and returns
+  /// the removed items in an instance of `StaticVecSplice`. `replace_with` does not need to be the
+  /// same length as range. Returns immediately if and when the StaticVec reaches maximum capacity,
+  /// regardless of whether or not `replace_with` still has more items to yield.
+  ///
+  /// # Panics
+  ///
+  /// Panics if the range's starting point is greater than the end point or if the end point is
+  /// greater than the length of the StaticVec.
+  ///
+  /// # Example usage:
+  /// ```
+  /// # use staticvec::*;
+  /// let mut v = staticvec![1, 2, 3];
+  /// let new = [7, 8];
+  /// let u: StaticVec<u8, 2> = v.splice(..2, new.iter().copied()).collect();
+  /// assert_eq!(v, [7, 8, 3]);
+  /// assert_eq!(u, [1, 2]);
+  /// ```
+  #[inline]
+  pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> StaticVecSplice<T, I::IntoIter, N>
+  where
+    R: RangeBounds<usize>,
+    I: IntoIterator<Item = T>, {
+    let length = self.length;
+    let start = match range.start_bound() {
+      Included(&idx) => idx,
+      Excluded(&idx) => idx + 1,
+      Unbounded => 0,
+    };
+    let end = match range.end_bound() {
+      Included(&idx) => idx + 1,
+      Excluded(&idx) => idx,
+      Unbounded => length,
+    };
+    assert!(
+      start <= end && end <= length,
+      "Bounds check failure in `StaticVec::splice`!"
+    );
+    StaticVecSplice {
+      start,
+      end,
+      vec: self,
+      replace_with: replace_with.into_iter(),
+    }
+  }
+
   /// Removes all elements in the StaticVec for which `filter` returns false.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![1, 2, 3, 4, 5];
@@ -1946,7 +2007,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Shortens the StaticVec, keeping the first `length` elements and dropping the rest.
   /// Does nothing if `length` is greater than or equal to the current length of the StaticVec.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![1, 2, 3, 4, 5];
@@ -1970,7 +2031,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Splits the StaticVec into two at the given index. The original StaticVec will contain elements
   /// `0..at`, and the new one will contain elements `at..self.len()`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v1 = staticvec![1, 2, 3];
@@ -2002,7 +2063,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Removes all but the first of consecutive elements in the StaticVec satisfying a given equality
   /// relation.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec!["aaa", "bbb", "BBB", "ccc", "ddd"];
@@ -2020,7 +2081,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Removes consecutive repeated elements in the StaticVec according to the
   /// locally required [`PartialEq`](core::cmp::PartialEq) trait implementation for `T`.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![1, 2, 2, 3, 2];
@@ -2037,7 +2098,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Removes all but the first of consecutive elements in the StaticVec that
   /// resolve to the same key.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// let mut v = staticvec![10, 20, 21, 30, 20];
@@ -2063,7 +2124,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
   /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::staticvec;
   /// assert_eq!(
@@ -2101,7 +2162,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
   /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::staticvec;
   /// assert_eq!(
@@ -2156,7 +2217,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
   /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::staticvec;
   /// assert_eq!(
@@ -2194,7 +2255,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// while accommodating for more types than [`Copy`](core::marker::Copy) would appropriately for
   /// this function, and [`PartialEq`](core::cmp::PartialEq) to make the item comparisons possible.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::staticvec;
   /// assert_eq!(
@@ -2222,7 +2283,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// returns a tuple consisting of a constant pointer to the first element of the StaticVec,
   /// the length of the StaticVec, and the capacity of the StaticVec.
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::*;
   /// static V: StaticVec<usize, 4> = staticvec![4, 5, 6, 7];
@@ -2262,7 +2323,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// and `other` are at full capacity, and will panic if that is not the case (that is,
   /// if `self.is_full() && other.is_full()` is not equal to `true`.)
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticvec, StaticVec};
   /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
@@ -2299,7 +2360,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// and `other` are at full capacity, and will panic if that is not the case (that is,
   /// if `self.is_full() && other.is_full()` is not equal to `true`.)
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticvec, StaticVec};
   /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
@@ -2336,7 +2397,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// and `other` are at full capacity, and will panic if that is not the case (that is,
   /// if `self.is_full() && other.is_full()` is not equal to `true`.)
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticvec, StaticVec};
   /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];
@@ -2373,7 +2434,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// and `other` are at full capacity, and will panic if that is not the case (that is,
   /// if `self.is_full() && other.is_full()` is not equal to `true`.)
   ///
-  /// Example usage:
+  /// # Example usage:
   /// ```
   /// # use staticvec::{staticvec, StaticVec};
   /// const A: StaticVec<f64, 4> = staticvec![4.0, 5.0, 6.0, 7.0];

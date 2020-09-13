@@ -838,7 +838,9 @@ fn insert_from_slice() {
 
 #[cfg_attr(all(windows, miri), ignore)]
 #[test]
-#[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
+#[should_panic(
+  expected = "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_from_slice`!"
+)]
 fn insert_from_slice_panic_a() {
   let mut v: StaticVec<u8, 4> = StaticVec::from([1, 2, 3, 4]);
   v.insert_from_slice(0, &[4]);
@@ -846,7 +848,9 @@ fn insert_from_slice_panic_a() {
 
 #[cfg_attr(all(windows, miri), ignore)]
 #[test]
-#[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
+#[should_panic(
+  expected = "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_from_slice`!"
+)]
 fn insert_from_slice_panic_b() {
   let mut v: StaticVec<u8, 8> = StaticVec::new();
   v.insert_from_slice(19, &[4]);
@@ -854,7 +858,9 @@ fn insert_from_slice_panic_b() {
 
 #[cfg_attr(all(windows, miri), ignore)]
 #[test]
-#[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
+#[should_panic(
+  expected = "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_from_slice`!"
+)]
 fn insert_from_slice_panic_c() {
   let mut v: StaticVec<u8, 8> = StaticVec::<u8, 8>::from(&[1, 2, 3, 4, 5, 6]);
   v.insert_from_slice(0, &[7, 8, 9, 10, 11]);
@@ -895,7 +901,9 @@ fn insert_many() {
 
 #[cfg_attr(all(windows, miri), ignore)]
 #[test]
-#[should_panic(expected = "Insufficient remaining capacity / out of bounds!")]
+#[should_panic(
+  expected = "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_many`!"
+)]
 fn insert_many_panic() {
   let mut v: StaticVec<u8, 8> = StaticVec::new();
   for i in 0..7 {
@@ -2014,11 +2022,9 @@ fn sorted_unstable() {
   assert_eq!(staticvec![2, 1].sorted_unstable(), [1, 2]);
 }
 
-// These `splice()` tests will be used once I merge in my implementation of it.
-/*
 #[test]
 fn splice() {
-  let mut v = StaticVec::<usize, 10>::from([1, 2, 3, 4, 5]);
+  let mut v = StaticVec::<i32, 6>::from([1, 2, 3, 4, 5]);
   let a = [10, 11, 12];
   v.splice(2..4, a.iter().cloned());
   assert_eq!(v, &[1, 2, 10, 11, 12, 5]);
@@ -2028,7 +2034,7 @@ fn splice() {
 
 #[test]
 fn splice_boxed() {
-  let mut v = StaticVec::<Box<usize>, 10>::from([box 1, box 2, box 3, box 4, box 5]);
+  let mut v = StaticVec::<Box<i32>, 6>::from([box 1, box 2, box 3, box 4, box 5]);
   let a = staticvec![box 10, box 11, box 12];
   v.splice(2..4, a.into_iter());
   assert_eq!(v, &[box 1, box 2, box 10, box 11, box 12, box 5]);
@@ -2037,11 +2043,33 @@ fn splice_boxed() {
 }
 
 #[test]
-fn splice_forget() {
-  let mut v = StaticVec::<usize, 10>::from([1, 2, 3, 4, 5]);
-  let a = [10, 11, 12];
-  std::mem::forget(v.splice(2..4, a.iter().cloned()));
-  assert_eq!(v, &[1, 2]);
+fn splice_debug_impl() {
+  let mut v = StaticVec::<Box<i32>, 8>::from([box 1, box 2, box 3, box 4]);
+  let v2 = staticvec![box 6, box 7, box 8, box 9, box 10];
+  let mut s = v.splice(1..3, v2.iter().cloned());
+  assert_eq!(format!("{:?}", s), "StaticVecSplice([2, 3])");
+  s.next();
+  assert_eq!(format!("{:?}", s), "StaticVecSplice([3])");
+  s.next();
+  assert_eq!(format!("{:?}", s), "StaticVecSplice([])");
+  s.next();
+  assert_eq!(format!("{:?}", s), "StaticVecSplice([])");
+}
+
+#[cfg_attr(all(windows, miri), ignore)]
+#[test]
+#[should_panic]
+fn splice_empty() {
+  let mut v = StaticVec::<Box<i32>, 0>::new();
+  v.splice(12..24, staticvec![box 1, box 2, box 3].into_iter());
+  assert_eq!(v, []);
+}
+
+#[test]
+fn splice_empty_iterator() {
+  let mut v = StaticVec::<Box<i32>, 12>::from([box 1, box 2, box 3, box 4, box 5, box 6]);
+  v.splice(1..4, StaticVec::<Box<i32>, 0>::new().into_iter());
+  assert_eq!(v, [box 1, box 5, box 6]);
 }
 
 #[cfg_attr(all(windows, miri), ignore)]
@@ -2055,7 +2083,7 @@ fn splice_inclusive_out_of_bounds() {
 
 #[test]
 fn splice_inclusive_range() {
-  let mut v = StaticVec::<usize, 10>::from([1, 2, 3, 4, 5]);
+  let mut v = StaticVec::<i32, 6>::from([1, 2, 3, 4, 5]);
   let a = [10, 11, 12];
   let t1: StaticVec<_, 2> = v.splice(2..=3, a.iter().cloned()).collect();
   assert_eq!(v, &[1, 2, 10, 11, 12, 5]);
@@ -2084,13 +2112,19 @@ fn splice_out_of_bounds() {
 }
 
 #[test]
+fn splice_single_item_iterator() {
+  let mut v = StaticVec::<Box<i32>, 12>::from([box 1, box 2, box 3, box 4, box 5, box 6]);
+  v.splice(1..4, StaticVec::<Box<i32>, 1>::from([box 1]).into_iter());
+  assert_eq!(v, [box 1, box 1, box 5, box 6]);
+}
+
+#[test]
 fn splice_unbounded() {
   let mut vec = staticvec![1, 2, 3, 4, 5];
   let t: StaticVec<_, 5> = vec.splice(.., None).collect();
   assert_eq!(vec, &[]);
   assert_eq!(t, &[1, 2, 3, 4, 5]);
 }
-*/
 
 #[test]
 fn split_off() {

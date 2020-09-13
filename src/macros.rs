@@ -4,7 +4,7 @@
 /// syntax is also supported, and both forms can be used in const contexts. This macro has no
 /// particular trait impl requirements for the input type.
 ///
-/// Example usage:
+/// # Example usage:
 /// ```
 /// use staticvec::{staticvec, StaticVec};
 ///
@@ -42,7 +42,7 @@ macro_rules! staticvec {
 /// to the required level of type inference being beyond what the compiler is (currently at least)
 /// capable of.
 ///
-/// Example usage:
+/// # Example usage:
 /// ```
 /// use staticvec::{staticstring, StaticString};
 ///
@@ -188,7 +188,7 @@ macro_rules! __staticsort {
 /// [`StaticVec`](crate::StaticVec) instance from the result in a fully const context compatible
 /// manner.
 ///
-/// Example usage:
+/// # Example usage:
 /// ```
 /// #![feature(const_fn)]
 ///

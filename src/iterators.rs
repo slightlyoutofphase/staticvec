@@ -49,6 +49,16 @@ pub struct StaticVecDrain<'a, T: 'a, const N: usize> {
   pub(crate) vec: *mut StaticVec<T, N>,
 }
 
+/// A "splicing" iterator, analogous to [`vec::Splice`](alloc::vec::Splice).
+/// Instances of [`StaticVecSplice`](crate::iterators::StaticVecSplice) are created
+/// by the [`splice`](crate::StaticVec::splice) method on [`StaticVec`](crate::StaticVec).
+pub struct StaticVecSplice<T, I: Iterator<Item = T>, const N: usize> {
+  pub(crate) start: usize,
+  pub(crate) end: usize,
+  pub(crate) replace_with: I,
+  pub(crate) vec: *mut StaticVec<T, N>,
+}
+
 impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   /// Returns a string displaying the current values of the
   /// iterator's `start` and `end` elements on two separate lines.
@@ -680,6 +690,126 @@ impl<'a, T: 'a, const N: usize> Drop for StaticVecDrain<'a, T, N> {
           .copy_to(vec_ref.mut_ptr_at_unchecked(start), total_length);
         vec_ref.set_len(start + total_length);
       }
+    }
+  }
+}
+
+impl<T, I: Iterator<Item = T>, const N: usize> Iterator for StaticVecSplice<T, I, N> {
+  type Item = T;
+
+  #[inline]
+  fn next(&mut self) -> Option<T> {
+    // We contextually already know we're within an appropriate range, so bounds checking
+    // is not necessary for any of the `self.vec` method calls below.
+    match self.end - self.start {
+      0 => None,
+      _ => match self.replace_with.next() {
+        Some(replace_with) => unsafe {
+          let removed =
+            core::mem::replace((&mut *self.vec).get_unchecked_mut(self.start), replace_with);
+          self.start += 1;
+          Some(removed)
+        },
+        None => unsafe {
+          let removed = (&mut *self.vec).remove_unchecked(self.start);
+          self.end -= 1;
+          Some(removed)
+        },
+      },
+    }
+  }
+
+  #[inline(always)]
+  fn size_hint(&self) -> (usize, Option<usize>) {
+    let len = self.len();
+    (len, Some(len))
+  }
+
+  #[inline(always)]
+  fn count(self) -> usize {
+    self.len()
+  }
+}
+
+impl<T, I: Iterator<Item = T> + DoubleEndedIterator, const N: usize> DoubleEndedIterator
+  for StaticVecSplice<T, I, N>
+{
+  #[inline]
+  fn next_back(&mut self) -> Option<T> {
+    // We contextually already know we're within an appropriate range, so bounds checking
+    // is not necessary for any of the `self.vec` method calls below.
+    match self.end - self.start {
+      0 => None,
+      _ => match self.replace_with.next_back() {
+        Some(replace_with) => unsafe {
+          let removed = core::mem::replace(
+            (&mut *self.vec).get_unchecked_mut(self.end - 1),
+            replace_with,
+          );
+          self.end -= 1;
+          Some(removed)
+        },
+        None => unsafe {
+          let removed = (&mut *self.vec).remove_unchecked(self.end - 1);
+          self.end -= 1;
+          Some(removed)
+        },
+      },
+    }
+  }
+}
+
+impl<T, I: Iterator<Item = T>, const N: usize> ExactSizeIterator for StaticVecSplice<T, I, N> {
+  #[inline(always)]
+  fn len(&self) -> usize {
+    self.end - self.start
+  }
+
+  #[inline(always)]
+  fn is_empty(&self) -> bool {
+    self.end - self.start == 0
+  }
+}
+
+impl<T, I: Iterator<Item = T>, const N: usize> FusedIterator for StaticVecSplice<T, I, N> {}
+unsafe impl<T, I: Iterator<Item = T>, const N: usize> TrustedLen for StaticVecSplice<T, I, N> {}
+unsafe impl<T, I: Iterator<Item = T>, const N: usize> Sync for StaticVecSplice<T, I, N> {}
+unsafe impl<T, I: Iterator<Item = T>, const N: usize> Send for StaticVecSplice<T, I, N> {}
+
+impl<T: Debug, I: Iterator<Item = T>, const N: usize> Debug for StaticVecSplice<T, I, N> {
+  #[inline(always)]
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    unsafe {
+      let items = slice_from_raw_parts(
+        (&*self.vec).ptr_at_unchecked(self.start),
+        self.end - self.start,
+      );
+      f.debug_tuple("StaticVecSplice").field(&items).finish()
+    }
+  }
+}
+
+impl<T, I: Iterator<Item = T>, const N: usize> Drop for StaticVecSplice<T, I, N> {
+  #[inline]
+  fn drop(&mut self) {
+    while let Some(_) = self.next() {}
+    let vec_ref = unsafe { &mut *self.vec };
+    for replace_with in self.replace_with.by_ref() {
+      // Stop looping if the StaticVec is at maximum capacity.
+      let old_length = vec_ref.length;
+      if old_length == N {
+        break;
+      }
+      // The next bit is just the code from `StaticVec::insert`, without the initial bounds check
+      // since we already know that we're within an appropriate range in this context.
+      let index = self.end;
+      unsafe {
+        let vec_ptr = vec_ref.mut_ptr_at_unchecked(index);
+        vec_ptr.copy_to(vec_ptr.offset(1), old_length - index);
+        vec_ptr.write(replace_with);
+        vec_ref.set_len(old_length + 1);
+      }
+      self.end += 1;
     }
   }
 }
