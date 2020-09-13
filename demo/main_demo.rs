@@ -4,7 +4,7 @@
 #![allow(const_item_mutation)]
 #![feature(const_fn)]
 
-use staticvec::*;
+use staticvec::{sortedstaticvec, staticvec, FromIterator, StaticVec};
 
 #[derive(Copy, Clone, Debug)]
 struct ZST {}

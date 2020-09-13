@@ -15,7 +15,7 @@
 // mean, "weird stuff done with heap memory" is significantly more likely to set Miri off than
 // "weird stuff done with stack memory".
 
-use staticvec::*;
+use staticvec::{sortedstaticvec, staticvec, CapacityError, FromIterator, StaticVec};
 
 use core::cell;
 
