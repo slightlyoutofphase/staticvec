@@ -10,7 +10,7 @@ use core::iter::TrustedLen;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use staticvec::*;
+use staticvec::{staticvec, StaticHeap, StaticHeapPeekMut, StaticVec};
 
 type MyStaticVec = StaticVec<i32, 64>;
 type MyStaticHeap = StaticHeap<i32, 64>;
