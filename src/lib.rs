@@ -118,9 +118,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// let v = StaticVec::<i32, 4>::new();
   /// assert_eq!(v.len(), 0);
   /// assert_eq!(v.capacity(), 4);
-  /// const CV: StaticVec<i32, 4> = StaticVec::new();
-  /// const LEN: usize = CV.len();
-  /// const CAP: usize = CV.capacity();
+  /// static CV: StaticVec<i32, 4> = StaticVec::new();
+  /// static LEN: usize = CV.len();
+  /// static CAP: usize = CV.capacity();
   /// assert_eq!(LEN, 0);
   /// assert_eq!(CAP, 4);
   /// ```
