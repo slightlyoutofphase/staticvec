@@ -118,6 +118,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// let v = StaticVec::<i32, 4>::new();
   /// assert_eq!(v.len(), 0);
   /// assert_eq!(v.capacity(), 4);
+  /// const CV: StaticVec<i32, 4> = StaticVec::new();
+  /// const LEN: usize = CV.len();
+  /// const CAP: usize = CV.capacity();
+  /// assert_eq!(LEN, 0);
+  /// assert_eq!(CAP, 4);
   /// ```
   #[inline(always)]
   pub const fn new() -> Self {
