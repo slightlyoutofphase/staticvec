@@ -1983,8 +1983,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     StaticVecSplice {
       start,
       end,
-      vec: self,
       replace_with: replace_with.into_iter(),
+      vec: self,
     }
   }
 
