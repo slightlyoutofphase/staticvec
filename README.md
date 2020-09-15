@@ -33,9 +33,9 @@ Contributions/suggestions/etc. very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
 
-**Important note regarding version 0.10.0 of this crate:**
+**Important note regarding version 0.10 of this crate:**
 
-It exists *solely* because of the fact that the following list of functions:
+The minor version increase from 0.9 was made specifically because of the fact that the following list of functions:
 
 - `concat`
 - `concat_clone`
@@ -45,9 +45,10 @@ It exists *solely* because of the fact that the following list of functions:
 - `union`
 
 were broken in a way by `rust-lang` PR #70107 that simply cannot be worked around at this time. If you rely on any of those functions,
-please continue using version 0.9.3 with a released-prior-to-June-3-2020 copy of the nightly compiler. Again, 0.9.3 would still be the latest
-version of this crate if it were the case that it were actually possible to do anything to fix the compilation error, but unfortunately
-that just is not the case right now.
+please continue using version 0.9.3 with a released-prior-to-June-3-2020 copy of the nightly compiler.
+
+With that said, it **is** recommended that new users of the crate develop against 0.10.X, as it does at this point contain some features that
+never existed in 0.9.X as well as various general internal improvements over 0.9.X, and also of course can be used with up-to-date nightlies.
 
 A basic usage example:
 
