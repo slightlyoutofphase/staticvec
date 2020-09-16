@@ -23,10 +23,10 @@
 #[macro_export]
 macro_rules! staticvec {
   ($($val:expr),* $(,)*) => {
-    $crate::StaticVec::new_from_const_array([$($val),*])
+    $crate::StaticVec::from([$($val),*])
   };
   ($val:expr; $n:expr) => {
-    $crate::StaticVec::new_from_const_array([$val; $n])
+    $crate::StaticVec::from([$val; $n])
   };
 }
 
