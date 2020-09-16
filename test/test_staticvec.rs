@@ -1,7 +1,8 @@
 #![allow(clippy::all)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
-#![feature(box_syntax, const_fn)]
+#![allow(incomplete_features)]
+#![feature(box_syntax, const_fn, const_generics, const_trait_impl)]
 
 // In case you're wondering, the instances of `#[cfg_attr(all(windows, miri), ignore)]` in this
 // file above the `#[should_panic]` tests are there simply because Miri only supports catching
