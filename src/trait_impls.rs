@@ -839,7 +839,7 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     // which shifts the inner data each time.
     let mut start_ptr = self.as_ptr();
     let old_length = self.length;
-    // We update self.length inplace in the loop to track how many bytes
+    // We update `self.length` in place in the loop to track how many bytes
     // have been written. This means that when we perform the shift at the
     // end, self.length is already correct.
     for buf in bufs {
@@ -848,12 +848,10 @@ impl<const N: usize> Read for StaticVec<u8, N> {
       }
       // The number of bytes we'll be reading out of self.
       let read_length = self.length.min(buf.len());
-      // Safety: start_ptr is known to point to the array in self, which
-      // is different than `buf`. read_length <= self.length.
+      // Safety: `start_ptr` is known to point to the array in `self`, which
+      // is different than `buf`, and `read_length` <= `self.length`.
       unsafe {
-        buf
-          .as_mut_ptr()
-          .copy_from_nonoverlapping(start_ptr, read_length);
+        start_ptr.copy_to_nonoverlapping(buf.as_mut_ptr(), read_length);
         start_ptr = start_ptr.add(read_length);
         self.length -= read_length;
       }
@@ -864,8 +862,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
       unsafe {
         self
           .ptr_at_unchecked(total_read)
-          .copy_to(self.as_mut_ptr(), current_length)
-      };
+          .copy_to(self.as_mut_ptr(), current_length);
+      }
     }
     Ok(total_read)
   }
