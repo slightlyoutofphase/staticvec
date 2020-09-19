@@ -53,11 +53,11 @@
 #![cfg_attr(feature = "std", feature(read_initializer))]
 
 use core::cmp::{Ord, PartialEq};
-use core::intrinsics;
+use core::intrinsics::assume;
 #[doc(hidden)]
 pub use core::iter::FromIterator;
 use core::marker::PhantomData;
-use core::mem::MaybeUninit;
+use core::mem::{size_of, MaybeUninit};
 use core::ops::{
   Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub,
 };
@@ -333,7 +333,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline(always)]
   pub const fn size_in_bytes(&self) -> usize {
-    intrinsics::size_of::<T>() * self.length
+    size_of::<T>() * self.length
   }
 
   /// Directly sets the length field of the StaticVec to `new_len`. Useful if you intend
@@ -1201,10 +1201,10 @@ impl<T, const N: usize> StaticVec<T, N> {
     let start_ptr = self.as_ptr();
     unsafe {
       // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
-      intrinsics::assume(!start_ptr.is_null());
+      assume(!start_ptr.is_null());
       StaticVecIterConst {
         start: start_ptr,
-        end: match intrinsics::size_of::<T>() {
+        end: match size_of::<T>() {
           0 => (start_ptr as *const u8).wrapping_add(self.length) as *const T,
           _ => start_ptr.add(self.length),
         },
@@ -1230,10 +1230,10 @@ impl<T, const N: usize> StaticVec<T, N> {
     let start_ptr = self.as_mut_ptr();
     unsafe {
       // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
-      intrinsics::assume(!start_ptr.is_null());
+      assume(!start_ptr.is_null());
       StaticVecIterMut {
         start: start_ptr,
-        end: match intrinsics::size_of::<T>() {
+        end: match size_of::<T>() {
           0 => (start_ptr as *mut u8).wrapping_add(self.length) as *mut T,
           _ => start_ptr.add(self.length),
         },
@@ -1359,7 +1359,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     let self_ptr = self.as_mut_ptr();
     // We know self_ptr will never be null, so this is a safe hint to give the optimizer.
-    unsafe { intrinsics::assume(!self_ptr.is_null()) };
+    unsafe { assume(!self_ptr.is_null()) };
     quicksort_internal(self_ptr, 0, (length - 1) as isize);
   }
 
@@ -1885,14 +1885,14 @@ impl<T, const N: usize> StaticVec<T, N> {
       let start_ptr = self.ptr_at_unchecked(start);
       // `start_ptr` will never be null, so this is a safe assumption to give to
       // the optimizer.
-      intrinsics::assume(!start_ptr.is_null());
+      assume(!start_ptr.is_null());
       // Create the StaticVecDrain from the specified range.
       StaticVecDrain {
         start: end,
         length: length - end,
         iter: StaticVecIterConst {
           start: start_ptr,
-          end: match intrinsics::size_of::<T>() {
+          end: match size_of::<T>() {
             0 => (self.as_ptr() as *const u8).wrapping_add(end) as *const T,
             _ => self.ptr_at_unchecked(end),
           },

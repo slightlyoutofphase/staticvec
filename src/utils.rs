@@ -1,6 +1,6 @@
 use core::cmp::{Ordering, PartialOrd};
-use core::intrinsics;
-use core::mem::MaybeUninit;
+use core::intrinsics::{assume, ptr_offset_from};
+use core::mem::{size_of, MaybeUninit};
 
 use crate::StaticVec;
 
@@ -8,11 +8,11 @@ use crate::StaticVec;
 /// directly for possible ZSTs. This is used specifically in the iterator implementations.
 #[inline(always)]
 pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
-  match intrinsics::size_of::<T>() {
+  match size_of::<T>() {
     0 => unsafe { (dest as usize).wrapping_sub(origin as usize) },
     // Safety: this function is used strictly with linear inputs
     // where dest is known to come after origin.
-    _ => unsafe { intrinsics::ptr_offset_from(dest, origin) as usize },
+    _ => unsafe { ptr_offset_from(dest, origin) as usize },
   }
 }
 
@@ -34,11 +34,11 @@ where
   // function is called from, so these are safe hints to give to the
   // optimizer.
   unsafe {
-    intrinsics::assume(!src.is_null());
+    assume(!src.is_null());
     // Curiously, the explicit typecast to `*mut T` on the next line
     // is necessary to get it to compile. Without the typecast, `rustc` can't figure out
     // what the type is supposed to be for some reason.
-    intrinsics::assume(!(dest as *mut T).is_null());
+    assume(!(dest as *mut T).is_null());
   }
   while i > 0 {
     unsafe {
@@ -105,7 +105,7 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
   // We call this function from exactly one place where `low` and `high` are known to be within an
   // appropriate range before getting passed into it, so there's no need to check them again here.
   // We also know that `values` will never be null, so we can safely give an optimizer hint here.
-  unsafe { intrinsics::assume(!values.is_null()) };
+  unsafe { assume(!values.is_null()) };
   loop {
     let mut i = low;
     let mut j = high;
@@ -153,7 +153,7 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -> &'a [T] {
   debug_assert!(
-    core::mem::size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
+    size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
     "Attempted to create a slice covering at least half the address space!"
   );
   unsafe { &*core::ptr::slice_from_raw_parts(data, length) }
@@ -163,7 +163,7 @@ pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts_mut<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
   debug_assert!(
-    core::mem::size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
+    size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
     "Attempted to create a slice covering at least half the address space!"
   );
   unsafe { &mut *core::ptr::slice_from_raw_parts_mut(data, length) }

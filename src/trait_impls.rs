@@ -780,22 +780,22 @@ impl<const N: usize> Read for StaticVec<u8, N> {
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
     let current_length = self.length;
     let read_length = current_length.min(buf.len());
-    // Safety:  read_length <= buf.length and self.length. Rust borrowing
-    // rules mean that buf is guaranteed not to overlap with self.
+    // Safety: `read_length` <= `buf.length` and `self.length`. Rust borrowing
+    // rules mean that `buf` is guaranteed not to overlap with self.
     unsafe {
       buf
         .as_mut_ptr()
         .copy_from_nonoverlapping(self.as_ptr(), read_length);
     }
     if read_length < current_length {
-      // Safety: we just confirmed that read_length is less than our current length.
+      // Safety: we just confirmed that `read_length` is less than our current length.
       unsafe {
         self
           .ptr_at_unchecked(read_length)
           .copy_to(self.as_mut_ptr(), current_length - read_length)
       };
     }
-    // Safety: 0 <= read_length <= current_length
+    // Safety: 0 <= `read_length` <= `current_length`.
     unsafe { self.set_len(current_length - read_length) };
     Ok(read_length)
   }
@@ -834,19 +834,19 @@ impl<const N: usize> Read for StaticVec<u8, N> {
 
   #[inline]
   fn read_vectored(&mut self, bufs: &mut [IoSliceMut]) -> io::Result<usize> {
-    // Minimize copies: copy to each output buf in sequence, then shift the
+    // Minimize copies: copy to each output buffer in sequence, then shift the
     // internal data only once. This as opposed to calling `read` in a loop,
     // which shifts the inner data each time.
     let mut start_ptr = self.as_ptr();
     let old_length = self.length;
     // We update `self.length` in place in the loop to track how many bytes
     // have been written. This means that when we perform the shift at the
-    // end, self.length is already correct.
+    // end, `self.length` is already correct.
     for buf in bufs {
       if self.is_empty() {
         break;
       }
-      // The number of bytes we'll be reading out of self.
+      // Determine the number of bytes we'll be reading out of `self`.
       let read_length = self.length.min(buf.len());
       // Safety: `start_ptr` is known to point to the array in `self`, which
       // is different than `buf`, and `read_length` <= `self.length`.
