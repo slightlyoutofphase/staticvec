@@ -41,7 +41,6 @@ pub mod string_utils;
 ///   Ok(())
 /// }
 /// ```
-#[derive(Clone)]
 pub struct StaticString<const N: usize> {
   pub(crate) vec: StaticVec<u8, N>,
 }
@@ -830,7 +829,8 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn retain<F: FnMut(char) -> bool>(&mut self, mut f: F) {
-    // Not the most efficient solution, we could shift left during batch mismatch
+    // Having benched `retain` implemented both this way and exactly how `std::string::String`
+    // does, this way is faster believe it or not.
     *self = Self::from_chars(self.as_str().chars().filter(|c| f(*c)));
   }
 

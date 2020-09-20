@@ -4,7 +4,7 @@ extern crate test;
 
 use test::Bencher;
 
-use staticvec::StaticString;
+use staticvec::{staticstring, StaticString};
 
 #[bench]
 fn try_push_c(b: &mut Bencher) {
@@ -86,4 +86,21 @@ fn push_string(b: &mut Bencher) {
     v.len()
   });
   b.bytes = v.capacity() as u64;
+}
+
+static S: StaticString<524> = staticstring!(
+  "ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔
+   ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔
+   ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔
+   ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔ABCD🤔"
+);
+
+#[bench]
+fn retain(b: &mut Bencher) {
+  b.iter(|| {
+    let mut s = S.clone();
+    s.retain(|c| c != '🤔');
+    s.len()
+  });
+  b.bytes = 524
 }

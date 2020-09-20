@@ -78,6 +78,15 @@ impl<const N: usize> const BorrowMut<str> for StaticString<N> {
   }
 }
 
+impl<const N: usize> Clone for StaticString<N> {
+  #[inline(always)]
+  fn clone(&self) -> Self {
+    Self {
+      vec: self.vec.clone(),
+    }
+  }
+}
+
 impl<const N: usize> Debug for StaticString<N> {
   #[inline(always)]
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
