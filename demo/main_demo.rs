@@ -2,7 +2,7 @@
 #![allow(clippy::all)]
 // So we don't get warned about intentionally calling `drain_filter()` on a const struct.
 #![allow(const_item_mutation)]
-#![feature(const_fn)]
+#![feature(const_fn, const_fn_floating_point_arithmetic)]
 
 use staticvec::{sortedstaticvec, staticvec, FromIterator, StaticVec};
 

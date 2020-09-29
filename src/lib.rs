@@ -30,6 +30,7 @@
 )]
 #![feature(
   const_fn,
+  const_fn_floating_point_arithmetic,
   const_fn_union,
   const_generics,
   const_mut_refs,
