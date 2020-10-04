@@ -1,4 +1,4 @@
-#![allow(clippy::all)]
+#![allow(clippy::all, unused_variables)]
 
 // In case you're wondering, the instances of `#[cfg_attr(all(windows, miri), ignore)]` in this
 // file above the `#[should_panic]` tests are there simply because Miri only supports catching
@@ -266,9 +266,13 @@ fn macro_constructor() {
     assert_eq!(S7.len(), 8);
     assert_eq!(S7.remaining_capacity(), 0);
   }
-  // Incorrect capacities like the following just give compile-time errors
-  // via our `const_panic`-enabled assertion:
-  // let s5: StaticString<0> = staticstring!("AAAAAA", 0);
+}
+
+#[cfg_attr(all(windows, miri), ignore)]
+#[test]
+#[should_panic]
+fn macro_constructor_invalid() {
+  let s: StaticString<0> = staticstring!("AAAAAA", 0);
 }
 
 #[test]

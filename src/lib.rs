@@ -2554,10 +2554,6 @@ impl<const N: usize> StaticVec<u8, N> {
     // This works at compile time too, of course, thanks to the `const_panic` feature.
     assert!(
       values.len() <= N,
-      // At the moment, I don't think this message is actually printed in any context when the
-      // assertion gets triggered (currently it's just "could not evaluate static initializer") but
-      // I feel like it doesn't hurt to have here just in case the compiler-error behavior changes
-      // such that custom messages are actually shown.
       "Attempted to create a `StaticString` with insufficient capacity from an `&str` literal!"
     );
     Self::new_from_str_data(Self::bytes_to_data(values.as_bytes()), values.len())
