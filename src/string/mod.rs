@@ -1013,8 +1013,7 @@ impl<const N: usize> StaticString<N> {
     &mut self,
     index: usize,
     string: S,
-  ) -> Result<(), StringError>
-  {
+  ) -> Result<(), StringError> {
     let string_ref = string.as_ref();
     is_inside_boundary(self.len() + string_ref.len(), N)?;
     is_char_boundary(self, index)?;

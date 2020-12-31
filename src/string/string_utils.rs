@@ -29,8 +29,7 @@ pub(crate) unsafe fn encode_char_utf8_unchecked<const N: usize>(
   string: &mut StaticString<N>,
   character: char,
   index: usize,
-)
-{
+) {
   let dest = string.vec.mut_ptr_at_unchecked(index);
   let code = character as u32;
   if code < MAX_ONE_B {
@@ -60,8 +59,7 @@ pub(crate) unsafe fn shift_right_unchecked<const N: usize>(
   string: &mut StaticString<N>,
   from: usize,
   to: usize,
-)
-{
+) {
   debug_assert!(from <= to && to + string.len() - from <= string.capacity());
   debug_assert!(string.as_str().is_char_boundary(from));
   string
@@ -76,8 +74,7 @@ pub(crate) unsafe fn shift_left_unchecked<const N: usize>(
   string: &mut StaticString<N>,
   from: usize,
   to: usize,
-)
-{
+) {
   debug_assert!(to <= from && from <= string.len());
   debug_assert!(string.as_str().is_char_boundary(from));
   string
@@ -100,8 +97,7 @@ pub fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StringError> 
 pub fn is_char_boundary<const N: usize>(
   string: &StaticString<N>,
   index: usize,
-) -> Result<(), StringError>
-{
+) -> Result<(), StringError> {
   match string.as_str().is_char_boundary(index) {
     false => Err(StringError::NotCharBoundary),
     true => Ok(()),

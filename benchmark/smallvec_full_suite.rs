@@ -287,8 +287,7 @@ fn staticvec_bench_insert_many(b: &mut Bencher) {
     vec: &mut StaticVec<isize, SPILLED_SIZE>,
     index: usize,
     iterable: I,
-  )
-  {
+  ) {
     vec.insert_many(index, iterable)
   }
 

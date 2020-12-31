@@ -131,8 +131,7 @@ macro_rules! __staticsort {
           mut values: [$type; $len],
           mut low: isize,
           mut high: isize,
-        ) -> [$type; $len]
-        {
+        ) -> [$type; $len] {
           if high - low <= 0 {
             return values;
           }

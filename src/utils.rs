@@ -77,8 +77,7 @@ where T: Copy {
 pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
   this: &[T2],
   other: &[T1],
-) -> Option<Ordering>
-{
+) -> Option<Ordering> {
   let min_length = this.len().min(other.len());
   unsafe {
     let left = this.get_unchecked(0..min_length);
@@ -100,8 +99,7 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
   values: *mut T,
   mut low: isize,
   mut high: isize,
-)
-{
+) {
   // We call this function from exactly one place where `low` and `high` are known to be within an
   // appropriate range before getting passed into it, so there's no need to check them again here.
   // We also know that `values` will never be null, so we can safely give an optimizer hint here.
