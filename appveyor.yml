@@ -19,7 +19,7 @@ for:
           target: i686-pc-windows-msvc
     install:
       - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-      - rustup-init -yv --default-toolchain nightly --default-host %target% --profile minimal
+      - cmd: rustup-init -yv --default-toolchain nightly --default-host %target% --profile minimal
       - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
     cache:
       - '%USERPROFILE%\.cargo'
@@ -28,11 +28,10 @@ for:
       only:
         - image: Ubuntu2004
     environment:
-      matrix:
-        - channel: nightly
-          target: x86_64-unknown-linux-gnu
+      channel: nightly
+      target: x86_64-unknown-linux-gnu
     install:
-      - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -yv --default-toolchain nightly --default-host %target% --profile minimal
+      - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -yv --default-toolchain nightly --default-host $target --profile minimal
       - sh: export PATH=$PATH:/$HOME/.cargo/bin
     cache:
       - '$HOME/.cargo'
@@ -41,11 +40,10 @@ for:
       only:
         - image: macOS
     environment:
-      matrix:
-        - channel: nightly
-          target: x86_64-apple-darwin
+      channel: nightly
+      target: x86_64-apple-darwin
     install:
-      - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -yv --default-toolchain nightly --default-host %target% --profile minimal
+      - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -yv --default-toolchain nightly --default-host $target --profile minimal
       - sh: export PATH=$PATH:/$HOME/.cargo/bin
     cache:
       - '$HOME/.cargo'
