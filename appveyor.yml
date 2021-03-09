@@ -11,6 +11,8 @@ for:
     matrix:
       only:
         - image: Visual Studio 2019 Preview
+    environment:
+      matrix:
         - channel: nightly
           target: x86_64-pc-windows-msvc
         - channel: nightly
@@ -25,18 +27,23 @@ for:
     matrix:
       only:
         - image: Ubuntu2004
+    environment:
+      matrix:
         - channel: nightly
-          target: x86_64-pc-windows-msvc
+          target: x86_64-unknown-linux-gnu
+    install:
+      - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -yv --default-toolchain nightly --default-host %target% --profile minimal
+      - sh: export PATH=$PATH:/$HOME/.cargo/bin
+    cache:
+      - '$HOME/.cargo'
   -
     matrix:
       only:
         - image: macOS
+    environment:
+      matrix:
         - channel: nightly
           target: x86_64-apple-darwin
-  -
-    matrix:
-      except:
-        - image: Visual Studio 2019 Preview
     install:
       - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -yv --default-toolchain nightly --default-host %target% --profile minimal
       - sh: export PATH=$PATH:/$HOME/.cargo/bin
