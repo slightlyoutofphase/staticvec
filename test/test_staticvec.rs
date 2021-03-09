@@ -346,7 +346,7 @@ fn concat_clone() {
       Box::new("F")
     ]
   );
-  let v = StaticVec::<i32, 0>::from([]).concat_clone(&StaticVec::<i32, 0>::from([]));
+  let v = StaticVec::<Box<i32>, 0>::from([]).concat_clone(&StaticVec::<Box<i32>, 0>::from([]));
   assert_eq!(v, []);
   let v2 = staticvec![Box::new(4), Box::new(5), Box::new(6)].concat_clone(&staticvec![
     Box::new(1),
@@ -2153,6 +2153,11 @@ fn symmetric_difference() {
     staticvec![501, 502, 503, 504].symmetric_difference(&staticvec![502, 503, 504, 505]),
     [501, 505]
   );
+  assert_eq!(
+    staticvec![box 1, box 1, box 1, box 1]
+      .symmetric_difference(&staticvec![box 2, box 2, box 2, box 2]),
+    [box 1, box 1, box 1, box 1, box 2, box 2, box 2, box 2]
+  );
 }
 
 #[test]
@@ -2248,6 +2253,10 @@ fn union() {
   assert_eq!(
     staticvec![1, 2, 3].union(&staticvec![4, 2, 3, 4]),
     [1, 2, 3, 4],
+  );
+  assert_eq!(
+    staticvec![box 5, box 5].union(&staticvec![box 7, box 7]),
+    [box 5, box 7]
   );
 }
 

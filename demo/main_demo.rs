@@ -436,7 +436,7 @@ fn main() {
   println!("{:?}", V.reversed().drain(0..1));
   static VV: StaticVec<f64, 0> = sortedstaticvec!(f64, []);
   println!("{:?}", VV);
-  // The type parameter is inferred as `StaticVec<usize, 7>`.
+  // The type parameter is inferred as `StaticVec<usize, 8>`.
   let filled = StaticVec::<_, 128>::filled_with_by_index(|i| {
     staticvec![i + 1, i + 2, i + 3, i + 4,].intersperse((i + 4) * 4)
   });
