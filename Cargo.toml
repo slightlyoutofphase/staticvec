@@ -15,9 +15,6 @@ include = ["Cargo.toml", "rustfmt.toml", "src/**/*.rs", "README.md", "LICENSE-AP
 [badges.maintenance]
 status = "actively-developed"
 
-[badges.travis-ci]
-repository = "slightlyoutofphase/staticvec"
-
 [badges.appveyor]
 repository = "slightlyoutofphase/staticvec"
 
