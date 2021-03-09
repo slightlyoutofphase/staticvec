@@ -2,7 +2,7 @@
 #![allow(clippy::all)]
 // So we don't get warned about intentionally calling `drain_filter()` on a const struct.
 #![allow(const_item_mutation)]
-#![feature(const_fn, const_fn_floating_point_arithmetic)]
+#![feature(const_fn, const_fn_floating_point_arithmetic, type_name_of_val)]
 
 use staticvec::{sortedstaticvec, staticvec, FromIterator, StaticVec};
 
@@ -413,7 +413,6 @@ fn main() {
   append_to.append(&mut to_append);
   println!("{:?}", to_append);
   println!("{:?}", append_to);
-  /*
   static STATIC_STATICVEC: StaticVec<u8, 5> = staticvec![1, 2, 3, 4, 5];
   println!(
     "{:?}",
@@ -423,7 +422,6 @@ fn main() {
       .sorted_unstable()
       .drain_iter(4..7)
   );
-  */
   let mut extended = StaticVec::<u8, 12>::new();
   extended.extend(staticvec![1, 2, 3].iter());
   extended.extend(staticvec![4, 5, 6].into_iter());
@@ -438,10 +436,11 @@ fn main() {
   println!("{:?}", V.reversed().drain(0..1));
   static VV: StaticVec<f64, 0> = sortedstaticvec!(f64, []);
   println!("{:?}", VV);
-  /*
-  let filled = StaticVec::<StaticVec<usize, 8>, 128>::filled_with_by_index(|i| {
+  // The type parameter is inferred as `StaticVec<usize, 7>`.
+  let filled = StaticVec::<_, 128>::filled_with_by_index(|i| {
     staticvec![i + 1, i + 2, i + 3, i + 4,].intersperse((i + 4) * 4)
   });
   println!("{:?}", filled);
-  */
+  println!("{}", std::any::type_name_of_val(&filled));
+  println!("{}", filled[0].remaining_capacity());
 }

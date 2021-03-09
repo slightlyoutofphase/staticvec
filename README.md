@@ -33,23 +33,6 @@ Contributions/suggestions/etc. very welcome!
 
 **Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
 
-**Important note regarding version 0.10 of this crate:**
-
-The minor version increase from 0.9 was made specifically because of the fact that the following list of functions:
-
-- `concat`
-- `concat_clone`
-- `intersperse`
-- `intersperse_clone`
-- `symmetric_difference`
-- `union`
-
-were broken in a way by `rust-lang` PR #70107 that simply cannot be worked around at this time. If you rely on any of those functions,
-please continue using version 0.9.3 with a released-prior-to-June-3-2020 copy of the nightly compiler.
-
-With that said, it **is** recommended that new users of the crate develop against 0.10.X, as it does at this point contain some features that
-never existed in 0.9.X as well as various general internal improvements over 0.9.X, and also of course can be used with up-to-date nightlies.
-
 A basic usage example:
 
 ```rust
@@ -94,6 +77,18 @@ fn main() {
   .iter() {
     println!("{}", i);
   }
+  // The type parameter is inferred as `StaticVec<usize, 16>`.
+  let filled = StaticVec::<_, 6>::filled_with_by_index(|i| {
+    staticvec![
+      i + 1,
+      i + 2,
+      i + 3,
+      i + 4,
+    ]
+    .concat(&staticvec![6, 6, 7, 7])
+    .intersperse((i + 4) * 4)
+  });
+  println!("{:?}", filled);
 }
 ```
 

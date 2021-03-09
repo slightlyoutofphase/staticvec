@@ -29,6 +29,7 @@
   incomplete_features
 )]
 #![feature(
+  const_evaluatable_checked,
   const_fn,
   const_fn_floating_point_arithmetic,
   const_fn_union,
@@ -1539,7 +1540,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
-  /*
   /// Returns a new StaticVec consisting of the elements of `self` and `other` concatenated in
   /// linear fashion such that the first element of `other` comes immediately after the last
   /// element of `self`.
@@ -1608,9 +1608,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     res
   }
-  */
 
-  /*
   /// Returns a new StaticVec consisting of the elements of `self` in linear order, interspersed
   /// with a copy of `separator` between each one.
   ///
@@ -1690,7 +1688,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     res
   }
-  */
 
   /// Returns a StaticVec containing the contents of a [`Vec`](alloc::vec::Vec) instance.
   /// If the [`Vec`](alloc::vec::Vec) has a length greater than the declared capacity of the
@@ -2158,7 +2155,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     res
   }
 
-  /*
   /// Returns a new StaticVec representing the symmetric difference of `self` and `other` (that is,
   /// all items present in at least one of `self` or `other`, but *not* present in both.)
   ///
@@ -2212,7 +2208,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     res
   }
-  */
 
   /// Returns a new StaticVec representing the intersection of `self` and `other` (that is,
   /// all items present in both `self` and `other`.)
@@ -2251,7 +2246,6 @@ impl<T, const N: usize> StaticVec<T, N> {
     res
   }
 
-  /*
   /// Returns a new StaticVec representing the union of `self` and `other` (that is, the full
   /// contents of both `self` and `other`, minus any duplicates.)
   ///
@@ -2284,7 +2278,6 @@ impl<T, const N: usize> StaticVec<T, N> {
       res
     }
   }
-  */
 
   /// A concept borrowed from the widely-used `SmallVec` crate, this function
   /// returns a tuple consisting of a constant pointer to the first element of the StaticVec,
