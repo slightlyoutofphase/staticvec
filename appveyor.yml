@@ -1,55 +1,55 @@
 image:
-  - Visual Studio 2019 Preview
-  - Ubuntu2004
+  # - Visual Studio 2019 Preview
+  - Ubuntu
   - macOS
 environment:
   APPVEYOR_YML_DISABLE_PS_LINUX: true
   matrix:
-    - TARGET: x86_64-pc-windows-msvc
-    - TARGET: i686-pc-windows-msvc
+    # - TARGET: x86_64-pc-windows-msvc
+    # - TARGET: i686-pc-windows-msvc
     - TARGET: x86_64-unknown-linux-gnu
     - TARGET: x86_64-apple-darwin
 matrix:
   exclude:
-    - image: Ubuntu2004
-      TARGET: x86_64-pc-windows-msvc
-    - image: Ubuntu2004
-      TARGET: i686-pc-windows-msvc
-    - image: Ubuntu2004
+    # - image: Ubuntu
+      # TARGET: x86_64-pc-windows-msvc
+    # - image: Ubuntu
+      # TARGET: i686-pc-windows-msvc
+    - image: Ubuntu
       TARGET: x86_64-apple-darwin
-    - image: macOS
-      TARGET: x86_64-pc-windows-msvc
-    - image: macOS
-      TARGET: i686-pc-windows-msvc
+    # - image: macOS
+      # TARGET: x86_64-pc-windows-msvc
+    # - image: macOS
+      # TARGET: i686-pc-windows-msvc
     - image: macOS
       TARGET: x86_64-unknown-linux-gnu
-    - image: Visual Studio 2019 Preview
-      TARGET: x86_64-unknown-linux-gnu
-    - image: Visual Studio 2019 Preview
-      TARGET: x86_64-apple-darwin
+    # - image: Visual Studio 2019 Preview
+      # TARGET: x86_64-unknown-linux-gnu
+    # - image: Visual Studio 2019 Preview
+      # TARGET: x86_64-apple-darwin
 skip_tags: true
 branches:
   only:
     - master
 for:
+  # -
+    # matrix:
+      # only:
+        # - image: Visual Studio 2019 Preview
+    # install:
+      # - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+      # - cmd: rustup-init.exe -yv --default-toolchain nightly --default-host %TARGET% --profile minimal
+      # - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+    # cache:
+      # - '%USERPROFILE%\.cargo'
   -
     matrix:
       only:
-        - image: Visual Studio 2019 Preview
-    install:
-      - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-      - cmd: rustup-init.exe -yv --default-toolchain nightly --default-host %TARGET% --profile minimal
-      - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-    cache:
-      - '%USERPROFILE%\.cargo'
-  -
-    matrix:
-      only:
-        - image: Ubuntu2004
+        - image: Ubuntu
     install:
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -yv --default-toolchain nightly --default-host x86_64-unknown-linux-gnu --profile minimal
     cache:
-      - '$HOME/.cargo'
+      - '/home/appveyor/.cargo'
   -
     matrix:
       only:
@@ -62,5 +62,5 @@ build: false
 test_script:
   # We run the suite once with all functionality enabled, and then once without
   # the default features to make sure `no_std` support has not been broken
-  - ps: ./ci/run_windows.ps1
+  # - ps: ./ci/run_windows.ps1
   - sh: sudo sh ./ci/run_linux_and_mac.sh
