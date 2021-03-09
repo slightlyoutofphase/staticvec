@@ -2,7 +2,7 @@ image:
   - Visual Studio 2019 Preview
   - Ubuntu2004
   - macOS
-environment
+environment:
   APPVEYOR_YML_DISABLE_PS_LINUX: true
   matrix:
     - TARGET: x86_64-pc-windows-msvc
