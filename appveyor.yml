@@ -3,10 +3,15 @@ image:
   - Ubuntu2004
   - macOS
 skip_tags: true
-environment:
+for:
+-
   matrix:
-    - TARGET: x86_64-pc-windows-msvc
-    - TARGET: i686-pc-windows-msvc
+    only:
+      - image: Visual Studio 2019 Preview
+  environment:
+    matrix:
+      - TARGET: x86_64-pc-windows-msvc
+      - TARGET: i686-pc-windows-msvc
 branches:
   only:
     - master
@@ -17,7 +22,7 @@ for:
         - image: Visual Studio 2019 Preview
     install:
       - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-      - ps: ./rustup-init.exe -yv --default-toolchain nightly --default-host $env:TARGET --profile minimal
+      - cmd: rustup-init.exe -yv --default-toolchain nightly --default-host %TARGET% --profile minimal
       - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
     cache:
       - '%USERPROFILE%\.cargo'
@@ -26,8 +31,7 @@ for:
       only:
         - image: Ubuntu2004
     install:
-      - curl -fsS -o ./rustup-init https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init
-      - sh: sudo ./rustup-init -yv --default-toolchain nightly --default-host x86_64-unknown-linux-gnu --profile minimal
+      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -yv -- --default-toolchain nightly --default-host x86_64-unknown-linux-gnu --profile minimal
       - sh: export PATH=$PATH:/$HOME/.cargo/bin
     cache:
       - '$HOME/.cargo'
@@ -36,8 +40,7 @@ for:
       only:
         - image: macOS
     install:
-      - curl -fsS -o ./rustup-init https://static.rust-lang.org/rustup/dist/x86_64-apple-darwin/rustup-init
-      - sh: sudo ./rustup-init -yv --default-toolchain nightly --default-host x86_64-apple-darwin --profile minimal
+      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -yv -- --default-toolchain nightly --default-host x86_64-apple-darwin --profile minimal
       - sh: export PATH=$PATH:/$HOME/.cargo/bin
     cache:
       - '$HOME/.cargo'
