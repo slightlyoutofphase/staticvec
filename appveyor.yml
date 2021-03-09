@@ -3,15 +3,6 @@ image:
   - Ubuntu2004
   - macOS
 skip_tags: true
-for:
--
-  matrix:
-    only:
-      - image: Visual Studio 2019 Preview
-  environment:
-    matrix:
-      - TARGET: x86_64-pc-windows-msvc
-      - TARGET: i686-pc-windows-msvc
 branches:
   only:
     - master
@@ -20,6 +11,10 @@ for:
     matrix:
       only:
         - image: Visual Studio 2019 Preview
+    environment:
+      matrix:
+        - TARGET: x86_64-pc-windows-msvc
+        - TARGET: i686-pc-windows-msvc
     install:
       - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
       - cmd: rustup-init.exe -yv --default-toolchain nightly --default-host %TARGET% --profile minimal
