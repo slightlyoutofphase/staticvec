@@ -17,7 +17,7 @@ for:
         - TARGET: i686-pc-windows-msvc
     install:
       - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-      - ps: rustup-init -yv --default-toolchain nightly --default-host $env:TARGET --profile minimal
+      - ps: rustup-init.exe -yv --default-toolchain nightly --default-host $env:TARGET --profile minimal
       - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
     cache:
       - '%USERPROFILE%\.cargo'
