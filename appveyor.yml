@@ -65,4 +65,4 @@ test_script:
   # We run the suite once with all functionality enabled, and then once without
   # the default features to make sure `no_std` support has not been broken
   - ps: ./ci/run_windows.ps1
-  - sh: ./ci/run_linux_and_mac.sh
+  - sh: sudo ./ci/run_linux_and_mac.sh
