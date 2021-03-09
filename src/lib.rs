@@ -1637,7 +1637,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     // Note that the `StaticVec::new()` calls above *have* to be written without any constraints,
     // as otherwise we'll hit a particular bug where `rustc` says:
     // "expected struct `StaticVec<_, { N * 2 }>`, found struct `StaticVec<_, { N * 2 }>`".
-    let mut res_ptr = res.as_mut_ptr();
+    let mut res_ptr = res.as_mut_ptr() as *mut T;
     let mut i = 0;
     let length = self.length;
     while i < length - 1 {
