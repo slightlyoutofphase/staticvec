@@ -1,20 +1,44 @@
-image: Visual Studio 2019 Preview
+image:
+  - Visual Studio 2019 Preview
+  - Ubuntu2004
+  - macOS
 skip_tags: true
 environment:
   matrix:
-    - channel: nightly
-      target: x86_64-pc-windows-msvc
-    - channel: nightly
-      target: i686-pc-windows-msvc
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 Preview
+      - channel: nightly
+        target: x86_64-pc-windows-msvc
+      - channel: nightly
+        target: i686-pc-windows-msvc
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+      - channel: nightly
+        target: x86_64-unknown-linux-gnu
+    - APPVEYOR_BUILD_WORKER_IMAGE: macOS
+      - channel: nightly
+        target: x86_64-apple-darwin
 branches:
   only:
     - master
-install:
-  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - rustup-init -yv --default-toolchain nightly --default-host %target% --profile minimal
-  - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-cache:
-  - '%USERPROFILE%\.cargo'
+for:
+  -
+    matrix:
+      only:
+        - image: Visual Studio 2019 Preview
+          install:
+            - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+            - rustup-init -yv --default-toolchain nightly --default-host %target% --profile minimal
+            - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+          cache:
+            - '%USERPROFILE%\.cargo'
+  -
+    matrix:
+      except:
+        - image: Visual Studio 2019 Preview
+          install:
+            - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -yv --default-toolchain nightly --default-host %target% --profile minimal
+            - sh: export PATH=$PATH:/$HOME/.cargo/bin
+          cache:
+            - '$HOME/.cargo'
 build: false
 test_script:
   # We run the suite once with all functionality enabled, and then once without
