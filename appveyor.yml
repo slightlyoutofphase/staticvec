@@ -3,20 +3,6 @@ image:
   - Ubuntu2004
   - macOS
 skip_tags: true
-environment:
-  matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 Preview
-      channel: nightly
-      target: x86_64-pc-windows-msvc
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019 Preview
-      channel: nightly
-      target: i686-pc-windows-msvc
-    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
-      channel: nightly
-      target: x86_64-unknown-linux-gnu
-    - APPVEYOR_BUILD_WORKER_IMAGE: macOS
-      channel: nightly
-      target: x86_64-apple-darwin
 branches:
   only:
     - master
@@ -25,12 +11,28 @@ for:
     matrix:
       only:
         - image: Visual Studio 2019 Preview
+        - channel: nightly
+          target: x86_64-pc-windows-msvc
+        - channel: nightly
+          target: i686-pc-windows-msvc
     install:
       - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
       - rustup-init -yv --default-toolchain nightly --default-host %target% --profile minimal
       - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
     cache:
       - '%USERPROFILE%\.cargo'
+  -
+    matrix:
+      only:
+        - image: Ubuntu2004
+        - channel: nightly
+          target: x86_64-pc-windows-msvc
+  -
+    matrix:
+      only:
+        - image: macOS
+        - channel: nightly
+          target: x86_64-apple-darwin
   -
     matrix:
       except:
