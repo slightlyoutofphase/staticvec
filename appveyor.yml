@@ -25,21 +25,21 @@ for:
     matrix:
       only:
         - image: Visual Studio 2019 Preview
-          install:
-            - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-            - rustup-init -yv --default-toolchain nightly --default-host %target% --profile minimal
-            - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
-          cache:
-            - '%USERPROFILE%\.cargo'
+    install:
+      - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+      - rustup-init -yv --default-toolchain nightly --default-host %target% --profile minimal
+      - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+    cache:
+      - '%USERPROFILE%\.cargo'
   -
     matrix:
       except:
         - image: Visual Studio 2019 Preview
-          install:
-            - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -yv --default-toolchain nightly --default-host %target% --profile minimal
-            - sh: export PATH=$PATH:/$HOME/.cargo/bin
-          cache:
-            - '$HOME/.cargo'
+    install:
+      - sh: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -yv --default-toolchain nightly --default-host %target% --profile minimal
+      - sh: export PATH=$PATH:/$HOME/.cargo/bin
+    cache:
+      - '$HOME/.cargo'
 build: false
 test_script:
   # We run the suite once with all functionality enabled, and then once without
