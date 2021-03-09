@@ -48,7 +48,6 @@ for:
         - image: Ubuntu2004
     install:
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -yv --default-toolchain nightly --default-host x86_64-unknown-linux-gnu --profile minimal
-      - sh: export PATH=$PATH:/$HOME/.cargo/bin
     cache:
       - '$HOME/.cargo'
   -
@@ -57,7 +56,6 @@ for:
         - image: macOS
     install:
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -yv --default-toolchain nightly --default-host x86_64-apple-darwin --profile minimal
-      - sh: export PATH=$PATH:/$HOME/.cargo/bin
     cache:
       - '$HOME/.cargo'
 build: false

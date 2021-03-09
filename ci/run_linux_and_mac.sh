@@ -6,6 +6,8 @@ case $(uname | tr '[:upper:]' '[:lower:]') in
     export APPVEYOR_OS_NAME=osx
     ;;
 esac
+export PATH="$HOME/.cargo/bin:$PATH"
+source $HOME/.cargo/env
 cargo clean
 if [ "$APPVEYOR_OS_NAME" = "linux" ]; then MIRI_NIGHTLY=nightly-$(curl -s https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu/miri); fi
 if [ "$APPVEYOR_OS_NAME" = "osx" ]; then MIRI_NIGHTLY=nightly-$(curl -s https://rust-lang.github.io/rustup-components-history/x86_64-apple-darwin/miri); fi
