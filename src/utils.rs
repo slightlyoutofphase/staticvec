@@ -1,6 +1,6 @@
 use core::cmp::{Ordering, PartialOrd};
 use core::intrinsics::{assume, ptr_offset_from};
-use core::mem::{size_of, MaybeUninit};
+use core::mem::{align_of, size_of, MaybeUninit};
 
 use crate::StaticVec;
 
@@ -147,22 +147,36 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
   }
 }
 
-/// A local `const fn` version of `slice::from_raw_parts`.
+/// A local (identically written) `const fn` version of `intrinsics::is_aligned_and_not_null`.
+#[inline(always)]
+pub(crate) const fn is_aligned_and_not_null<T>(ptr: *const T) -> bool {
+  unsafe { !ptr.is_null() && ptr as usize % align_of::<T>() == 0 }
+}
+
+/// A local (identically written) `const fn` version of `slice::from_raw_parts`.
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -> &'a [T] {
   debug_assert!(
+    is_aligned_and_not_null(data),
+    "Attempted to create an unaligned or null slice!"
+  );
+  debug_assert!(
     size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
-    "Attempted to create a slice covering at least half the address space!"
+    "Attempted to create a slice covering at least half of the address space!"
   );
   unsafe { &*core::ptr::slice_from_raw_parts(data, length) }
 }
 
-/// A local `const fn` version of `slice::from_raw_parts_mut`.
+/// A local (identically written) `const fn` version of `slice::from_raw_parts_mut`.
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts_mut<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
   debug_assert!(
+    is_aligned_and_not_null(data),
+    "Attempted to create an unaligned or null slice!"
+  );
+  debug_assert!(
     size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
-    "Attempted to create a slice covering at least half the address space!"
+    "Attempted to create a slice covering at least half of the address space!"
   );
   unsafe { &mut *core::ptr::slice_from_raw_parts_mut(data, length) }
 }
