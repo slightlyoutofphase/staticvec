@@ -147,18 +147,28 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
   }
 }
 
+/*
 /// A local (identically written) `const fn` version of `intrinsics::is_aligned_and_not_null`.
 #[inline(always)]
 pub(crate) const fn is_aligned_and_not_null<T>(ptr: *const T) -> bool {
-  unsafe { !ptr.is_null() && core::mem::transmute<*const T, usize>(ptr) % align_of::<T>() == 0 }
+  // This does not compile currently in certain const contexts because of the `ptr as usize` cast,
+  // even though the results of the below slice functions are always valid and properly usable
+  // from regular code even when declared as `static`.
+  unsafe { !ptr.is_null() && ptr as usize % align_of::<T>() == 0 }
 }
+*/
 
 /// A local (identically written) `const fn` version of `slice::from_raw_parts`.
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -> &'a [T] {
   debug_assert!(
+    /*
     is_aligned_and_not_null(data),
     "Attempted to create an unaligned or null slice!"
+    */
+    // See comment starting at line 154 for more info about what's going on here.
+    !data.is_null(),
+    "Attempted to create a null slice!"
   );
   debug_assert!(
     size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
@@ -171,8 +181,13 @@ pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -
 #[inline(always)]
 pub(crate) const fn slice_from_raw_parts_mut<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
   debug_assert!(
+    /*
     is_aligned_and_not_null(data),
     "Attempted to create an unaligned or null slice!"
+    */
+    // See comment starting at line 154 for more info about what's going on here.
+    !data.is_null(),
+    "Attempted to create a null slice!"
   );
   debug_assert!(
     size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
