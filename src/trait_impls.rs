@@ -37,10 +37,6 @@ use serde::{
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
-// The instances of `#[rustfmt::skip]` specifically above the `const` impls below are currently
-// necessary, as otherwise rustfmt just silently deletes the `const` keyword.
-
-#[rustfmt::skip]
 impl<T, const N: usize> const AsMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_mut(&mut self) -> &mut [T] {
@@ -48,7 +44,6 @@ impl<T, const N: usize> const AsMut<[T]> for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const AsRef<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_ref(&self) -> &[T] {
@@ -56,7 +51,6 @@ impl<T, const N: usize> const AsRef<[T]> for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const Borrow<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow(&self) -> &[T] {
@@ -64,7 +58,6 @@ impl<T, const N: usize> const Borrow<[T]> for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const BorrowMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow_mut(&mut self) -> &mut [T] {
@@ -146,7 +139,6 @@ impl<T: Debug, const N: usize> Debug for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const Default for StaticVec<T, N> {
   /// Calls `new`.
   #[inline(always)]
@@ -155,7 +147,6 @@ impl<T, const N: usize> const Default for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const Deref for StaticVec<T, N> {
   type Target = [T];
   #[inline(always)]
@@ -164,7 +155,6 @@ impl<T, const N: usize> const Deref for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const DerefMut for StaticVec<T, N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut [T] {
@@ -371,7 +361,6 @@ impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, N2> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const From<[T; N]> for StaticVec<T, N> {
   #[inline(always)]
   fn from(values: [T; N]) -> Self {
@@ -567,7 +556,6 @@ impl<T, const N: usize> IndexMut<RangeFrom<usize>> for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const Index<RangeFull> for StaticVec<T, N> {
   type Output = [T];
   /// Returns a constant reference to a slice consisting of `0..self.length`
@@ -578,7 +566,6 @@ impl<T, const N: usize> const Index<RangeFull> for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const IndexMut<RangeFull> for StaticVec<T, N> {
   /// Returns a mutable reference to a slice consisting of `0..self.length`
   /// elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
@@ -617,7 +604,6 @@ impl<T, const N: usize> IndexMut<RangeInclusive<usize>> for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const Index<RangeTo<usize>> for StaticVec<T, N> {
   type Output = [T];
   /// Asserts that the upper bound of `index` is less than or equal to the
@@ -630,7 +616,6 @@ impl<T, const N: usize> const Index<RangeTo<usize>> for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const IndexMut<RangeTo<usize>> for StaticVec<T, N> {
   /// Asserts that the upper bound of `index` is less than or equal to the
   /// current length of the StaticVec, and if so returns a constant reference
@@ -642,7 +627,6 @@ impl<T, const N: usize> const IndexMut<RangeTo<usize>> for StaticVec<T, N> {
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const Index<RangeToInclusive<usize>> for StaticVec<T, N> {
   type Output = [T];
   /// Asserts that the upper bound of `index` is less than the
@@ -655,7 +639,6 @@ impl<T, const N: usize> const Index<RangeToInclusive<usize>> for StaticVec<T, N>
   }
 }
 
-#[rustfmt::skip]
 impl<T, const N: usize> const IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
   /// Asserts that the upper bound of `index` is less than the
   /// current length of the StaticVec, and if so returns a constant reference

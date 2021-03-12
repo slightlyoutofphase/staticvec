@@ -36,10 +36,6 @@ impl<T: Copy, const N: usize> Clone for StaticHeap<T, N> {
   }
 }
 
-// The `#[rustfmt::skip]` specifically above the `const` impl below is currently necessary, as
-// otherwise rustfmt just silently deletes the `const` keyword.
-
-#[rustfmt::skip]
 impl<T: Ord, const N: usize> const Default for StaticHeap<T, N> {
   /// Creates an empty `StaticHeap<T, N>`.
   #[inline(always)]
