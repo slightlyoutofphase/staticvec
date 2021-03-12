@@ -42,7 +42,6 @@
   const_raw_ptr_to_usize_cast,
   const_slice_from_raw_parts,
   const_trait_impl,
-  const_transmute,
   core_intrinsics,
   doc_cfg,
   exact_size_is_empty,
