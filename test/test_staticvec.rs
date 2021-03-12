@@ -800,6 +800,30 @@ fn insert() {
   assert_eq!(vec, [1, 4, 2, 3, 5]);
 }
 
+#[cfg_attr(all(windows, miri), ignore)]
+#[test]
+#[should_panic]
+fn insert_already_full() {
+  let mut vec = StaticVec::<i32, 5>::from([1, 2, 3, 4, 5]);
+  vec.insert(1, 4);
+}
+
+#[cfg_attr(all(windows, miri), ignore)]
+#[test]
+#[should_panic]
+fn insert_index_too_high() {
+  let mut vec = StaticVec::<i32, 8>::from([1, 2, 3, 4, 5]);
+  vec.insert(19, 4);
+}
+
+#[cfg_attr(all(windows, miri), ignore)]
+#[test]
+#[should_panic]
+fn insert_no_capacity() {
+  let mut vec = StaticVec::<i32, 0>::new();
+  vec.insert(0, 4);
+}
+
 // The next couple of tests for `insert_from_slice` and `insert_many` and are adapted from the
 // SmallVec testsuite.
 
