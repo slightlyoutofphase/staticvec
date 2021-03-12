@@ -150,7 +150,7 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
 /// A local (identically written) `const fn` version of `intrinsics::is_aligned_and_not_null`.
 #[inline(always)]
 pub(crate) const fn is_aligned_and_not_null<T>(ptr: *const T) -> bool {
-  unsafe { !ptr.is_null() && ptr as usize % align_of::<T>() == 0 }
+  unsafe { !ptr.is_null() && core::mem::transmute<*const T, usize>(ptr) % align_of::<T>() == 0 }
 }
 
 /// A local (identically written) `const fn` version of `slice::from_raw_parts`.
