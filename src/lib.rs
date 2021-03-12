@@ -36,6 +36,7 @@
   const_generics,
   const_mut_refs,
   const_panic,
+  const_ptr_is_null,
   const_ptr_offset_from,
   const_raw_ptr_deref,
   const_raw_ptr_to_usize_cast,
