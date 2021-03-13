@@ -102,7 +102,7 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, N> {
   }
 }
 
-impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
+impl<T: Copy, const N: usize> const Clone for StaticVec<T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     let length = self.length;
@@ -113,9 +113,7 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
         data: {
           let mut res = Self::new_data_uninit();
           unsafe {
-            self
-              .as_ptr()
-              .copy_to_nonoverlapping(Self::first_ptr_mut(&mut res), length);
+            ptr::copy_nonoverlapping(self.as_ptr(), Self::first_ptr_mut(&mut res), length);
             res
           }
         },
@@ -126,9 +124,11 @@ impl<T: Copy, const N: usize> Clone for StaticVec<T, N> {
 
   #[inline(always)]
   fn clone_from(&mut self, rhs: &Self) {
-    // Here we take advantage of the above efficient `clone` implementation,
-    // in reverse.
-    *self = rhs.clone();
+    // Similar to what we do above, but more straightforward since `clone_from` works in-place.
+    unsafe {
+      ptr::copy_nonoverlapping(rhs.as_ptr(), self.as_mut_ptr(), rhs.length);
+      self.set_len(rhs.length);
+    }
   }
 }
 

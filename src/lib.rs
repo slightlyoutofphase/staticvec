@@ -32,6 +32,7 @@
   const_evaluatable_checked,
   const_fn,
   const_fn_floating_point_arithmetic,
+  const_fn_fn_ptr_basics,
   const_fn_union,
   const_generics,
   const_intrinsic_copy,
@@ -49,6 +50,7 @@
   core_intrinsics,
   doc_cfg,
   exact_size_is_empty,
+  inline_const,
   maybe_uninit_extra,
   maybe_uninit_ref,
   maybe_uninit_uninit_array,
@@ -1685,19 +1687,19 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// );
   /// ```
   #[inline]
-  pub fn intersperse(&self, separator: T) -> StaticVec<T, { N * 2 }>
+  pub const fn intersperse(&self, separator: T) -> StaticVec<T, { N * 2 }>
   where T: Copy {
     if self.is_empty() {
       return StaticVec::new();
     }
-    let mut res = StaticVec::new();
+    let mut res = StaticVec::new_data_uninit();
     // The `as *mut T` cast below is necessary to make the type inference work properly (at the
     // moment at least). `rustc` still gets a bit confused by math operations done on const generic
     // values in return types it seems.
     // Note that the `StaticVec::new()` calls above *have* to be written without any constraints,
     // as otherwise we'll hit a particular bug where `rustc` says:
     // "expected struct `StaticVec<_, { N * 2 }>`, found struct `StaticVec<_, { N * 2 }>`".
-    let mut res_ptr = res.as_mut_ptr() as *mut T;
+    let mut res_ptr = StaticVec::first_ptr_mut(&mut res) as *mut T;
     let mut i = 0;
     let length = self.length;
     while i < length - 1 {
@@ -1710,9 +1712,11 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
     unsafe {
       res_ptr.write(self.ptr_at_unchecked(i).read());
-      res.set_len((length * 2) - 1);
     }
-    res
+    StaticVec {
+      data: res,
+      length: (length * 2) - 1,
+    }
   }
 
   /// A version of [`intersperse`](crate::StaticVec::intersperse) for scenarios where `T` does not

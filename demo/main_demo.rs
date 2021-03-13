@@ -1,9 +1,22 @@
 // So we don't get "function complexity" lints and such since it's a demo.
 #![allow(clippy::all)]
-// So we don't get warned about intentionally calling `drain_filter()` on a const struct.
-#![allow(const_item_mutation)]
-#![feature(const_fn, const_fn_floating_point_arithmetic, type_name_of_val)]
+// So we don't get warned about intentionally calling `drain_filter()` on a const struct,
+// or warned about incomplete features.
+#![allow(const_item_mutation, incomplete_features)]
+#![feature(
+  const_fn,
+  const_fn_floating_point_arithmetic,
+  const_maybe_uninit_assume_init,
+  const_mut_refs,
+  // Weirdly named feature, as it doesn't necessarily relate to `Cell` at all.
+  const_refs_to_cell,
+  const_trait_impl,
+  inline_const,
+  maybe_uninit_ref,
+  type_name_of_val
+)]
 
+use core::mem::MaybeUninit;
 use staticvec::{sortedstaticvec, staticvec, FromIterator, StaticVec};
 
 #[derive(Copy, Clone, Debug)]
@@ -37,6 +50,33 @@ static S2: StaticVec<usize, 4> = staticvec![1, 2, 3, 4];
 static B: bool = S1.len() + S2.len() == 10;
 static S3: StaticVec<bool, 2> = staticvec![B, !B];
 static SLICE: &[bool] = S3.as_slice();
+static LOL: StaticVec<usize, 12> = S1.intersperse(999);
+static mut MUTABLE: StaticVec<usize, 128> = StaticVec::<usize, 128>::new();
+
+// It's also possible to write compile-time initialization functions that suit your specific needs
+// with "complex" logic taking advantage of various functionality you might typically expect to only
+// be available at runtime.
+const fn build<T: Copy, const N: usize>(x: [T; N]) -> StaticVec<T, N> {
+  // StaticVec implements Drop, and so can't *directly* be returned from a `const fn` yet,
+  // even when `T` is `Copy`.
+  let mut mu = MaybeUninit::new(StaticVec::new());
+  // Not actually unsafe here: `sv` is just a mutable reference to a normal empty StaticVec.
+  let sv = unsafe { mu.assume_init_mut() };
+  // `StaticVec::push` is a `const fn`.
+  let mut i = 0;
+  while i < N {
+    sv.push(x[i]);
+    i += 1;
+  }
+  // So is `StaticVec::pop`, so we can also do this...
+  while sv.pop().is_some() {}
+  // And put everything back in like this...
+  sv.insert_from_slice(0, &x);
+  // Still not actually unsafe here.
+  unsafe { mu.assume_init() }
+}
+
+const BUILT: StaticVec<u8, 3> = build([2, 4, 6]);
 
 fn main() {
   println!("{:?}", S1);
@@ -44,6 +84,16 @@ fn main() {
   println!("{:?}", B);
   println!("{:?}", S3);
   println!("{:?}", SLICE);
+  println!("{:?}", LOL);
+  println!("{}", unsafe { MUTABLE.len() });
+  println!("{}", unsafe { MUTABLE.capacity() });
+  println!("{:?}", BUILT);
+  let mut zz = StaticVec::<usize, 12>::from([1, 2, 3, 4, 5, 6]);
+  let mut zzz = zz.clone();
+  println!("{:?}", zzz);
+  zzz.clear();
+  zz.clone_from(&zzz);
+  println!("{:?}", zz);
   let mut v = StaticVec::<f32, 24>::new();
   for i in 0..v.capacity() {
     v.push(i as f32);
@@ -69,12 +119,12 @@ fn main() {
   for f in &v {
     println!("{}", f);
   }
-  let mut va = StaticVec::<usize, 512>::new();
+  let mut va = StaticVec::<usize, 128>::new();
   for i in 0..va.capacity() {
     va.push(i);
   }
-  let ia = va.remove_item(&256).unwrap();
-  let ib = va.remove_item(&255).unwrap();
+  let ia = va.remove_item(&64).unwrap();
+  let ib = va.remove_item(&63).unwrap();
   println!("{}", ia);
   println!("{}", ib);
   va.remove(10);

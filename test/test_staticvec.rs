@@ -952,6 +952,8 @@ fn intersection() {
     staticvec![4, 5, 6, 7].intersection(&staticvec![1, 2, 3, 7, 4]),
     [4, 7],
   );
+  assert_eq!(staticvec![1].intersection(&staticvec![2]), [],);
+  assert_eq!(staticvec![1, 2, 3].intersection(&staticvec![]), []);
 }
 
 #[test]
