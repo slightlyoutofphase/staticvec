@@ -34,10 +34,14 @@
   const_fn_floating_point_arithmetic,
   const_fn_union,
   const_generics,
+  const_intrinsic_copy,
   const_mut_refs,
   const_panic,
   const_ptr_is_null,
+  const_ptr_offset,
   const_ptr_offset_from,
+  const_ptr_read,
+  const_ptr_write,
   const_raw_ptr_deref,
   const_raw_ptr_to_usize_cast,
   const_slice_from_raw_parts,
@@ -363,14 +367,21 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(vec, data);
   /// ```
   #[inline(always)]
-  pub unsafe fn set_len(&mut self, new_len: usize) {
+  pub const unsafe fn set_len(&mut self, new_len: usize) {
     // Most of the `unsafe` functions in this crate that are heavily used internally
     // have debug-build-only assertions where it's useful.
+    /*
+    // The formatted assertion macros are not const-compatible yet.
     debug_assert!(
       new_len <= N,
       "In `StaticVec::set_len`, provided length {} exceeds the maximum capacity of {}!",
       new_len,
       N
+    );
+    */
+    debug_assert!(
+      new_len <= N,
+      "A `new_len` greater than `N` was passed to `StaticVec::set_len`!"
     );
     self.length = new_len;
   }
@@ -513,18 +524,27 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// }
   /// ```
   #[inline(always)]
-  pub unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
-    // We check against `N` as opposed to `length` in our debug assertion here, as these
-    // `_unchecked` versions of `ptr_at` and `mut_ptr_at` are primarily intended for
-    // initialization-related purposes (and used extensively that way internally throughout the
-    // crate.)
+  pub const unsafe fn ptr_at_unchecked(&self, index: usize) -> *const T {
+    // We (inclusively, to account for the possibility of `N` being 0) check against `N` as opposed
+    // to `length` in our debug assertion here, as these `_unchecked` versions of `ptr_at` and
+    // `mut_ptr_at` are primarily intended for initialization-related purposes (and used extensively
+    // that way internally throughout the crate.)
+    /*
+    // The formatted assertion macros are not const-compatible yet.
     debug_assert!(
       index <= N,
       "In `StaticVec::ptr_at_unchecked`, provided index {} must be within `0..={}`!",
       index,
       N
     );
-    self.as_ptr().add(index)
+    */
+    debug_assert!(
+      index <= N,
+      "Bounds check failure in `StaticVec::ptr_at_unchecked`!",
+    );
+    // Safety: `index` is explicitly a `usize` to start with, and so cannot be negative at this
+    // point.
+    self.as_ptr().offset(index as isize)
   }
 
   /// Returns a mutable pointer to the element of the StaticVec at `index` without doing any
@@ -553,18 +573,27 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, ["I", "am", "a", "StaticVec!"]);
   /// ```
   #[inline(always)]
-  pub unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
-    // We check against `N` as opposed to `length` in our debug assertion here, as these
-    // `_unchecked` versions of `ptr_at` and `mut_ptr_at` are primarily intended for
-    // initialization-related purposes (and used extensively that way internally throughout the
-    // crate.)
+  pub const unsafe fn mut_ptr_at_unchecked(&mut self, index: usize) -> *mut T {
+    // We (inclusively, to account for the possibility of `N` being 0) check against `N` as opposed
+    // to `length` in our debug assertion here, as these `_unchecked` versions of `ptr_at` and
+    // `mut_ptr_at` are primarily intended for initialization-related purposes (and used extensively
+    // that way internally throughout the crate.)
+    /*
+    // The formatted assertion macros are not const-compatible yet.
     debug_assert!(
       index <= N,
       "In `StaticVec::mut_ptr_at_unchecked`, provided index {} must be within `0..={}`!",
       index,
       N
     );
-    self.as_mut_ptr().add(index)
+    */
+    debug_assert!(
+      index <= N,
+      "Bounds check failure in `StaticVec::mut_ptr_at_unchecked`!",
+    );
+    // Safety: `index` is explicitly a `usize` to start with, and so cannot be negative at this
+    // point.
+    self.as_mut_ptr().offset(index as isize)
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` if `index`
@@ -579,12 +608,19 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// unsafe { assert_eq!(*p, "StaticVec!") };
   /// ```
   #[inline(always)]
-  pub fn ptr_at(&self, index: usize) -> *const T {
+  pub const fn ptr_at(&self, index: usize) -> *const T {
+    /*
+    // The formatted assertion macros are not const-compatible yet.
     assert!(
       index < self.length,
       "In `StaticVec::ptr_at`, provided index {} must be within `0..{}`!",
       index,
       self.length
+    );
+    */
+    assert!(
+      index < self.length,
+      "Bounds check failure in `StaticVec::ptr_at`!"
     );
     unsafe { self.ptr_at_unchecked(index) }
   }
@@ -602,12 +638,19 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, ["I", "am", "a", "StaticVec!"]);
   /// ```
   #[inline(always)]
-  pub fn mut_ptr_at(&mut self, index: usize) -> *mut T {
+  pub const fn mut_ptr_at(&mut self, index: usize) -> *mut T {
+    /*
+    // The formatted assertion macros are not const-compatible yet.
     assert!(
       index < self.length,
       "In `StaticVec::mut_ptr_at`, provided index {} must be within `0..{}`!",
       index,
       self.length
+    );
+    */
+    assert!(
+      index < self.length,
+      "Bounds check failure in `StaticVec::mut_ptr_at`!"
     );
     unsafe { self.mut_ptr_at_unchecked(index) }
   }
@@ -630,14 +673,21 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// unsafe { assert_eq!(*staticvec![1, 2, 3].get_unchecked(1), 2) };
   /// ```
   #[inline(always)]
-  pub unsafe fn get_unchecked(&self, index: usize) -> &T {
+  pub const unsafe fn get_unchecked(&self, index: usize) -> &T {
     // This function is used internally in places where `length` has been intentionally
     // temporarily set to zero, so we do our debug assertion against `N`.
+    /*
+    // The formatted assertion macros are not const-compatible yet.
     debug_assert!(
       index < N,
       "In `StaticVec::get_unchecked`, provided index {} must be within `0..{}`!",
       index,
       N
+    );
+    */
+    debug_assert!(
+      index < N,
+      "Bounds check failure in `StaticVec::get_unchecked`!"
     );
     &*self.ptr_at_unchecked(index)
   }
@@ -661,14 +711,21 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 9, 3]);
   /// ```
   #[inline(always)]
-  pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+  pub const unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
     // This function is used internally in places where `length` has been intentionally
     // temporarily set to zero, so we do our debug assertion against `N`.
+    /*
+    // The formatted assertion macros are not const-compatible yet.
     debug_assert!(
       index < N,
       "In `StaticVec::get_unchecked_mut`, provided index {} must be within `0..{}`!",
       index,
       N
+    );
+    */
+    debug_assert!(
+      index < N,
+      "Bounds check failure in `StaticVec::get_unchecked_mut`!"
     );
     &mut *self.mut_ptr_at_unchecked(index)
   }
@@ -690,7 +747,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 2, 3]);
   /// ```
   #[inline(always)]
-  pub unsafe fn push_unchecked(&mut self, value: T) {
+  pub const unsafe fn push_unchecked(&mut self, value: T) {
     debug_assert!(
       self.is_not_full(),
       "`StaticVec::push_unchecked` was called through a StaticVec already at maximum capacity!"
@@ -717,7 +774,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 2, 3]);
   /// ```
   #[inline(always)]
-  pub unsafe fn pop_unchecked(&mut self) -> T {
+  pub const unsafe fn pop_unchecked(&mut self) -> T {
     debug_assert!(
       self.is_not_empty(),
       "`StaticVec::pop_unchecked` was called through an empty StaticVec!"
@@ -739,7 +796,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert!(v2.try_push(1).is_ok());
   /// ```
   #[inline(always)]
-  pub fn try_push(&mut self, value: T) -> Result<(), PushCapacityError<T, N>> {
+  pub const fn try_push(&mut self, value: T) -> Result<(), PushCapacityError<T, N>> {
     if self.is_not_full() {
       unsafe { self.push_unchecked(value) };
       Ok(())
@@ -760,7 +817,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 2]);
   /// ```
   #[inline(always)]
-  pub fn push(&mut self, value: T) {
+  pub const fn push(&mut self, value: T) {
     assert!(
       self.is_not_full(),
       "`StaticVec::push` was called through a StaticVec already at maximum capacity!"
@@ -780,7 +837,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 2]);
   /// ```
   #[inline(always)]
-  pub fn pop(&mut self) -> Option<T> {
+  pub const fn pop(&mut self) -> Option<T> {
     if self.is_empty() {
       None
     } else {
@@ -800,7 +857,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(None, v2.first());
   /// ```
   #[inline(always)]
-  pub fn first(&self) -> Option<&T> {
+  pub const fn first(&self) -> Option<&T> {
     if self.is_empty() {
       None
     } else {
@@ -821,7 +878,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(x, &[5, 1, 2]);
   /// ```
   #[inline(always)]
-  pub fn first_mut(&mut self) -> Option<&mut T> {
+  pub const fn first_mut(&mut self) -> Option<&mut T> {
     if self.is_empty() {
       None
     } else {
@@ -841,7 +898,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(None, w.last());
   /// ```
   #[inline(always)]
-  pub fn last(&self) -> Option<&T> {
+  pub const fn last(&self) -> Option<&T> {
     if self.is_empty() {
       None
     } else {
@@ -862,7 +919,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(x, &[0, 1, 10]);
   /// ```
   #[inline(always)]
-  pub fn last_mut(&mut self) -> Option<&mut T> {
+  pub const fn last_mut(&mut self) -> Option<&mut T> {
     if self.is_empty() {
       None
     } else {
@@ -873,12 +930,12 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// A crate-local unchecked version of `remove`, currently only used in the implementation of
   /// `StaticVecSplice`.
   #[inline]
-  pub(crate) fn remove_unchecked(&mut self, index: usize) -> T {
+  pub(crate) const fn remove_unchecked(&mut self, index: usize) -> T {
     let old_length = self.length;
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
       let res = self_ptr.read();
-      self_ptr.offset(1).copy_to(self_ptr, old_length - index - 1);
+      ptr::copy(self_ptr.offset(1), self_ptr, old_length - index - 1);
       self.set_len(old_length - 1);
       res
     }
@@ -894,7 +951,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(staticvec![1, 2, 3].remove(1), 2);
   /// ```
   #[inline]
-  pub fn remove(&mut self, index: usize) -> T {
+  pub const fn remove(&mut self, index: usize) -> T {
     let old_length = self.length;
     assert!(
       index < old_length,
@@ -903,7 +960,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
       let res = self_ptr.read();
-      self_ptr.offset(1).copy_to(self_ptr, old_length - index - 1);
+      ptr::copy(self_ptr.offset(1), self_ptr, old_length - index - 1);
       self.set_len(old_length - 1);
       res
     }
@@ -989,7 +1046,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 4, 2, 3]);
   /// ```
   #[inline]
-  pub fn insert(&mut self, index: usize, value: T) {
+  pub const fn insert(&mut self, index: usize, value: T) {
     let old_length = self.length;
     assert!(
       old_length < N && index <= old_length,
@@ -997,7 +1054,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     );
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
-      self_ptr.copy_to(self_ptr.offset(1), old_length - index);
+      ptr::copy(self_ptr, self_ptr.offset(1), old_length - index);
       self_ptr.write(value);
       self.set_len(old_length + 1);
     }
@@ -1075,7 +1132,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
   /// ```
   #[inline]
-  pub fn insert_from_slice(&mut self, index: usize, values: &[T])
+  pub const fn insert_from_slice(&mut self, index: usize, values: &[T])
   where T: Copy {
     let old_length = self.length;
     let values_length = values.len();
@@ -1085,8 +1142,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     );
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
-      self_ptr.copy_to(self_ptr.add(values_length), old_length - index);
-      self_ptr.copy_from_nonoverlapping(values.as_ptr(), values_length);
+      ptr::copy(self_ptr, self_ptr.add(values_length), old_length - index);
+      ptr::copy_nonoverlapping(values.as_ptr(), self_ptr, values_length);
       self.set_len(old_length + values_length);
     }
   }
@@ -1103,11 +1160,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline]
   pub fn try_insert(&mut self, index: usize, value: T) -> Result<(), CapacityError<N>> {
+    // This one seems like it *should* be `const fn` compatible, but for some reason rustc`
+    // gives a "can't evaluate destructors" error about it currently,
     let old_length = self.length;
     if old_length < N && index <= old_length {
       unsafe {
         let self_ptr = self.mut_ptr_at_unchecked(index);
-        self_ptr.copy_to(self_ptr.offset(1), old_length - index);
+        ptr::copy(self_ptr, self_ptr.offset(1), old_length - index);
         self_ptr.write(value);
         self.set_len(old_length + 1);
       }
@@ -1131,7 +1190,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert!(v2.try_insert_from_slice(207, &[5, 6]).is_err());
   /// ```
   #[inline]
-  pub fn try_insert_from_slice(
+  pub const fn try_insert_from_slice(
     &mut self,
     index: usize,
     values: &[T],
@@ -1144,8 +1203,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     if old_length < N && index <= old_length && values_length <= self.remaining_capacity() {
       unsafe {
         let self_ptr = self.mut_ptr_at_unchecked(index);
-        self_ptr.copy_to(self_ptr.add(values_length), old_length - index);
-        self_ptr.copy_from_nonoverlapping(values.as_ptr(), values_length);
+        ptr::copy(self_ptr, self_ptr.add(values_length), old_length - index);
+        ptr::copy_nonoverlapping(values.as_ptr(), self_ptr, values_length);
         self.set_len(old_length + values_length);
       }
       Ok(())

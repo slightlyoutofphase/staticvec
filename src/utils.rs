@@ -1,6 +1,6 @@
 use core::cmp::{Ordering, PartialOrd};
 use core::intrinsics::{assume, ptr_offset_from};
-use core::mem::{/*align_of,*/ size_of, MaybeUninit};
+use core::mem::{/* align_of, */ size_of, MaybeUninit};
 
 use crate::StaticVec;
 
