@@ -1806,7 +1806,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   /// # use staticvec::*;
   /// let mut sv = staticvec![1, 2, 3];
-  /// let v = StaticVec::into_vec(sv);
+  /// let v = sv.into_vec();
   /// assert_eq!(v, [1, 2, 3]);
   /// ```
   #[cfg(feature = "std")]
