@@ -109,8 +109,11 @@ pub mod utils;
 /// A [`Vec`](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
 pub struct StaticVec<T, const N: usize> {
-  // We create this field in an uninitialized state, and write to it element-wise as needed
-  // via pointer methods. At no time should `assume_init` *ever* be called through it.
+  // We create this field in an uninitialized state, and write to it element-wise as needed via
+  // pointer methods. At no time should the regular `assume_init` function *ever* be called through
+  // it unless an abundantly obviously-not-UB reason is present or a clear explanation is provided
+  // in comments. At this time, we only use `assume_init_read` and `assume_init_mut` (soundly, and
+  // for good reasons) in about two places total.
   data: MaybeUninit<[T; N]>,
   // The constant `N` parameter (and thus the total span of `data`) represent capacity for us,
   // while the field below represents, as its name suggests, the current length of a StaticVec
