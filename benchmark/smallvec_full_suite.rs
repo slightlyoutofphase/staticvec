@@ -1,7 +1,5 @@
-#![allow(incomplete_features)]
-#![allow(clippy::all)]
-#![feature(test)]
-#![feature(const_generics)]
+#![allow(clippy::all, incomplete_features)]
+#![feature(const_generics, test)]
 
 // SlightlyOutOfPhase, August 2019:
 
