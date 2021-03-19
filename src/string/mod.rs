@@ -848,10 +848,13 @@ impl<const N: usize> StaticString<N> {
     while let Some(m) = searcher.next_match() {
       let (start, end) = (m.0, m.1);
       // Safety: `start` and `end` will be on UTF-8 byte boundaries per the Searcher docs.
+      // Note: this is doing *exactly* the same thing as in the `String` version of this function.
       unsafe { vec_ptr.add(end - shrunk_by).copy_to(vec_ptr.add(start - shrunk_by), old_length - end); }
       shrunk_by += end - start;
     }
-    self.vec.length = old_length - shrunk_by;
+    // Explicitly drop `searcher` right now so that we can mutably borrow `self.vec` for `set_len`.
+    core::mem::drop(searcher);
+    unsafe { self.vec.set_len(old_length - shrunk_by); }
   }
 
   /// Removes all characters from the StaticString except for those specified by the predicate
