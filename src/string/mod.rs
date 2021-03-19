@@ -1,6 +1,6 @@
 use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
 use core::ops::{Bound, RangeBounds};
-use core::str::{pattern::Searcher, self, from_utf8, from_utf8_unchecked};
+use core::str::{pattern::{Pattern, Searcher}, self, from_utf8, from_utf8_unchecked};
 
 pub use self::string_errors::StringError;
 use self::string_utils::{
