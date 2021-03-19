@@ -1,6 +1,9 @@
 use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
 use core::ops::{Bound, RangeBounds};
-use core::str::{/*pattern::{Pattern, Searcher},*/ self, from_utf8, from_utf8_unchecked};
+use core::str::{
+  self, from_utf8, from_utf8_unchecked,
+  pattern::{Pattern, Searcher},
+};
 
 pub use self::string_errors::StringError;
 use self::string_utils::{
@@ -538,7 +541,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(s, "foobar");
   /// ```
   #[inline(always)]
-  pub unsafe fn push_str_unchecked(&mut self, string: &str) {
+  pub const unsafe fn push_str_unchecked(&mut self, string: &str) {
     let string_length = string.len();
     debug_assert!(string_length <= self.remaining_capacity());
     let old_length = self.len();
@@ -816,8 +819,7 @@ impl<const N: usize> StaticString<N> {
     }
     character
   }
-  
-  /*
+
   /// Removes all matches of pattern `pat` in the `StaticString`.
   ///
   /// # Example usage:
@@ -843,21 +845,34 @@ impl<const N: usize> StaticString<N> {
     if old_length == 0 {
       return;
     }
+    let mut matches = StaticVec::<(usize, usize), N>::new();
+    // Create `searcher` in a scope, so that it's dropped exactly when we want.
+    {
+      let mut searcher = pat.into_searcher(self);
+      while let Some(m) = searcher.next_match() {
+        // Safety: it is not possible for the number of matches to be greater than 'N', because
+        // 'N' is the number of individual bytes that the `StaticString` this function is being
+        // called through has guaranteed capacity for.
+        unsafe {
+          matches.push_unchecked(m);
+        }
+      }
+    }
     let mut shrunk_by = 0;
     let vec_ptr = self.vec.as_mut_ptr();
-    let mut searcher = pat.into_searcher(self);
-    while let Some(m) = searcher.next_match() {
-      let (start, end) = (m.0, m.1);
-      // Safety: `start` and `end` will be on UTF-8 byte boundaries per the Searcher docs.
-      // Note: this is doing *exactly* the same thing as in the `String` version of this function.
-      unsafe { vec_ptr.add(end - shrunk_by).copy_to(vec_ptr.add(start - shrunk_by), old_length - end); }
+    for (start, end) in &matches {
+      // Safety: `start` and `end` will be on UTF-8 byte boundaries per the `Searcher` docs.
+      unsafe {
+        vec_ptr
+          .add(end - shrunk_by)
+          .copy_to(vec_ptr.add(start - shrunk_by), old_length - end);
+      }
       shrunk_by += end - start;
     }
-    // Explicitly drop `searcher` right now so that we can mutably borrow `self.vec` for `set_len`.
-    core::mem::drop(searcher);
-    unsafe { self.vec.set_len(old_length - shrunk_by); }
+    unsafe {
+      self.vec.set_len(old_length - shrunk_by);
+    }
   }
-  */
 
   /// Removes all characters from the StaticString except for those specified by the predicate
   /// function.
