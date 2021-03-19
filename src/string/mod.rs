@@ -838,37 +838,20 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub fn remove_matches<'a, P: for<'x> Pattern<'x>>(&'a mut self, pat: P) {
-    if self.len() == 0 {
+    let old_length = self.len();
+    if old_length == 0 {
       return;
     }
-    let matches = {
-      let mut searcher = pat.into_searcher(self);
-      let mut matches = StaticVec::<(usize, usize), N>::new();
-  
-      while let Some(m) = searcher.next_match() {
-        // Safety: it is not possible for the number of matches to be greater than 'N', because
-        // 'N' is the number of individual bytes that the `StaticString` this function is being
-        // called through has guaranteed capacity for.
-        unsafe { matches.push_unchecked(m); }
-      }
-  
-      matches
-    };
-  
-    let len = self.len();
     let mut shrunk_by = 0;
-  
     let vec_ptr = self.vec.as_mut_ptr();
-  
-    // SAFETY: start and end will be on utf8 byte boundaries per
-    // the Searcher docs
-    unsafe {
-      for (start, end) in &matches {
-        vec_ptr.add(end - shrunk_by).copy_to(vec_ptr.add(start - shrunk_by), len - end);
-        shrunk_by += end - start;
-      }
-      self.vec.set_len(len - shrunk_by);
+    let mut searcher = pat.into_searcher(self);
+    while let Some(m) = searcher.next_match() {
+      let (start, end) = (m.0, m.1);
+      // Safety: `start` and `end` will be on UTF-8 byte boundaries per the Searcher docs.
+      unsafe { vec_ptr.add(end - shrunk_by).copy_to(vec_ptr.add(start - shrunk_by), old_length - end); }
+      shrunk_by += end - start;
     }
+    unsafe { self.vec.set_len(old_length - shrunk_by); }
   }
 
   /// Removes all characters from the StaticString except for those specified by the predicate
