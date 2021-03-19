@@ -21,6 +21,7 @@ pub enum StringError {
   OutOfBounds,
 }
 
+#[allow(clippy::match_like_matches_macro)]
 impl StringError {
   #[inline(always)]
   pub fn is_utf8(&self) -> bool {

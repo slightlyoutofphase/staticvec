@@ -126,7 +126,7 @@ impl<'a, T: Ord, const N: usize> Drop for StaticHeapDrainSorted<'a, T, N> {
     impl<'r, 'a, T: Ord, const N: usize> Drop for DropGuard<'r, 'a, T, N> {
       #[inline(always)]
       fn drop(&mut self) {
-        while let Some(_) = self.0.inner.pop() {}
+        while self.0.inner.pop().is_some() {}
       }
     }
     while let Some(item) = self.inner.pop() {

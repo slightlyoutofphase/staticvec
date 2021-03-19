@@ -555,7 +555,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     );
     // Safety: `index` is explicitly a `usize` to start with, and so cannot be negative at this
     // point.
-    self.as_ptr().offset(index as isize)
+    self.as_ptr().add(index)
   }
 
   /// Returns a mutable pointer to the element of the StaticVec at `index` without doing any
@@ -604,7 +604,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     );
     // Safety: `index` is explicitly a `usize` to start with, and so cannot be negative at this
     // point.
-    self.as_mut_ptr().offset(index as isize)
+    self.as_mut_ptr().add(index)
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` if `index`
@@ -984,6 +984,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// # use staticvec::*;
   /// assert_eq!(staticvec![1, 2, 2, 3].remove_item(&2), Some(2));
   /// ```
+  #[allow(clippy::manual_map)]
   #[inline(always)]
   pub fn remove_item(&mut self, item: &T) -> Option<T>
   where T: PartialEq {
@@ -2327,6 +2328,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///   [1, 2, 3, 4],
   /// );
   /// ```
+  #[allow(clippy::from_iter_instead_of_collect)]
   #[inline]
   #[rustfmt::skip]
   pub fn union<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>

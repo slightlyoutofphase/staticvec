@@ -517,11 +517,13 @@ impl<T, const N: usize> const IndexMut<usize> for StaticVec<T, N> {
 
 impl<T, const N: usize> const Index<Range<usize>> for StaticVec<T, N> {
   type Output = [T];
-  /// Asserts that the lower bound of `index` is less than its upper bound,
+  /// Asserts that the lower bound of `index` is less than or equal to its upper bound,
   /// and that its upper bound is less than or equal to the current length of the StaticVec,
   /// and if so returns a constant reference to a slice of elements `index.start..index.end`.
+  #[allow(clippy::suspicious_operation_groupings)]
   #[inline(always)]
   fn index(&self, index: Range<usize>) -> &Self::Output {
+    // This is the part that confuses Clippy.
     assert!(index.start <= index.end && index.end <= self.length);
     slice_from_raw_parts(
       unsafe { self.ptr_at_unchecked(index.start) },
@@ -531,11 +533,13 @@ impl<T, const N: usize> const Index<Range<usize>> for StaticVec<T, N> {
 }
 
 impl<T, const N: usize> const IndexMut<Range<usize>> for StaticVec<T, N> {
-  /// Asserts that the lower bound of `index` is less than its upper bound,
+  /// Asserts that the lower bound of `index` is less than or equal to its upper bound,
   /// and that its upper bound is less than or equal to the current length of the StaticVec,
   /// and if so returns a mutable reference to a slice of elements `index.start..index.end`.
+  #[allow(clippy::suspicious_operation_groupings)]
   #[inline(always)]
   fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
+    // This is the part that confuses Clippy.
     assert!(index.start <= index.end && index.end <= self.length);
     slice_from_raw_parts_mut(
       unsafe { self.mut_ptr_at_unchecked(index.start) },
@@ -668,6 +672,7 @@ impl<T, const N: usize> const IndexMut<RangeToInclusive<usize>> for StaticVec<T,
 }
 
 /// **Note:** this is only available when the `std` crate feature is enabled.
+#[allow(clippy::from_over_into)]
 #[cfg(feature = "std")]
 impl<T, const N: usize> Into<Vec<T>> for StaticVec<T, N> {
   /// Functionally equivalent to [`into_vec`](crate::StaticVec::into_vec).
