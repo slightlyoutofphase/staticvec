@@ -16,10 +16,21 @@ pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usi
   }
 }
 
+/// A `const fn` compatible `min` function specifically for usizes. Not being generic allows it to
+/// actually work in the const contexts we need it to.
+#[inline(always)]
+pub(crate) const fn const_min(lhs: usize, rhs: usize) -> usize {
+  if lhs < rhs {
+    lhs
+  } else {
+    rhs
+  }
+}
+
 /// A simple reversal function that returns a new array, called in
 /// [`StaticVec::reversed`](crate::StaticVec::reversed).
 #[inline]
-pub(crate) fn reverse_copy<T, const N: usize>(
+pub(crate) const fn reverse_copy<T, const N: usize>(
   length: usize,
   this: &MaybeUninit<[T; N]>,
 ) -> MaybeUninit<[T; N]>
@@ -95,7 +106,7 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
 /// A simple quicksort function for internal use, called in
 /// ['quicksorted_unstable`](crate::StaticVec::quicksorted_unstable).
 #[inline]
-pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
+pub(crate) const fn quicksort_internal<T: Copy + PartialOrd>(
   values: *mut T,
   mut low: isize,
   mut high: isize,

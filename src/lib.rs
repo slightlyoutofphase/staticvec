@@ -29,6 +29,7 @@
   incomplete_features
 )]
 #![feature(
+  const_assume,
   const_evaluatable_checked,
   const_fn,
   const_fn_floating_point_arithmetic,
@@ -36,6 +37,7 @@
   const_fn_union,
   const_generics,
   const_intrinsic_copy,
+  const_maybe_uninit_assume_init,
   const_mut_refs,
   const_panic,
   const_ptr_is_null,
@@ -45,7 +47,11 @@
   const_ptr_write,
   const_raw_ptr_deref,
   const_raw_ptr_to_usize_cast,
+  // this should be called `const_interior_mutability` IMO
+  const_refs_to_cell,
+  const_replace,
   const_slice_from_raw_parts,
+  const_swap,
   const_trait_impl,
   core_intrinsics,
   doc_cfg,
@@ -81,7 +87,7 @@ pub use crate::iterators::{
 };
 pub use crate::string::{string_utils, StaticString, StringError};
 use crate::utils::{
-  quicksort_internal, reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut,
+  const_min, quicksort_internal, reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut,
 };
 
 #[cfg(any(feature = "std", rustdoc))]
@@ -157,9 +163,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 2, 3]);
   /// ```
   #[inline]
-  pub fn new_from_slice(values: &[T]) -> Self
+  pub const fn new_from_slice(values: &[T]) -> Self
   where T: Copy {
-    let length = values.len().min(N);
+    let length = const_min(values.len(), N);
     Self {
       data: {
         let mut data = Self::new_data_uninit();
@@ -940,7 +946,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
       let res = self_ptr.read();
-      ptr::copy(self_ptr.offset(1), self_ptr, old_length - index - 1);
+      self_ptr.offset(1).copy_to(self_ptr, old_length - index - 1);
       self.set_len(old_length - 1);
       res
     }
@@ -965,7 +971,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
       let res = self_ptr.read();
-      ptr::copy(self_ptr.offset(1), self_ptr, old_length - index - 1);
+      self_ptr.offset(1).copy_to(self_ptr, old_length - index - 1);
       self.set_len(old_length - 1);
       res
     }
@@ -1001,13 +1007,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, ["AAA", "DDD", "CCC"]);
   /// ```
   #[inline(always)]
-  pub fn swap_pop(&mut self, index: usize) -> Option<T> {
+  pub const fn swap_pop(&mut self, index: usize) -> Option<T> {
     if index < self.length {
       unsafe {
         let new_length = self.length - 1;
         let last_value = self.ptr_at_unchecked(new_length).read();
         self.set_len(new_length);
-        Some(self.mut_ptr_at_unchecked(index).replace(last_value))
+        Some(ptr::replace(self.mut_ptr_at_unchecked(index), last_value))
       }
     } else {
       None
@@ -1026,7 +1032,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, ["AAA", "DDD", "CCC"]);
   /// ```
   #[inline(always)]
-  pub fn swap_remove(&mut self, index: usize) -> T {
+  pub const fn swap_remove(&mut self, index: usize) -> T {
     assert!(
       index < self.length,
       "Bounds check failure in `StaticVec::swap_remove`!"
@@ -1035,7 +1041,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       let new_length = self.length - 1;
       let last_value = self.ptr_at_unchecked(new_length).read();
       self.set_len(new_length);
-      self.mut_ptr_at_unchecked(index).replace(last_value)
+      ptr::replace(self.mut_ptr_at_unchecked(index), last_value)
     }
   }
 
@@ -1059,7 +1065,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     );
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
-      ptr::copy(self_ptr, self_ptr.offset(1), old_length - index);
+      self_ptr.copy_to(self_ptr.offset(1), old_length - index);
       self_ptr.write(value);
       self.set_len(old_length + 1);
     }
@@ -1147,8 +1153,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     );
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
-      ptr::copy(self_ptr, self_ptr.add(values_length), old_length - index);
-      ptr::copy_nonoverlapping(values.as_ptr(), self_ptr, values_length);
+      self_ptr.copy_to(self_ptr.add(values_length), old_length - index);
+      self_ptr.copy_from_nonoverlapping(values.as_ptr(), values_length);
       self.set_len(old_length + values_length);
     }
   }
@@ -1165,13 +1171,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline]
   pub fn try_insert(&mut self, index: usize, value: T) -> Result<(), CapacityError<N>> {
-    // This one seems like it *should* be `const fn` compatible, but for some reason rustc`
-    // gives a "can't evaluate destructors" error about it currently,
     let old_length = self.length;
     if old_length < N && index <= old_length {
       unsafe {
         let self_ptr = self.mut_ptr_at_unchecked(index);
-        ptr::copy(self_ptr, self_ptr.offset(1), old_length - index);
+        self_ptr.copy_to(self_ptr.offset(1), old_length - index);
         self_ptr.write(value);
         self.set_len(old_length + 1);
       }
@@ -1208,8 +1212,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     if old_length < N && index <= old_length && values_length <= self.remaining_capacity() {
       unsafe {
         let self_ptr = self.mut_ptr_at_unchecked(index);
-        ptr::copy(self_ptr, self_ptr.add(values_length), old_length - index);
-        ptr::copy_nonoverlapping(values.as_ptr(), self_ptr, values_length);
+        self_ptr.copy_to(self_ptr.add(values_length), old_length - index);
+        self_ptr.copy_from_nonoverlapping(values.as_ptr(), values_length);
         self.set_len(old_length + values_length);
       }
       Ok(())
@@ -1264,7 +1268,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// }
   /// ```
   #[inline(always)]
-  pub fn iter(&self) -> StaticVecIterConst<T, N> {
+  pub const fn iter(&self) -> StaticVecIterConst<T, N> {
     let start_ptr = self.as_ptr();
     unsafe {
       // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
@@ -1293,7 +1297,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [3, 2, 1, 0]);
   /// ```
   #[inline(always)]
-  pub fn iter_mut(&mut self) -> StaticVecIterMut<T, N> {
+  pub const fn iter_mut(&mut self) -> StaticVecIterMut<T, N> {
     let start_ptr = self.as_mut_ptr();
     unsafe {
       // `start_ptr` will never be null, so this is a safe assumption to give the optimizer.
@@ -1383,7 +1387,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// );
   /// ```
   #[inline]
-  pub fn quicksorted_unstable(&self) -> Self
+  pub const fn quicksorted_unstable(&self) -> Self
   where T: Copy + PartialOrd {
     let length = self.length;
     if length < 2 {
@@ -1418,7 +1422,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// // values simply not being sorted quite as you'd hoped.
   /// ```
   #[inline]
-  pub fn quicksort_unstable(&mut self)
+  pub const fn quicksort_unstable(&mut self)
   where T: Copy + PartialOrd {
     let length = self.length;
     if length < 2 {
@@ -1440,7 +1444,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(staticvec![1, 2, 3].reversed(), [3, 2, 1]);
   /// ```
   #[inline(always)]
-  pub fn reversed(&self) -> Self
+  pub const fn reversed(&self) -> Self
   where T: Copy {
     Self {
       data: reverse_copy(self.length, &self.data),
@@ -1463,14 +1467,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v[3], 4);
   /// ```
   #[inline]
-  pub fn filled_with<F>(mut initializer: F) -> Self
-  where F: FnMut() -> T {
+  pub fn filled_with<F: FnMut() -> T>(mut initializer: F) -> Self {
     let mut res = Self::new();
     for i in 0..N {
       unsafe {
         res.mut_ptr_at_unchecked(i).write(initializer());
-        res.length += 1;
       }
+      res.length += 1;
     }
     res
   }
@@ -1493,14 +1496,13 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v[3], 4);
   /// ```
   #[inline]
-  pub fn filled_with_by_index<F>(mut initializer: F) -> Self
-  where F: FnMut(usize) -> T {
+  pub fn filled_with_by_index<F: FnMut(usize) -> T>(mut initializer: F) -> Self {
     let mut res = Self::new();
     for i in 0..N {
       unsafe {
         res.mut_ptr_at_unchecked(i).write(initializer(i));
-        res.length += 1;
       }
+      res.length += 1;
     }
     res
   }
@@ -1519,10 +1521,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [1, 2, 3, 4, 5, 6, 7, 8]);
   /// ```
   #[inline(always)]
-  pub fn extend_from_slice(&mut self, values: &[T])
+  pub const fn extend_from_slice(&mut self, values: &[T])
   where T: Copy {
     let old_length = self.length;
-    let added_length = values.len().min(N - old_length);
+    let added_length = const_min(values.len(), N - old_length);
     // Safety: added_length is <= our remaining capacity and values.len.
     unsafe {
       values
@@ -1926,8 +1928,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v2, [6, 5, 4]);
   /// ```
   #[inline]
-  pub fn drain_iter<R>(&mut self, range: R) -> StaticVecDrain<T, N>
-  where R: RangeBounds<usize> {
+  pub fn drain_iter<R: RangeBounds<usize>>(&mut self, range: R) -> StaticVecDrain<T, N> {
     // Borrowed this part from normal Vec's implementation.
     let length = self.length;
     let start = match range.start_bound() {
@@ -1981,8 +1982,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(odds, [1, 3, 5, 9, 11, 13, 15]);
   /// ```
   #[inline]
-  pub fn drain_filter<F>(&mut self, mut filter: F) -> Self
-  where F: FnMut(&mut T) -> bool {
+  pub fn drain_filter<F: FnMut(&mut T) -> bool>(&mut self, mut filter: F) -> Self {
     let old_length = self.length;
     // Temporarily set our length to 0 to avoid double drops and such if anything
     // goes wrong in the filter loop.
@@ -2031,10 +2031,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(u, [1, 2]);
   /// ```
   #[inline]
-  pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> StaticVecSplice<T, I::IntoIter, N>
-  where
-    R: RangeBounds<usize>,
-    I: IntoIterator<Item = T>, {
+  pub fn splice<R: RangeBounds<usize>, I: IntoIterator<Item = T>>(
+    &mut self,
+    range: R,
+    replace_with: I,
+  ) -> StaticVecSplice<T, I::IntoIter, N> {
     let length = self.length;
     let start = match range.start_bound() {
       Included(&idx) => idx,
@@ -2070,8 +2071,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [2, 3, 5]);
   /// ```
   #[inline(always)]
-  pub fn retain<F>(&mut self, mut filter: F)
-  where F: FnMut(&T) -> bool {
+  pub fn retain<F: FnMut(&T) -> bool>(&mut self, mut filter: F) {
     self.drain_filter(|val| !filter(val));
   }
 
@@ -2142,8 +2142,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, ["aaa", "bbb", "ccc", "ddd"]);
   /// ```
   #[inline(always)]
-  pub fn dedup_by<F>(&mut self, same_bucket: F)
-  where F: FnMut(&mut T, &mut T) -> bool {
+  pub fn dedup_by<F: FnMut(&mut T, &mut T) -> bool>(&mut self, same_bucket: F) {
     // Mostly the same as Vec's version.
     let new_length = self.as_mut_slice().partition_dedup_by(same_bucket).0.len();
     self.truncate(new_length);
@@ -2177,10 +2176,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v, [10, 20, 30, 20]);
   /// ```
   #[inline(always)]
-  pub fn dedup_by_key<F, K>(&mut self, mut key: F)
-  where
-    F: FnMut(&mut T) -> K,
-    K: PartialEq<K>, {
+  pub fn dedup_by_key<F: FnMut(&mut T) -> K, K: PartialEq<K>>(&mut self, mut key: F) {
     // Exactly the same as Vec's version.
     self.dedup_by(|a, b| key(a) == key(b))
   }
