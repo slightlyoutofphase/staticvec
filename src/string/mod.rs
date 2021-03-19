@@ -851,6 +851,7 @@ impl<const N: usize> StaticString<N> {
       unsafe { vec_ptr.add(end - shrunk_by).copy_to(vec_ptr.add(start - shrunk_by), old_length - end); }
       shrunk_by += end - start;
     }
+    core::mem::drop(searcher);
     unsafe { self.vec.set_len(old_length - shrunk_by); }
   }
 
