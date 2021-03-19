@@ -1,6 +1,6 @@
 use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
 use core::ops::{Bound, RangeBounds};
-use core::str::{self, from_utf8, from_utf8_unchecked};
+use core::str::{pattern::Searcher, self, from_utf8, from_utf8_unchecked};
 
 pub use self::string_errors::StringError;
 use self::string_utils::{
@@ -815,6 +815,54 @@ impl<const N: usize> StaticString<N> {
       self.vec.set_len(old_length - char_length);
     }
     character
+  }
+  
+  /// Removes all matches of pattern `pat` in the `StaticString`.
+  ///
+  /// # Example usage:
+  /// ```
+  /// # use staticvec::{staticstring, StaticString};
+  /// let mut s = staticstring!("Trees are not green, the sky is not blue.");
+  /// s.remove_matches("not ");
+  /// assert_eq!("Trees are green, the sky is blue.", s);
+  /// ```
+  ///
+  /// Matches will be detected and removed iteratively, so in cases where
+  /// patterns overlap, only the first pattern will be removed:
+  ///
+  /// ```
+  /// # use staticvec::{staticstring, StaticString};
+  /// let mut s = staticstring!("banana");
+  /// s.remove_matches("ana");
+  /// assert_eq!("bna", s);
+  /// ```
+  #[inline]
+  pub fn remove_matches<'a, P: for<'x> Pattern<'x>>(&'a mut self, pat: P) {
+    let matches = {
+      let mut searcher = pat.into_searcher(self);
+      let mut matches = StaticVec::<(usize, usize), N>::new();
+  
+      while let Some(m) = searcher.next_match() {
+        matches.push(m);
+      }
+  
+      matches
+    };
+  
+    let len = self.len();
+    let mut shrunk_by = 0;
+  
+    let vec_ptr = self.vec.as_mut_ptr();
+  
+    // SAFETY: start and end will be on utf8 byte boundaries per
+    // the Searcher docs
+    unsafe {
+      for (start, end) in &matches {
+        vec_ptr.add(end - shrunk_by).copy_to(vec_ptr.add(start - shrunk_by), len - end);
+        shrunk_by += end - start;
+      }
+      self.vec.set_len(len - shrunk_by);
+    }
   }
 
   /// Removes all characters from the StaticString except for those specified by the predicate
