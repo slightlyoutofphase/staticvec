@@ -838,6 +838,9 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub fn remove_matches<'a, P: for<'x> Pattern<'x>>(&'a mut self, pat: P) {
+    if self.len() == 0 {
+      return;
+    }
     let matches = {
       let mut searcher = pat.into_searcher(self);
       let mut matches = StaticVec::<(usize, usize), N>::new();
