@@ -824,7 +824,7 @@ impl<const N: usize> StaticString<N> {
   /// # use staticvec::{staticstring, StaticString};
   /// let mut s = staticstring!("Trees are not green, the sky is not blue.");
   /// s.remove_matches("not ");
-  /// assert_eq!("Trees are green, the sky is blue.", s);
+  /// assert_eq!("Trees are green, the sky is blue.", s.as_str());
   /// ```
   ///
   /// Matches will be detected and removed iteratively, so in cases where
@@ -834,7 +834,7 @@ impl<const N: usize> StaticString<N> {
   /// # use staticvec::{staticstring, StaticString};
   /// let mut s = staticstring!("banana");
   /// s.remove_matches("ana");
-  /// assert_eq!("bna", s);
+  /// assert_eq!("bna", s.as_str());
   /// ```
   #[inline]
   pub fn remove_matches<'a, P: for<'x> Pattern<'x>>(&'a mut self, pat: P) {
