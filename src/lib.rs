@@ -125,7 +125,7 @@ pub struct StaticVec<T, const N: usize> {
   // The constant `N` parameter (and thus the total span of `data`) represent capacity for us,
   // while the field below represents, as its name suggests, the current length of a StaticVec
   // (that is, the current number of "live" elements) just as is the case for a regular `Vec`.
-  length: usize,
+  pub(crate) length: usize,
 }
 
 impl<T, const N: usize> StaticVec<T, N> {
