@@ -357,6 +357,7 @@ fn remove_invalid() {
   StaticString::<0>::from("ศ").remove(1);
 }
 
+/*
 #[test]
 fn remove_matches() {
   let mut s = staticstring!("abc");
@@ -377,6 +378,7 @@ fn remove_matches() {
   s.remove_matches('a');
   assert_eq!(s.as_str(), "");
 }
+*/
 
 #[test]
 fn replace_range() {
