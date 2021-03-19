@@ -60,6 +60,7 @@
   maybe_uninit_extra,
   maybe_uninit_ref,
   maybe_uninit_uninit_array,
+  pattern,
   slice_partition_dedup,
   specialization,
   trusted_len,
