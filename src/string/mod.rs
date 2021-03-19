@@ -846,7 +846,10 @@ impl<const N: usize> StaticString<N> {
       let mut matches = StaticVec::<(usize, usize), N>::new();
   
       while let Some(m) = searcher.next_match() {
-        matches.push(m);
+        // Safety: it is not possible for the number of matches to be greater than 'N', because
+        // 'N' is the number of individual bytes that the `StaticString` this function is being
+        // called through has guaranteed capacity for.
+        unsafe { matches.push_unchecked(m); }
       }
   
       matches
