@@ -817,6 +817,7 @@ impl<const N: usize> StaticString<N> {
     character
   }
   
+  /*
   /// Removes all matches of pattern `pat` in the `StaticString`.
   ///
   /// # Example usage:
@@ -856,6 +857,7 @@ impl<const N: usize> StaticString<N> {
     core::mem::drop(searcher);
     unsafe { self.vec.set_len(old_length - shrunk_by); }
   }
+  */
 
   /// Removes all characters from the StaticString except for those specified by the predicate
   /// function.
