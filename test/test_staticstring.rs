@@ -358,6 +358,27 @@ fn remove_invalid() {
 }
 
 #[test]
+fn remove_matches() {
+  let mut s = staticstring!("abc");
+  s.remove_matches('b');
+  assert_eq!(s.as_str(), "ac");
+  s.remove_matches('b');
+  assert_eq!(s.as_str(), "ac");
+  let mut s = staticstring!("abcb");
+  s.remove_matches('b');
+  assert_eq!(s.as_str(), "ac");
+  let mut s = staticstring!("ศไทย中华Việt Nam; foobarศ");
+  s.remove_matches('ศ');
+  assert_eq!(s.as_str(), "ไทย中华Việt Nam; foobar");
+  let mut s = StaticString::<0>::from("");
+  s.remove_matches("");
+  assert_eq!(s.as_str(), "");
+  let mut s = staticstring!("aaaaa");
+  s.remove_matches('a');
+  assert_eq!(s.as_str(), "");
+}
+
+#[test]
 fn replace_range() {
   let mut s = MyString::from("Hello, world!");
   s.replace_range(7..12, "世界");
