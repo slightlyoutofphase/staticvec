@@ -476,7 +476,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// }
   /// ```
   #[inline(always)]
-  pub fn iter(&self) -> StaticVecIterConst<'_, T, N> {
+  pub const fn iter(&self) -> StaticVecIterConst<'_, T, N> {
     self.data.iter()
   }
 
@@ -498,7 +498,7 @@ impl<T, const N: usize> StaticHeap<T, N> {
   /// println!("{:?}", heap);
   /// ```
   #[inline(always)]
-  pub fn iter_mut(&mut self) -> StaticVecIterMut<'_, T, N> {
+  pub const fn iter_mut(&mut self) -> StaticVecIterMut<'_, T, N> {
     self.data.iter_mut()
   }
 
