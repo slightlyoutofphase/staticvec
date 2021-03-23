@@ -102,5 +102,15 @@ fn retain(b: &mut Bencher) {
     s.retain(|c| c != '🤔');
     s.len()
   });
-  b.bytes = 524
+  b.bytes = 524;
+}
+
+#[bench]
+fn remove_matches(b: &mut Bencher) {
+  b.iter(|| {
+    let mut s = S.clone();
+    s.remove_matches('🤔');
+    s.len()
+  });
+  b.bytes = 524;
 }

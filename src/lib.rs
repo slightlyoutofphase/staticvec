@@ -1475,6 +1475,8 @@ impl<T, const N: usize> StaticVec<T, N> {
       unsafe {
         res.mut_ptr_at_unchecked(i).write(initializer());
       }
+      // Adjusting the length of `res` as we go ensures any items already written to it will be
+      // dropped properly in the event that `initializer` panics at some point.
       res.length += 1;
     }
     res
@@ -1504,6 +1506,8 @@ impl<T, const N: usize> StaticVec<T, N> {
       unsafe {
         res.mut_ptr_at_unchecked(i).write(initializer(i));
       }
+      // Adjusting the length of `res` as we go ensures any items already written to it will be
+      // dropped properly in the event that `initializer` panics at some point.
       res.length += 1;
     }
     res

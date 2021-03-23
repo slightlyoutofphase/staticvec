@@ -85,7 +85,7 @@ pub(crate) unsafe fn shift_left_unchecked<const N: usize>(
 
 /// Returns an error if `size` is greater than `limit`.
 #[inline(always)]
-pub fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StringError> {
+pub const fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StringError> {
   match size <= limit {
     false => Err(StringError::OutOfBounds),
     true => Ok(()),

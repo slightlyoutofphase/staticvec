@@ -24,7 +24,7 @@ pub enum StringError {
 #[allow(clippy::match_like_matches_macro)]
 impl StringError {
   #[inline(always)]
-  pub fn is_utf8(&self) -> bool {
+  pub const fn is_utf8(&self) -> bool {
     match self {
       Self::Utf8(_) => true,
       _ => false,
@@ -32,7 +32,7 @@ impl StringError {
   }
 
   #[inline(always)]
-  pub fn is_utf16(&self) -> bool {
+  pub const fn is_utf16(&self) -> bool {
     match self {
       Self::Utf16(_) => true,
       _ => false,
@@ -40,7 +40,7 @@ impl StringError {
   }
 
   #[inline(always)]
-  pub fn is_out_of_bounds(&self) -> bool {
+  pub const fn is_out_of_bounds(&self) -> bool {
     match self {
       Self::OutOfBounds => true,
       _ => false,
@@ -48,7 +48,7 @@ impl StringError {
   }
 
   #[inline(always)]
-  pub fn is_not_char_boundary(&self) -> bool {
+  pub const fn is_not_char_boundary(&self) -> bool {
     match self {
       Self::NotCharBoundary => true,
       _ => false,
@@ -71,21 +71,21 @@ impl Display for StringError {
 #[cfg(feature = "std")]
 impl std::error::Error for StringError {}
 
-impl From<DecodeUtf16Error> for StringError {
+impl const From<DecodeUtf16Error> for StringError {
   #[inline(always)]
   fn from(err: DecodeUtf16Error) -> Self {
     Self::Utf16(err)
   }
 }
 
-impl From<Utf8Error> for StringError {
+impl const From<Utf8Error> for StringError {
   #[inline(always)]
   fn from(err: Utf8Error) -> Self {
     Self::Utf8(err)
   }
 }
 
-impl<const N: usize> From<CapacityError<N>> for StringError {
+impl<const N: usize> const From<CapacityError<N>> for StringError {
   #[inline(always)]
   fn from(_err: CapacityError<N>) -> Self {
     Self::OutOfBounds
