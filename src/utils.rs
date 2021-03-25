@@ -177,7 +177,9 @@ pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -
     is_aligned_and_not_null(data),
     "Attempted to create an unaligned or null slice!"
     */
-    // See comment starting at line 154 for more info about what's going on here.
+    // See comment starting at line 154 for more info about what's going on here. Note that the
+    // alignment check is not actually a concern for our use case anyways, since we only call this
+    // function with known-valid pointers to initialized elements of a StaticVec's internal array.
     !data.is_null(),
     "Attempted to create a null slice!"
   );
@@ -196,7 +198,9 @@ pub(crate) const fn slice_from_raw_parts_mut<'a, T>(data: *mut T, length: usize)
     is_aligned_and_not_null(data),
     "Attempted to create an unaligned or null slice!"
     */
-    // See comment starting at line 154 for more info about what's going on here.
+    // See comment starting at line 154 for more info about what's going on here. Note that the
+    // alignment check is not actually a concern for our use case anyways, since we only call this
+    // function with known-valid pointers to initialized elements of a StaticVec's internal array.
     !data.is_null(),
     "Attempted to create a null slice!"
   );

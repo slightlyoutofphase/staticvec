@@ -22,9 +22,15 @@ use staticvec::{sortedstaticvec, staticvec, FromIterator, StaticVec};
 #[derive(Copy, Clone, Debug)]
 struct ZST {}
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct MyStruct {
   s: &'static str,
+}
+
+impl MyStruct {
+  pub const fn new(s: &'static str) -> Self {
+    Self { s }
+  }
 }
 
 #[derive(Debug)]
@@ -52,6 +58,14 @@ static S3: StaticVec<bool, 2> = staticvec![B, !B];
 static SLICE: &[bool] = S3.as_slice();
 static LOL: StaticVec<usize, 12> = S1.intersperse(999);
 static mut MUTABLE: StaticVec<usize, 128> = StaticVec::<usize, 128>::new();
+static LEFT: StaticVec<MyStruct, 4> = staticvec![
+  MyStruct::new("a"),
+  MyStruct::new("b"),
+  MyStruct::new("c"),
+  MyStruct::new("d")
+];
+static RIGHT: StaticVec<MyStruct, 2> = staticvec![MyStruct::new("e"), MyStruct::new("f")];
+static CONCATENATED: StaticVec<MyStruct, 6> = LEFT.concat(&RIGHT);
 
 // It's also possible to write compile-time initialization functions that suit your specific needs
 // with "complex" logic taking advantage of various methods you might typically expect to only
@@ -94,6 +108,7 @@ fn main() {
   println!("{:?}", LOL);
   println!("{}", unsafe { MUTABLE.len() });
   println!("{}", unsafe { MUTABLE.capacity() });
+  println!("{:?}", CONCATENATED);
   println!("{:?}", BUILT);
   let mut zz = StaticVec::<usize, 12>::from([1, 2, 3, 4, 5, 6]);
   let mut zzz = zz.clone();

@@ -37,6 +37,7 @@
   const_fn_union,
   const_generics,
   const_intrinsic_copy,
+  const_maybe_uninit_as_ptr,
   const_maybe_uninit_assume_init,
   const_mut_refs,
   const_panic,
@@ -1631,25 +1632,30 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert!(staticvec!['a', 'b'].concat(&staticvec!['c', 'd']) == ['a', 'b', 'c', 'd']);
   /// ```
   #[inline]
-  pub fn concat<const N2: usize>(&self, other: &StaticVec<T, N2>) -> StaticVec<T, { N + N2 }>
-  where T: Copy {
+  pub const fn concat<const N2: usize>(
+    &self,
+    other: &StaticVec<T, N2>,
+  ) -> StaticVec<T, { N + N2 }>
+  where
+    T: Copy,
+  {
     let length = self.length;
     let other_length = other.length;
-    let mut res = StaticVec::new();
+    let mut res = StaticVec::new_data_uninit();
+    let res_ptr = res.as_mut_ptr() as *mut T;
     unsafe {
       // Copy over all of `self`.
-      self
-        .as_ptr()
-        .copy_to_nonoverlapping(res.as_mut_ptr(), length);
+      self.as_ptr().copy_to_nonoverlapping(res_ptr, length);
       // Copy over all of `other` starting at the position immediately following
       // the last occupied position of the copy we just did from `self`.
       other
         .as_ptr()
-        .copy_to_nonoverlapping(res.mut_ptr_at_unchecked(length), other_length);
-      // Set the length of the resulting StaticVec before we return it.
-      res.set_len(length + other_length);
+        .copy_to_nonoverlapping(res_ptr.add(length), other_length);
     }
-    res
+    StaticVec {
+      data: res,
+      length: length + other_length,
+    }
   }
 
   /// A version of [`concat`](crate::StaticVec::concat) for scenarios where `T` does not

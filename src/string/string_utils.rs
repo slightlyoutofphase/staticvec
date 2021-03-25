@@ -1,15 +1,11 @@
 use super::{StaticString, StringError};
 
-pub(crate) trait IntoLossy<T>: Sized {
-  fn into_lossy(self) -> T;
-}
-
 /// Unsafely marks a branch as unreachable.
 #[inline(always)]
 #[allow(unused_variables)]
 pub(crate) unsafe fn never(s: &str) -> ! {
   #[cfg(debug_assertions)]
-  panic!("{}", s);
+  core::panic!("{}", s);
   #[cfg(not(debug_assertions))]
   core::hint::unreachable_unchecked()
 }
@@ -118,22 +114,6 @@ pub(crate) fn truncate_str(slice: &str, size: usize) -> &str {
     unsafe { slice.get_unchecked(..index) }
   } else {
     slice
-  }
-}
-
-impl IntoLossy<u8> for usize {
-  #[allow(clippy::cast_possible_truncation)]
-  #[inline]
-  fn into_lossy(self) -> u8 {
-    self as u8
-  }
-}
-
-impl IntoLossy<u8> for u32 {
-  #[allow(clippy::cast_possible_truncation)]
-  #[inline]
-  fn into_lossy(self) -> u8 {
-    self as u8
   }
 }
 
