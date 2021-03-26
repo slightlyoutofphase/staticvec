@@ -3,6 +3,10 @@
 // So we don't get warned about intentionally calling `drain_filter()` on a const struct,
 // or warned about incomplete features.
 #![allow(const_item_mutation, incomplete_features)]
+// As a "regular end user" of this crate, you're not likely to need all or even any of these
+// flags to be specified in your own code unless you're also going out of your way to basically
+// do everything that can conceivably be done with a StaticVec within the context of a single
+// program.
 #![feature(
   const_fn,
   const_fn_floating_point_arithmetic,
