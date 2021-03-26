@@ -8,6 +8,7 @@
   const_fn_floating_point_arithmetic,
   const_maybe_uninit_assume_init,
   const_mut_refs,
+  const_precise_live_drops,
   // Weirdly named feature, as it doesn't necessarily relate to `Cell` at all.
   const_refs_to_cell,
   const_trait_impl,
@@ -38,7 +39,7 @@ struct MyOtherStruct {
   s: &'static str,
 }
 
-impl Clone for MyOtherStruct {
+impl const Clone for MyOtherStruct {
   fn clone(&self) -> Self {
     Self { s: self.s }
   }
@@ -66,6 +67,31 @@ static LEFT: StaticVec<MyStruct, 4> = staticvec![
 ];
 static RIGHT: StaticVec<MyStruct, 2> = staticvec![MyStruct::new("e"), MyStruct::new("f")];
 static CONCATENATED: StaticVec<MyStruct, 6> = LEFT.concat(&RIGHT);
+
+// You can do quite a bit with a StaticVec even inside of a top-level const block.
+static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
+  let mut a = staticvec![
+    MyOtherStruct { s: "d" },
+    MyOtherStruct { s: "e" },
+    MyOtherStruct { s: "f" }
+  ];
+  let mut b = StaticVec::<MyOtherStruct, 6>::new();
+  let iter_slice = staticvec![
+    MyOtherStruct { s: "a" },
+    MyOtherStruct { s: "b" },
+    MyOtherStruct { s: "c" },
+  ]
+  .iter()
+  .as_slice();
+  b.insert(0, iter_slice[0].clone());
+  b.insert(1, iter_slice[1].clone());
+  b.insert(2, iter_slice[2].clone());
+  b.append(&mut a);
+  // `a` is now empty, but we have to "forget" it anyways to make this work in a const context
+  // in conjunction with the `const_precise_live_drops` feature currently.
+  core::mem::forget(a);
+  b
+};
 
 // It's also possible to write compile-time initialization functions that suit your specific needs
 // with "complex" logic taking advantage of various methods you might typically expect to only
@@ -110,6 +136,7 @@ fn main() {
   println!("{}", unsafe { MUTABLE.capacity() });
   println!("{:?}", CONCATENATED);
   println!("{:?}", BUILT);
+  println!("{:?}", BLOCKY);
   let mut zz = StaticVec::<usize, 12>::from([1, 2, 3, 4, 5, 6]);
   let mut zzz = zz.clone();
   println!("{:?}", zzz);

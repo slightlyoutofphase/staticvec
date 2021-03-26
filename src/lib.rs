@@ -41,6 +41,7 @@
   const_maybe_uninit_assume_init,
   const_mut_refs,
   const_panic,
+  const_precise_live_drops,
   const_ptr_is_null,
   const_ptr_offset,
   const_ptr_offset_from,
@@ -1589,11 +1590,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(b, [5, 6, 7, 8]);
   /// ```
   #[inline]
-  pub fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, N2>) {
+  pub const fn append<const N2: usize>(&mut self, other: &mut StaticVec<T, N2>) {
     let old_length = self.length;
     // Get the maximum number of items both within our capacity and within
     // what `other` actually has to offer.
-    let item_count = (N - old_length).min(other.length);
+    let item_count = const_min(N - old_length, other.length);
     // Calculate what the length of `other` should be changed to once we've
     // moved the items from it into self.
     let other_new_length = other.length - item_count;
@@ -1859,14 +1860,22 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(a.unwrap(), [1, 2, 3, 4]);
   /// ```
   #[inline(always)]
-  pub fn into_inner(mut self) -> Result<[T; N], Self> {
+  pub const fn into_inner(self) -> Result<[T; N], Self> {
     if self.is_not_full() {
       Err(self)
     } else {
-      // Set the length of `self` to 0 to prevent double-drops.
-      self.length = 0;
-      // Read out the contents of `data`.
-      unsafe { Ok(self.data.assume_init_read()) }
+      // Read out the contents of `data`. The way we do it looks silly, but is the only way for this
+      // function to be const-compatible. Note that setting `self.length` to zero here is not
+      // necessary, as `drop` will not be called on this StaticVec, so there is no risk of
+      // double-drops.
+      unsafe {
+        Ok(
+          MaybeUninit::new(self)
+            .assume_init_mut()
+            .data
+            .assume_init_read(),
+        )
+      }
     }
   }
 
