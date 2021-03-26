@@ -21,7 +21,7 @@ const MAX_THREE_B: u32 = 0x10000;
 
 /// Encodes `character` into `string` at the specified position.
 #[inline(always)]
-pub(crate) unsafe fn encode_char_utf8_unchecked<const N: usize>(
+pub(crate) const unsafe fn encode_char_utf8_unchecked<const N: usize>(
   string: &mut StaticString<N>,
   character: char,
   index: usize,

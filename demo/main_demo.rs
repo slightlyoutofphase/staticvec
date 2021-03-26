@@ -3,25 +3,21 @@
 // So we don't get warned about intentionally calling `drain_filter()` on a const struct,
 // or warned about incomplete features.
 #![allow(const_item_mutation, incomplete_features)]
-// As a "regular end user" of this crate, you're not likely to need all or even any of these
-// flags to be specified in your own code unless you're also going out of your way to basically
-// do everything that can conceivably be done with a StaticVec within the context of a single
-// program.
+// As a "regular end user" of this crate, you're not likely to need all or even any of these flags
+// to be specified in your own code unless you're also going out of your way to basically do
+// everything that can conceivably be done with a StaticVec within the context of a single program.
 #![feature(
   const_fn,
   const_fn_floating_point_arithmetic,
-  const_maybe_uninit_assume_init,
   const_mut_refs,
   const_precise_live_drops,
   // Weirdly named feature, as it doesn't necessarily relate to `Cell` at all.
   const_refs_to_cell,
   const_trait_impl,
   inline_const,
-  maybe_uninit_ref,
   type_name_of_val
 )]
 
-use core::mem::MaybeUninit;
 use staticvec::{sortedstaticvec, staticvec, FromIterator, StaticVec};
 
 #[derive(Copy, Clone, Debug)]
@@ -55,7 +51,7 @@ impl Drop for MyOtherStruct {
   }
 }
 
-// A little demonstration of some of the things you can do at compile time
+// A little demonstration of some of the things you can do at compile time.
 static S1: StaticVec<usize, 6> = staticvec![1, 2, 3, 4, 5, 6];
 static S2: StaticVec<usize, 4> = staticvec![1, 2, 3, 4];
 static B: bool = S1.len() + S2.len() == 10;
@@ -72,7 +68,35 @@ static LEFT: StaticVec<MyStruct, 4> = staticvec![
 static RIGHT: StaticVec<MyStruct, 2> = staticvec![MyStruct::new("e"), MyStruct::new("f")];
 static CONCATENATED: StaticVec<MyStruct, 6> = LEFT.concat(&RIGHT);
 
-// You can do quite a bit with a StaticVec even inside of a top-level const block.
+// It's also possible to write compile-time initialization functions that suit your specific needs
+// with "complex" logic taking advantage of various methods you might typically expect to only be
+// available at runtime. Note that depending on what you're doing exactly, and whether or not you
+// want to directly *return* a StaticVec from a `const fn`, you may need to enable the
+// `const_precise_live_drops` feature flag locally in your crate. The below function is an example
+// of something that does need that feature flag to to compile successfully.
+const fn build<T: Copy, const N: usize>(x: [T; N]) -> StaticVec<T, N> {
+  let mut sv = StaticVec::new();
+  // `StaticVec::push` is a `const fn`. Note that loops in `const fn` are limited to `while`
+  // currently: if that changes, obviously use an iterator-based `for` loop instead.
+  let mut i = 0;
+  while i < N {
+    sv.push(x[i]);
+    i += 1;
+  }
+  // `StaticVec::pop` is also a `const fn`, so we can do this as well...
+  while sv.pop().is_some() {}
+  // And put everything back in like this...
+  sv.insert_from_slice(0, &x);
+  // And finally return the StaticVec like this.
+  sv
+  // The methods demonstrated above are by no means the only ones for StaticVec that could be used
+  // (and might be useful) in a context like this, so do go ahead and peruse the docs for this crate
+  // to find out more.
+}
+
+const BUILT: StaticVec<u8, 3> = build([2, 4, 6]);
+
+// You can even do quite a bit with a StaticVec inside of a top-level const block.
 static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
   let mut a = staticvec![
     MyOtherStruct { s: "d" },
@@ -96,38 +120,6 @@ static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
   core::mem::forget(a);
   b
 };
-
-// It's also possible to write compile-time initialization functions that suit your specific needs
-// with "complex" logic taking advantage of various methods you might typically expect to only
-// be available at runtime.
-const fn build<T: Copy, const N: usize>(x: [T; N]) -> StaticVec<T, N> {
-  // StaticVec implements `Drop`, and so can't *directly* be returned from a `const fn` yet (at
-  // least specifically if / when first instantiated as a fully-initialized "naked" function-local
-  // variable) even when `T` is `Copy`, making the (sound) use of MaybeUninit below necessary to
-  // facilitate regular access to the StaticVec we'll be creating.
-  let mut mu = MaybeUninit::new(StaticVec::new());
-  // Not actually unsafe here: `sv` is just a mutable reference to a normal empty StaticVec.
-  let sv = unsafe { mu.assume_init_mut() };
-  // `StaticVec::push` is a `const fn`. Note that loops in `const fn` are limited to `while`
-  // currently: if that changes, obviously use an iterator-based `for` loop instead.
-  let mut i = 0;
-  while i < N {
-    sv.push(x[i]);
-    i += 1;
-  }
-  // `StaticVec::pop` is also a `const fn`, so we can do this as well...
-  while sv.pop().is_some() {}
-  // And put everything back in like this...
-  sv.insert_from_slice(0, &x);
-  // Still not actually unsafe here: we soundly initialized everything that needed it as soon as we
-  // called `StaticVec::new()`.
-  unsafe { mu.assume_init() }
-  // The methods demonstrated above are by no means the only ones for StaticVec that could be used
-  // (and might be useful) in a context like this, so do go ahead and peruse the docs for this crate
-  // to find out more.
-}
-
-const BUILT: StaticVec<u8, 3> = build([2, 4, 6]);
 
 fn main() {
   println!("{:?}", S1);
