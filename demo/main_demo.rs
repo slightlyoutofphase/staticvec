@@ -85,7 +85,9 @@ const fn build<T: Copy, const N: usize>(x: [T; N]) -> StaticVec<T, N> {
   }
   // `StaticVec::pop` is also a `const fn`, so we can do this as well...
   while sv.pop().is_some() {}
-  // And put everything back in like this...
+  // And put everything back in like this... (note that the `Copy` bounds specifically on
+  // `insert_from_slice` are the only thing we use here that actually make the `Copy` bounds
+  // on the `build` function itself necessary).
   sv.insert_from_slice(0, &x);
   // And finally return the StaticVec like this.
   sv
@@ -95,6 +97,8 @@ const fn build<T: Copy, const N: usize>(x: [T; N]) -> StaticVec<T, N> {
 }
 
 const BUILT: StaticVec<u8, 3> = build([2, 4, 6]);
+const ALSO_BUILT: StaticVec<f32, 3> = build([2.0, 4.0, 6.0]);
+const BUILT_AS_WELL: StaticVec<MyStruct, 3> = build([MyStruct::new("a"), MyStruct::new("b"), MyStruct::new("c")]);
 
 // You can even do quite a bit with a StaticVec inside of a top-level const block.
 static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
@@ -132,6 +136,8 @@ fn main() {
   println!("{}", unsafe { MUTABLE.capacity() });
   println!("{:?}", CONCATENATED);
   println!("{:?}", BUILT);
+  println!("{:?}", ALSO_BUILT);
+  println!("{:?}", BUILT_AS_WELL);
   println!("{:?}", BLOCKY);
   let mut zz = StaticVec::<usize, 12>::from([1, 2, 3, 4, 5, 6]);
   let mut zzz = zz.clone();
