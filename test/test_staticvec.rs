@@ -7,13 +7,7 @@
   const_trait_impl
 )]
 
-// In case you're wondering, the instances of `#[cfg_attr(all(windows, miri), ignore)]` in this
-// file above the `#[should_panic]` tests are there simply because Miri only supports catching
-// panics on Unix-like OSes and ignores `#[should_panic]` everywhere else, so without the
-// configuration attributes those tests just panic normally under Miri on Windows, which we don't
-// want.
-
-// Also, in case you're wondering why there's extensive use of "StaticVecs that contain boxed items"
+// In case you're wondering why there's extensive use of "StaticVecs that contain boxed items"
 // (something that would probably not be that common in the sense of normal use of this crate) in
 // this file: it's done for the sake of wanting to be as "Miri detectable" as possible, by which I
 // mean, "weird stuff done with heap memory" is significantly more likely to set Miri off than
@@ -253,7 +247,6 @@ fn clone_from_longer() {
   assert_eq!(dst, src);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[cfg(feature = "std")]
 #[test]
 fn panicking_clone() {
@@ -469,7 +462,6 @@ fn drain() {
   );
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn drain_panic() {
@@ -550,7 +542,6 @@ fn drain_iter() {
   assert_eq!(&v5[..], &[ZST {}, ZST {}, ZST {}, ZST {}]);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn drain_iter_panic() {
@@ -781,7 +772,6 @@ fn index() {
   assert_eq!(vec[..], [0, 1, 2, 3, 4]);
 }
 
-#[cfg(not(miri))]
 #[test]
 #[cfg(feature = "std")]
 fn index_panics() {
@@ -805,7 +795,6 @@ fn insert() {
   assert_eq!(vec, [1, 4, 2, 3, 5]);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn insert_already_full() {
@@ -813,7 +802,6 @@ fn insert_already_full() {
   vec.insert(1, 4);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn insert_index_too_high() {
@@ -821,7 +809,6 @@ fn insert_index_too_high() {
   vec.insert(19, 4);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn insert_no_capacity() {
@@ -868,7 +855,6 @@ fn insert_from_slice() {
   assert_eq!(v2, [12]);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic(
   expected = "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_from_slice`!"
@@ -878,7 +864,6 @@ fn insert_from_slice_panic_a() {
   v.insert_from_slice(0, &[4]);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic(
   expected = "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_from_slice`!"
@@ -888,7 +873,6 @@ fn insert_from_slice_panic_b() {
   v.insert_from_slice(19, &[4]);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic(
   expected = "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_from_slice`!"
@@ -931,7 +915,6 @@ fn insert_many() {
   );
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic(
   expected = "Insufficient remaining capacity or bounds check failure in `StaticVec::insert_many`!"
@@ -1726,6 +1709,30 @@ fn partial_eq() {
   if staticvec![1; 64] != &mut staticvec![1; 64] {
     panic!();
   }
+  if staticvec![1.0; 64] != [1.0; 64] {
+    panic!();
+  }
+  if &staticvec![1.0; 64] != [1.0; 64] {
+    panic!();
+  }
+  if &mut staticvec![1.0; 64] != [1.0; 64] {
+    panic!();
+  }
+  if staticvec![1.0; 64] != &[1.0; 64] {
+    panic!();
+  }
+  if staticvec![1.0; 64] != &mut [1.0; 64] {
+    panic!();
+  }
+  if staticvec![1.0; 64] != staticvec![1.0; 64] {
+    panic!();
+  }
+  if staticvec![1.0; 64] != &staticvec![1.0; 64] {
+    panic!();
+  }
+  if staticvec![1.0; 64] != &mut staticvec![1.0; 64] {
+    panic!();
+  }
 }
 
 #[test]
@@ -1740,13 +1747,28 @@ fn partial_ord() {
   assert!(staticvec![vec![1]] <= &staticvec![vec![2]]);
   assert!(staticvec![vec![1]] >= &[]);
   assert!(staticvec![vec![1]] > &mut []);
+  assert!(staticvec![1.23] < staticvec![2.33]);
+  assert!(staticvec![1.23] > []);
+  assert!(staticvec![1.23] <= &staticvec![2.33]);
+  assert!(staticvec![1.23] >= &[]);
+  assert!(staticvec![1.23] > &mut []);
+  assert!(staticvec![vec![1.23], vec![2.33]] < staticvec![vec![1.23], vec![2.33], vec![3.33]]);
+  assert!(staticvec![vec![1.23]] > []);
+  assert!(staticvec![vec![1.23]] <= &staticvec![vec![2.33]]);
+  assert!(staticvec![vec![1.23]] >= &[]);
+  assert!(staticvec![vec![1.23]] > &mut []);
 }
 
 #[test]
 fn pop() {
-  let mut vec = staticvec![1, 2, 3];
-  assert_eq!(vec.pop(), Some(3));
-  assert_eq!(vec, [1, 2]);
+  let mut vec = staticvec![box 1, box 2, box 3];
+  assert_eq!(vec.pop(), Some(box 3));
+  assert_eq!(vec, [box 1, box 2]);
+  assert_eq!(vec.pop(), Some(box 2));
+  assert_eq!(vec, [box 1]);
+  assert_eq!(vec.pop(), Some(box 1));
+  assert_eq!(vec, []);
+  assert_eq!(vec.pop(), None);
 }
 
 #[test]
@@ -1767,9 +1789,16 @@ fn ptr_at_unchecked() {
 
 #[test]
 fn push() {
-  let mut vec = StaticVec::<i32, 4>::new_from_slice(&[1, 2, 3]);
+  let mut vec = StaticVec::<i32, 4>::from(&[1, 2, 3]);
   vec.push(3);
   assert_eq!(vec, [1, 2, 3, 3]);
+}
+
+#[test]
+#[should_panic]
+fn push_panic() {
+  let mut v = staticvec![box 1, box 2, box 3];
+  v.push(box 12);
 }
 
 #[test]
@@ -1965,7 +1994,6 @@ fn remove() {
   assert_eq!(v, [1, 3]);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn remove_panic() {
@@ -2088,7 +2116,6 @@ fn splice_debug_impl() {
   assert_eq!(format!("{:?}", s), "StaticVecSplice([])");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn splice_empty() {
@@ -2104,7 +2131,6 @@ fn splice_empty_iterator() {
   assert_eq!(v, [box 1, box 5, box 6]);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn splice_inclusive_out_of_bounds() {
@@ -2134,7 +2160,6 @@ fn splice_items_zero_sized() {
   assert_eq!(t, &[()]);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn splice_out_of_bounds() {
@@ -2166,7 +2191,6 @@ fn split_off() {
   assert_eq!(vec2, [2, 3]);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn split_off_assert() {

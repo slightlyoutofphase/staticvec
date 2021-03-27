@@ -1,11 +1,5 @@
 #![allow(clippy::all, unused_variables)]
 
-// In case you're wondering, the instances of `#[cfg_attr(all(windows, miri), ignore)]` in this
-// file above the `#[should_panic]` tests are there simply because Miri only supports catching
-// panics on Unix-like OSes and ignores `#[should_panic]` everywhere else, so without the
-// configuration attributes those tests just panic normally under Miri on Windows, which we don't
-// want.
-
 use staticvec::{staticstring, staticvec, StaticString, StaticVec};
 
 type MyString = StaticString<255>;
@@ -187,14 +181,12 @@ fn insert() {
   assert_eq!(s, "ệfooยbar");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn insert_invalid1() {
   StaticString::<0>::from("").insert(1, 't');
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn insert_invalid2() {
@@ -209,7 +201,6 @@ fn insert_str() {
   assert_eq!(s.as_str(), "ABCABBCD🤔");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn insert_str_invalid1() {
@@ -220,7 +211,6 @@ fn insert_str_invalid1() {
   s.insert_str(10, "D");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn insert_str_invalid2() {
@@ -268,7 +258,6 @@ fn macro_constructor() {
   }
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn macro_constructor_invalid() {
@@ -350,7 +339,6 @@ fn remove() {
   assert_eq!(s, "ไทย中华Vit Nam; foobar");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn remove_invalid() {
@@ -385,7 +373,6 @@ fn replace_range() {
   assert_eq!(s, "Hello, 世界!");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn replace_range_backwards_range() {
@@ -393,7 +380,6 @@ fn replace_range_backwards_range() {
   s.replace_range(3..0, "789");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn replace_range_char_boundary() {
@@ -408,7 +394,6 @@ fn replace_range_empty() {
   assert_eq!(s, "1345");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn replace_range_inclusive_out_of_bounds() {
@@ -425,7 +410,6 @@ fn replace_range_inclusive_range() {
   assert_eq!(v, "1A895");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn replace_range_out_of_bounds() {
@@ -480,7 +464,6 @@ fn split_off_empty() {
   assert!(empty.is_empty());
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn split_off_mid_char() {
@@ -488,7 +471,6 @@ fn split_off_mid_char() {
   orig.split_off(1);
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn split_off_past_end() {
@@ -529,7 +511,6 @@ fn truncate_invalid_len() {
   assert_eq!(s, "12345");
 }
 
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 #[should_panic]
 fn truncate_split_codepoint() {

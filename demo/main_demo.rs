@@ -1,11 +1,12 @@
 // So we don't get "function complexity" lints and such since it's a demo.
 #![allow(clippy::all)]
-// So we don't get warned about intentionally calling `drain_filter()` on a const struct,
-// or warned about incomplete features.
+// So we don't get warned about intentionally calling `drain_filter()` on a const struct, or warned
+// about incomplete features.
 #![allow(const_item_mutation, incomplete_features)]
-// As a "regular end user" of this crate, you're not likely to need all or even any of these flags
-// to be specified in your own code unless you're also going out of your way to basically do
-// everything that can conceivably be done with a StaticVec within the context of a single program.
+// To be clear, as a "regular end user" of this crate, you will not necessarily need all or even any
+// of the above or below flags to be specified in your own code unless you're also going out of your
+// way to basically do everything that can conceivably be done with a StaticVec within the context
+// of a single program.
 #![feature(
   const_fn,
   const_fn_floating_point_arithmetic,
@@ -18,6 +19,7 @@
   type_name_of_val
 )]
 
+use core::mem::forget;
 use staticvec::{sortedstaticvec, staticvec, FromIterator, StaticVec};
 
 #[derive(Copy, Clone, Debug)]
@@ -86,8 +88,8 @@ const fn build<T: Copy, const N: usize>(x: [T; N]) -> StaticVec<T, N> {
   // `StaticVec::pop` is also a `const fn`, so we can do this as well...
   while sv.pop().is_some() {}
   // And put everything back in like this... (note that the `Copy` bounds specifically on
-  // `insert_from_slice` are the only thing we use here that actually make the `Copy` bounds
-  // on the `build` function itself necessary).
+  // `insert_from_slice` are the only thing we use here that actually make the `Copy` bounds on the
+  // `build` function itself necessary).
   sv.insert_from_slice(0, &x);
   // And finally return the StaticVec like this.
   sv
@@ -98,7 +100,8 @@ const fn build<T: Copy, const N: usize>(x: [T; N]) -> StaticVec<T, N> {
 
 const BUILT: StaticVec<u8, 3> = build([2, 4, 6]);
 const ALSO_BUILT: StaticVec<f32, 3> = build([2.0, 4.0, 6.0]);
-const BUILT_AS_WELL: StaticVec<MyStruct, 3> = build([MyStruct::new("a"), MyStruct::new("b"), MyStruct::new("c")]);
+const BUILT_AS_WELL: StaticVec<MyStruct, 3> =
+  build([MyStruct::new("a"), MyStruct::new("b"), MyStruct::new("c")]);
 
 // You can even do quite a bit with a StaticVec inside of a top-level const block.
 static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
@@ -119,10 +122,28 @@ static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
   b.insert(1, iter_slice[1].clone());
   b.insert(2, iter_slice[2].clone());
   b.append(&mut a);
-  // `a` is now empty, but we have to "forget" it anyways to make this work in a const context
-  // in conjunction with the `const_precise_live_drops` feature currently.
-  core::mem::forget(a);
+  // `a` is now empty, but we have to "forget" it anyways to make this work in a const context in
+  // conjunction with the `const_precise_live_drops` feature currently. Note that the reason the
+  // `build` const fn did not require any use of `mem::forget` is that we only created a single
+  // StaticVec instance within it which was directly used as the return value.
+  forget(a);
   b
+};
+
+static BLOCKIER: StaticVec<i32, 12> = const {
+  let a1 = staticvec![5, 4, 3, 2, 1];
+  let a2 = a1.reversed();
+  let b = a2.intersperse(42);
+  let mut c = staticvec![0, 6];
+  let mut d = StaticVec::<i32, 12>::new();
+  d.insert_from_slice(0, b.as_slice());
+  d.insert(0, c.remove(0));
+  d.append(&mut c);
+  forget(a1);
+  forget(a2);
+  forget(b);
+  forget(c);
+  d
 };
 
 fn main() {
@@ -139,6 +160,7 @@ fn main() {
   println!("{:?}", ALSO_BUILT);
   println!("{:?}", BUILT_AS_WELL);
   println!("{:?}", BLOCKY);
+  println!("{:?}", BLOCKIER);
   let mut zz = StaticVec::<usize, 12>::from([1, 2, 3, 4, 5, 6]);
   let mut zzz = zz.clone();
   println!("{:?}", zzz);

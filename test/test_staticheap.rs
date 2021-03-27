@@ -90,8 +90,6 @@ fn drain_sorted_collect() {
   assert_eq!(sorted, staticvec![10, 9, 8, 7, 6, 5, 4, 3, 2, 2, 1, 1, 0]);
 }
 
-// Miri cannot currently catch panics on Windows.
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 fn drain_sorted_leak() {
   static DROPS: AtomicU32 = AtomicU32::new(0);
@@ -296,8 +294,6 @@ fn iter_rev_cloned_collect() {
 //
 // Destructors must be called exactly once per element.
 
-// Miri cannot currently catch panics on Windows.
-#[cfg_attr(all(windows, miri), ignore)]
 #[test]
 fn panic_safe() {
   use core::cmp;

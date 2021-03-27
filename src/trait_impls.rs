@@ -169,6 +169,7 @@ impl<T, const N: usize> const DerefMut for StaticVec<T, N> {
 impl<T, const N: usize> Drop for StaticVec<T, N> {
   #[inline(always)]
   fn drop(&mut self) {
+    // `self.as_mut_slice()` will always return a slice of known-initialized elements.
     unsafe { ptr::drop_in_place(self.as_mut_slice()) };
   }
 }
@@ -477,6 +478,7 @@ impl<T, const N: usize> const Index<usize> for StaticVec<T, N> {
   /// and if so returns the value at that position as a constant reference.
   #[inline(always)]
   fn index(&self, index: usize) -> &Self::Output {
+    // The formatted assertion macros are not const-compatible yet.
     /*
     assert!(
       index < self.length,
@@ -498,7 +500,7 @@ impl<T, const N: usize> const IndexMut<usize> for StaticVec<T, N> {
   /// and if so returns the value at that position as a mutable reference.
   #[inline(always)]
   fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-    // The formatted assertion macros are not const-compatible yet
+    // The formatted assertion macros are not const-compatible yet.
     /*
     assert!(
       index < self.length,
