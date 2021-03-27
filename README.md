@@ -5,9 +5,9 @@
 [Rustc Version nightly]: https://img.shields.io/badge/rustc-nightly-lightgray.svg
 [![Build status](https://ci.appveyor.com/api/projects/status/qb40my4v3rr63st2/branch/master?svg=true)](https://ci.appveyor.com/project/slightlyoutofphase/staticvec/branch/master)
 
-Implements a fixed-capacity stack-allocated Vec alternative backed by an array, using const generics.
+Implements a fixed-capacity stack-allocated `Vec` alternative backed by an array, using const generics.
 
-Note: the word "static" here is meant by the traditional definition of "unchanging" / "not dynamic" etc.
+Note: the word "static" here is meant by the traditional definition of "unchanging" or "not dynamic".
 
 This crate does **not** use literal `static` variables for anything (but does provide multiple ways
 to instantiate a `StaticVec` **as** a `static` or `const` variable if desired).
@@ -22,15 +22,17 @@ via `serde` is available by activating the `serde_support` crate feature.
 methods are accessible through instances of it and that references to it can be used in contexts
 where `[T]` is expected.
 
-As of version 0.8.0, this crate additionally provides a fixed-capacity `StaticString` struct, which is built
-around an instance of `StaticVec<u8, N>`.
+As of version 0.8.0, this crate additionally provides a fixed-capacity `StaticString` struct, which
+is built around an instance of `StaticVec<u8, N>`.
 
-As of version 0.8.5, a fixed-capacity `StaticHeap` struct based on the standard library `BinaryHeap` and built
-around an instance of `StaticVec<T, N>` has been added as well.
+As of version 0.8.5, a fixed-capacity `StaticHeap` struct based on the standard library `BinaryHeap`
+and built around an instance of `StaticVec<T, N>` has been added as well.
 
 Contributions/suggestions/etc. very welcome!
 
-**Minimum supported Rust version:** due to the use of const generics, this is a nightly-only crate at the moment.
+**Minimum supported Rust version:** this is a nightly-only crate at the moment due to the use of
+various feature gates that provide functionality beyond the scope of stabilized minimal subsets
+such as `min_const_generics` and `min_const_fn`.
 
 A basic usage example:
 
