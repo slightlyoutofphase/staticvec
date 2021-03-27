@@ -2,7 +2,7 @@ use core::fmt::{self, Debug, Formatter};
 use core::intrinsics::assume;
 use core::iter::{FusedIterator, TrustedLen};
 use core::marker::{PhantomData, Send, Sync};
-use core::mem::{size_of, MaybeUninit};
+use core::mem::{replace, size_of, MaybeUninit};
 use core::ptr;
 
 use crate::utils::{distance_between, slice_from_raw_parts, slice_from_raw_parts_mut};
@@ -13,6 +13,10 @@ use alloc::string::String;
 
 #[cfg(feature = "std")]
 use alloc::format;
+
+// Note that all of the iterators in this file having a constant generic `N` parameter is not really
+// useful currently, but done in a forward-thinking sense for such a time when it *is* useful in
+// order to avoid unsolvable backwards-compatibility issues at that point.
 
 /// Similar to [`Iter`](core::slice::Iter), but specifically implemented with [`StaticVec`]s in
 /// mind.
@@ -90,6 +94,10 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
     slice_from_raw_parts(self.start, distance_between(self.end, self.start))
   }
 }
+
+// Note that the `const` iterator implementations below are `const` moreso just as groundwork for a
+// future where `for` loops are allowed in `const` contexts, and do not necessarily benefit in any
+// particularly useful way from being `const` impls quite yet.
 
 impl<'a, T: 'a, const N: usize> const Iterator for StaticVecIterConst<'a, T, N> {
   type Item = &'a T;
@@ -705,8 +713,7 @@ impl<T, I: Iterator<Item = T>, const N: usize> Iterator for StaticVecSplice<T, I
       0 => None,
       _ => match self.replace_with.next() {
         Some(replace_with) => unsafe {
-          let removed =
-            core::mem::replace((&mut *self.vec).get_unchecked_mut(self.start), replace_with);
+          let removed = replace((&mut *self.vec).get_unchecked_mut(self.start), replace_with);
           self.start += 1;
           Some(removed)
         },
@@ -742,7 +749,7 @@ impl<T, I: Iterator<Item = T> + DoubleEndedIterator, const N: usize> DoubleEnded
       0 => None,
       _ => match self.replace_with.next_back() {
         Some(replace_with) => unsafe {
-          let removed = core::mem::replace(
+          let removed = replace(
             (&mut *self.vec).get_unchecked_mut(self.end - 1),
             replace_with,
           );

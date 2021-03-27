@@ -37,6 +37,10 @@ use serde::{
   Deserialize, Deserializer, Serialize, Serializer,
 };
 
+// Note that the constness of many of the trait impls in this file varies in how useful it actually
+// is currently, and is done mostly just out of the desire to be able to quickly "stay on top" of
+// future developments as far as `const_trait_impl` is concerned.
+
 impl<T, const N: usize> const AsMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_mut(&mut self) -> &mut [T] {

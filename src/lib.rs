@@ -1256,6 +1256,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline(always)]
   pub fn clear(&mut self) {
+    // Safety: `self.as_mut_slice()` will always return either a slice of values that are known to
+    // be initialized, or simply a benign empty slice if the StaticVec it is called through is
+    // empty.
     unsafe { ptr::drop_in_place(self.as_mut_slice()) };
     self.length = 0;
   }
