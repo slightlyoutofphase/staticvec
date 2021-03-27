@@ -73,7 +73,7 @@ static CONCATENATED: StaticVec<MyStruct, 6> = LEFT.concat(&RIGHT);
 // available at runtime. Note that depending on what you're doing exactly, and whether or not you
 // want to directly *return* a StaticVec from a `const fn`, you may need to enable the
 // `const_precise_live_drops` feature flag locally in your crate. The below function is an example
-// of something that does need that feature flag to to compile successfully.
+// of something that does need that feature flag to compile successfully.
 const fn build<T: Copy, const N: usize>(x: [T; N]) -> StaticVec<T, N> {
   let mut sv = StaticVec::new();
   // `StaticVec::push` is a `const fn`. Note that loops in `const fn` are limited to `while`
