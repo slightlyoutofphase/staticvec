@@ -1896,11 +1896,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// let u = v.drain(1..);
   /// assert_eq!(v, &[1]);
   /// ```
-  #[inline]
-  pub fn drain<R>(&mut self, range: R) -> Self
   // No Copy bounds here because the original StaticVec gives up all access to the values in
   // question.
-  where R: RangeBounds<usize> {
+  #[inline]
+  pub fn drain<R: RangeBounds<usize>>(&mut self, range: R) -> Self {
     // Borrowed this part from normal Vec's implementation.
     let old_length = self.length;
     let start = match range.start_bound() {
