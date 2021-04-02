@@ -66,6 +66,7 @@
   slice_partition_dedup,
   specialization,
   trusted_len,
+  trusted_random_access,
   untagged_unions
 )]
 #![cfg_attr(feature = "std", feature(read_initializer))]

@@ -1,6 +1,6 @@
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics::assume;
-use core::iter::{FusedIterator, TrustedLen};
+use core::iter::{FusedIterator, TrustedLen, TrustedRandomAccess};
 use core::marker::{PhantomData, Send, Sync};
 use core::mem::{replace, size_of, MaybeUninit};
 use core::ptr;
@@ -163,6 +163,13 @@ impl<'a, T: 'a, const N: usize> const Iterator for StaticVecIterConst<'a, T, N> 
   fn last(mut self) -> Option<&'a T> {
     self.next_back()
   }
+
+  #[inline(always)]
+  unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> &'a T {
+    // Safety: see the comments for the implementation of this function in
+    // 'core/slice/iter/macros.rs`, as they're equally applicable to us here.
+    &*self.start.add(idx)
+  }
 }
 
 impl<'a, T: 'a, const N: usize> const DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
@@ -219,6 +226,12 @@ impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecIterConst<'
 
 impl<'a, T: 'a, const N: usize> const FusedIterator for StaticVecIterConst<'a, T, N> {}
 unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterConst<'a, T, N> {}
+// We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
+// it.
+#[doc(hidden)]
+unsafe impl<'a, T: 'a, const N: usize> TrustedRandomAccess for StaticVecIterConst<'a, T, N> {
+  const MAY_HAVE_SIDE_EFFECT: bool = false;
+}
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterConst<'a, T, N> {}
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Send for StaticVecIterConst<'a, T, N> {}
 
@@ -339,6 +352,13 @@ impl<'a, T: 'a, const N: usize> const Iterator for StaticVecIterMut<'a, T, N> {
   fn last(mut self) -> Option<&'a mut T> {
     self.next_back()
   }
+
+  #[inline(always)]
+  unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> &'a mut T {
+    // Safety: see the comments for the implementation of this function in
+    // 'core/slice/iter/macros.rs`, as they're equally applicable to us here.
+    &mut *self.start.add(idx)
+  }
 }
 
 impl<'a, T: 'a, const N: usize> const DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
@@ -395,6 +415,12 @@ impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecIterMut<'a,
 
 impl<'a, T: 'a, const N: usize> const FusedIterator for StaticVecIterMut<'a, T, N> {}
 unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterMut<'a, T, N> {}
+// We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
+// it.
+#[doc(hidden)]
+unsafe impl<'a, T: 'a, const N: usize> TrustedRandomAccess for StaticVecIterMut<'a, T, N> {
+  const MAY_HAVE_SIDE_EFFECT: bool = false;
+}
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterMut<'a, T, N> {}
 unsafe impl<'a, T: 'a + Send, const N: usize> const Send for StaticVecIterMut<'a, T, N> {}
 
@@ -433,22 +459,22 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` indices.
   #[inline(always)]
-  pub fn as_slice(&self) -> &[T] {
+  pub const fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     slice_from_raw_parts(
       unsafe { StaticVec::first_ptr(&self.data).add(self.start) },
-      self.len(),
+      self.end - self.start,
     )
   }
 
   /// Returns a mutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` indices.
   #[inline(always)]
-  pub fn as_mut_slice(&mut self) -> &mut [T] {
+  pub const fn as_mut_slice(&mut self) -> &mut [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     slice_from_raw_parts_mut(
       unsafe { StaticVec::first_ptr_mut(&mut self.data).add(self.start) },
-      self.len(),
+      self.end - self.start,
     )
   }
 }
@@ -507,6 +533,13 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
   fn last(mut self) -> Option<T> {
     self.next_back()
   }
+
+  #[inline(always)]
+  unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> T
+  where Self: TrustedRandomAccess {
+    // Safety: `TrustedRandomAccess` is only implemented for `StaticVecIntoIter` when `T` is `Copy`.
+    self.as_slice().as_ptr().add(idx).read()
+  }
 }
 
 impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
@@ -558,6 +591,12 @@ impl<T, const N: usize> ExactSizeIterator for StaticVecIntoIter<T, N> {
 
 impl<T, const N: usize> FusedIterator for StaticVecIntoIter<T, N> {}
 unsafe impl<T, const N: usize> TrustedLen for StaticVecIntoIter<T, N> {}
+// We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
+// it.
+#[doc(hidden)]
+unsafe impl<T: Copy, const N: usize> TrustedRandomAccess for StaticVecIntoIter<T, N> {
+  const MAY_HAVE_SIDE_EFFECT: bool = false;
+}
 unsafe impl<T: Sync, const N: usize> Sync for StaticVecIntoIter<T, N> {}
 unsafe impl<T: Send, const N: usize> Send for StaticVecIntoIter<T, N> {}
 
@@ -643,6 +682,13 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
   fn last(mut self) -> Option<T> {
     self.next_back()
   }
+
+  #[inline(always)]
+  unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> T
+  where Self: TrustedRandomAccess {
+    // Safety: `TrustedRandomAccess` is only implemented for `StaticVecDrain` when `T` is `Copy`.
+    self.as_slice().as_ptr().add(idx).read()
+  }
 }
 
 impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecDrain<'a, T, N> {
@@ -669,6 +715,12 @@ impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecDrain<'a, T, N> {
 
 impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecDrain<'a, T, N> {}
 unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecDrain<'a, T, N> {}
+// We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
+// it.
+#[doc(hidden)]
+unsafe impl<'a, T: Copy + 'a, const N: usize> TrustedRandomAccess for StaticVecDrain<'a, T, N> {
+  const MAY_HAVE_SIDE_EFFECT: bool = false;
+}
 unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecDrain<'a, T, N> {}
 unsafe impl<'a, T: 'a + Send, const N: usize> Send for StaticVecDrain<'a, T, N> {}
 
