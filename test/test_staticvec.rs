@@ -628,6 +628,10 @@ fn from_iter() {
     StaticVec::<u8, 12>::from_iter(staticvec![1, 2, 3, 4, 5, 6].iter()),
     [1, 2, 3, 4, 5, 6]
   );
+  assert_eq!(
+    StaticVec::<u8, 12>::from_iter(core::array::IntoIter::new([1, 2, 3, 4, 5, 6])),
+    [1, 2, 3, 4, 5, 6]
+  );
   assert_eq!(StaticVec::<u8, 0>::from_iter(&[1, 2, 3, 4, 5, 6]), []);
   assert_eq!(
     StaticVec::<Box<Struct>, 2>::from_iter(

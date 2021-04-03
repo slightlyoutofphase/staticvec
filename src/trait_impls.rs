@@ -317,6 +317,18 @@ impl<'a, T: 'a + Copy, const N: usize> ExtendEx<&'a T, core::slice::Iter<'a, T>>
   }
 }
 
+impl<T: Copy, const N: usize> ExtendEx<T, core::array::IntoIter<T, N>> for StaticVec<T, N> {
+  #[inline(always)]
+  fn extend_ex(&mut self, iter: core::array::IntoIter<T, N>) {
+    self.extend_from_slice(iter.as_slice());
+  }
+
+  #[inline(always)]
+  fn from_iter_ex(iter: core::array::IntoIter<T, N>) -> Self {
+    Self::new_from_slice(iter.as_slice())
+  }
+}
+
 impl<'a, T: 'a + Copy, const N: usize> const ExtendEx<&'a T, &'a [T]> for StaticVec<T, N> {
   #[inline(always)]
   fn extend_ex(&mut self, iter: &'a [T]) {
