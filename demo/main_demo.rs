@@ -69,6 +69,8 @@ static LEFT: StaticVec<MyStruct, 4> = staticvec![
 ];
 static RIGHT: StaticVec<MyStruct, 2> = staticvec![MyStruct::new("e"), MyStruct::new("f")];
 static CONCATENATED: StaticVec<MyStruct, 6> = LEFT.concat(&RIGHT);
+static SPLIT: (StaticVec<usize, 2>, StaticVec<usize, 4>) =
+  staticvec![1usize, 2usize, 3usize, 4usize, 5usize, 6usize].split_at::<2>();
 
 // It's also possible to write compile-time initialization functions that suit your specific needs
 // with "complex" logic taking advantage of various methods you might typically expect to only be
@@ -156,6 +158,7 @@ fn main() {
   println!("{}", unsafe { MUTABLE.len() });
   println!("{}", unsafe { MUTABLE.capacity() });
   println!("{:?}", CONCATENATED);
+  println!("{:?}", SPLIT);
   println!("{:?}", BUILT);
   println!("{:?}", ALSO_BUILT);
   println!("{:?}", BUILT_AS_WELL);

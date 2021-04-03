@@ -76,7 +76,7 @@ use core::intrinsics::assume;
 #[doc(hidden)]
 pub use core::iter::FromIterator;
 use core::marker::PhantomData;
-use core::mem::{size_of, MaybeUninit};
+use core::mem::{self, size_of, MaybeUninit};
 use core::ops::{
   Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub,
 };
@@ -2123,8 +2123,10 @@ impl<T, const N: usize> StaticVec<T, N> {
     }
   }
 
-  /// Splits the StaticVec into two at the given index. The original StaticVec will contain elements
-  /// `0..at`, and the new one will contain elements `at..self.len()`.
+  /// Splits one StaticVec into two at the given index, returning the second half without consuming
+  /// the first half. The original StaticVec will contain all elements within the exclusive range
+  /// `0..at`, and the new one will contain all elements within the exclusive range
+  /// `at..self.len()`.
   ///
   /// # Example usage:
   /// ```
@@ -2152,6 +2154,59 @@ impl<T, const N: usize> StaticVec<T, N> {
         split
       },
       length: split_length,
+    }
+  }
+
+  /// Splits one StaticVec into two new ones at index `M` and returns them in a tuple, while
+  /// consuming the original. The first new one will contain all elements within the exclusive range
+  /// `0..M`, and the second new one will contain all elements within the exclusive range
+  /// `M..self.len()`.
+  ///
+  /// # Example usage:
+  /// ```
+  /// # #![feature(box_syntax)]
+  /// # use staticvec::*;
+  /// let v1 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  /// let t1 = v1.split_at::<0>();
+  /// assert_eq!(t1.0, []);
+  /// assert_eq!(t1.1, [box 1, box 2, box 3, box 4, box 5, box 6]);
+  /// let v2 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  /// let t2 = v2.split_at::<2>();
+  /// assert_eq!(t2.0, [box 1, box 2]);
+  /// assert_eq!(t2.1, [box 3, box 4, box 5, box 6]);
+  /// let v3 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  /// let t3 = v3.split_at::<6>();
+  /// assert_eq!(t3.0, [box 1, box 2, box 3, box 4, box 5, box 6]);
+  /// assert_eq!(t3.1, []);
+  #[inline]
+  pub const fn split_at<const M: usize>(self) -> (StaticVec<T, M>, StaticVec<T, { N - M }>) {
+    let old_length = self.length;
+    assert!(
+      M <= old_length,
+      "Bounds check failure in `StaticVec::split_at'!"
+    );
+    let mut left = MaybeUninit::<[T; M]>::uninit();
+    let mut right = MaybeUninit::<[T; N - M]>::uninit();
+    let self_ptr = self.as_ptr();
+    let left_ptr = left.as_mut_ptr() as *mut T;
+    let right_ptr = right.as_mut_ptr() as *mut T;
+    let right_length = old_length - M;
+    unsafe {
+      self_ptr.copy_to_nonoverlapping(left_ptr, M);
+      self_ptr
+        .add(M)
+        .copy_to_nonoverlapping(right_ptr, right_length);
+      mem::forget(self);
+      (
+        StaticVec {
+          data: left,
+          length: M,
+        },
+        StaticVec {
+          data: right,
+          length: right_length,
+        },
+      )
     }
   }
 

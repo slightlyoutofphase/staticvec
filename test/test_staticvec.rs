@@ -2141,6 +2141,31 @@ fn splice_unbounded() {
 }
 
 #[test]
+fn split_at() {
+  let v1 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  let t1 = v1.split_at::<0>();
+  assert_eq!(t1.0, []);
+  assert_eq!(t1.1, [box 1, box 2, box 3, box 4, box 5, box 6]);
+  let v2 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  let t2 = v2.split_at::<2>();
+  assert_eq!(t2.0, [box 1, box 2]);
+  assert_eq!(t2.1, [box 3, box 4, box 5, box 6]);
+  let v3 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  let t3 = v3.split_at::<6>();
+  assert_eq!(t3.0, [box 1, box 2, box 3, box 4, box 5, box 6]);
+  assert_eq!(t3.1, []);
+}
+
+#[test]
+#[should_panic]
+fn split_at_assert() {
+  let v = StaticVec::<Box<i32>, 12>::new();
+  let t = v.split_at::<12>();
+  assert_eq!(t.0, []);
+  assert_eq!(t.1, []);
+}
+
+#[test]
 fn split_off() {
   let mut vec = staticvec![1, 2, 3];
   let vec2 = vec.split_off(1);
