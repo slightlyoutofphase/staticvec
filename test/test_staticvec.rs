@@ -2160,6 +2160,7 @@ fn split_at() {
 #[should_panic]
 fn split_at_assert() {
   let v = StaticVec::<Box<i32>, 12>::new();
+  // `v` has a capacity of 12, but a current length of 0, so this should panic.
   let t = v.split_at::<12>();
   assert_eq!(t.0, []);
   assert_eq!(t.1, []);
