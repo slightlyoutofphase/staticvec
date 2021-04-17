@@ -83,6 +83,16 @@ where T: Copy {
   }
 }
 
+/// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
+pub(crate) const fn zst_ptr_add_mut<T>(ptr: *mut T, offset: usize) -> *mut T {
+  unsafe { (ptr as usize + offset) as *mut T }
+}
+
+/// An internal convenience function for incrementing immutable ZST pointers by usize offsets.
+pub(crate) const fn zst_ptr_add<T>(ptr: *const T, offset: usize) -> *const T {
+  unsafe { (ptr as usize + offset) as *const T }
+}
+
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.
 #[inline]
 pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(

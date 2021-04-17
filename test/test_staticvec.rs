@@ -474,6 +474,13 @@ fn drain_iter() {
   ];
   v5.drain_iter(0..4);
   assert_eq!(&v5[..], &[ZST {}, ZST {}, ZST {}, ZST {}]);
+  assert_eq!(
+    staticvec![1, 2, 3, 4]
+      .drain_iter(1..3)
+      .zip(staticvec![5, 6, 7, 8].drain_iter(1..3))
+      .collect::<StaticVec<(i32, i32), 2>>(),
+    staticvec![(2, 6), (3, 7)]
+  );
 }
 
 #[test]
@@ -1348,6 +1355,18 @@ fn into_iter() {
   let mut it5 = v5.into_iter();
   assert_eq!(it5.as_slice(), &[ZST {}, ZST {}, ZST {}, ZST {}]);
   assert_eq!(it5.as_mut_slice(), &mut [ZST {}, ZST {}, ZST {}, ZST {}]);
+  let a1 = staticvec![box 1, box 2, box 3];
+  let a2 = staticvec![box 4, box 5, box 6];
+  let iter = a1.into_iter().zip(a2.into_iter());
+  let mut a3 = iter.collect::<StaticVec<(Box<i32>, Box<i32>), 6>>();
+  for tup in a3.iter_mut() {
+    *tup.0 += 1;
+    *tup.1 += 1;
+  }
+  assert_eq!(
+    a3,
+    staticvec![(box 2, box 5), (box 3, box 6), (box 4, box 7)]
+  );
 }
 
 #[test]

@@ -5,7 +5,9 @@ use core::marker::{PhantomData, Send, Sync};
 use core::mem::{replace, size_of, MaybeUninit};
 use core::ptr;
 
-use crate::utils::{distance_between, slice_from_raw_parts, slice_from_raw_parts_mut};
+use crate::utils::{
+  distance_between, slice_from_raw_parts, slice_from_raw_parts_mut, zst_ptr_add, zst_ptr_add_mut,
+};
 use crate::StaticVec;
 
 #[cfg(feature = "std")]
@@ -169,7 +171,7 @@ impl<'a, T: 'a, const N: usize> const Iterator for StaticVecIterConst<'a, T, N> 
     // Safety: see the comments for the implementation of this function in
     // 'core/slice/iter/macros.rs`, as they're equally applicable to us here.
     match size_of::<T>() {
-      0 => &*((self.start as usize + idx) as *const T),
+      0 => &*zst_ptr_add(self.start, idx),
       _ => &*self.start.add(idx),
     }
   }
@@ -361,7 +363,7 @@ impl<'a, T: 'a, const N: usize> const Iterator for StaticVecIterMut<'a, T, N> {
     // Safety: see the comments for the implementation of this function in
     // 'core/slice/iter/macros.rs`, as they're equally applicable to us here.
     match size_of::<T>() {
-      0 => &mut *((self.start as usize + idx) as *mut T),
+      0 => &mut *zst_ptr_add_mut(self.start, idx),
       _ => &mut *self.start.add(idx),
     }
   }
@@ -466,22 +468,28 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   /// `start` and `end` indices.
   #[inline(always)]
   pub const fn as_slice(&self) -> &[T] {
-    // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    slice_from_raw_parts(
-      unsafe { StaticVec::first_ptr(&self.data).add(self.start) },
-      self.end - self.start,
-    )
+    // Safety: `start_at` is never null. This function will "at worst" return an empty slice.
+    let start_at = unsafe {
+      match size_of::<T>() {
+        0 => zst_ptr_add(StaticVec::first_ptr(&self.data), self.start),
+        _ => StaticVec::first_ptr(&self.data).add(self.start),
+      }
+    };
+    slice_from_raw_parts(start_at, self.end - self.start)
   }
 
   /// Returns a mutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` indices.
   #[inline(always)]
   pub const fn as_mut_slice(&mut self) -> &mut [T] {
-    // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    slice_from_raw_parts_mut(
-      unsafe { StaticVec::first_ptr_mut(&mut self.data).add(self.start) },
-      self.end - self.start,
-    )
+    // Safety: `start_at` is never null. This function will "at worst" return an empty slice.
+    let start_at = unsafe {
+      match size_of::<T>() {
+        0 => zst_ptr_add_mut(StaticVec::first_ptr_mut(&mut self.data), self.start),
+        _ => StaticVec::first_ptr_mut(&mut self.data).add(self.start),
+      }
+    };
+    slice_from_raw_parts_mut(start_at, self.end - self.start)
   }
 }
 
@@ -493,7 +501,10 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     match self.end - self.start {
       0 => None,
       _ => {
-        let res = Some(unsafe { StaticVec::first_ptr(&self.data).add(self.start).read() });
+        let res = match size_of::<T>() {
+          0 => Some(unsafe { zst_ptr_add(StaticVec::first_ptr(&self.data), self.start).read() }),
+          _ => Some(unsafe { StaticVec::first_ptr(&self.data).add(self.start).read() }),
+        };
         self.start += 1;
         res
       }
@@ -521,13 +532,17 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
         // Get the index in `self.data` of the item to be returned.
         let res_index = old_start + n;
         // Get a pointer to the item, using the above index.
-        let res = StaticVec::first_ptr(&self.data).add(res_index);
+        let res = match size_of::<T>() {
+          0 => zst_ptr_add(StaticVec::first_ptr(&self.data), res_index),
+          _ => StaticVec::first_ptr(&self.data).add(res_index),
+        };
         // Drop whatever range of values may exist in earlier positions
         // to avoid memory leaks.
-        ptr::drop_in_place(slice_from_raw_parts_mut(
-          StaticVec::first_ptr_mut(&mut self.data).add(old_start),
-          res_index - old_start,
-        ));
+        let drop_at = match size_of::<T>() {
+          0 => zst_ptr_add_mut(StaticVec::first_ptr_mut(&mut self.data), old_start),
+          _ => StaticVec::first_ptr_mut(&mut self.data).add(old_start),
+        };
+        ptr::drop_in_place(slice_from_raw_parts_mut(drop_at, res_index - old_start));
         // Adjust our starting index.
         self.start = res_index + 1;
         Some(res.read())
@@ -546,7 +561,7 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
     // Safety: `TrustedRandomAccess` is only implemented for `StaticVecIntoIter` when `T` is `Copy`,
     // and the caller is required to uphold the invariants for this function.
     match size_of::<T>() {
-      0 => ((StaticVec::first_ptr(&self.data) as usize + idx) as *const T).read(),
+      0 => zst_ptr_add(StaticVec::first_ptr(&self.data), idx).read(),
       _ => StaticVec::first_ptr(&self.data).add(idx).read(),
     }
   }
@@ -559,7 +574,10 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
       0 => None,
       _ => {
         self.end -= 1;
-        Some(unsafe { StaticVec::first_ptr(&self.data).add(self.end).read() })
+        match size_of::<T>() {
+          0 => Some(unsafe { zst_ptr_add(StaticVec::first_ptr(&self.data), self.end).read() }),
+          _ => Some(unsafe { StaticVec::first_ptr(&self.data).add(self.end).read() }),
+        }
       }
     }
   }
@@ -577,11 +595,15 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
       // Drop whatever range of values may exist in later positions
       // to avoid memory leaks.
       unsafe {
-        ptr::drop_in_place(slice_from_raw_parts_mut(
-          StaticVec::first_ptr_mut(&mut self.data).add(res_index),
-          old_end - res_index,
-        ));
-        Some(StaticVec::first_ptr(&self.data).add(self.end).read())
+        let drop_at = match size_of::<T>() {
+          0 => zst_ptr_add_mut(StaticVec::first_ptr_mut(&mut self.data), res_index),
+          _ => StaticVec::first_ptr_mut(&mut self.data).add(res_index),
+        };
+        ptr::drop_in_place(slice_from_raw_parts_mut(drop_at, old_end - res_index));
+        match size_of::<T>() {
+          0 => Some(zst_ptr_add(StaticVec::first_ptr(&self.data), self.end).read()),
+          _ => Some(StaticVec::first_ptr(&self.data).add(self.end).read()),
+        }
       }
     }
   }
@@ -634,14 +656,13 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
   #[inline(always)]
   fn drop(&mut self) {
     let item_count = self.end - self.start;
+    let drop_at = match size_of::<T>() {
+      0 => zst_ptr_add_mut(StaticVec::first_ptr_mut(&mut self.data), self.start),
+      _ => unsafe { StaticVec::first_ptr_mut(&mut self.data).add(self.start) },
+    };
     match item_count {
       0 => (),
-      _ => unsafe {
-        ptr::drop_in_place(slice_from_raw_parts_mut(
-          StaticVec::first_ptr_mut(&mut self.data).add(self.start),
-          item_count,
-        ))
-      },
+      _ => unsafe { ptr::drop_in_place(slice_from_raw_parts_mut(drop_at, item_count)) },
     }
   }
 }
@@ -699,7 +720,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
     // Safety: `TrustedRandomAccess` is only implemented for `StaticVecDrain` when `T` is `Copy`,
     // and the caller is required to uphold the invariants for this function.
     match size_of::<T>() {
-      0 => ((self.as_slice().as_ptr() as usize + idx) as *const T).read(),
+      0 => zst_ptr_add(self.as_slice().as_ptr(), idx).read(),
       _ => self.as_slice().as_ptr().add(idx).read(),
     }
   }
