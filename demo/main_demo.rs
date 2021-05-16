@@ -8,8 +8,8 @@
 // way to basically do everything that can conceivably be done with a StaticVec within the context
 // of a single program.
 #![feature(
-  const_fn,
   const_fn_floating_point_arithmetic,
+  const_fn_trait_bound,
   const_mut_refs,
   const_precise_live_drops,
   // Weirdly named feature, as it doesn't necessarily relate to `Cell` at all.

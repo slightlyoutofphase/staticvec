@@ -189,7 +189,7 @@ macro_rules! __staticsort {
 ///
 /// # Example usage:
 /// ```
-/// #![feature(const_fn, const_fn_floating_point_arithmetic)]
+/// #![feature(const_fn_floating_point_arithmetic)]
 ///
 /// use staticvec::{sortedstaticvec, StaticVec};
 ///

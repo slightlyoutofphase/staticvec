@@ -1,8 +1,8 @@
 #![allow(clippy::all, dead_code, incomplete_features, unused_imports)]
 #![feature(
   box_syntax,
-  const_fn,
   const_fn_floating_point_arithmetic,
+  const_fn_trait_bound,
   const_generics,
   const_trait_impl
 )]
