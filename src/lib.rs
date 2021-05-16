@@ -31,7 +31,6 @@
 #![feature(
   const_assume,
   const_evaluatable_checked,
-  const_fn,
   const_fn_floating_point_arithmetic,
   const_fn_fn_ptr_basics,
   const_fn_union,
