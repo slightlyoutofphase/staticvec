@@ -1,3 +1,5 @@
+**Note:** I am aware that changes were made on around June 4th that reverted the constness of various pointer methods. As these have been explicitly stated as temporary in the relevant PRs, no "fix version" of this crate will be issued unless the changes in question prove to be stretching the truth about how temporary they actually are.
+
 [![Latest Version]][crates.io] ![Rustc Version nightly]
 
 [Latest Version]: https://img.shields.io/crates/v/staticvec.svg
