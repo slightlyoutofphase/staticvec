@@ -45,6 +45,10 @@ impl const Clone for MyOtherStruct {
   fn clone(&self) -> Self {
     Self { s: self.s }
   }
+  
+  fn clone_from(&mut self, source: &Self) {
+    *self = source.clone()
+  }
 }
 
 impl Drop for MyOtherStruct {
