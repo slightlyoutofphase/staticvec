@@ -47,7 +47,7 @@ impl const Clone for MyOtherStruct {
   }
   
   fn clone_from(&mut self, source: &Self) {
-    *self = source.clone()
+    self.s = source.s
   }
 }
 
