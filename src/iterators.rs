@@ -101,7 +101,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
 // future where `for` loops are allowed in `const` contexts, and do not necessarily benefit in any
 // particularly useful way from being `const` impls quite yet.
 
-impl<'a, T: 'a, const N: usize> const Iterator for StaticVecIterConst<'a, T, N> {
+impl<'a, T: 'a, const N: usize> /*const*/ Iterator for StaticVecIterConst<'a, T, N> {
   type Item = &'a T;
 
   #[inline(always)]
@@ -177,7 +177,7 @@ impl<'a, T: 'a, const N: usize> const Iterator for StaticVecIterConst<'a, T, N> 
   }
 }
 
-impl<'a, T: 'a, const N: usize> const DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
+impl<'a, T: 'a, const N: usize> /*const*/ DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<&'a T> {
     unsafe {
@@ -234,13 +234,13 @@ unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterConst<'
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: 'a, const N: usize> const TrustedRandomAccess for StaticVecIterConst<'a, T, N> {
+unsafe impl<'a, T: 'a, const N: usize> /*const*/ TrustedRandomAccess for StaticVecIterConst<'a, T, N> {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
 }
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterConst<'a, T, N> {}
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Send for StaticVecIterConst<'a, T, N> {}
 
-impl<'a, T: 'a, const N: usize> const Clone for StaticVecIterConst<'a, T, N> {
+impl<'a, T: 'a, const N: usize> /*const*/ Clone for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     Self {
@@ -293,7 +293,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> const Iterator for StaticVecIterMut<'a, T, N> {
+impl<'a, T: 'a, const N: usize> /*const*/ Iterator for StaticVecIterMut<'a, T, N> {
   type Item = &'a mut T;
 
   #[inline(always)]
@@ -369,7 +369,7 @@ impl<'a, T: 'a, const N: usize> const Iterator for StaticVecIterMut<'a, T, N> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> const DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
+impl<'a, T: 'a, const N: usize> /*const*/ DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<&'a mut T> {
     unsafe {
@@ -426,7 +426,7 @@ unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterMut<'a,
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: 'a, const N: usize> const TrustedRandomAccess for StaticVecIterMut<'a, T, N> {
+unsafe impl<'a, T: 'a, const N: usize> /*const*/ TrustedRandomAccess for StaticVecIterMut<'a, T, N> {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
 }
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterMut<'a, T, N> {}
@@ -626,7 +626,7 @@ unsafe impl<T, const N: usize> TrustedLen for StaticVecIntoIter<T, N> {}
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<T: Copy, const N: usize> const TrustedRandomAccess for StaticVecIntoIter<T, N> {
+unsafe impl<T: Copy, const N: usize> /*const*/ TrustedRandomAccess for StaticVecIntoIter<T, N> {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
 }
 unsafe impl<T: Sync, const N: usize> Sync for StaticVecIntoIter<T, N> {}
@@ -753,7 +753,7 @@ unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecDrain<'a, T, N> {
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: Copy + 'a, const N: usize> const TrustedRandomAccess
+unsafe impl<'a, T: Copy + 'a, const N: usize> /*const*/ TrustedRandomAccess
   for StaticVecDrain<'a, T, N>
 {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
