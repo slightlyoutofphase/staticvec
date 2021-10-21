@@ -1779,7 +1779,7 @@ fn push_panic() {
 
 #[test]
 fn quicksorted_unstable() {
-  const V: StaticVec<StaticVec<i32, 3>, 2> = staticvec![staticvec![1, 2, 3], staticvec![6, 5, 4]];
+  /*const*/ let V: StaticVec<StaticVec<i32, 3>, 2> = staticvec![staticvec![1, 2, 3], staticvec![6, 5, 4]];
   assert_eq!(
     V.iter()
       .flatten()
