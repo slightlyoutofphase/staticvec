@@ -7,7 +7,7 @@ use crate::StaticVec;
 /// An internal function for calculating pointer offsets as usizes, while accounting
 /// directly for possible ZSTs. This is used specifically in the iterator implementations.
 #[inline(always)]
-pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
+pub(crate) /*const*/ fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
   match size_of::<T>() {
     0 => unsafe { (dest as usize).wrapping_sub(origin as usize) },
     // Safety: this function is used strictly with linear inputs
@@ -84,12 +84,14 @@ where T: Copy {
 }
 
 /// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
-pub(crate) const fn zst_ptr_add_mut<T>(ptr: *mut T, offset: usize) -> *mut T {
+#[inline(always)]
+pub(crate) /*const*/ fn zst_ptr_add_mut<T>(ptr: *mut T, offset: usize) -> *mut T {
   unsafe { (ptr as usize + offset) as *mut T }
 }
 
 /// An internal convenience function for incrementing immutable ZST pointers by usize offsets.
-pub(crate) const fn zst_ptr_add<T>(ptr: *const T, offset: usize) -> *const T {
+#[inline(always)]
+pub(crate) /*const*/ fn zst_ptr_add<T>(ptr: *const T, offset: usize) -> *const T {
   unsafe { (ptr as usize + offset) as *const T }
 }
 
@@ -116,7 +118,7 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
 /// A simple quicksort function for internal use, called in
 /// ['quicksorted_unstable`](crate::StaticVec::quicksorted_unstable).
 #[inline]
-pub(crate) const fn quicksort_internal<T: Copy + PartialOrd>(
+pub(crate) /*const*/ fn quicksort_internal<T: Copy + PartialOrd>(
   values: *mut T,
   mut low: isize,
   mut high: isize,
