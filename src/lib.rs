@@ -48,7 +48,6 @@
   const_ptr_read,
   const_ptr_write,
   const_raw_ptr_deref,
-  const_raw_ptr_to_usize_cast,
   // this should be called `const_interior_mutability` IMO
   const_refs_to_cell,
   const_replace,
