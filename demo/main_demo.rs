@@ -117,16 +117,15 @@ static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
     MyOtherStruct { s: "f" }
   ];
   let mut b = StaticVec::<MyOtherStruct, 6>::new();
-  let iter_slice = staticvec![
+  let c = staticvec![
     MyOtherStruct { s: "a" },
     MyOtherStruct { s: "b" },
     MyOtherStruct { s: "c" },
-  ]
-  /*.iter()*/
-  .as_slice();
-  b.insert(0, iter_slice[0].clone());
-  b.insert(1, iter_slice[1].clone());
-  b.insert(2, iter_slice[2].clone());
+  ];
+  let c_slice = c.as_slice();
+  b.insert(0, c_slice[0].clone());
+  b.insert(1, c_slice[1].clone());
+  b.insert(2, c_slice[2].clone());
   b.append(&mut a);
   // `a` is now empty, but we have to "forget" it anyways to make this work in a const context in
   // conjunction with the `const_precise_live_drops` feature currently. Note that the reason the
