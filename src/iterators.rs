@@ -91,7 +91,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` pointers.
   #[inline(always)]
-  pub const fn as_slice(&self) -> &'a [T] {
+  pub /*const*/ fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     slice_from_raw_parts(self.start, distance_between(self.end, self.start))
   }
@@ -217,7 +217,7 @@ impl<'a, T: 'a, const N: usize> /*const*/ DoubleEndedIterator for StaticVecIterC
   }
 }
 
-impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecIterConst<'a, T, N> {
+impl<'a, T: 'a, const N: usize> /*const*/ ExactSizeIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
@@ -287,7 +287,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   /// `start` and `end` pointers. Though this is a mutable iterator, the slice cannot be mutable
   /// as it would lead to aliasing issues.
   #[inline(always)]
-  pub const fn as_slice(&self) -> &[T] {
+  pub /*const*/ fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     slice_from_raw_parts(self.start, distance_between(self.end, self.start))
   }
@@ -409,7 +409,7 @@ impl<'a, T: 'a, const N: usize> /*const*/ DoubleEndedIterator for StaticVecIterM
   }
 }
 
-impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecIterMut<'a, T, N> {
+impl<'a, T: 'a, const N: usize> /*const*/ ExactSizeIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
@@ -467,7 +467,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` indices.
   #[inline(always)]
-  pub const fn as_slice(&self) -> &[T] {
+  pub /*const*/ fn as_slice(&self) -> &[T] {
     // Safety: `start_at` is never null. This function will "at worst" return an empty slice.
     let start_at = unsafe {
       match size_of::<T>() {
@@ -481,7 +481,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   /// Returns a mutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` indices.
   #[inline(always)]
-  pub const fn as_mut_slice(&mut self) -> &mut [T] {
+  pub /*const*/ fn as_mut_slice(&mut self) -> &mut [T] {
     // Safety: `start_at` is never null. This function will "at worst" return an empty slice.
     let start_at = unsafe {
       match size_of::<T>() {
@@ -683,7 +683,7 @@ impl<'a, T: 'a, const N: usize> StaticVecDrain<'a, T, N> {
   /// Returns an immutable slice consisting of the current range of elements the iterator has a view
   /// over.
   #[inline(always)]
-  pub const fn as_slice(&self) -> &[T] {
+  pub /*const*/ fn as_slice(&self) -> &[T] {
     self.iter.as_slice()
   }
 }
