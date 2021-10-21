@@ -122,7 +122,7 @@ static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
     MyOtherStruct { s: "b" },
     MyOtherStruct { s: "c" },
   ]
-  .iter()
+  /*.iter()*/
   .as_slice();
   b.insert(0, iter_slice[0].clone());
   b.insert(1, iter_slice[1].clone());
