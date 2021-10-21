@@ -9,7 +9,7 @@ use crate::StaticVec;
 #[inline(always)]
 pub(crate) /*const*/ fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
   match size_of::<T>() {
-    0 => unsafe { (dest as usize).wrapping_sub(origin as usize) },
+    0 => (dest as usize).wrapping_sub(origin as usize),
     // Safety: this function is used strictly with linear inputs
     // where dest is known to come after origin.
     _ => unsafe { ptr_offset_from(dest, origin) as usize },
@@ -86,13 +86,13 @@ where T: Copy {
 /// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
 #[inline(always)]
 pub(crate) /*const*/ fn zst_ptr_add_mut<T>(ptr: *mut T, offset: usize) -> *mut T {
-  unsafe { (ptr as usize + offset) as *mut T }
+  (ptr as usize + offset) as *mut T
 }
 
 /// An internal convenience function for incrementing immutable ZST pointers by usize offsets.
 #[inline(always)]
 pub(crate) /*const*/ fn zst_ptr_add<T>(ptr: *const T, offset: usize) -> *const T {
-  unsafe { (ptr as usize + offset) as *const T }
+  (ptr as usize + offset) as *const T
 }
 
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.
