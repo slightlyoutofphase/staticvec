@@ -29,13 +29,12 @@
   incomplete_features
 )]
 #![feature(
+  adt_const_params,
   const_assume,
-  const_evaluatable_checked,
   const_fn_floating_point_arithmetic,
   const_fn_fn_ptr_basics,
   const_fn_trait_bound,
   const_fn_union,
-  const_generics,
   const_intrinsic_copy,
   const_maybe_uninit_as_ptr,
   const_maybe_uninit_assume_init,
@@ -57,6 +56,7 @@
   core_intrinsics,
   doc_cfg,
   exact_size_is_empty,
+  generic_const_exprs,
   inline_const,
   maybe_uninit_extra,
   maybe_uninit_uninit_array,
