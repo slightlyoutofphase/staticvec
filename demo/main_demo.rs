@@ -132,6 +132,8 @@ static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
   // `build` const fn did not require any use of `mem::forget` is that we only created a single
   // StaticVec instance within it which was directly used as the return value.
   forget(a);
+  // `c` must be "forgotten" for the same reasons as `a`.
+  forget(c);
   b
 };
 
