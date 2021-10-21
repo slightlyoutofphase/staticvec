@@ -1386,14 +1386,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// # Example usage:
   /// ```
   /// # use staticvec::{staticvec, StaticVec};
-  /// const V: StaticVec<StaticVec<i32, 2>, 2> = staticvec![staticvec![1, 3], staticvec![4, 2]];
+  /// /*const*/ let V: StaticVec<StaticVec<i32, 2>, 2> = staticvec![staticvec![1, 3], staticvec![4, 2]];
   /// assert_eq!(
   ///   V.iter().flatten().collect::<StaticVec<i32, 4>>().quicksorted_unstable(),
   ///   [1, 2, 3, 4]
   /// );
   /// ```
   #[inline]
-  pub const fn quicksorted_unstable(&self) -> Self
+  pub /*const*/ fn quicksorted_unstable(&self) -> Self
   where T: Copy + PartialOrd {
     let length = self.length;
     if length < 2 {
@@ -1428,7 +1428,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// // values simply not being sorted quite as you'd hoped.
   /// ```
   #[inline]
-  pub const fn quicksort_unstable(&mut self)
+  pub /*const*/ fn quicksort_unstable(&mut self)
   where T: Copy + PartialOrd {
     let length = self.length;
     if length < 2 {
