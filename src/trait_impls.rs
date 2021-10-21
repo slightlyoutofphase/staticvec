@@ -275,7 +275,7 @@ impl<'a, T: 'a + Copy, const N: usize> const ExtendEx<&'a T, &StaticVec<T, N>> f
   }
 }
 
-impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> const
+impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> /*const*/
   ExtendEx<&'a T, StaticVecIterConst<'a, T, N2>> for StaticVec<T, N1>
 {
   #[inline(always)]
@@ -289,7 +289,7 @@ impl<'a, T: 'a + Copy, const N1: usize, const N2: usize> const
   }
 }
 
-impl<'a, T: 'a + Copy, const N: usize> const ExtendEx<&'a T, StaticVecIterConst<'a, T, N>>
+impl<'a, T: 'a + Copy, const N: usize> /*const*/ ExtendEx<&'a T, StaticVecIterConst<'a, T, N>>
   for StaticVec<T, N>
 {
   #[inline(always)]
