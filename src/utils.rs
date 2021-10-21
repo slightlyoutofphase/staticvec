@@ -118,7 +118,7 @@ pub(crate) fn partial_compare<T1, T2: PartialOrd<T1>>(
 /// A simple quicksort function for internal use, called in
 /// ['quicksorted_unstable`](crate::StaticVec::quicksorted_unstable).
 #[inline]
-pub(crate) /*const*/ fn quicksort_internal<T: Copy + PartialOrd>(
+pub(crate) const fn quicksort_internal<T: Copy + PartialOrd>(
   values: *mut T,
   mut low: isize,
   mut high: isize,
@@ -133,10 +133,10 @@ pub(crate) /*const*/ fn quicksort_internal<T: Copy + PartialOrd>(
     unsafe {
       let p = *values.offset(low + ((high - low) >> 1));
       loop {
-        while *values.offset(i) < p {
+        while *(values.offset(i)) < p {
           i += 1;
         }
-        while *values.offset(j) > p {
+        while *(values.offset(j)) > p {
           j -= 1;
         }
         if i <= j {
