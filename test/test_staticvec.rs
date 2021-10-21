@@ -1,10 +1,11 @@
 #![allow(clippy::all, dead_code, incomplete_features, unused_imports)]
 #![feature(
+  adt_const_params,
   box_syntax,
   const_fn_floating_point_arithmetic,
   const_fn_trait_bound,
-  const_generics,
-  const_trait_impl
+  const_trait_impl,
+  generic_const_exprs
 )]
 
 // In case you're wondering why there's extensive use of "StaticVecs that contain boxed items"
