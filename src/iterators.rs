@@ -1,6 +1,6 @@
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics::assume;
-use core::iter::{FusedIterator, TrustedLen, TrustedRandomAccessNoCoerce, TrustedRandomAccess};
+use core::iter::{FusedIterator, TrustedLen, TrustedRandomAccessNoCoerce};
 use core::marker::{PhantomData, Send, Sync};
 use core::mem::{replace, size_of, MaybeUninit};
 use core::ptr;
