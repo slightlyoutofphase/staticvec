@@ -1,6 +1,6 @@
 use core::fmt::{self, Debug, Formatter};
 use core::intrinsics::assume;
-use core::iter::{FusedIterator, TrustedLen, TrustedRandomAccess};
+use core::iter::{FusedIterator, TrustedLen, TrustedRandomAccessNoCoerce, TrustedRandomAccess};
 use core::marker::{PhantomData, Send, Sync};
 use core::mem::{replace, size_of, MaybeUninit};
 use core::ptr;
@@ -234,7 +234,7 @@ unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterConst<'
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: 'a, const N: usize> /*const*/ TrustedRandomAccess for StaticVecIterConst<'a, T, N> {
+unsafe impl<'a, T: 'a, const N: usize> /*const*/ TrustedRandomAccessNoCoerce for StaticVecIterConst<'a, T, N> {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
 }
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterConst<'a, T, N> {}
@@ -426,7 +426,7 @@ unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterMut<'a,
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: 'a, const N: usize> /*const*/ TrustedRandomAccess for StaticVecIterMut<'a, T, N> {
+unsafe impl<'a, T: 'a, const N: usize> /*const*/ TrustedRandomAccessNoCoerce for StaticVecIterMut<'a, T, N> {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
 }
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterMut<'a, T, N> {}
@@ -557,8 +557,8 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
 
   #[inline(always)]
   unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> T
-  where Self: TrustedRandomAccess {
-    // Safety: `TrustedRandomAccess` is only implemented for `StaticVecIntoIter` when `T` is `Copy`,
+  where Self: TrustedRandomAccessNoCoerce {
+    // Safety: `TrustedRandomAccessNoCoerce` is only implemented for `StaticVecIntoIter` when `T` is `Copy`,
     // and the caller is required to uphold the invariants for this function.
     match size_of::<T>() {
       0 => zst_ptr_add(StaticVec::first_ptr(&self.data), idx).read(),
@@ -626,7 +626,7 @@ unsafe impl<T, const N: usize> TrustedLen for StaticVecIntoIter<T, N> {}
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<T: Copy, const N: usize> /*const*/ TrustedRandomAccess for StaticVecIntoIter<T, N> {
+unsafe impl<T: Copy, const N: usize> /*const*/ TrustedRandomAccessNoCoerce for StaticVecIntoIter<T, N> {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
 }
 unsafe impl<T: Sync, const N: usize> Sync for StaticVecIntoIter<T, N> {}
@@ -716,8 +716,8 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
 
   #[inline(always)]
   unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> T
-  where Self: TrustedRandomAccess {
-    // Safety: `TrustedRandomAccess` is only implemented for `StaticVecDrain` when `T` is `Copy`,
+  where Self: TrustedRandomAccessNoCoerce {
+    // Safety: `TrustedRandomAccessNoCoerce` is only implemented for `StaticVecDrain` when `T` is `Copy`,
     // and the caller is required to uphold the invariants for this function.
     match size_of::<T>() {
       0 => zst_ptr_add(self.as_slice().as_ptr(), idx).read(),
@@ -753,7 +753,7 @@ unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecDrain<'a, T, N> {
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: Copy + 'a, const N: usize> /*const*/ TrustedRandomAccess
+unsafe impl<'a, T: Copy + 'a, const N: usize> /*const*/ TrustedRandomAccessNoCoerce
   for StaticVecDrain<'a, T, N>
 {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
