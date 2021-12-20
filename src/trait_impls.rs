@@ -795,10 +795,12 @@ impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, N>);
 /// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
 impl<const N: usize> Read for StaticVec<u8, N> {
+  /*
   #[inline(always)]
   unsafe fn initializer(&self) -> io::Initializer {
     io::Initializer::nop()
   }
+  */
 
   #[inline]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
