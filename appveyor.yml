@@ -41,7 +41,7 @@ for:
       - cmd: rustup-init.exe -yv --default-toolchain nightly --default-host %TARGET% --profile minimal
       - cmd: set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
     cache:
-      - '%USERPROFILE%\.cargo'
+      #- '%USERPROFILE%\.cargo'
   -
     matrix:
       only:
@@ -49,7 +49,7 @@ for:
     install:
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -yv --default-toolchain nightly --default-host x86_64-unknown-linux-gnu --profile minimal
     cache:
-      - '/home/appveyor/.cargo'
+      #- '/home/appveyor/.cargo'
   -
     matrix:
       only:
@@ -57,7 +57,7 @@ for:
     install:
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -yv --default-toolchain nightly --default-host x86_64-apple-darwin --profile minimal
     cache:
-      - '$HOME/.cargo'
+      #- '$HOME/.cargo'
 build: false
 test_script:
   # We run the suite once with all functionality enabled, and then once without
