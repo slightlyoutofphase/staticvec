@@ -35,7 +35,7 @@
   const_fn_fn_ptr_basics,
   const_fn_trait_bound,
   const_intrinsic_copy,
-  const_maybe_uninit_as_ptr,
+  const_maybe_uninit_as_mut_ptr,
   const_maybe_uninit_assume_init,
   const_mut_refs,
   const_precise_live_drops,
@@ -44,7 +44,6 @@
   const_ptr_offset_from,
   const_ptr_read,
   const_ptr_write,
-  const_raw_ptr_deref,
   // this should be called `const_interior_mutability` IMO
   const_refs_to_cell,
   const_replace,
