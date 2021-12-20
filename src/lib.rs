@@ -64,7 +64,6 @@
   trusted_random_access,
   untagged_unions
 )]
-#![cfg_attr(feature = "std", feature(read_initializer))]
 
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics::assume;
