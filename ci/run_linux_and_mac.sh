@@ -20,6 +20,7 @@ export MIRIFLAGS="-Zmiri-disable-isolation"
 # We run the suite once under Miri with all functionality enabled, and then once
 # normally without the default features just to make sure `no_std` support has
 # not been broken.
+cargo clean
 cargo miri test --features="std"
 cargo clean
 cargo test --no-default-features
