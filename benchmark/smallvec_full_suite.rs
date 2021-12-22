@@ -1,5 +1,5 @@
 #![allow(clippy::all, incomplete_features)]
-#![feature(const_generics, test)]
+#![feature(test)]
 
 // SlightlyOutOfPhase, August 2019:
 

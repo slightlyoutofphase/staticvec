@@ -20,7 +20,7 @@
 )]
 
 use core::mem::forget;
-use staticvec::{sortedstaticvec, staticvec, FromIterator, StaticVec};
+use staticvec::{sortedstaticvec, staticvec, StaticVec};
 
 #[derive(Copy, Clone, Debug)]
 struct ZST {}
@@ -45,7 +45,7 @@ impl const Clone for MyOtherStruct {
   fn clone(&self) -> Self {
     Self { s: self.s }
   }
-  
+
   fn clone_from(&mut self, source: &Self) {
     self.s = source.s
   }

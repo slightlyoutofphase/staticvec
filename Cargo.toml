@@ -5,11 +5,11 @@ repository = "https://github.com/slightlyoutofphase/staticvec"
 documentation = "https://docs.rs/staticvec/"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-version = "0.10.8"
+version = "0.11.0"
 authors = ["SlightlyOutOfPhase <slightlyoutofphase@gmail.com>"]
 keywords = ["vec", "array", "no_std", "vector", "stack"]
 categories = ["data-structures", "no-std"]
-edition = "2018"
+edition = "2021"
 include = ["Cargo.toml", "rustfmt.toml", "src/**/*.rs", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
 
 [badges.maintenance]

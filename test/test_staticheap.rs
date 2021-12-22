@@ -1,5 +1,11 @@
 #![allow(incomplete_features)]
-#![feature(adt_const_params, box_syntax, exact_size_is_empty, generic_const_exprs, trusted_len)]
+#![feature(
+  adt_const_params,
+  box_syntax,
+  exact_size_is_empty,
+  generic_const_exprs,
+  trusted_len
+)]
 
 // A note: This is literally the actual liballoc `BinaryHeap` test suite adapted for `StaticHeap`.
 

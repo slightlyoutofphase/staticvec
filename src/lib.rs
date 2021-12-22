@@ -67,8 +67,6 @@
 
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics::assume;
-#[doc(hidden)]
-pub use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::mem::{self, size_of, MaybeUninit};
 use core::ops::{

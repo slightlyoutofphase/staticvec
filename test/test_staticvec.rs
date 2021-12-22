@@ -5,6 +5,7 @@
   const_fn_floating_point_arithmetic,
   const_fn_trait_bound,
   const_trait_impl,
+  exact_size_is_empty,
   generic_const_exprs
 )]
 
@@ -14,7 +15,7 @@
 // mean, "weird stuff done with heap memory" is significantly more likely to set Miri off than
 // "weird stuff done with stack memory".
 
-use staticvec::{sortedstaticvec, staticvec, CapacityError, FromIterator, StaticVec};
+use staticvec::{sortedstaticvec, staticvec, CapacityError, StaticVec};
 
 use core::cell;
 
@@ -637,7 +638,7 @@ fn from_iter() {
     [1, 2, 3, 4, 5, 6]
   );
   assert_eq!(
-    StaticVec::<u8, 12>::from_iter(core::array::IntoIter::new([1, 2, 3, 4, 5, 6])),
+    StaticVec::<u8, 12>::from_iter(IntoIterator::into_iter([1, 2, 3, 4, 5, 6])),
     [1, 2, 3, 4, 5, 6]
   );
   assert_eq!(StaticVec::<u8, 0>::from_iter(&[1, 2, 3, 4, 5, 6]), []);
@@ -957,8 +958,22 @@ fn iter() {
   assert_eq!(*i.next().unwrap(), box 3);
   assert_eq!("StaticVecIterConst([])", format!("{:?}", i));
   let v2 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
-  let it2 = v2.iter();
+  let mut it2 = v2.iter();
   assert_eq!(it2.as_slice(), &[ZST {}, ZST {}, ZST {}, ZST {}]);
+  assert_eq!(it2.len(), 4);
+  assert_eq!(it2.is_empty(), false);
+  it2.next();
+  assert_eq!(it2.len(), 3);
+  assert_eq!(it2.is_empty(), false);
+  it2.next();
+  assert_eq!(it2.len(), 2);
+  assert_eq!(it2.is_empty(), false);
+  it2.next();
+  assert_eq!(it2.len(), 1);
+  assert_eq!(it2.is_empty(), false);
+  it2.next();
+  assert_eq!(it2.len(), 0);
+  assert_eq!(it2.is_empty(), true);
   let a1 = staticvec![box 1, box 2, box 3];
   let a2 = staticvec![box 4, box 5, box 6];
   let mut iter = a1.iter().zip(a2.iter());
@@ -1780,9 +1795,9 @@ fn push_panic() {
 
 #[test]
 fn quicksorted_unstable() {
-  /*const*/ let V: StaticVec<StaticVec<i32, 3>, 2> = staticvec![staticvec![1, 2, 3], staticvec![6, 5, 4]];
+  let v: StaticVec<StaticVec<i32, 3>, 2> = staticvec![staticvec![1, 2, 3], staticvec![6, 5, 4]];
   assert_eq!(
-    V.iter()
+    v.iter()
       .flatten()
       .collect::<StaticVec<i32, 6>>()
       .quicksorted_unstable(),
