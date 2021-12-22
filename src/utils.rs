@@ -85,14 +85,14 @@ where T: Copy {
 
 /// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
 #[inline(always)]
-pub(crate) /*const*/ fn zst_ptr_add_mut<T>(ptr: *mut T, offset: usize) -> *mut T {
-  (ptr as usize + offset) as *mut T
+pub(crate) const fn zst_ptr_add_mut<T>(ptr: *mut T, offset: usize) -> *mut T {
+  unsafe { (ptr as *mut u8).offset(count as isize) as *mut T }
 }
 
 /// An internal convenience function for incrementing immutable ZST pointers by usize offsets.
 #[inline(always)]
-pub(crate) /*const*/ fn zst_ptr_add<T>(ptr: *const T, offset: usize) -> *const T {
-  (ptr as usize + offset) as *const T
+pub(crate) const fn zst_ptr_add<T>(ptr: *const T, offset: usize) -> *const T {
+  unsafe { (ptr as *const u8).offset(count as isize) as *const T }
 }
 
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.
