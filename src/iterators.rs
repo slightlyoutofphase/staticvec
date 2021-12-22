@@ -91,7 +91,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` pointers.
   #[inline(always)]
-  pub /*const*/ fn as_slice(&self) -> &'a [T] {
+  pub const fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     slice_from_raw_parts(self.start, distance_between(self.end, self.start))
   }
@@ -101,7 +101,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
 // future where `for` loops are allowed in `const` contexts, and do not necessarily benefit in any
 // particularly useful way from being `const` impls quite yet.
 
-impl<'a, T: 'a, const N: usize> /*const*/ Iterator for StaticVecIterConst<'a, T, N> {
+impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
   type Item = &'a T;
 
   #[inline(always)]
@@ -177,7 +177,7 @@ impl<'a, T: 'a, const N: usize> /*const*/ Iterator for StaticVecIterConst<'a, T,
   }
 }
 
-impl<'a, T: 'a, const N: usize> /*const*/ DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
+impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<&'a T> {
     unsafe {
@@ -217,7 +217,7 @@ impl<'a, T: 'a, const N: usize> /*const*/ DoubleEndedIterator for StaticVecIterC
   }
 }
 
-impl<'a, T: 'a, const N: usize> /*const*/ ExactSizeIterator for StaticVecIterConst<'a, T, N> {
+impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
@@ -234,13 +234,18 @@ unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterConst<'
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: 'a, const N: usize> /*const*/ TrustedRandomAccessNoCoerce for StaticVecIterConst<'a, T, N> {
+unsafe impl<'a, T: 'a, const N: usize> const TrustedRandomAccessNoCoerce
+  for StaticVecIterConst<'a, T, N>
+{
   const MAY_HAVE_SIDE_EFFECT: bool = false;
+  fn size(&self) -> usize {
+    distance_between(self.end, self.start)
+  }
 }
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterConst<'a, T, N> {}
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Send for StaticVecIterConst<'a, T, N> {}
 
-impl<'a, T: 'a, const N: usize> /*const*/ Clone for StaticVecIterConst<'a, T, N> {
+impl<'a, T: 'a, const N: usize> Clone for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     Self {
@@ -287,13 +292,13 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   /// `start` and `end` pointers. Though this is a mutable iterator, the slice cannot be mutable
   /// as it would lead to aliasing issues.
   #[inline(always)]
-  pub /*const*/ fn as_slice(&self) -> &[T] {
+  pub const fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
     slice_from_raw_parts(self.start, distance_between(self.end, self.start))
   }
 }
 
-impl<'a, T: 'a, const N: usize> /*const*/ Iterator for StaticVecIterMut<'a, T, N> {
+impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
   type Item = &'a mut T;
 
   #[inline(always)]
@@ -369,7 +374,7 @@ impl<'a, T: 'a, const N: usize> /*const*/ Iterator for StaticVecIterMut<'a, T, N
   }
 }
 
-impl<'a, T: 'a, const N: usize> /*const*/ DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
+impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn next_back(&mut self) -> Option<&'a mut T> {
     unsafe {
@@ -409,7 +414,7 @@ impl<'a, T: 'a, const N: usize> /*const*/ DoubleEndedIterator for StaticVecIterM
   }
 }
 
-impl<'a, T: 'a, const N: usize> /*const*/ ExactSizeIterator for StaticVecIterMut<'a, T, N> {
+impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
@@ -426,8 +431,13 @@ unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterMut<'a,
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: 'a, const N: usize> /*const*/ TrustedRandomAccessNoCoerce for StaticVecIterMut<'a, T, N> {
+unsafe impl<'a, T: 'a, const N: usize> const TrustedRandomAccessNoCoerce
+  for StaticVecIterMut<'a, T, N>
+{
   const MAY_HAVE_SIDE_EFFECT: bool = false;
+  fn size(&self) -> usize {
+    distance_between(self.end, self.start)
+  }
 }
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterMut<'a, T, N> {}
 unsafe impl<'a, T: 'a + Send, const N: usize> const Send for StaticVecIterMut<'a, T, N> {}
@@ -467,7 +477,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   /// Returns an immutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` indices.
   #[inline(always)]
-  pub /*const*/ fn as_slice(&self) -> &[T] {
+  pub const fn as_slice(&self) -> &[T] {
     // Safety: `start_at` is never null. This function will "at worst" return an empty slice.
     let start_at = unsafe {
       match size_of::<T>() {
@@ -481,7 +491,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
   /// Returns a mutable slice consisting of the elements in the range between the iterator's
   /// `start` and `end` indices.
   #[inline(always)]
-  pub /*const*/ fn as_mut_slice(&mut self) -> &mut [T] {
+  pub const fn as_mut_slice(&mut self) -> &mut [T] {
     // Safety: `start_at` is never null. This function will "at worst" return an empty slice.
     let start_at = unsafe {
       match size_of::<T>() {
@@ -558,8 +568,8 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
   #[inline(always)]
   unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> T
   where Self: TrustedRandomAccessNoCoerce {
-    // Safety: `TrustedRandomAccessNoCoerce` is only implemented for `StaticVecIntoIter` when `T` is `Copy`,
-    // and the caller is required to uphold the invariants for this function.
+    // Safety: `TrustedRandomAccessNoCoerce` is only implemented for `StaticVecIntoIter` when `T` is
+    // `Copy`, and the caller is required to uphold the invariants for this function.
     match size_of::<T>() {
       0 => zst_ptr_add(StaticVec::first_ptr(&self.data), idx).read(),
       _ => StaticVec::first_ptr(&self.data).add(idx).read(),
@@ -626,8 +636,12 @@ unsafe impl<T, const N: usize> TrustedLen for StaticVecIntoIter<T, N> {}
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<T: Copy, const N: usize> /*const*/ TrustedRandomAccessNoCoerce for StaticVecIntoIter<T, N> {
+unsafe impl<T: Copy, const N: usize> const TrustedRandomAccessNoCoerce for StaticVecIntoIter<T, N> {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
+
+  fn size(&self) -> usize {
+    self.end - self.start
+  }
 }
 unsafe impl<T: Sync, const N: usize> Sync for StaticVecIntoIter<T, N> {}
 unsafe impl<T: Send, const N: usize> Send for StaticVecIntoIter<T, N> {}
@@ -683,7 +697,7 @@ impl<'a, T: 'a, const N: usize> StaticVecDrain<'a, T, N> {
   /// Returns an immutable slice consisting of the current range of elements the iterator has a view
   /// over.
   #[inline(always)]
-  pub /*const*/ fn as_slice(&self) -> &[T] {
+  pub const fn as_slice(&self) -> &[T] {
     self.iter.as_slice()
   }
 }
@@ -717,8 +731,8 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
   #[inline(always)]
   unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> T
   where Self: TrustedRandomAccessNoCoerce {
-    // Safety: `TrustedRandomAccessNoCoerce` is only implemented for `StaticVecDrain` when `T` is `Copy`,
-    // and the caller is required to uphold the invariants for this function.
+    // Safety: `TrustedRandomAccessNoCoerce` is only implemented for `StaticVecDrain` when `T` is
+    // `Copy`, and the caller is required to uphold the invariants for this function.
     match size_of::<T>() {
       0 => zst_ptr_add(self.as_slice().as_ptr(), idx).read(),
       _ => self.as_slice().as_ptr().add(idx).read(),
@@ -753,10 +767,13 @@ unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecDrain<'a, T, N> {
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: Copy + 'a, const N: usize> /*const*/ TrustedRandomAccessNoCoerce
+unsafe impl<'a, T: Copy + 'a, const N: usize> const TrustedRandomAccessNoCoerce
   for StaticVecDrain<'a, T, N>
 {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
+  fn size(&self) -> usize {
+    distance_between(self.iter.end, self.iter.start)
+  }
 }
 unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecDrain<'a, T, N> {}
 unsafe impl<'a, T: 'a + Send, const N: usize> Send for StaticVecDrain<'a, T, N> {}
