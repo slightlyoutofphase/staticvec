@@ -7,11 +7,11 @@ use crate::StaticVec;
 /// An internal function for calculating pointer offsets as usizes, while accounting
 /// directly for possible ZSTs. This is used specifically in the iterator implementations.
 #[inline(always)]
-pub(crate) /*const*/ fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
+pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
+  // Safety: this function is used strictly with linear inputs
+  // where `dest` is known to come after `origin`.
   match size_of::<T>() {
-    0 => (dest as usize).wrapping_sub(origin as usize),
-    // Safety: this function is used strictly with linear inputs
-    // where dest is known to come after origin.
+    0 => unsafe { ptr_offset_from(dest as *const u8, origin as *const u8) as usize },
     _ => unsafe { ptr_offset_from(dest, origin) as usize },
   }
 }
@@ -85,14 +85,14 @@ where T: Copy {
 
 /// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
 #[inline(always)]
-pub(crate) /*const*/ fn zst_ptr_add_mut<T>(ptr: *mut T, offset: usize) -> *mut T {
-  (ptr as usize + offset) as *mut T
+pub(crate) const fn zst_ptr_add_mut<T>(ptr: *mut T, count: usize) -> *mut T {
+  unsafe { (ptr as *mut u8).offset(count as isize) as *mut T }
 }
 
 /// An internal convenience function for incrementing immutable ZST pointers by usize offsets.
 #[inline(always)]
-pub(crate) /*const*/ fn zst_ptr_add<T>(ptr: *const T, offset: usize) -> *const T {
-  (ptr as usize + offset) as *const T
+pub(crate) const fn zst_ptr_add<T>(ptr: *const T, count: usize) -> *const T {
+  unsafe { (ptr as *const u8).offset(count as isize) as *const T }
 }
 
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.
