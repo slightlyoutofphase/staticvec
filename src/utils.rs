@@ -4,42 +4,17 @@ use core::mem::{size_of, MaybeUninit};
 
 use crate::StaticVec;
 
-#[inline(always)]
-const fn ptr_to_usize<T>(ptr: *const T) -> usize {
-  /// A type conversion struct that explicitly disallows anything non-Copy. Used below for working
-  /// around the incompatibility of "ptr as usize" in const contexts in current nightly Rust, the
-  /// functionality of which we do need to implement `distance_between` as `const.
-  #[repr(C)]
-  union Convert<From: Copy, To: Copy> {
-    from: From,
-    to: To,
-  }
-  // We could use `transmute` for this of course, but this crate has managed to never use that at
-  // all to date, so why start now?
-  unsafe { Convert::<*const T, usize> { from: ptr }.to }
-}
-
-#[inline(always)]
-const fn ptr_to_usize_mut<T>(ptr: *mut T) -> usize {
-  /// See the comments in the above *const T version of this function.
-  #[repr(C)]
-  union Convert<From: Copy, To: Copy> {
-    from: From,
-    to: To,
-  }
-  unsafe { Convert::<*mut T, usize> { from: ptr }.to }
-}
-
 /// An internal function for calculating pointer offsets as usizes, while accounting
 /// directly for possible ZSTs. This is used specifically in the iterator implementations.
 #[inline(always)]
 pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
   // Safety: this function is used strictly with linear inputs where `dest` is known to come after
-  // `origin`. Note that this is `const` solely with non-ZSTs in mind, and won't actually compile
-  // with a ZST type parameter in const contexts, which is fine for our purposes as we just need it
-  // to handle ZSTs correctly in non-const situations.
+  // `origin`.
   match size_of::<T>() {
-    0 => ptr_to_usize(dest).wrapping_sub(ptr_to_usize(origin)),
+    // If `T` is a ZST, we cannot use typed pointers as it would either return an incorrect value
+    // or in some cases segfault.
+    0 => unsafe { ptr_offset_from(dest as *const u8, origin as *const u8) as usize },
+    // For all other sizes of `T`, however typed pointers are just fine.
     _ => unsafe { ptr_offset_from(dest, origin) as usize },
   }
 }
@@ -114,13 +89,15 @@ where T: Copy {
 /// An internal convenience function for incrementing immutable ZST pointers by usize offsets.
 #[inline(always)]
 pub(crate) const fn zst_ptr_add<T>(ptr: *const T, count: usize) -> *const T {
-  (ptr_to_usize(ptr) + count) as *const T
+  debug_assert!(size_of::<T>() == 0, "`zst_ptr_add` called on a non-ZST!");
+  (ptr as *const u8).wrapping_add(n) as *const T
 }
 
 /// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
 #[inline(always)]
 pub(crate) const fn zst_ptr_add_mut<T>(ptr: *mut T, count: usize) -> *mut T {
-  (ptr_to_usize_mut(ptr) + count) as *mut T
+  debug_assert!(size_of::<T>() == 0, "`zst_ptr_add_mut` called on a non-ZST!");
+  (ptr as *mut u8).wrapping_add(n) as *mut T
 }
 
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.
