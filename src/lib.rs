@@ -36,6 +36,7 @@
   const_fn_trait_bound,
   const_intrinsic_copy,
   const_maybe_uninit_as_mut_ptr,
+  const_maybe_uninit_as_ptr,
   const_maybe_uninit_assume_init,
   const_mut_refs,
   const_precise_live_drops,
@@ -459,7 +460,11 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline(always)]
   pub const fn as_ptr(&self) -> *const T {
-    Self::first_ptr(&self.data)
+    // This is the same aliasing-avoidance / optimization-trick approach used by regular Vec.
+    let res = self.data.as_ptr() as *const T;
+    // A pointer to "element zero" of an array is never null.
+    unsafe { assume(!ptr.is_null()); }
+    res
   }
 
   /// Returns a mutable pointer to the first element of the StaticVec's internal array.
@@ -477,7 +482,10 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline(always)]
   pub const fn as_mut_ptr(&mut self) -> *mut T {
-    Self::first_ptr_mut(&mut self.data)
+    // See the comment above in `as_ptr()`.
+    let res = self.data.as_mut_ptr() as *mut T;
+    unsafe { assume(!ptr.is_null()); }
+    res
   }
 
   /// Returns a constant reference to a slice of the StaticVec's inhabited area.
@@ -2607,7 +2615,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// as opposed to slices.
   #[inline(always)]
   pub(crate) const fn first_ptr(this: &MaybeUninit<[T; N]>) -> *const T {
-    this as *const MaybeUninit<[T; N]> as *const T
+    let res = this.as_ptr() as *const T;
+    unsafe { assume(!ptr.is_null()); }
+    res
   }
 
   /// An internal convenience function to go from `&mut MaybeUninit<[T; N]>` to `*mut T`.
@@ -2615,7 +2625,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// arrays as opposed to slices.
   #[inline(always)]
   pub(crate) const fn first_ptr_mut(this: &mut MaybeUninit<[T; N]>) -> *mut T {
-    this as *mut MaybeUninit<[T; N]> as *mut T
+    let res = this.as_mut_ptr() as *mut T;
+    unsafe { assume(!ptr.is_null()); }
+    res
   }
 }
 
