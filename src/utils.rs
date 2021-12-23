@@ -90,14 +90,14 @@ where T: Copy {
 #[inline(always)]
 pub(crate) const fn zst_ptr_add<T>(ptr: *const T, count: usize) -> *const T {
   debug_assert!(size_of::<T>() == 0, "`zst_ptr_add` called on a non-ZST!");
-  (ptr as *const u8).wrapping_add(n) as *const T
+  (ptr as *const u8).wrapping_add(count) as *const T
 }
 
 /// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
 #[inline(always)]
 pub(crate) const fn zst_ptr_add_mut<T>(ptr: *mut T, count: usize) -> *mut T {
   debug_assert!(size_of::<T>() == 0, "`zst_ptr_add_mut` called on a non-ZST!");
-  (ptr as *mut u8).wrapping_add(n) as *mut T
+  (ptr as *mut u8).wrapping_add(count) as *mut T
 }
 
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.
