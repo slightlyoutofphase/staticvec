@@ -36,7 +36,6 @@
   const_fn_trait_bound,
   const_intrinsic_copy,
   const_maybe_uninit_as_mut_ptr,
-  const_maybe_uninit_as_ptr,
   const_maybe_uninit_assume_init,
   const_mut_refs,
   const_precise_live_drops,
