@@ -2187,8 +2187,8 @@ impl<T, const N: usize> StaticVec<T, N> {
     let mut left = MaybeUninit::<[T; M]>::uninit();
     let mut right = MaybeUninit::<[T; N - M]>::uninit();
     let self_ptr = self.as_ptr();
-    let left_ptr = left.as_mut_ptr() as *mut T;
-    let right_ptr = right.as_mut_ptr() as *mut T;
+    let left_ptr = Self::first_ptr_mut(&mut left);
+    let right_ptr = Self::first_ptr_mut(&mut right);
     let right_length = old_length - M;
     unsafe {
       self_ptr.copy_to_nonoverlapping(left_ptr, M);
