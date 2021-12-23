@@ -64,6 +64,7 @@
   trusted_random_access,
   untagged_unions
 )]
+#![cfg_attr(feature = "std", feature(read_buf))]
 
 use core::cmp::{Ord, PartialEq};
 use core::intrinsics::assume;
@@ -73,6 +74,7 @@ use core::ops::{
   Add, Bound::Excluded, Bound::Included, Bound::Unbounded, Div, Mul, RangeBounds, Sub,
 };
 use core::ptr;
+use core::slice::{from_raw_parts, from_raw_parts_mut};
 
 pub use crate::errors::{CapacityError, PushCapacityError};
 pub use crate::heap::{
@@ -82,9 +84,7 @@ pub use crate::iterators::{
   StaticVecDrain, StaticVecIntoIter, StaticVecIterConst, StaticVecIterMut, StaticVecSplice,
 };
 pub use crate::string::{string_utils, StaticString, StringError};
-use crate::utils::{
-  const_min, quicksort_internal, reverse_copy, slice_from_raw_parts, slice_from_raw_parts_mut,
-};
+use crate::utils::{const_min, quicksort_internal, reverse_copy};
 
 #[cfg(any(feature = "std", rustdoc))]
 extern crate alloc;
@@ -491,7 +491,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub const fn as_slice(&self) -> &[T] {
     // Safety: `self.as_ptr()` is a pointer to an array for which the first `length`
     // elements are guaranteed to be initialized. Therefore this is a valid slice.
-    slice_from_raw_parts(self.as_ptr(), self.length)
+    unsafe { from_raw_parts(self.as_ptr(), self.length) }
   }
 
   /// Returns a mutable reference to a slice of the StaticVec's inhabited area.
@@ -507,7 +507,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub const fn as_mut_slice(&mut self) -> &mut [T] {
     // Safety: See as_slice.
-    slice_from_raw_parts_mut(self.as_mut_ptr(), self.length)
+    unsafe { from_raw_parts_mut(self.as_mut_ptr(), self.length) }
   }
 
   /// Returns a constant pointer to the element of the StaticVec at `index` without doing any
@@ -1796,7 +1796,7 @@ impl<T, const N: usize> StaticVec<T, N> {
             .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), item_count);
           // Manually drop any excess values in the source vec to avoid undesirable memory leaks.
           if vec_len > item_count {
-            ptr::drop_in_place(slice_from_raw_parts_mut(
+            ptr::drop_in_place(from_raw_parts_mut(
               vec.as_mut_ptr().add(item_count),
               vec_len - item_count,
             ));
@@ -2107,7 +2107,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       let old_length = self.length;
       unsafe {
         self.set_len(length);
-        ptr::drop_in_place(slice_from_raw_parts_mut(
+        ptr::drop_in_place(from_raw_parts_mut(
           self.mut_ptr_at_unchecked(length),
           old_length - length,
         ));

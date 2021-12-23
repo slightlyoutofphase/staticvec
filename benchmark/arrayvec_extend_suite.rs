@@ -36,12 +36,12 @@ fn staticvec_extend_with_constant_blackboxed(b: &mut Bencher) {
 
 #[bench]
 fn staticvec_extend_with_range_blackboxed(b: &mut Bencher) {
-  let mut v = StaticVec::<u16, 512>::new();
+  let mut v = StaticVec::<u8, 512>::new();
   let cap = v.capacity();
   b.iter(|| {
     v.clear();
     let range = 0..cap;
-    v.extend(black_box(range).map(|x| x as u16));
+    v.extend(range.map(|x| black_box(x as u8)));
     v[511]
   });
   b.bytes = v.capacity() as u64;

@@ -1,17 +1,45 @@
 use core::cmp::{Ordering, PartialOrd};
 use core::intrinsics::{assume, ptr_offset_from};
-use core::mem::{/* align_of, */ size_of, MaybeUninit};
+use core::mem::{size_of, MaybeUninit};
 
 use crate::StaticVec;
+
+#[inline(always)]
+const fn ptr_to_usize<T>(ptr: *const T) -> usize {
+  /// A type conversion struct that explicitly disallows anything non-Copy. Used below for working
+  /// around the incompatibility of "ptr as usize" in const contexts in current nightly Rust, the
+  /// functionality of which we do need to implement `distance_between` as `const.
+  #[repr(C)]
+  union Convert<From: Copy, To: Copy> {
+    from: From,
+    to: To,
+  }
+  // We could use `transmute` for this of course, but this crate has managed to never use that at
+  // all to date, so why start now?
+  unsafe { Convert::<*const T, usize> { from: ptr }.to }
+}
+
+#[inline(always)]
+const fn ptr_to_usize_mut<T>(ptr: *mut T) -> usize {
+  /// See the comments in the above *const T version of this function.
+  #[repr(C)]
+  union Convert<From: Copy, To: Copy> {
+    from: From,
+    to: To,
+  }
+  unsafe { Convert::<*mut T, usize> { from: ptr }.to }
+}
 
 /// An internal function for calculating pointer offsets as usizes, while accounting
 /// directly for possible ZSTs. This is used specifically in the iterator implementations.
 #[inline(always)]
 pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
-  // Safety: this function is used strictly with linear inputs
-  // where `dest` is known to come after `origin`.
+  // Safety: this function is used strictly with linear inputs where `dest` is known to come after
+  // `origin`. Note that this is `const` solely with non-ZSTs in mind, and won't actually compile
+  // with a ZST type parameter in const contexts, which is fine for our purposes as we just need it
+  // to handle ZSTs correctly in non-const situations.
   match size_of::<T>() {
-    0 => unsafe { ptr_offset_from(dest as *const u8, origin as *const u8) as usize },
+    0 => ptr_to_usize(dest).wrapping_sub(ptr_to_usize(origin)),
     _ => unsafe { ptr_offset_from(dest, origin) as usize },
   }
 }
@@ -83,16 +111,16 @@ where T: Copy {
   }
 }
 
-/// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
-#[inline(always)]
-pub(crate) const fn zst_ptr_add_mut<T>(ptr: *mut T, count: usize) -> *mut T {
-  unsafe { (ptr as *mut u8).offset(count as isize) as *mut T }
-}
-
 /// An internal convenience function for incrementing immutable ZST pointers by usize offsets.
 #[inline(always)]
 pub(crate) const fn zst_ptr_add<T>(ptr: *const T, count: usize) -> *const T {
-  unsafe { (ptr as *const u8).offset(count as isize) as *const T }
+  (ptr_to_usize(ptr) + count) as *const T
+}
+
+/// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
+#[inline(always)]
+pub(crate) const fn zst_ptr_add_mut<T>(ptr: *mut T, count: usize) -> *mut T {
+  (ptr_to_usize_mut(ptr) + count) as *mut T
 }
 
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.
@@ -168,57 +196,4 @@ pub(crate) fn quicksort_internal<T: Copy + PartialOrd>(
       break;
     }
   }
-}
-
-/*
-/// A local (identically written) `const fn` version of `intrinsics::is_aligned_and_not_null`.
-#[inline(always)]
-pub(crate) const fn is_aligned_and_not_null<T>(ptr: *const T) -> bool {
-  // This does not compile currently in certain const contexts because of the `ptr as usize` cast,
-  // even though the results of the below slice functions are always valid and properly usable
-  // from regular code even when declared as `static`.
-  unsafe { !ptr.is_null() && ptr as usize % align_of::<T>() == 0 }
-}
-*/
-
-/// A local (identically written) `const fn` version of `slice::from_raw_parts`.
-#[inline(always)]
-pub(crate) const fn slice_from_raw_parts<'a, T>(data: *const T, length: usize) -> &'a [T] {
-  debug_assert!(
-    /*
-    is_aligned_and_not_null(data),
-    "Attempted to create an unaligned or null slice!"
-    */
-    // See comment starting at line 165 for more info about what's going on here. Note that the
-    // alignment check is not actually a concern for our use case anyways, since we only call this
-    // function with known-valid pointers to initialized elements of a StaticVec's internal array.
-    !data.is_null(),
-    "Attempted to create a null slice!"
-  );
-  debug_assert!(
-    size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
-    "Attempted to create a slice covering at least half of the address space!"
-  );
-  unsafe { &*core::ptr::slice_from_raw_parts(data, length) }
-}
-
-/// A local (identically written) `const fn` version of `slice::from_raw_parts_mut`.
-#[inline(always)]
-pub(crate) const fn slice_from_raw_parts_mut<'a, T>(data: *mut T, length: usize) -> &'a mut [T] {
-  debug_assert!(
-    /*
-    is_aligned_and_not_null(data),
-    "Attempted to create an unaligned or null slice!"
-    */
-    // See comment starting at line 165 for more info about what's going on here. Note that the
-    // alignment check is not actually a concern for our use case anyways, since we only call this
-    // function with known-valid pointers to initialized elements of a StaticVec's internal array.
-    !data.is_null(),
-    "Attempted to create a null slice!"
-  );
-  debug_assert!(
-    size_of::<T>().saturating_mul(length) <= isize::MAX as usize,
-    "Attempted to create a slice covering at least half of the address space!"
-  );
-  unsafe { &mut *core::ptr::slice_from_raw_parts_mut(data, length) }
 }

@@ -4,10 +4,9 @@ use core::iter::{FusedIterator, TrustedLen, TrustedRandomAccessNoCoerce};
 use core::marker::{PhantomData, Send, Sync};
 use core::mem::{replace, size_of, MaybeUninit};
 use core::ptr;
+use core::slice::{from_raw_parts, from_raw_parts_mut};
 
-use crate::utils::{
-  distance_between, slice_from_raw_parts, slice_from_raw_parts_mut, zst_ptr_add, zst_ptr_add_mut,
-};
+use crate::utils::{distance_between, zst_ptr_add, zst_ptr_add_mut};
 use crate::StaticVec;
 
 #[cfg(feature = "std")]
@@ -93,7 +92,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   pub const fn as_slice(&self) -> &'a [T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    slice_from_raw_parts(self.start, distance_between(self.end, self.start))
+    unsafe { from_raw_parts(self.start, distance_between(self.end, self.start)) }
   }
 }
 
@@ -294,7 +293,7 @@ impl<'a, T: 'a, const N: usize> StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   pub const fn as_slice(&self) -> &[T] {
     // Safety: `start` is never null. This function will "at worst" return an empty slice.
-    slice_from_raw_parts(self.start, distance_between(self.end, self.start))
+    unsafe { from_raw_parts(self.start, distance_between(self.end, self.start)) }
   }
 }
 
@@ -485,7 +484,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
         _ => StaticVec::first_ptr(&self.data).add(self.start),
       }
     };
-    slice_from_raw_parts(start_at, self.end - self.start)
+    unsafe { from_raw_parts(start_at, self.end - self.start) }
   }
 
   /// Returns a mutable slice consisting of the elements in the range between the iterator's
@@ -499,7 +498,7 @@ impl<T, const N: usize> StaticVecIntoIter<T, N> {
         _ => StaticVec::first_ptr_mut(&mut self.data).add(self.start),
       }
     };
-    slice_from_raw_parts_mut(start_at, self.end - self.start)
+    unsafe { from_raw_parts_mut(start_at, self.end - self.start) }
   }
 }
 
@@ -552,7 +551,7 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
           0 => zst_ptr_add_mut(StaticVec::first_ptr_mut(&mut self.data), old_start),
           _ => StaticVec::first_ptr_mut(&mut self.data).add(old_start),
         };
-        ptr::drop_in_place(slice_from_raw_parts_mut(drop_at, res_index - old_start));
+        ptr::drop_in_place(from_raw_parts_mut(drop_at, res_index - old_start));
         // Adjust our starting index.
         self.start = res_index + 1;
         Some(res.read())
@@ -609,7 +608,7 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
           0 => zst_ptr_add_mut(StaticVec::first_ptr_mut(&mut self.data), res_index),
           _ => StaticVec::first_ptr_mut(&mut self.data).add(res_index),
         };
-        ptr::drop_in_place(slice_from_raw_parts_mut(drop_at, old_end - res_index));
+        ptr::drop_in_place(from_raw_parts_mut(drop_at, old_end - res_index));
         match size_of::<T>() {
           0 => Some(zst_ptr_add(StaticVec::first_ptr(&self.data), self.end).read()),
           _ => Some(StaticVec::first_ptr(&self.data).add(self.end).read()),
@@ -676,7 +675,7 @@ impl<T, const N: usize> Drop for StaticVecIntoIter<T, N> {
     };
     match item_count {
       0 => (),
-      _ => unsafe { ptr::drop_in_place(slice_from_raw_parts_mut(drop_at, item_count)) },
+      _ => unsafe { ptr::drop_in_place(from_raw_parts_mut(drop_at, item_count)) },
     }
   }
 }
@@ -895,7 +894,7 @@ impl<T: Debug, I: Iterator<Item = T>, const N: usize> Debug for StaticVecSplice<
     // Safety: `self.vec` will never be null, and `self.end` and `self.start` will always be within
     // an appropriate range.
     unsafe {
-      let items = slice_from_raw_parts(
+      let items = from_raw_parts(
         (&*self.vec).ptr_at_unchecked(self.start),
         self.end - self.start,
       );

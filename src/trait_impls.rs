@@ -8,15 +8,19 @@ use core::ops::{
   RangeToInclusive,
 };
 use core::ptr;
+use core::slice::{from_raw_parts, from_raw_parts_mut};
 
 use crate::heap::StaticHeap;
 use crate::iterators::{StaticVecIntoIter, StaticVecIterConst, StaticVecIterMut};
 use crate::string::StaticString;
-use crate::utils::{partial_compare, slice_from_raw_parts, slice_from_raw_parts_mut};
+use crate::utils::partial_compare;
 use crate::StaticVec;
 
 #[cfg(feature = "std")]
 use core::str;
+
+#[cfg(feature = "std")]
+use crate::utils::const_min;
 
 #[cfg(feature = "std")]
 use alloc::string::String;
@@ -25,7 +29,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 #[cfg(feature = "std")]
-use std::io::{self, BufRead, IoSlice, IoSliceMut, Read, Write};
+use std::io::{self, BufRead, IoSlice, IoSliceMut, Read, ReadBuf, Write};
 
 #[cfg(feature = "serde_support")]
 use core::marker::PhantomData;
@@ -542,10 +546,7 @@ impl<T, const N: usize> const Index<Range<usize>> for StaticVec<T, N> {
   fn index(&self, index: Range<usize>) -> &Self::Output {
     // This is the part that confuses Clippy.
     assert!(index.start <= index.end && index.end <= self.length);
-    slice_from_raw_parts(
-      unsafe { self.ptr_at_unchecked(index.start) },
-      index.end - index.start,
-    )
+    unsafe { from_raw_parts(self.ptr_at_unchecked(index.start), index.end - index.start) }
   }
 }
 
@@ -558,10 +559,12 @@ impl<T, const N: usize> const IndexMut<Range<usize>> for StaticVec<T, N> {
   fn index_mut(&mut self, index: Range<usize>) -> &mut Self::Output {
     // This is the part that confuses Clippy.
     assert!(index.start <= index.end && index.end <= self.length);
-    slice_from_raw_parts_mut(
-      unsafe { self.mut_ptr_at_unchecked(index.start) },
-      index.end - index.start,
-    )
+    unsafe {
+      from_raw_parts_mut(
+        self.mut_ptr_at_unchecked(index.start),
+        index.end - index.start,
+      )
+    }
   }
 }
 
@@ -573,10 +576,12 @@ impl<T, const N: usize> const Index<RangeFrom<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeFrom<usize>) -> &Self::Output {
     assert!(index.start <= self.length);
-    slice_from_raw_parts(
-      unsafe { self.ptr_at_unchecked(index.start) },
-      self.length - index.start,
-    )
+    unsafe {
+      from_raw_parts(
+        self.ptr_at_unchecked(index.start),
+        self.length - index.start,
+      )
+    }
   }
 }
 
@@ -587,10 +592,12 @@ impl<T, const N: usize> const IndexMut<RangeFrom<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeFrom<usize>) -> &mut Self::Output {
     assert!(index.start <= self.length);
-    slice_from_raw_parts_mut(
-      unsafe { self.mut_ptr_at_unchecked(index.start) },
-      self.length - index.start,
-    )
+    unsafe {
+      from_raw_parts_mut(
+        self.mut_ptr_at_unchecked(index.start),
+        self.length - index.start,
+      )
+    }
   }
 }
 
@@ -623,7 +630,7 @@ impl<T, const N: usize> const Index<RangeInclusive<usize>> for StaticVec<T, N> {
     let start = *index.start();
     let end = *index.end();
     assert!(start <= end && end < self.length);
-    slice_from_raw_parts(unsafe { self.ptr_at_unchecked(start) }, (end + 1) - start)
+    unsafe { from_raw_parts(self.ptr_at_unchecked(start), (end + 1) - start) }
   }
 }
 
@@ -636,10 +643,7 @@ impl<T, const N: usize> const IndexMut<RangeInclusive<usize>> for StaticVec<T, N
     let start = *index.start();
     let end = *index.end();
     assert!(start <= end && end < self.length);
-    slice_from_raw_parts_mut(
-      unsafe { self.mut_ptr_at_unchecked(start) },
-      (end + 1) - start,
-    )
+    unsafe { from_raw_parts_mut(self.mut_ptr_at_unchecked(start), (end + 1) - start) }
   }
 }
 
@@ -651,7 +655,7 @@ impl<T, const N: usize> const Index<RangeTo<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index(&self, index: RangeTo<usize>) -> &Self::Output {
     assert!(index.end <= self.length);
-    slice_from_raw_parts(self.as_ptr(), index.end)
+    unsafe { from_raw_parts(self.as_ptr(), index.end) }
   }
 }
 
@@ -662,7 +666,7 @@ impl<T, const N: usize> const IndexMut<RangeTo<usize>> for StaticVec<T, N> {
   #[inline(always)]
   fn index_mut(&mut self, index: RangeTo<usize>) -> &mut Self::Output {
     assert!(index.end <= self.length);
-    slice_from_raw_parts_mut(self.as_mut_ptr(), index.end)
+    unsafe { from_raw_parts_mut(self.as_mut_ptr(), index.end) }
   }
 }
 
@@ -674,7 +678,7 @@ impl<T, const N: usize> const Index<RangeToInclusive<usize>> for StaticVec<T, N>
   #[inline(always)]
   fn index(&self, index: RangeToInclusive<usize>) -> &Self::Output {
     assert!(index.end < self.length);
-    slice_from_raw_parts(self.as_ptr(), index.end + 1)
+    unsafe { from_raw_parts(self.as_ptr(), index.end + 1) }
   }
 }
 
@@ -685,7 +689,7 @@ impl<T, const N: usize> const IndexMut<RangeToInclusive<usize>> for StaticVec<T,
   #[inline(always)]
   fn index_mut(&mut self, index: RangeToInclusive<usize>) -> &mut Self::Output {
     assert!(index.end < self.length);
-    slice_from_raw_parts_mut(self.as_mut_ptr(), index.end + 1)
+    unsafe { from_raw_parts_mut(self.as_mut_ptr(), index.end + 1) }
   }
 }
 
@@ -884,6 +888,16 @@ impl<const N: usize> Read for StaticVec<u8, N> {
       }
     }
     Ok(total_read)
+  }
+
+  #[inline]
+  fn read_buf(&mut self, buf: &mut ReadBuf<'_>) -> io::Result<()> {
+    // Here we directly adapt the implementation from &[u8].
+    let amount = const_min(buf.remaining(), self.len());
+    let (a, b) = self.as_mut().split_at(amount);
+    buf.append(a);
+    *self = Self::from(b);
+    Ok(())
   }
 }
 

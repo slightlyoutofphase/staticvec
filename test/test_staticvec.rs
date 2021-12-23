@@ -6,7 +6,8 @@
   const_fn_trait_bound,
   const_trait_impl,
   exact_size_is_empty,
-  generic_const_exprs
+  generic_const_exprs,
+  read_buf
 )]
 
 // In case you're wondering why there's extensive use of "StaticVecs that contain boxed items"
@@ -1838,11 +1839,11 @@ fn quicksort_unstable() {
 
 #[cfg(feature = "std")]
 mod read_tests {
+  use core::mem::MaybeUninit;
   use staticvec::*;
-  use std::io::{self, BufRead, Read};
+  use std::io::{self, BufRead, Read, ReadBuf};
 
-  // We provide custom implementations of most `Read` methods; test those
-  // impls
+  // We provide custom implementations of most `Read` methods; test those impls
   #[test]
   fn read() {
     let mut ints = staticvec![1, 2, 3, 4, 6, 7, 8, 9, 10];
@@ -1929,6 +1930,38 @@ mod read_tests {
     assert_eq!(ints2.read_vectored(&mut bufs2).unwrap(), 9);
     assert_eq!("[[1, 2], [3, 4, 5], [6, 7, 8, 9]]", format!("{:?}", bufs2));
     assert_eq!(ints2, [10, 11, 12]);
+  }
+
+  #[test]
+  fn read_buf() {
+    let inner: &[u8] = &[5, 6, 7, 0, 1, 2, 3, 4];
+    let mut reader = StaticVec::<u8, 8>::from(inner);
+    let mut buf = [MaybeUninit::uninit(); 3];
+    let mut buf = ReadBuf::uninit(&mut buf);
+    reader.read_buf(&mut buf).unwrap();
+    assert_eq!(buf.filled(), [5, 6, 7]);
+    assert_eq!(reader, [0, 1, 2, 3, 4]);
+    let mut buf = [MaybeUninit::uninit(); 2];
+    let mut buf = ReadBuf::uninit(&mut buf);
+    reader.read_buf(&mut buf).unwrap();
+    assert_eq!(buf.filled(), [0, 1]);
+    assert_eq!(reader, [2, 3, 4]);
+    let mut buf = [MaybeUninit::uninit(); 1];
+    let mut buf = ReadBuf::uninit(&mut buf);
+    reader.read_buf(&mut buf).unwrap();
+    assert_eq!(buf.filled(), [2]);
+    assert_eq!(reader, [3, 4]);
+    let mut buf = [MaybeUninit::uninit(); 3];
+    let mut buf = ReadBuf::uninit(&mut buf);
+    reader.read_buf(&mut buf).unwrap();
+    assert_eq!(buf.filled(), [3, 4]);
+    assert_eq!(reader, []);
+    reader.read_buf(&mut buf).unwrap();
+    assert_eq!(buf.filled(), [3, 4]);
+    assert_eq!(reader, []);
+    buf.clear();
+    reader.read_buf(&mut buf).unwrap();
+    assert_eq!(buf.filled_len(), 0);
   }
 
   #[test]
