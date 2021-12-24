@@ -111,7 +111,7 @@ pub mod utils;
 /// A [`Vec`](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
 ///
-/// Please note that while rustdoc does currently correctly render inherent `const fn` method
+/// Please note that while `rustdoc` does currently correctly render inherent `const fn` method
 /// signatures, the same is not true of `const` trait implementation method signatures, so at this
 /// time it's recommended that you refer directly to the source code of this crate if unsure of
 /// whether a given trait has been implemented as `const` in conjunction with the `const_trait_impl`

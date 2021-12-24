@@ -20,7 +20,6 @@ repository = "slightlyoutofphase/staticvec"
 
 [package.metadata.docs.rs]
 features = ["std", "serde"]
-rustdoc-args = ["--cfg","docs_rs"]
 
 [profile.release]
 opt-level = 3
