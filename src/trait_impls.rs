@@ -31,10 +31,10 @@ use alloc::vec::Vec;
 #[cfg(feature = "std")]
 use std::io::{self, BufRead, IoSlice, IoSliceMut, Read, ReadBuf, Write};
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 use core::marker::PhantomData;
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 use serde::{
   de::{SeqAccess, Visitor},
   Deserialize, Deserializer, Serialize, Serializer,
@@ -456,8 +456,8 @@ impl<const N: usize> From<StaticString<N>> for StaticVec<u8, N> {
   }
 }
 
-/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<T, const N: usize> From<Vec<T>> for StaticVec<T, N> {
   /// Functionally equivalent to [`from_vec`](crate::StaticVec::from_vec).
   #[inline(always)]
@@ -693,9 +693,9 @@ impl<T, const N: usize> const IndexMut<RangeToInclusive<usize>> for StaticVec<T,
   }
 }
 
-/// **Note:** this is only available when the `std` crate feature is enabled.
 #[allow(clippy::from_over_into)]
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<T, const N: usize> Into<Vec<T>> for StaticVec<T, N> {
   /// Functionally equivalent to [`into_vec`](crate::StaticVec::into_vec).
   #[inline(always)]
@@ -794,9 +794,8 @@ impl_partial_ord_with_as_slice_against_slice!(&mut [T1], StaticVec<T2, N>);
 
 /// Read from a StaticVec. This implementation operates by copying bytes into the destination
 /// buffers, then shifting the remaining bytes over.
-///
-/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> Read for StaticVec<u8, N> {
   #[inline]
   fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
@@ -901,8 +900,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
   }
 }
 
-/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> Write for StaticVec<u8, N> {
   #[inline]
   fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
@@ -942,8 +941,8 @@ impl<const N: usize> Write for StaticVec<u8, N> {
   }
 }
 
-/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> BufRead for StaticVec<u8, N> {
   #[inline(always)]
   fn fill_buf(&mut self) -> io::Result<&[u8]> {
@@ -956,7 +955,8 @@ impl<const N: usize> BufRead for StaticVec<u8, N> {
   }
 }
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
+#[doc(cfg(feature = "serde"))]
 impl<'de, T, const N: usize> Deserialize<'de> for StaticVec<T, N>
 where T: Deserialize<'de>
 {
@@ -993,7 +993,8 @@ where T: Deserialize<'de>
   }
 }
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
+#[doc(cfg(feature = "serde"))]
 impl<T, const N: usize> Serialize for StaticVec<T, N>
 where T: Serialize
 {

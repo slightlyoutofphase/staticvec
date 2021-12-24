@@ -110,6 +110,12 @@ pub mod utils;
 
 /// A [`Vec`](alloc::vec::Vec)-like struct (mostly directly API-compatible where it can be)
 /// implemented with const generics around an array of fixed `N` capacity.
+///
+/// Please note that while rustdoc does currently correctly render inherent `const fn` method
+/// signatures, the same is not true of `const` trait implementation method signatures, so at this
+/// time it's recommended that you refer directly to the source code of this crate if unsure of
+/// whether a given trait has been implemented as `const` in conjunction with the `const_trait_impl`
+/// feature.
 pub struct StaticVec<T, const N: usize> {
   // We create this field in an uninitialized state, and write to it element-wise as needed via
   // pointer methods. At no time should the regular `assume_init` function *ever* be called through
@@ -1398,8 +1404,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// );
   /// ```
   #[inline]
-  pub fn quicksorted_unstable(&self) -> Self
-  where T: Copy + PartialOrd {
+  pub const fn quicksorted_unstable(&self) -> Self
+  where T: Copy + ~const PartialOrd {
     let length = self.length;
     if length < 2 {
       // StaticVec uses specialization to have an optimized verson of `Clone` for copy types.
@@ -1433,8 +1439,8 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// // values simply not being sorted quite as you'd hoped.
   /// ```
   #[inline]
-  pub fn quicksort_unstable(&mut self)
-  where T: Copy + PartialOrd {
+  pub const fn quicksort_unstable(&mut self)
+  where T: Copy + ~const PartialOrd {
     let length = self.length;
     if length < 2 {
       return;
@@ -2140,7 +2146,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// assert_eq!(v2, [2, 3]);
   /// ```
   #[inline]
-  pub fn split_off(&mut self, at: usize) -> Self {
+  pub const fn split_off(&mut self, at: usize) -> Self {
     let old_length = self.length;
     assert!(
       at <= old_length,

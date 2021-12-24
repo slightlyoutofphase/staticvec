@@ -86,12 +86,12 @@ macro_rules! staticvec {
 /// contexts.
 ///
 /// For example, this would give a compile-time error:
-/// ```
-/// // const S5: StaticString<1> = staticstring!("ABCDEFG", 1);
+/// ```compile_fail
+/// const S5: StaticString<1> = staticstring!("ABCDEFG", 1);
 /// ```
 /// As would the following:
-/// ```
-/// // let s6 = staticstring!("🤔🤔🤔🤔🤔🤔", 0);
+/// ```compile_fail
+/// let s6 = staticstring!("🤔🤔🤔🤔🤔🤔", 0);
 /// ```
 #[macro_export]
 #[rustfmt::skip]

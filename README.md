@@ -16,7 +16,7 @@ Fully `#![no_std]` compatible (with almost no loss of functionality) by setting
 `default-features = false` for the `staticvec` dependency in your `Cargo.toml`.
 
 Optional support for serialization and deserialization of the `StaticVec` struct
-via `serde` is available by activating the `serde_support` crate feature.
+via `serde` is available by activating the `serde` crate feature.
 
 `StaticVec` also implements both `Deref` and `DerefMut` to `[T]`, meaning that all existing slice
 methods are accessible through instances of it and that references to it can be used in contexts

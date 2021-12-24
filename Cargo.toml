@@ -18,6 +18,10 @@ status = "actively-developed"
 [badges.appveyor]
 repository = "slightlyoutofphase/staticvec"
 
+[package.metadata.docs.rs]
+features = ["std", "serde"]
+rustdoc-args = ["--cfg","docs_rs"]
+
 [profile.release]
 opt-level = 3
 debug = false
@@ -55,8 +59,6 @@ incremental = false
 
 [features]
 std = []
-serde_support = ["serde"]
-serde_json_support = ["serde_json"]
 default = ["std"]
 
 [[test]]
@@ -108,7 +110,7 @@ required-features = ["std"]
 [[example]]
 name = "serde_support_demo"
 path = "demo/serde_support_demo.rs"
-required-features = ["std", "serde_support", "serde_json_support"]
+required-features = ["std", "serde", "serde_json"]
 
 [dependencies]
 serde = { optional = true, version = "1.0", features = ["derive"] }

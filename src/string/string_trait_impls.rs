@@ -15,7 +15,7 @@ use crate::StaticVec;
 #[cfg(feature = "std")]
 use alloc::string::String;
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 use serde::{de::Deserializer, ser::Serializer, Deserialize, Serialize};
 
 impl<const N: usize> Add<&str> for StaticString<N> {
@@ -165,8 +165,8 @@ impl<const N: usize> From<StaticVec<u8, N>> for StaticString<N> {
   }
 }
 
-/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> From<String> for StaticString<N> {
   #[inline(always)]
   fn from(string: String) -> Self {
@@ -337,8 +337,8 @@ impl<const N: usize> PartialEq<&str> for StaticString<N> {
   }
 }
 
-/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> PartialEq<String> for StaticString<N> {
   #[inline(always)]
   fn eq(&self, other: &String) -> bool {
@@ -367,8 +367,8 @@ impl<const N: usize> PartialOrd<&str> for StaticString<N> {
   }
 }
 
-/// **Note:** this is only available when the `std` crate feature is enabled.
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl<const N: usize> PartialOrd<String> for StaticString<N> {
   #[inline(always)]
   fn partial_cmp(&self, other: &String) -> Option<Ordering> {
@@ -388,7 +388,8 @@ impl<const N: usize> Write for StaticString<N> {
   }
 }
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
+#[doc(cfg(feature = "serde"))]
 impl<'de, const N: usize> Deserialize<'de> for StaticString<N> {
   #[inline(always)]
   fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -396,7 +397,8 @@ impl<'de, const N: usize> Deserialize<'de> for StaticString<N> {
   }
 }
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
+#[doc(cfg(feature = "serde"))]
 impl<const N: usize> Serialize for StaticString<N> {
   #[inline(always)]
   fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {

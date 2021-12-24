@@ -69,6 +69,7 @@ impl Display for StringError {
 }
 
 #[cfg(feature = "std")]
+#[doc(cfg(feature = "std"))]
 impl std::error::Error for StringError {}
 
 impl const From<DecodeUtf16Error> for StringError {

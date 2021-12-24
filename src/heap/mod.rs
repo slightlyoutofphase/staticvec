@@ -1,6 +1,6 @@
 use core::mem::swap;
 
-#[cfg(feature = "serde_support")]
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use self::heap_helpers::StaticHeapHole;
@@ -98,7 +98,7 @@ mod heap_trait_impls;
 /// [pop]: #method.pop
 /// [peek]: #method.peek
 /// [peek\_mut]: #method.peek_mut
-#[cfg_attr(feature = "serde_support", derive(Deserialize, Serialize))]
+#[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 pub struct StaticHeap<T, const N: usize> {
   pub(crate) data: StaticVec<T, N>,
 }
