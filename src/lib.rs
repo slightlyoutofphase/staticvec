@@ -462,7 +462,9 @@ impl<T, const N: usize> StaticVec<T, N> {
     // This is the same aliasing-avoidance / optimization-trick approach used by regular Vec.
     let res = self.data.as_ptr() as *const T;
     // A pointer to "element zero" of an array is never null.
-    unsafe { assume(!res.is_null()); }
+    unsafe {
+      assume(!res.is_null());
+    }
     res
   }
 
@@ -483,7 +485,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   pub const fn as_mut_ptr(&mut self) -> *mut T {
     // See the comment above in `as_ptr()`.
     let res = self.data.as_mut_ptr() as *mut T;
-    unsafe { assume(!res.is_null()); }
+    unsafe {
+      assume(!res.is_null());
+    }
     res
   }
 
@@ -2615,7 +2619,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub(crate) const fn first_ptr(this: &MaybeUninit<[T; N]>) -> *const T {
     let res = this.as_ptr() as *const T;
-    unsafe { assume(!res.is_null()); }
+    unsafe {
+      assume(!res.is_null());
+    }
     res
   }
 
@@ -2625,7 +2631,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   #[inline(always)]
   pub(crate) const fn first_ptr_mut(this: &mut MaybeUninit<[T; N]>) -> *mut T {
     let res = this.as_mut_ptr() as *mut T;
-    unsafe { assume(!res.is_null()); }
+    unsafe {
+      assume(!res.is_null());
+    }
     res
   }
 }

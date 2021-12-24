@@ -118,8 +118,10 @@ impl<'a, T> StaticHeapHole<'a, T> {
   pub(crate) unsafe fn move_to(&mut self, index: usize) {
     debug_assert!(index != self.position);
     debug_assert!(index < self.data.len());
-    let index_ptr = self.data.as_ptr().add(index);
-    let hole_ptr = self.data.as_mut_ptr().add(self.position);
+    // This avoids aliasing, per the most recent revision of BinaryHeap's code.
+    let ptr = self.data.as_mut_ptr();
+    let index_ptr: *const _ = ptr.add(index);
+    let hole_ptr = ptr.add(self.position);
     index_ptr.copy_to_nonoverlapping(hole_ptr, 1);
     self.position = index;
   }
