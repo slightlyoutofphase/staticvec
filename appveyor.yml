@@ -1,6 +1,6 @@
 image:
-  - Visual Studio 2019 Preview
-  - Ubuntu
+  - Visual Studio 2022
+  - Ubuntu2004
   - macOS
 environment:
   APPVEYOR_YML_DISABLE_PS_LINUX: true
@@ -11,11 +11,11 @@ environment:
     - TARGET: x86_64-apple-darwin
 matrix:
   exclude:
-    - image: Ubuntu
+    - image: Ubuntu2004
       TARGET: x86_64-pc-windows-msvc
-    - image: Ubuntu
+    - image: Ubuntu2004
       TARGET: i686-pc-windows-msvc
-    - image: Ubuntu
+    - image: Ubuntu2004
       TARGET: x86_64-apple-darwin
     - image: macOS
       TARGET: x86_64-pc-windows-msvc
@@ -23,9 +23,9 @@ matrix:
       TARGET: i686-pc-windows-msvc
     - image: macOS
       TARGET: x86_64-unknown-linux-gnu
-    - image: Visual Studio 2019 Preview
+    - image: Visual Studio 2022
       TARGET: x86_64-unknown-linux-gnu
-    - image: Visual Studio 2019 Preview
+    - image: Visual Studio 2022
       TARGET: x86_64-apple-darwin
 skip_tags: true
 branches:
@@ -35,7 +35,7 @@ for:
   -
     matrix:
       only:
-        - image: Visual Studio 2019 Preview
+        - image: Visual Studio 2022
     install:
       - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
       - cmd: rustup-init.exe -yv --default-toolchain nightly --default-host %TARGET% --profile minimal
@@ -45,7 +45,7 @@ for:
   -
     matrix:
       only:
-        - image: Ubuntu
+        - image: Ubuntu2004
     install:
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -yv --default-toolchain nightly --default-host x86_64-unknown-linux-gnu --profile minimal
     cache:
