@@ -212,6 +212,17 @@ fn bounds_to_string() {
   assert_eq!("Empty iterator!", itm2.bounds_to_string());
   let itv2 = v2.into_iter();
   assert_eq!("Empty iterator!", itv2.bounds_to_string());
+  let v3 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut it3 = v3.iter();
+  it3.next();
+  it3.next_back();
+  assert_eq!(
+    "Current value of element at `start`: ZST\nCurrent value of element at `end`: ZST",
+    it3.bounds_to_string()
+  );
+  it3.next();
+  it3.next_back();
+  assert_eq!("Empty iterator!", it3.bounds_to_string());
 }
 
 #[test]
