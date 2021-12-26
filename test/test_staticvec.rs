@@ -2328,6 +2328,9 @@ fn truncate() {
   let mut vec4 = staticvec![1, 2, 3, 4];
   vec4.truncate(97);
   assert_eq!(vec4.len(), 4);
+  let mut vec5 = staticvec![box 1, box 2, box 3, box 4, box 5];
+  vec5.truncate(2);
+  assert_eq!(vec5, [box 1, box 2]);
 }
 
 #[test]

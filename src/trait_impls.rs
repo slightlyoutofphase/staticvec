@@ -893,9 +893,9 @@ impl<const N: usize> Read for StaticVec<u8, N> {
   fn read_buf(&mut self, buf: &mut ReadBuf<'_>) -> io::Result<()> {
     // Here we directly adapt the implementation from &[u8].
     let amount = const_min(buf.remaining(), self.len());
-    let (a, b) = self.as_mut().split_at(amount);
-    buf.append(a);
-    *self = Self::from(b);
+    let b = self.split_off(amount);
+    buf.append(&self);
+    *self = b;
     Ok(())
   }
 }
