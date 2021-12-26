@@ -1,5 +1,5 @@
 tab_spaces = 2
-edition = "2018"
+edition = "2021"
 where_single_line = true
 brace_style = "PreferSameLine"
 control_brace_style = "AlwaysSameLine"
