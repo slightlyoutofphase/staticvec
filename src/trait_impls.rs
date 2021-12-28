@@ -726,7 +726,7 @@ impl<'a, T: 'a, const N: usize> const IntoIterator for &'a mut StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> IntoIterator for StaticVec<T, N> {
+impl<T, const N: usize> const IntoIterator for StaticVec<T, N> {
   type IntoIter = StaticVecIntoIter<T, N>;
   type Item = T;
   /// Returns a by-value [`StaticVecIntoIter`](crate::iterators::StaticVecIntoIter) over the
@@ -734,17 +734,17 @@ impl<T, const N: usize> IntoIterator for StaticVec<T, N> {
   #[inline(always)]
   fn into_iter(mut self) -> Self::IntoIter {
     let old_length = self.length;
-    // This prevents the values from being dropped locally, since they're
-    // being copied into the iterator.
-    self.length = 0;
     StaticVecIntoIter {
       start: 0,
       end: old_length,
       data: {
-        // Copy the inhabited part of self into the iterator.
+        // Copy the inhabited part of `self` into the iterator.
         let mut data = Self::new_data_uninit();
         unsafe {
-          self
+          // The `MaybeUninit` wrapping prevents the values from being dropped locally, which
+          // is necessary since again they're being copied into the iterator.          
+          MaybeUninit::new(self)
+            .assume_init_ref()
             .as_ptr()
             .copy_to_nonoverlapping(Self::first_ptr_mut(&mut data), old_length)
         };
