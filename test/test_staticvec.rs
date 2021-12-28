@@ -2396,7 +2396,7 @@ fn union() {
 
 mod fmt_write_tests {
   use staticvec::*;
-  use core::fmt::{Error, Result, Write};
+  use core::fmt::{self, Write};
   use core::str::from_utf8;
   
   #[test]
@@ -2408,7 +2408,7 @@ mod fmt_write_tests {
     let mut buf = StaticVec::<u8, 12>::new();
     // If either unwrap fails here, we've got a problem.
     writer(&mut buf, "hola").unwrap();
-    assert_eq!(from_utf(buf.as_slice()).unwrap(), "hola");
+    assert_eq!(from_utf8(buf.as_slice()).unwrap(), "hola");
     // Smaller than it needs to be, again for the sake of the test.
     let mut buf2 = StaticVec::<u8, 2>::new();
     // Make sure `Err` is returned when appropriate.
@@ -2416,7 +2416,7 @@ mod fmt_write_tests {
   }
   
   #[test]
-  fn write_str() {
+  fn write_char() {
     fn writer<W: Write>(f: &mut W, c: char) -> fmt::Result {
       f.write_char(c)
     }
@@ -2425,7 +2425,7 @@ mod fmt_write_tests {
     // If any of the unwraps fails here, we've got a problem.
     writer(&mut buf, 'a').unwrap();
     writer(&mut buf, 'b').unwrap();
-    assert_eq!(from_utf(buf.as_slice()).unwrap(), "ab");
+    assert_eq!(from_utf8(buf.as_slice()).unwrap(), "ab");
     // Smaller than it needs to be, again for the sake of the test.
     let mut buf2 = StaticVec::<u8, 1>::new();
     // Make sure `Err` is returned when appropriate.
@@ -2441,7 +2441,7 @@ mod fmt_write_tests {
     let mut buf = StaticVec::<u8, 12>::new();
     // If either unwrap fails here, we've got a problem.
     writer(&mut buf, "world").unwrap();
-    assert_eq!(from_utf(buf.as_slice()).unwrap(), "world");
+    assert_eq!(from_utf8(buf.as_slice()).unwrap(), "world");
     // Smaller than it needs to be, again for the sake of the test.
     let mut buf2 = StaticVec::<u8, 4>::new();
     // Make sure `Err` is returned when appropriate.
