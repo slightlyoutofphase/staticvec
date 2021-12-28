@@ -732,7 +732,7 @@ impl<T, const N: usize> const IntoIterator for StaticVec<T, N> {
   /// Returns a by-value [`StaticVecIntoIter`](crate::iterators::StaticVecIntoIter) over the
   /// StaticVec's inhabited area, which consumes the StaticVec.
   #[inline(always)]
-  fn into_iter(mut self) -> Self::IntoIter {
+  fn into_iter(self) -> Self::IntoIter {
     let old_length = self.length;
     StaticVecIntoIter {
       start: 0,
