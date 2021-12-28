@@ -906,14 +906,12 @@ impl<const N: usize> fmt::Write for StaticVec<u8, N> {
     // This is just exactly `try_extend_from_slice`, except with the specific `Result` type
     // that this particular trait method calls for.
     let old_length = self.length;
-    let added_length = values.len();
+    let added_length = s.len();
     if N - old_length < added_length {
       return Err(fmt::Error);
     }
     unsafe {
-      values
-        .as_ptr()
-        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
+      s.as_ptr().copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
       self.set_len(old_length + added_length);
     }
     Ok(())
