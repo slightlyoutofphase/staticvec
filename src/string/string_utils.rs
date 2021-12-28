@@ -81,7 +81,7 @@ pub(crate) unsafe fn shift_left_unchecked<const N: usize>(
 
 /// Returns an error if `size` is greater than `limit`.
 #[inline(always)]
-pub const fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StringError> {
+pub(crate) const fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StringError> {
   match size <= limit {
     false => Err(StringError::OutOfBounds),
     true => Ok(()),
@@ -90,7 +90,7 @@ pub const fn is_inside_boundary(size: usize, limit: usize) -> Result<(), StringE
 
 /// Returns an error if `index` is not at a valid UTF-8 character boundary.
 #[inline(always)]
-pub fn is_char_boundary<const N: usize>(
+pub(crate) fn is_char_boundary<const N: usize>(
   string: &StaticString<N>,
   index: usize,
 ) -> Result<(), StringError> {
@@ -115,6 +115,26 @@ pub(crate) fn truncate_str(slice: &str, size: usize) -> &str {
   } else {
     slice
   }
+}
+
+/// Macro to avoid code duplication in char-pushing methods.
+macro_rules! push_unchecked_internal {
+  ($self_var:expr, $char_var:expr, $len:expr) => {
+    #[allow(unused_unsafe)]
+    match $len {
+      1 => unsafe { $self_var.vec.push_unchecked($char_var as u8) },
+      _ => {
+        let old_length = $self_var.len();
+        unsafe {
+          $char_var
+            .encode_utf8(&mut [0; 4])
+            .as_ptr()
+            .copy_to_nonoverlapping($self_var.vec.mut_ptr_at_unchecked(old_length), $len);
+          $self_var.vec.set_len(old_length + $len);
+        }
+      }
+    };
+  };
 }
 
 #[cfg(test)]

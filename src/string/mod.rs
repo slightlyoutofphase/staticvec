@@ -18,8 +18,8 @@ use alloc::string::String;
 
 mod string_errors;
 mod string_trait_impls;
-#[doc(hidden)]
-pub mod string_utils;
+#[macro_use]
+mod string_utils;
 
 /// A fixed-capacity [`String`](alloc::string::String)-like struct built around an instance of
 /// `StaticVec<u8, N>`.
@@ -640,18 +640,8 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, character: char) {
-    let char_length = character.len_utf8();
-    match char_length {
-      1 => self.vec.push_unchecked(character as u8),
-      _ => {
-        let old_length = self.len();
-        character
-          .encode_utf8(&mut [0; 4])
-          .as_ptr()
-          .copy_to_nonoverlapping(self.vec.mut_ptr_at_unchecked(old_length), char_length);
-        self.vec.set_len(old_length + char_length);
-      }
-    };
+    let char_len = character.len_utf8();
+    push_unchecked_internal!(self, character, char_len);
   }
 
   /// Appends the given char to the end of the StaticString, panicking if the StaticString
@@ -667,11 +657,12 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn push(&mut self, character: char) {
+    let char_len = character.len_utf8();
     assert!(
-      character.len_utf8() <= self.remaining_capacity(),
+      char_len <= self.remaining_capacity(),
       "Insufficient remaining capacity!"
     );
-    unsafe { self.push_unchecked(character) };
+    push_unchecked_internal!(self, character, char_len);
   }
 
   /// Appends the given char to the end of the StaticString, returning [`StringError::OutOfBounds`]
@@ -691,9 +682,10 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline(always)]
   pub fn try_push(&mut self, character: char) -> Result<(), StringError> {
-    match self.remaining_capacity() < character.len_utf8() {
+    let char_len = character.len_utf8();
+    match self.remaining_capacity() < char_len {
       false => {
-        unsafe { self.push_unchecked(character) }
+        push_unchecked_internal!(self, character, char_len);
         Ok(())
       }
       true => Err(StringError::OutOfBounds),

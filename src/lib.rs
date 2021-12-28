@@ -83,7 +83,7 @@ pub use crate::heap::{
 pub use crate::iterators::{
   StaticVecDrain, StaticVecIntoIter, StaticVecIterConst, StaticVecIterMut, StaticVecSplice,
 };
-pub use crate::string::{string_utils, StaticString, StringError};
+pub use crate::string::{StaticString, StringError};
 use crate::utils::{const_min, quicksort_internal, reverse_copy};
 
 #[cfg(any(feature = "std", rustdoc))]
@@ -95,16 +95,13 @@ use alloc::vec::Vec;
 #[cfg(feature = "std")]
 extern crate std;
 
+mod errors;
+mod heap;
 mod iterators;
 #[macro_use]
 mod macros;
-#[doc(hidden)]
-mod errors;
-#[doc(hidden)]
-mod heap;
-#[doc(hidden)]
 mod string;
-pub(crate) mod trait_impls;
+mod trait_impls;
 #[doc(hidden)]
 pub mod utils;
 
@@ -983,6 +980,7 @@ impl<T, const N: usize> StaticVec<T, N> {
     );
     unsafe {
       let self_ptr = self.mut_ptr_at_unchecked(index);
+      assume(!self_ptr.is_null());
       let res = self_ptr.read();
       self_ptr.offset(1).copy_to(self_ptr, old_length - index - 1);
       self.set_len(old_length - 1);

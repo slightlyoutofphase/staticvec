@@ -67,6 +67,7 @@ where
 /// Previously this was what one of the forms of the [`staticvec!`] macro used internally. Currently
 /// it's not used at all, and may be removed if I don't think of another use for it in the next
 /// little while.
+#[allow(dead_code)]
 #[inline(always)]
 pub fn new_from_value<T, const COUNT: usize>(value: T) -> StaticVec<T, COUNT>
 where T: Copy {
