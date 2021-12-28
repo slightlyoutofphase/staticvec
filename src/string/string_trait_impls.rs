@@ -1,6 +1,6 @@
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
-use core::fmt::{self, Debug, Display, Formatter, Write};
+use core::fmt::{self, Arguments, Debug, Display, Formatter, Write};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
 use core::ops::{
@@ -379,12 +379,17 @@ impl<const N: usize> PartialOrd<String> for StaticString<N> {
 impl<const N: usize> Write for StaticString<N> {
   #[inline(always)]
   fn write_str(&mut self, s: &str) -> fmt::Result {
-    self.try_push_str(s).map_err(|_| fmt::Error)
+    self.vec.write_str(s)
   }
 
   #[inline(always)]
   fn write_char(&mut self, c: char) -> fmt::Result {
-    self.try_push(c).map_err(|_| fmt::Error)
+    self.vec.write_char(c)
+  }
+  
+  #[inline(always)]
+  fn write_fmt(mut self: &mut Self, args: Arguments<'_>) -> fmt::Result {
+    self.vec.write_fmt(args)
   }
 }
 
