@@ -29,7 +29,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 #[cfg(feature = "std")]
-use std::io::{self, BufRead, IoSlice, IoSliceMut, Read, ReadBuf, Write};
+use std::io::{self, BufRead, IoSlice, IoSliceMut, Read, ReadBuf};
 
 #[cfg(feature = "serde")]
 use core::marker::PhantomData;
@@ -900,9 +900,29 @@ impl<const N: usize> Read for StaticVec<u8, N> {
   }
 }
 
+impl<const N: usize> fmt::Write for StaticVec<u8, N> {
+  #[inline]
+  fn write_str(&mut self, s: &str) -> fmt::Result {
+    // This is just exactly `try_extend_from_slice`, except with the specific `Result` type
+    // that this particular trait method calls for.
+    let old_length = self.length;
+    let added_length = values.len();
+    if N - old_length < added_length {
+      return Err(fmt::Error);
+    }
+    unsafe {
+      values
+        .as_ptr()
+        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
+      self.set_len(old_length + added_length);
+    }
+    Ok(())
+  }
+}
+
 #[cfg(feature = "std")]
 #[doc(cfg(feature = "std"))]
-impl<const N: usize> Write for StaticVec<u8, N> {
+impl<const N: usize> io::Write for StaticVec<u8, N> {
   #[inline]
   fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
     let old_length = self.length;
