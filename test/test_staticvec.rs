@@ -2394,8 +2394,63 @@ fn union() {
   );
 }
 
+mod fmt_write_tests {
+  use staticvec::*;
+  use core::fmt::{Error, Result, Write};
+  use core::str::from_utf8;
+  
+  #[test]
+  fn write_str() {
+    fn writer<W: Write>(f: &mut W, s: &str) -> fmt::Result {
+      f.write_str(s)
+    }
+    // Arbitrarily bigger than it needs to be for the sake of the test.
+    let mut buf = StaticVec::<u8, 12>::new();
+    // If either unwrap fails here, we've got a problem.
+    writer(&mut buf, "hola").unwrap();
+    assert_eq!(from_utf(buf.as_slice()).unwrap(), "hola");
+    // Smaller than it needs to be, again for the sake of the test.
+    let mut buf2 = StaticVec::<u8, 2>::new();
+    // Make sure `Err` is returned when appropriate.
+    assert!(writer(&mut buf2, "hola").is_err());    
+  }
+  
+  #[test]
+  fn write_str() {
+    fn writer<W: Write>(f: &mut W, c: char) -> fmt::Result {
+      f.write_char(c)
+    }
+    // Arbitrarily bigger than it needs to be for the sake of the test.
+    let mut buf = StaticVec::<u8, 12>::new();
+    // If any of the unwraps fails here, we've got a problem.
+    writer(&mut buf, 'a').unwrap();
+    writer(&mut buf, 'b').unwrap();
+    assert_eq!(from_utf(buf.as_slice()).unwrap(), "ab");
+    // Smaller than it needs to be, again for the sake of the test.
+    let mut buf2 = StaticVec::<u8, 1>::new();
+    // Make sure `Err` is returned when appropriate.
+    assert!(writer(&mut buf2, '👻').is_err());
+  }
+  
+  #[test]
+  fn write_fmt() {
+    fn writer<W: Write>(f: &mut W, s: &str) -> fmt::Result {
+      f.write_fmt(format_args!("{}", s))
+    }
+    // Arbitrarily bigger than it needs to be for the sake of the test.
+    let mut buf = StaticVec::<u8, 12>::new();
+    // If either unwrap fails here, we've got a problem.
+    writer(&mut buf, "world").unwrap();
+    assert_eq!(from_utf(buf.as_slice()).unwrap(), "world");
+    // Smaller than it needs to be, again for the sake of the test.
+    let mut buf2 = StaticVec::<u8, 4>::new();
+    // Make sure `Err` is returned when appropriate.
+    assert!(writer(&mut buf2, "universe").is_err());
+  }  
+}
+
 #[cfg(feature = "std")]
-mod write_tests {
+mod io_write_tests {
   use staticvec::*;
   use std::io::{IoSlice, Write};
 
