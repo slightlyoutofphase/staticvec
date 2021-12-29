@@ -118,7 +118,7 @@ pub(crate) fn truncate_str(slice: &str, size: usize) -> &str {
 }
 
 /// Macro to avoid code duplication in char-pushing methods.
-macro_rules! push_unchecked_internal {
+macro_rules! push_char_unchecked_internal {
   ($self_var:expr, $char_var:expr, $len:expr) => {
     #[allow(unused_unsafe)]
     match $len {
@@ -134,6 +134,18 @@ macro_rules! push_unchecked_internal {
         }
       }
     };
+  };
+}
+
+/// Macro to avoid code duplication in char-pushing methods.
+macro_rules! push_str_unchecked_internal {
+  ($self_var:expr, $str_var:expr, $self_len_var:expr, $str_len_var:expr) => {
+    #[allow(unused_unsafe)]
+    unsafe {
+      let dest = $self_var.vec.mut_ptr_at_unchecked($self_len_var);
+      $str_var.as_ptr().copy_to_nonoverlapping(dest, $str_len_var);
+      $self_var.vec.set_len($self_len_var + $str_len_var);
+    }
   };
 }
 

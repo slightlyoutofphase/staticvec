@@ -2395,10 +2395,10 @@ fn union() {
 }
 
 mod fmt_write_tests {
-  use staticvec::*;
   use core::fmt::{self, Write};
   use core::str::from_utf8;
-  
+  use staticvec::*;
+
   #[test]
   fn write_str() {
     fn writer<W: Write>(f: &mut W, s: &str) -> fmt::Result {
@@ -2412,9 +2412,9 @@ mod fmt_write_tests {
     // Smaller than it needs to be, again for the sake of the test.
     let mut buf2 = StaticVec::<u8, 2>::new();
     // Make sure `Err` is returned when appropriate.
-    assert!(writer(&mut buf2, "hola").is_err());    
+    assert!(writer(&mut buf2, "hola").is_err());
   }
-  
+
   #[test]
   fn write_char() {
     fn writer<W: Write>(f: &mut W, c: char) -> fmt::Result {
@@ -2431,7 +2431,7 @@ mod fmt_write_tests {
     // Make sure `Err` is returned when appropriate.
     assert!(writer(&mut buf2, '👻').is_err());
   }
-  
+
   #[test]
   fn write_fmt() {
     fn writer<W: Write>(f: &mut W, s: &str) -> fmt::Result {
@@ -2446,7 +2446,7 @@ mod fmt_write_tests {
     let mut buf2 = StaticVec::<u8, 4>::new();
     // Make sure `Err` is returned when appropriate.
     assert!(writer(&mut buf2, "universe").is_err());
-  }  
+  }
 }
 
 #[cfg(feature = "std")]

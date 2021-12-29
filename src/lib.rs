@@ -201,13 +201,14 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
   /// assert_eq!(v2, [1, 2, 3]);
   /// ```
-  /// Note that StaticVec also implements [`From`](core::convert::From) for both slices and static
-  /// arrays (as well as several other types), which may prove more ergonomic in some cases as it
-  /// allows for a greater degree of type inference:
+  /// Note that StaticVec also implements [`From`](core::convert::From) for both slices and
+  /// fixed-size arrays (as well as several other types), which may prove more ergonomic in some
+  /// cases as it allows for a greater degree of type inference:
   /// ```
   /// # use staticvec::StaticVec;
   /// // The StaticVec on the next line is inferred to be of type `StaticVec<&'static str, 4>`.
   /// let v = StaticVec::from(["A", "B", "C", "D"]);
+  /// assert_eq!(v, ["A", "B", "C", "D"]);
   /// ```
   #[inline]
   pub fn new_from_array<const N2: usize>(values: [T; N2]) -> Self {

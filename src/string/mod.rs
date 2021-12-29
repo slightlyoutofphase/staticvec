@@ -545,9 +545,7 @@ impl<const N: usize> StaticString<N> {
     let string_length = string.len();
     debug_assert!(string_length <= self.remaining_capacity());
     let old_length = self.len();
-    let dest = self.vec.mut_ptr_at_unchecked(old_length);
-    string.as_ptr().copy_to_nonoverlapping(dest, string_length);
-    self.vec.set_len(old_length + string_length);
+    push_str_unchecked_internal!(self, string, old_length, string_length);
   }
 
   /// Attempts to push `string` to the StaticString, panicking if it is the case that `self.len() +
@@ -560,14 +558,16 @@ impl<const N: usize> StaticString<N> {
   /// s.push_str("bar");
   /// assert_eq!(s, "foobar");
   /// ```
-  #[inline(always)]
-  pub fn push_str<S: AsRef<str>>(&mut self, string: S) {
+  #[inline]
+  pub const fn push_str<S: ~const AsRef<str> + ~const Drop>(&mut self, string: S) {
     let string_ref = string.as_ref();
+    let string_length = string_ref.len();
+    let old_length = self.vec.length;
     assert!(
-      string_ref.len() <= self.remaining_capacity(),
+      string_length <= N - old_length,
       "Insufficient remaining capacity!"
     );
-    unsafe { self.push_str_unchecked(string_ref) };
+    push_str_unchecked_internal!(self, string_ref, old_length, string_length);
   }
 
   /// Attempts to push `string` to the StaticString. Truncates `string` as necessary (or simply does
@@ -605,14 +605,18 @@ impl<const N: usize> StaticString<N> {
   /// assert!(s.try_push_str("0".repeat(300)).is_err());
   /// ```
   #[inline(always)]
-  pub fn try_push_str<S: AsRef<str>>(&mut self, string: S) -> Result<(), CapacityError<N>> {
+  pub const fn try_push_str<S: ~const AsRef<str> + ~const Drop>(
+    &mut self,
+    string: S,
+  ) -> Result<(), CapacityError<N>> {
     let string_ref = string.as_ref();
-    match self.vec.remaining_capacity() < string_ref.len() {
-      false => {
-        unsafe { self.push_str_unchecked(string_ref) };
-        Ok(())
-      }
-      true => Err(CapacityError {}),
+    let string_length = string_ref.len();
+    let old_length = self.vec.length;
+    if N - old_length < string_length {
+      Err(CapacityError {})
+    } else {
+      push_str_unchecked_internal!(self, string_ref, old_length, string_length);
+      Ok(())
     }
   }
 
@@ -641,7 +645,7 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub unsafe fn push_unchecked(&mut self, character: char) {
     let char_len = character.len_utf8();
-    push_unchecked_internal!(self, character, char_len);
+    push_char_unchecked_internal!(self, character, char_len);
   }
 
   /// Appends the given char to the end of the StaticString, panicking if the StaticString
@@ -662,7 +666,7 @@ impl<const N: usize> StaticString<N> {
       char_len <= self.remaining_capacity(),
       "Insufficient remaining capacity!"
     );
-    push_unchecked_internal!(self, character, char_len);
+    push_char_unchecked_internal!(self, character, char_len);
   }
 
   /// Appends the given char to the end of the StaticString, returning [`StringError::OutOfBounds`]
@@ -685,7 +689,7 @@ impl<const N: usize> StaticString<N> {
     let char_len = character.len_utf8();
     match self.remaining_capacity() < char_len {
       false => {
-        push_unchecked_internal!(self, character, char_len);
+        push_char_unchecked_internal!(self, character, char_len);
         Ok(())
       }
       true => Err(StringError::OutOfBounds),

@@ -386,7 +386,7 @@ impl<const N: usize> Write for StaticString<N> {
   fn write_char(&mut self, c: char) -> fmt::Result {
     self.vec.write_char(c)
   }
-  
+
   #[inline(always)]
   fn write_fmt(&mut self, args: Arguments<'_>) -> fmt::Result {
     self.vec.write_fmt(args)

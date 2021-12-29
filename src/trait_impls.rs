@@ -742,7 +742,7 @@ impl<T, const N: usize> const IntoIterator for StaticVec<T, N> {
         let mut data = Self::new_data_uninit();
         unsafe {
           // The `MaybeUninit` wrapping prevents the values from being dropped locally, which
-          // is necessary since again they're being copied into the iterator.          
+          // is necessary since again they're being copied into the iterator.
           MaybeUninit::new(self)
             .assume_init_ref()
             .as_ptr()
@@ -911,7 +911,8 @@ impl<const N: usize> fmt::Write for StaticVec<u8, N> {
       return Err(fmt::Error);
     }
     unsafe {
-      s.as_ptr().copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
+      s.as_ptr()
+        .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(old_length), added_length);
       self.set_len(old_length + added_length);
     }
     Ok(())
