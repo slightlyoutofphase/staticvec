@@ -2422,7 +2422,7 @@ mod fmt_write_tests {
     }
     // Arbitrarily bigger than it needs to be for the sake of the test.
     let mut buf = StaticVec::<u8, 12>::new();
-    // If any of the unwraps fails here, we've got a problem.
+    // If any of the unwraps fail here, we've got a problem.
     writer(&mut buf, 'a').unwrap();
     writer(&mut buf, 'b').unwrap();
     assert_eq!(from_utf8(buf.as_slice()).unwrap(), "ab");
