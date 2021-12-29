@@ -560,6 +560,10 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[inline]
   pub const fn push_str<S: ~const AsRef<str> + ~const Drop>(&mut self, string: S) {
+    // Note that when calling this at runtime, the compiler still just sees the signature
+    // as `push_str<S: AsRef<str>>(&mut self, string: S)`. Adding new `~const` bounds is only
+    // a "breaking change" if you add them to something that was *already* a `const fn`. Adding
+    // them while turning something *into* a `const fn` is fully backwards compatible, though.    
     let string_ref = string.as_ref();
     let string_length = string_ref.len();
     let old_length = self.vec.length;
