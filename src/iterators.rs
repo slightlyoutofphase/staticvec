@@ -242,6 +242,7 @@ unsafe impl<'a, T: 'a, const N: usize> const TrustedRandomAccessNoCoerce
   }
 }
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterConst<'a, T, N> {}
+// `StaticVecIterConst` works in terms of `&T`, which is sendable if / when `T` is `Sync`.
 unsafe impl<'a, T: 'a + Sync, const N: usize> const Send for StaticVecIterConst<'a, T, N> {}
 
 impl<'a, T: 'a, const N: usize> Clone for StaticVecIterConst<'a, T, N> {
