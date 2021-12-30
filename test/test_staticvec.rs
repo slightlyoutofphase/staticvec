@@ -622,9 +622,30 @@ fn from() {
     format!("{:?}", StaticVec::<i32, 6>::from(&[5, 6, 7, 1, 2, 3]))
   );
   assert_eq!(
+    "[5, 6, 7]",
+    format!("{:?}", StaticVec::<i32, 3>::from(&mut [5, 6, 7, 1, 2, 3]))
+  );
+  assert_eq!(
     "[1, 1, 1, 1, 1, 1]",
     format!("{:?}", StaticVec::<i32, 6>::from([1; 6]))
   );
+  assert_eq!(
+    "[1, 1, 1]",
+    format!("{:?}", StaticVec::<i32, 3>::from([1; 6]))
+  );
+  assert_eq!(
+    "[]",
+    format!("{:?}", StaticVec::<Box<i32>, 0>::from([box 9i32]))
+  );
+  assert_eq!(
+    "[9, 18, 27]",
+    format!(
+      "{:?}",
+      StaticVec::<Box<i32>, 19>::from([box 9i32, box 18i32, box 27i32])
+    )
+  );
+  const C: StaticVec<i32, 4> = StaticVec::from([1, 2, 3, 4]);
+  assert_eq!("[1, 2, 3, 4]", format!("{:?}", C));
   let mut v = staticvec![1];
   v.clear();
   assert_eq!(StaticVec::<i32, 6>::from(v.as_slice()).len(), 0);
