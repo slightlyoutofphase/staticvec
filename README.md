@@ -4,6 +4,7 @@
 [crates.io]: https://crates.io/crates/staticvec
 [Rustc Version nightly]: https://img.shields.io/badge/rustc-nightly-lightgray.svg
 [![Build status](https://ci.appveyor.com/api/projects/status/qb40my4v3rr63st2/branch/master?svg=true)](https://ci.appveyor.com/project/slightlyoutofphase/staticvec/branch/master)
+[![docs.rs](https://docs.rs/staticvec/badge.svg)](https://docs.rs/staticvec/)
 
 Implements a fixed-capacity stack-allocated `Vec` alternative backed by an array, using const generics.
 
