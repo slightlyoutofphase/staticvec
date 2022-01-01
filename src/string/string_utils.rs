@@ -117,7 +117,7 @@ pub(crate) fn truncate_str(slice: &str, size: usize) -> &str {
   }
 }
 
-/// Macro to avoid code duplication in char-pushing methods.
+/// Macro to avoid code duplication in `char`-pushing methods.
 macro_rules! push_char_unchecked_internal {
   ($self_var:expr, $char_var:expr, $len:expr) => {
     #[allow(unused_unsafe)]
@@ -137,7 +137,7 @@ macro_rules! push_char_unchecked_internal {
   };
 }
 
-/// Macro to avoid code duplication in char-pushing methods.
+/// Macro to avoid code duplication in `&str`-pushing methods.
 macro_rules! push_str_unchecked_internal {
   ($self_var:expr, $str_var:expr, $self_len_var:expr, $str_len_var:expr) => {
     #[allow(unused_unsafe)]
