@@ -137,7 +137,7 @@ impl<const N: usize> StaticString<N> {
   /// assert!(StaticString::<20>::try_from_str(out_of_bounds).is_err());
   /// ```
   #[inline(always)]
-  pub /* const */ fn try_from_str<S: ~const AsRef<str> + ~const Drop>(string: S) -> Result<Self, CapacityError<N>> {
+  pub fn try_from_str<S: AsRef<str>>(string: S) -> Result<Self, CapacityError<N>> {
     let mut res = Self::new();
     res.try_push_str(string)?;
     Ok(res)
