@@ -1,21 +1,36 @@
 use core::cmp::{Ordering, PartialOrd};
-use core::intrinsics::{assume, ptr_offset_from};
+use core::intrinsics::{assume, const_eval_select};
 use core::mem::{size_of, MaybeUninit};
 
 use crate::StaticVec;
 
-/// An internal function for calculating pointer offsets as usizes, while accounting
-/// directly for possible ZSTs. This is used specifically in the iterator implementations.
+#[inline(always)]
+pub(crate) fn runtime_zst_handler<T>(dest: *const T, origin: *const T) -> usize {
+  // At runtime we can handle ZSTs with usize casts, as is done throughout the crate.
+  (dest as usize).wrapping_sub(origin as usize)
+}
+
+#[inline(always)]
+pub(crate) const fn compiletime_zst_handler<T>(_dest: *const T, _origin: *const T) -> usize {
+  assert!(
+    size_of::<T>() == 0,
+    "compiletime_zst_handler called on a non-ZST!"
+  );
+  panic!("`distance_between` is only currently usefully `const` for non-ZSTs!");
+}
+
+/// An internal function for calculating pointer offsets as usizes, while accounting directly for
+/// possible ZSTs. This is used specifically in the iterator implementations.
 #[inline(always)]
 pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usize {
   // Safety: this function is used strictly with linear inputs where `dest` is known to come after
-  // `origin`.
+  // `origin`, so the usize cast for the result value will always be valid.
   match size_of::<T>() {
-    // If `T` is a ZST, we cannot use typed pointers as it would either return an incorrect value
-    // or in some cases segfault.
-    0 => unsafe { ptr_offset_from(dest as *const u8, origin as *const u8) as usize },
-    // For all other sizes of `T`, however typed pointers are just fine.
-    _ => unsafe { ptr_offset_from(dest, origin) as usize },
+    // This function cannot safely be used on ZST pointers at compile time (which would not be
+    // useful in any scenario I can currently think of anyways).
+    0 => unsafe { const_eval_select((dest, origin), compiletime_zst_handler, runtime_zst_handler) },
+    // For all other sizes of `T` though, `offset_from` works just fine.
+    _ => unsafe { dest.offset_from(origin) as usize },
   }
 }
 

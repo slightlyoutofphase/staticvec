@@ -77,7 +77,7 @@ impl<const N: usize> const Clone for StaticString<N> {
       vec: self.vec.clone(),
     }
   }
-  
+
   #[inline(always)]
   fn clone_from(&mut self, other: &Self) {
     self.vec.clone_from(&other.vec);

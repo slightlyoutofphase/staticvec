@@ -32,6 +32,7 @@
   adt_const_params,
   const_assume,
   const_convert,
+  const_eval_select,
   const_fn_floating_point_arithmetic,
   const_fn_fn_ptr_basics,
   const_fn_trait_bound,
