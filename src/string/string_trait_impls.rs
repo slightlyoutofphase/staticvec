@@ -70,7 +70,7 @@ impl<const N: usize> const BorrowMut<str> for StaticString<N> {
   }
 }
 
-impl<const N: usize> Clone for StaticString<N> {
+impl<const N: usize> const Clone for StaticString<N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     Self {
