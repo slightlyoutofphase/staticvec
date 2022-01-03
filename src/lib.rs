@@ -50,6 +50,7 @@
   const_slice_from_raw_parts,
   const_swap,
   const_trait_impl,
+  const_try,
   core_intrinsics,
   doc_cfg,
   exact_size_is_empty,
