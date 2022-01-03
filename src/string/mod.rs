@@ -90,7 +90,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(string, "My String");
   /// ```
   #[inline(always)]
-  pub unsafe fn from_str_unchecked(string: &str) -> Self {
+  pub const unsafe fn from_str_unchecked(string: &str) -> Self {
     let mut res = Self::new();
     res.push_str_unchecked(string);
     res
@@ -137,7 +137,7 @@ impl<const N: usize> StaticString<N> {
   /// assert!(StaticString::<20>::try_from_str(out_of_bounds).is_err());
   /// ```
   #[inline(always)]
-  pub fn try_from_str<S: AsRef<str>>(string: S) -> Result<Self, CapacityError<N>> {
+  pub const fn try_from_str<S: ~const AsRef<str> + ~const Drop>(string: S) -> Result<Self, CapacityError<N>> {
     let mut res = Self::new();
     res.try_push_str(string)?;
     Ok(res)
@@ -647,7 +647,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub unsafe fn push_unchecked(&mut self, character: char) {
+  pub const unsafe fn push_unchecked(&mut self, character: char) {
     let char_len = character.len_utf8();
     push_char_unchecked_internal!(self, character, char_len);
   }
@@ -664,7 +664,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(&string[..], "ab");
   /// ```
   #[inline(always)]
-  pub fn push(&mut self, character: char) {
+  pub const fn push(&mut self, character: char) {
     let char_len = character.len_utf8();
     assert!(
       char_len <= self.remaining_capacity(),
@@ -689,7 +689,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub fn try_push(&mut self, character: char) -> Result<(), StringError> {
+  pub const fn try_push(&mut self, character: char) -> Result<(), StringError> {
     let char_len = character.len_utf8();
     match self.remaining_capacity() < char_len {
       false => {
