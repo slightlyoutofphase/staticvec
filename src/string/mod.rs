@@ -647,7 +647,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub const unsafe fn push_unchecked(&mut self, character: char) {
+  pub unsafe fn push_unchecked(&mut self, character: char) {
     let char_len = character.len_utf8();
     push_char_unchecked_internal!(self, character, char_len);
   }
@@ -664,7 +664,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(&string[..], "ab");
   /// ```
   #[inline(always)]
-  pub const fn push(&mut self, character: char) {
+  pub fn push(&mut self, character: char) {
     let char_len = character.len_utf8();
     assert!(
       char_len <= self.remaining_capacity(),
@@ -689,7 +689,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub const fn try_push(&mut self, character: char) -> Result<(), StringError> {
+  pub fn try_push(&mut self, character: char) -> Result<(), StringError> {
     let char_len = character.len_utf8();
     match self.remaining_capacity() < char_len {
       false => {
