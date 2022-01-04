@@ -85,7 +85,7 @@ pub use crate::iterators::{
   StaticVecDrain, StaticVecIntoIter, StaticVecIterConst, StaticVecIterMut, StaticVecSplice,
 };
 pub use crate::string::{StaticString, StringError};
-use crate::utils::{const_min, quicksort_internal, reverse_copy};
+use crate::utils::{const_min, quicksort_internal, reverse_copy, zst_ptr_add, zst_ptr_add_mut};
 
 #[cfg(any(feature = "std", rustdoc))]
 extern crate alloc;
