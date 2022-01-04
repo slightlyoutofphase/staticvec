@@ -8,7 +8,7 @@ use core::str::{
 pub use self::string_errors::StringError;
 use self::string_utils::{
   encode_char_utf8_unchecked, is_char_boundary, is_inside_boundary, never, shift_left_unchecked,
-  shift_right_unchecked, truncate_str,
+  shift_right_unchecked, str_is_char_boundary, truncate_str,
 };
 use crate::errors::CapacityError;
 use crate::StaticVec;
@@ -111,7 +111,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[allow(clippy::should_implement_trait)]
   #[inline(always)]
-  pub fn from_str<S: AsRef<str>>(string: S) -> Self {
+  pub const fn from_str<S: ~const AsRef<str> + ~const Drop>(string: S) -> Self {
     let mut res = Self::new();
     let string_ref = string.as_ref();
     unsafe {
@@ -592,7 +592,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub fn push_str_truncating<S: AsRef<str>>(&mut self, string: S) {
+  pub const fn push_str_truncating<S: ~const AsRef<str> + ~const Drop>(&mut self, string: S) {
     unsafe { self.push_str_unchecked(truncate_str(string.as_ref(), self.remaining_capacity())) };
   }
 
@@ -647,9 +647,9 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub unsafe fn push_unchecked(&mut self, character: char) {
+  pub const unsafe fn push_unchecked(&mut self, character: char) {
     let char_len = character.len_utf8();
-    push_char_unchecked_internal!(self, character, char_len);
+    push_char_unchecked_internal!(self, character as u32, char_len);
   }
 
   /// Appends the given char to the end of the StaticString, panicking if the StaticString
@@ -664,13 +664,13 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(&string[..], "ab");
   /// ```
   #[inline(always)]
-  pub fn push(&mut self, character: char) {
+  pub const fn push(&mut self, character: char) {
     let char_len = character.len_utf8();
     assert!(
       char_len <= self.remaining_capacity(),
       "Insufficient remaining capacity!"
     );
-    push_char_unchecked_internal!(self, character, char_len);
+    push_char_unchecked_internal!(self, character as u32, char_len);
   }
 
   /// Appends the given char to the end of the StaticString, returning [`StringError::OutOfBounds`]
@@ -689,11 +689,11 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub fn try_push(&mut self, character: char) -> Result<(), StringError> {
+  pub const fn try_push(&mut self, character: char) -> Result<(), StringError> {
     let char_len = character.len_utf8();
     match self.remaining_capacity() < char_len {
       false => {
-        push_char_unchecked_internal!(self, character, char_len);
+        push_char_unchecked_internal!(self, character as u32, char_len);
         Ok(())
       }
       true => Err(StringError::OutOfBounds),
@@ -718,9 +718,9 @@ impl<const N: usize> StaticString<N> {
   /// // s2.truncate(1);
   /// ```
   #[inline(always)]
-  pub fn truncate(&mut self, new_len: usize) {
+  pub const fn truncate(&mut self, new_len: usize) {
     if new_len <= self.len() {
-      assert!(self.as_str().is_char_boundary(new_len));
+      assert!(str_is_char_boundary(self, new_len));
       unsafe { self.vec.set_len(new_len) };
     }
   }
@@ -1148,7 +1148,7 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub fn split_off(&mut self, at: usize) -> Self {
     assert!(
-      at <= self.len() && self.as_str().is_char_boundary(at),
+      at <= self.len() && str_is_char_boundary(self.as_str(), at),
       "Out of bounds or invalid character boundary!"
     );
     unsafe {
@@ -1172,7 +1172,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub fn clear(&mut self) {
+  pub const fn clear(&mut self) {
     unsafe { self.vec.set_len(0) };
   }
 
@@ -1210,8 +1210,8 @@ impl<const N: usize> StaticString<N> {
     let replaced = end.saturating_sub(start);
     assert!(
       replaced + replace_length <= N
-        && self.as_str().is_char_boundary(start)
-        && self.as_str().is_char_boundary(end),
+        && str_is_char_boundary(self, start)
+        && str_is_char_boundary(self, end),
       "Out of bounds or invalid character boundary!"
     );
     if replace_length == 0 {

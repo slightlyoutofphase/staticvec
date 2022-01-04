@@ -31,7 +31,6 @@
 #![feature(
   adt_const_params,
   const_assume,
-  const_convert,
   const_eval_select,
   const_fn_floating_point_arithmetic,
   const_fn_fn_ptr_basics,
@@ -52,7 +51,6 @@
   const_slice_from_raw_parts,
   const_swap,
   const_trait_impl,
-  const_try,
   core_intrinsics,
   doc_cfg,
   exact_size_is_empty,

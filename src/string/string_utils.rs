@@ -1,4 +1,6 @@
 use super::{StaticString, StringError};
+use core::slice::from_raw_parts;
+use core::str::from_utf8_unchecked;
 
 /// Unsafely marks a branch as unreachable.
 #[inline(always)]
@@ -49,6 +51,31 @@ pub(crate) const unsafe fn encode_char_utf8_unchecked<const N: usize>(
   }
 }
 
+/// Fast `const` compatible version of `encode_utf8` for chars with a known length greater than one.
+#[inline(always)]
+pub(crate) const fn encode_utf8_raw(code: u32, len: usize) -> [u8; 4] {
+  let mut res = [0u8; 4];
+  match (len, &mut res) {
+    (2, [a, b, ..]) => {
+      *a = (code >> 6 & 0x1F) as u8 | TAG_TWO_B;
+      *b = (code & 0x3F) as u8 | TAG_CONT;
+    }
+    (3, [a, b, c, ..]) => {
+      *a = (code >> 12 & 0x0F) as u8 | TAG_THREE_B;
+      *b = (code >> 6 & 0x3F) as u8 | TAG_CONT;
+      *c = (code & 0x3F) as u8 | TAG_CONT;
+    }
+    (4, [a, b, c, d]) => {
+      *a = (code >> 18 & 0x07) as u8 | TAG_FOUR_B;
+      *b = (code >> 12 & 0x3F) as u8 | TAG_CONT;
+      *c = (code >> 6 & 0x3F) as u8 | TAG_CONT;
+      *d = (code & 0x3F) as u8 | TAG_CONT;
+    }
+    _ => panic!("Bug in `encode_utf8_raw!"),
+  };
+  res
+}
+
 /// Shifts `string` to the right.
 #[inline(always)]
 pub(crate) unsafe fn shift_right_unchecked<const N: usize>(
@@ -89,12 +116,26 @@ pub(crate) const fn is_inside_boundary(size: usize, limit: usize) -> Result<(), 
 }
 
 /// Returns an error if `index` is not at a valid UTF-8 character boundary.
+#[must_use]
+#[inline(always)]
+pub(crate) const fn str_is_char_boundary(s: &str, index: usize) -> bool {
+  let len = s.len();
+  if index == 0 || index == len {
+    true
+  } else if index > len {
+    false
+  } else {
+    unsafe { (*s.as_ptr().add(index)) as i8 >= -0x40 }
+  }
+}
+
+/// Returns an error if `index` is not at a valid UTF-8 character boundary.
 #[inline(always)]
 pub(crate) fn is_char_boundary<const N: usize>(
   string: &StaticString<N>,
   index: usize,
 ) -> Result<(), StringError> {
-  match string.as_str().is_char_boundary(index) {
+  match str_is_char_boundary(string.as_str(), index) {
     false => Err(StringError::NotCharBoundary),
     true => Ok(()),
   }
@@ -103,15 +144,15 @@ pub(crate) fn is_char_boundary<const N: usize>(
 /// Truncates `slice` to the specified size (ignoring the last few bytes if they form a partial
 /// `char`).
 #[inline]
-pub(crate) fn truncate_str(slice: &str, size: usize) -> &str {
-  if slice.is_char_boundary(size) {
-    unsafe { slice.get_unchecked(..size) }
+pub(crate) const fn truncate_str(slice: &str, size: usize) -> &str {
+  if str_is_char_boundary(slice, size) {
+    unsafe { from_utf8_unchecked(from_raw_parts(slice.as_ptr(), size)) }
   } else if size < slice.len() {
     let mut index = size - 1;
-    while !slice.is_char_boundary(index) {
+    while !str_is_char_boundary(slice, index) {
       index -= 1;
     }
-    unsafe { slice.get_unchecked(..index) }
+    unsafe { from_utf8_unchecked(from_raw_parts(slice.as_ptr(), index)) }
   } else {
     slice
   }
@@ -126,8 +167,7 @@ macro_rules! push_char_unchecked_internal {
       _ => {
         let old_length = $self_var.len();
         unsafe {
-          $char_var
-            .encode_utf8(&mut [0; 4])
+          $crate::string::string_utils::encode_utf8_raw($char_var, $len)
             .as_ptr()
             .copy_to_nonoverlapping($self_var.vec.mut_ptr_at_unchecked(old_length), $len);
           $self_var.vec.set_len(old_length + $len);
@@ -159,6 +199,7 @@ mod tests {
     assert_eq!(truncate_str("i", 10), "i");
     assert_eq!(truncate_str("iiiiii", 3), "iii");
     assert_eq!(truncate_str("🤔🤔🤔", 5), "🤔");
+    assert_eq!(truncate_str("🤔🤔🤔", 0), "");
   }
 
   #[test]
