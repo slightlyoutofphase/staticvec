@@ -1303,7 +1303,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       StaticVecIterConst {
         start: start_ptr,
         end: match size_of::<T>() {
-          0 => (start_ptr as *const u8).wrapping_add(self.length) as *const T,
+          0 => zst_ptr_add(start_ptr, self.length),
           _ => start_ptr.add(self.length),
         },
         marker: PhantomData,
@@ -1332,7 +1332,7 @@ impl<T, const N: usize> StaticVec<T, N> {
       StaticVecIterMut {
         start: start_ptr,
         end: match size_of::<T>() {
-          0 => (start_ptr as *mut u8).wrapping_add(self.length) as *mut T,
+          0 => zst_ptr_add_mut(start_ptr, self.length),
           _ => start_ptr.add(self.length),
         },
         marker: PhantomData,
@@ -2002,7 +2002,7 @@ impl<T, const N: usize> StaticVec<T, N> {
         iter: StaticVecIterConst {
           start: start_ptr,
           end: match size_of::<T>() {
-            0 => (self.as_ptr() as *const u8).wrapping_add(end) as *const T,
+            0 => zst_ptr_add(self.as_ptr(), end),
             _ => self.ptr_at_unchecked(end),
           },
           marker: PhantomData,
