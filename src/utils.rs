@@ -14,7 +14,7 @@ pub(crate) fn runtime_zst_handler<T>(dest: *const T, origin: *const T) -> usize 
 pub(crate) const fn compiletime_zst_handler<T>(_dest: *const T, _origin: *const T) -> usize {
   assert!(
     size_of::<T>() == 0,
-    "compiletime_zst_handler called on a non-ZST!"
+    "`compiletime_zst_handler` called on a non-ZST!"
   );
   panic!("`distance_between` is only currently usefully `const` for non-ZSTs!");
 }
