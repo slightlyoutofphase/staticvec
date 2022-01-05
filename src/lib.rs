@@ -2145,7 +2145,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Splits one StaticVec into two at the given index, returning the second half without consuming
   /// the first half. The original StaticVec will contain all elements within the exclusive range
   /// `0..at`, and the new one will contain all elements within the exclusive range
-  /// `at..self.len()`.
+  /// `at..self.len()`. This function will panic if `at` is greater than `self.len()`.
   ///
   /// # Example usage:
   /// ```
@@ -2179,7 +2179,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// Splits one StaticVec into two new ones at index `M` and returns them in a tuple, while
   /// consuming the original. The first new one will contain all elements within the exclusive range
   /// `0..M`, and the second new one will contain all elements within the exclusive range
-  /// `M..self.len()`.
+  /// `M..self.len()`. This function will panic if `M` is greater than `self.len()`.
   ///
   /// # Example usage:
   /// ```
