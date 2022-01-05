@@ -1674,6 +1674,8 @@ fn new_from_array() {
     box Struct { s: "EEE" },
   ]);
   assert_eq!(v5, [box Struct { s: "AAA" }, box Struct { s: "BBB" }]);
+  let v6 = StaticVec::<Box<i32>, 0>::new_from_array([box 1, box 2, box 3]);
+  assert_eq!(v6, []);
 }
 
 #[test]
@@ -1711,6 +1713,8 @@ fn new_from_slice() {
   assert_eq!(vec2, [1, 2, 3]);
   let vec3 = StaticVec::<i32, 27>::new_from_slice(&[]);
   assert_eq!(vec3, []);
+  let vec4 = StaticVec::<i32, 0>::new_from_slice(&[1, 2, 3]);
+  assert_eq!(vec4, []);
 }
 
 #[test]
@@ -2286,6 +2290,10 @@ fn split_off() {
   let vec2 = vec.split_off(1);
   assert_eq!(vec, [1]);
   assert_eq!(vec2, [2, 3]);
+  let mut vec3 = staticvec![box 1, box 2, box 3, box 4];
+  let vec4 = vec3.split_off(2);
+  assert_eq!(vec3, [box 1, box 2]);
+  assert_eq!(vec4, [box 3, box 4]);
 }
 
 #[test]
