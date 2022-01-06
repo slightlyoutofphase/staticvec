@@ -1023,7 +1023,12 @@ fn iter() {
   assert_eq!(iter2.next(), Some((&ZST {}, &ZST {})));
   assert_eq!(iter2.next(), Some((&ZST {}, &ZST {})));
   assert_eq!(iter2.next(), Some((&ZST {}, &ZST {})));
-  assert_eq!(iter2.next(), None);  
+  assert_eq!(iter2.next(), None);
+  let a5 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut iter3 = a5.iter();
+  unsafe {
+    assert_eq!(iter3.__iterator_get_unchecked(2), &ZST {});
+  }
 }
 
 #[test]
@@ -1233,6 +1238,11 @@ fn iter_mut() {
     a1.concat_clone(&a2),
     staticvec![box 2, box 3, box 4, box 5, box 6, box 7]
   );
+  let mut a3 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut iter2 = a3.iter_mut();
+  unsafe {
+    assert_eq!(iter2.__iterator_get_unchecked(2), &ZST {});
+  }
 }
 
 #[test]
