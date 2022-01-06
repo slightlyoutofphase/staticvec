@@ -649,11 +649,19 @@ unsafe impl<T: Send, const N: usize> const Send for StaticVecIntoIter<T, N> {}
 impl<T: Clone, const N: usize> Clone for StaticVecIntoIter<T, N> {
   #[inline(always)]
   fn clone(&self) -> StaticVecIntoIter<T, N> {
-    let mut res = StaticVec::new();
-    for item in self.as_slice() {
-      unsafe { res.push_unchecked(item.clone()) };
+    Self {
+      start: self.start,
+      end: self.end,
+      data: {
+        let mut data = MaybeUninit::<[T; N]>::uninit();
+        let new_data_ptr = data.as_mut_ptr() as *mut T;
+        let self_data_ptr = self.data.as_ptr() as *const T;
+        for i in self.start..self.end {
+          unsafe { new_data_ptr.add(i).write(&*self_data_ptr.add(i).clone()) };
+        }
+        data
+      },
     }
-    res.into_iter()
   }
 }
 
