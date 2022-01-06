@@ -7,7 +7,8 @@
   const_trait_impl,
   exact_size_is_empty,
   generic_const_exprs,
-  read_buf
+  read_buf,
+  trusted_random_access
 )]
 
 // In case you're wondering why there's extensive use of "StaticVecs that contain boxed items"
