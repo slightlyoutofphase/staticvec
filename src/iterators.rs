@@ -657,7 +657,7 @@ impl<T: Clone, const N: usize> Clone for StaticVecIntoIter<T, N> {
         let new_data_ptr = data.as_mut_ptr() as *mut T;
         let self_data_ptr = self.data.as_ptr() as *const T;
         for i in self.start..self.end {
-          unsafe { new_data_ptr.add(i).write(&*self_data_ptr.add(i).clone()) };
+          unsafe { new_data_ptr.add(i).write((&*self_data_ptr.add(i)).clone()) };
         }
         data
       },
