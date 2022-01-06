@@ -656,10 +656,10 @@ impl<T: Clone, const N: usize> Clone for StaticVecIntoIter<T, N> {
         let mut data = MaybeUninit::<[T; N]>::uninit();
         let new_data_ptr = data.as_mut_ptr() as *mut T;
         // Guaranteed safe assumption in this context.
-        assume(!new_data_ptr.is_null());
+        unsafe { assume(!new_data_ptr.is_null()) };
         let self_data_ptr = self.data.as_ptr() as *const T;
         // Guaranteed safe assumption in this context.
-        assume(!self_data_ptr.is_null());
+        unsafe { assume(!self_data_ptr.is_null()) };
         for i in self.start..self.end {
           unsafe { new_data_ptr.add(i).write((&*self_data_ptr.add(i)).clone()) };
         }
