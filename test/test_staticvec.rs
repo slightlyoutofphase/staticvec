@@ -1017,6 +1017,13 @@ fn iter() {
   assert_eq!(iter.next(), Some((&box 2, &box 5)));
   assert_eq!(iter.next(), Some((&box 3, &box 6)));
   assert_eq!(iter.next(), None);
+  let a3 = staticvec![ZST {}, ZST {}, ZST {}];
+  let a4 = staticvec![ZST {}, ZST {}, ZST {}];
+  let mut iter2 = a3.iter().zip(a4.iter());
+  assert_eq!(iter2.next(), Some((&ZST {}, &ZST {})));
+  assert_eq!(iter2.next(), Some((&ZST {}, &ZST {})));
+  assert_eq!(iter2.next(), Some((&ZST {}, &ZST {})));
+  assert_eq!(iter2.next(), None);  
 }
 
 #[test]
