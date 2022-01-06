@@ -1430,6 +1430,14 @@ fn into_iter() {
     a3,
     staticvec![(box 2, box 5), (box 3, box 6), (box 4, box 7)]
   );
+  // Make sure cloning doesn't cause any issues.
+  let a4 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  let mut iter2 = a4.into_iter();
+  iter2.next();
+  iter2.next_back();
+  iter2.next();
+  let iter3 = iter2.clone();
+  assert_eq!(iter2.as_slice(), iter3.as_slice());
 }
 
 #[test]
