@@ -115,6 +115,9 @@ impl Drop for ZST {
   }
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+struct CloneableZST;
+
 #[test]
 fn append() {
   let mut a = staticvec![
@@ -1438,6 +1441,14 @@ fn into_iter() {
   iter2.next();
   let iter3 = iter2.clone();
   assert_eq!(iter2.as_slice(), iter3.as_slice());
+  // Needs to work properly with ZSTs too of course.
+  let a5 = staticvec![CloneableZST, CloneableZST, CloneableZST, CloneableZST, CloneableZST, CloneableZST];
+  let mut iter4 = a5.into_iter();
+  iter4.nth(0);
+  iter4.next_back();
+  iter4.next();
+  let iter5 = iter4.clone();
+  assert_eq!(iter4.as_slice(), iter5.as_slice());  
 }
 
 #[test]
