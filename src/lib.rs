@@ -1991,7 +1991,10 @@ impl<T, const N: usize> StaticVec<T, N> {
     unsafe {
       // Set the length to `start` to avoid memory issues if anything goes wrong with the Drain.
       self.set_len(start);
-      let start_ptr = self.ptr_at_unchecked(start);
+      let start_ptr = match size_of::<T>() {
+        0 => zst_ptr_add(self.as_ptr(), start),
+        _ => self.ptr_at_unchecked(start),
+      };
       // `start_ptr` will never be null, so this is a safe assumption to give to
       // the optimizer.
       assume(!start_ptr.is_null());

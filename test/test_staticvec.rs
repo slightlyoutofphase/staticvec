@@ -488,10 +488,18 @@ fn drain_iter() {
     ZST {},
     ZST {},
     ZST {},
-    ZST {}
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
   ];
-  v5.drain_iter(0..4);
-  assert_eq!(&v5[..], &[ZST {}, ZST {}, ZST {}, ZST {}]);
+  assert_eq!(v5.drain_iter(6..12).len(), 6);
+  assert_eq!(v5.len(), 10);
   assert_eq!(
     staticvec![1, 2, 3, 4]
       .drain_iter(1..3)
@@ -515,6 +523,11 @@ fn drain_filter() {
   let odds = numbers;
   assert_eq!(evens, [2, 4, 6, 8, 14]);
   assert_eq!(odds, [1, 3, 5, 9, 11, 13, 15]);
+  let mut zsts1 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let full = zsts1.drain_filter(|x| *x == ZST {});
+  let empty = zsts1;
+  assert_eq!(full, [ZST {}, ZST {}, ZST {}, ZST {}]);
+  assert_eq!(empty, []);
   let mut empty: StaticVec<i32, 12> = StaticVec::from([]);
   assert_eq!(empty.drain_filter(|x| *x == 0), []);
   let mut structs: StaticVec<Box<Struct>, 4> = staticvec![
@@ -1025,10 +1038,27 @@ fn iter() {
   assert_eq!(iter2.next(), Some((&ZST {}, &ZST {})));
   assert_eq!(iter2.next(), Some((&ZST {}, &ZST {})));
   assert_eq!(iter2.next(), None);
-  let a5 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let a5 = staticvec![
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {}
+  ];
   let mut iter3 = a5.iter();
   unsafe {
-    assert_eq!(iter3.__iterator_get_unchecked(2), &ZST {});
+    assert_eq!(iter3.__iterator_get_unchecked(13), &ZST {});
   }
 }
 
@@ -1239,10 +1269,27 @@ fn iter_mut() {
     a1.concat_clone(&a2),
     staticvec![box 2, box 3, box 4, box 5, box 6, box 7]
   );
-  let mut a3 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
+  let mut a3 = staticvec![
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {}
+  ];
   let mut iter2 = a3.iter_mut();
   unsafe {
-    assert_eq!(iter2.__iterator_get_unchecked(2), &ZST {});
+    assert_eq!(iter2.__iterator_get_unchecked(13), &ZST {});
   }
 }
 
@@ -1460,13 +1507,59 @@ fn into_iter() {
   let iter3 = iter2.clone();
   assert_eq!(iter2.as_slice(), iter3.as_slice());
   // Needs to work properly with ZSTs too of course.
-  let a5 = staticvec![CloneableZST, CloneableZST, CloneableZST, CloneableZST, CloneableZST, CloneableZST];
+  let a5 = staticvec![
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST
+  ];
   let mut iter4 = a5.into_iter();
   iter4.nth(0);
   iter4.next_back();
   iter4.next();
-  let iter5 = iter4.clone();
-  assert_eq!(iter4.as_slice(), iter5.as_slice());  
+  let mut iter5 = iter4.clone();
+  assert_eq!(iter4.as_slice(), iter5.as_slice());
+  for x in iter4.as_slice().iter() {
+    assert_eq!(x, &CloneableZST);
+  }
+  for y in iter5.as_mut_slice().iter_mut() {
+    assert_eq!(y, &mut CloneableZST);
+  }
+  let mut i = 0;
+  for x in staticvec![
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST,
+    CloneableZST
+  ] {
+    assert_eq!(x, CloneableZST);
+    i += 1;
+  }
+  assert_eq!(i, 16);
 }
 
 #[test]

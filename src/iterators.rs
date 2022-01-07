@@ -170,7 +170,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
     // Safety: see the comments for the implementation of this function in
     // 'core/slice/iter/macros.rs`, as they're equally applicable to us here.
     match size_of::<T>() {
-      0 => &*zst_ptr_add(self.start, idx),
+      0 => &*((self.start as usize + idx) as *const T),
       _ => &*self.start.add(idx),
     }
   }
@@ -368,7 +368,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
     // Safety: see the comments for the implementation of this function in
     // 'core/slice/iter/macros.rs`, as they're equally applicable to us here.
     match size_of::<T>() {
-      0 => &mut *zst_ptr_add_mut(self.start, idx),
+      0 => &mut *((self.start as usize + idx) as *mut T),
       _ => &mut *self.start.add(idx),
     }
   }
@@ -655,13 +655,14 @@ impl<T: Clone, const N: usize> Clone for StaticVecIntoIter<T, N> {
       data: {
         let mut data = MaybeUninit::<[T; N]>::uninit();
         let new_data_ptr = data.as_mut_ptr() as *mut T;
-        // Guaranteed safe assumption in this context.
-        unsafe { assume(!new_data_ptr.is_null()) };
         let self_data_ptr = self.data.as_ptr() as *const T;
-        // Guaranteed safe assumption in this context.
-        unsafe { assume(!self_data_ptr.is_null()) };
-        for i in self.start..self.end {
-          unsafe { new_data_ptr.add(i).write((&*self_data_ptr.add(i)).clone()) };
+        unsafe {
+          // These are guaranteed safe assumptions in this context.
+          assume(!new_data_ptr.is_null());
+          assume(!self_data_ptr.is_null());
+          for i in self.start..self.end {
+            new_data_ptr.add(i).write((&*self_data_ptr.add(i)).clone());
+          }
         }
         data
       },
