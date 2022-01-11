@@ -20,9 +20,9 @@ export MIRIFLAGS="-Zmiri-disable-isolation"
 # We run the suite once under Miri with all functionality enabled, and then once
 # normally without the default features just to make sure `no_std` support has
 # not been broken.
+# cargo clean
+# cargo miri test --features="std"
+# cargo clean
+# cargo test --no-default-features
 cargo clean
-cargo miri test --features="std"
-cargo clean
-cargo test --no-default-features
-cargo clean
-if [ "$APPVEYOR_OS_NAME" = "linux" ]; then cd ./fuzz && cargo rustc -- -Cpasses=sancov -Cllvm-args=-sanitizer-coverage-level=3 -Cllvm-args=-sanitizer-coverage-inline-8bit-counters -Z sanitizer=address && ./target/debug/ops
+if [ "$APPVEYOR_OS_NAME" = "linux" ]; then cd ./fuzz && cargo rustc -- -Cpasses=sancov -Cllvm-args=-sanitizer-coverage-level=3 -Cllvm-args=-sanitizer-coverage-inline-8bit-counters -Z sanitizer=address && ./target/debug/ops; fi
