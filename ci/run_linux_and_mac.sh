@@ -24,3 +24,5 @@ cargo clean
 cargo miri test --features="std"
 cargo clean
 cargo test --no-default-features
+cargo clean
+if [ "$APPVEYOR_OS_NAME" = "linux" ]; then cd ./fuzz && cargo rustc -- -Cpasses=sancov -Cllvm-args=-sanitizer-coverage-level=3 -Cllvm-args=-sanitizer-coverage-inline-8bit-counters -Z sanitizer=address && ./target/debug/ops
