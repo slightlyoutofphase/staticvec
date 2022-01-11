@@ -21,9 +21,9 @@ export MIRIFLAGS="-Zmiri-disable-isolation"
 # normally without the default features just to make sure `no_std` support has
 # not been broken.
 cargo clean
-cargo miri test --features="std"
+cargo miri test --features="std" || exit 1
 cargo clean
-cargo test --no-default-features
+cargo test --no-default-features || exit 1
 # Uncommenting the last two lines also runs the libfuzzer fuzz target, but it's more suited for running
 # locally than on CI currently due to the amount of time it takes to be effective
 # cargo clean
