@@ -169,10 +169,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
   unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> &'a T {
     // Safety: see the comments for the implementation of this function in
     // 'core/slice/iter/macros.rs`, as they're equally applicable to us here.
-    match size_of::<T>() {
-      0 => &*((self.start as usize + idx) as *const T),
-      _ => &*self.start.add(idx),
-    }
+    &*self.start.add(idx)
   }
 }
 
@@ -367,10 +364,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
   unsafe fn __iterator_get_unchecked(&mut self, idx: usize) -> &'a mut T {
     // Safety: see the comments for the implementation of this function in
     // 'core/slice/iter/macros.rs`, as they're equally applicable to us here.
-    match size_of::<T>() {
-      0 => &mut *((self.start as usize + idx) as *mut T),
-      _ => &mut *self.start.add(idx),
-    }
+    &mut *self.start.add(idx)
   }
 }
 
