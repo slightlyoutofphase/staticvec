@@ -62,5 +62,5 @@ build: false
 test_script:
   # We run the suite once with all functionality enabled, and then once without
   # the default features to make sure `no_std` support has not been broken
-  - cmd: ./ci/run_windows.bat
+  # - cmd: ./ci/run_windows.bat
   - sh: sudo sh ./ci/run_linux_and_mac.sh
