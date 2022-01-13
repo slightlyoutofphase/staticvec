@@ -211,13 +211,17 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// // The StaticVec on the next line is inferred to be of type `StaticVec<&'static str, 4>`.
   /// let v = StaticVec::from(["A", "B", "C", "D"]);
   /// assert_eq!(v, ["A", "B", "C", "D"]);
-  /// // You can essentially use [`From`](core::convert::From) in the vast majority of scenarios
-  /// // where *either* [`new_from_slice`](crate::StaticVec::new_from_slice) or
-  /// // [`new_from_array`](crate::StaticVec::new_from_array) would be accepted by the compiler,
-  /// // and expect it to "just work" like the appropriate one of the two on a contextual basis.
-  /// // For example, the two "extra" instances of [`Box`](std::boxed::Box) on the next line will
-  /// // be correctly dropped just as they would be when calling
-  /// // [`new_from_array`](crate::StaticVec::new_from_array).  
+  /// ```
+  /// You can essentially use [`From`](core::convert::From) in the vast majority of scenarios
+  /// where *either* [`new_from_slice`](crate::StaticVec::new_from_slice) or
+  /// [`new_from_array`](crate::StaticVec::new_from_array) would be accepted by the compiler,
+  /// and expect it to "just work" like the appropriate one of the two on a contextual basis.
+  /// For example, the two "extra" instances of [`Box`](std::boxed::Box) on the next line will
+  /// be correctly dropped just as they would be when calling
+  /// [`new_from_array`](crate::StaticVec::new_from_array).
+  /// ```
+  /// # #![feature(box_syntax)]
+  /// # use staticvec::StaticVec;
   /// let v2 = StaticVec::<Box<i32>, 2>::from([box 1, box 2, box 3, box 4]);
   /// assert_eq!(v2, [box 1, box 2]);
   /// ```
