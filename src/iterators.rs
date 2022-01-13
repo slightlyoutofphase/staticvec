@@ -713,14 +713,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecDrain<'a, T, N> {
   type Item = T;
 
   #[inline(always)]
-  fn next(&mut self) -> Option<T> {
-    assert!(
-      !self.iter.start.is_null(),
-      "Drain start: {} Drain length: {} Iter length: {}",
-      self.start,
-      self.length,
-      self.iter.len()
-    );    
+  fn next(&mut self) -> Option<T> {   
     self
       .iter
       .next()
