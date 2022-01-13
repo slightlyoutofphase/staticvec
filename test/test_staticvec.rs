@@ -500,6 +500,26 @@ fn drain_iter() {
   ];
   assert_eq!(v5.drain_iter(6..12).len(), 6);
   assert_eq!(v5.len(), 10);
+  let mut v6 = staticvec![
+    box 1,
+    box 2,
+    box 3,
+    box 4,
+    box 5,
+    box 6,
+    box 7,
+    box 8,
+    box 9,
+    box 10,
+    box 11,
+    box 12,
+    box 13,
+    box 14,
+    box 15,
+    box 16,
+  ];
+  assert_eq!(v6.drain_iter(6..12).len(), 6);
+  assert_eq!(v6.len(), 10);  
   assert_eq!(
     staticvec![1, 2, 3, 4]
       .drain_iter(1..3)
