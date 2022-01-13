@@ -498,7 +498,10 @@ fn drain_iter() {
     ZST {},
     ZST {},
   ];
-  assert_eq!(v5.drain_iter(6..12).len(), 6);
+  let mut v5_drain = v5.drain(6..12);
+  assert_eq!(v5_drain.len(), 6);
+  while let Some(_x) = v5_drain.next() {}
+  drop(v5_drain);
   assert_eq!(v5.len(), 10);
   let mut v6 = staticvec![
     box 1,
