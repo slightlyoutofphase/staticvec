@@ -5,13 +5,13 @@ use core::mem::{size_of, MaybeUninit};
 use crate::StaticVec;
 
 #[inline(always)]
-pub(crate) fn runtime_zst_handler<T>(dest: *const T, origin: *const T) -> usize {
+pub(crate) fn runtime_distance_between<T>(dest: *const T, origin: *const T) -> usize {
   // At runtime we can handle ZSTs with usize casts, as is done throughout the crate.
   (dest as usize).wrapping_sub(origin as usize)
 }
 
 #[inline(always)]
-pub(crate) const fn compiletime_zst_handler<T>(_dest: *const T, _origin: *const T) -> usize {
+pub(crate) const fn compiletime_distance_between<T>(_dest: *const T, _origin: *const T) -> usize {
   assert!(
     size_of::<T>() == 0,
     "`compiletime_zst_handler` called on a non-ZST!"
@@ -28,7 +28,13 @@ pub(crate) const fn distance_between<T>(dest: *const T, origin: *const T) -> usi
   match size_of::<T>() {
     // This function cannot safely be used on ZST pointers at compile time (which would not be
     // useful in any scenario I can currently think of anyways).
-    0 => unsafe { const_eval_select((dest, origin), compiletime_zst_handler, runtime_zst_handler) },
+    0 => unsafe {
+      const_eval_select(
+        (dest, origin),
+        compiletime_distance_between,
+        runtime_distance_between,
+      )
+    },
     // For all other sizes of `T` though, `offset_from` works just fine.
     _ => unsafe { dest.offset_from(origin) as usize },
   }
@@ -102,11 +108,31 @@ where T: Copy {
   }
 }
 
+#[inline(always)]
+pub(crate) const fn compiletime_zst_ptr_add<T>(ptr: *const T, count: usize) -> *const T {
+  (ptr as *const u8).wrapping_add(count) as *const T
+}
+
+#[inline(always)]
+pub(crate) const fn compiletime_zst_ptr_add_mut<T>(ptr: *mut T, count: usize) -> *mut T {
+  (ptr as *mut u8).wrapping_add(count) as *mut T
+}
+
+#[inline(always)]
+pub(crate) fn runtime_zst_ptr_add<T>(ptr: *const T, count: usize) -> *const T {
+  (ptr as usize + count) as *const T
+}
+
+#[inline(always)]
+pub(crate) fn runtime_zst_ptr_add_mut<T>(ptr: *mut T, count: usize) -> *mut T {
+  (ptr as usize + count) as *mut T
+}
+
 /// An internal convenience function for incrementing immutable ZST pointers by usize offsets.
 #[inline(always)]
 pub(crate) const fn zst_ptr_add<T>(ptr: *const T, count: usize) -> *const T {
   debug_assert!(size_of::<T>() == 0, "`zst_ptr_add` called on a non-ZST!");
-  (ptr as *const u8).wrapping_add(count) as *const T
+  unsafe { const_eval_select((ptr, count), compiletime_zst_ptr_add, runtime_zst_ptr_add) }
 }
 
 /// An internal convenience function for incrementing mutable ZST pointers by usize offsets.
@@ -116,7 +142,13 @@ pub(crate) const fn zst_ptr_add_mut<T>(ptr: *mut T, count: usize) -> *mut T {
     size_of::<T>() == 0,
     "`zst_ptr_add_mut` called on a non-ZST!"
   );
-  (ptr as *mut u8).wrapping_add(count) as *mut T
+  unsafe {
+    const_eval_select(
+      (ptr, count),
+      compiletime_zst_ptr_add_mut,
+      runtime_zst_ptr_add_mut,
+    )
+  }
 }
 
 /// A version of the default `partial_cmp` implementation with a more flexible function signature.

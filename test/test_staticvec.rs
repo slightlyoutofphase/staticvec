@@ -498,31 +498,14 @@ fn drain_iter() {
     ZST {},
     ZST {},
   ];
-  let mut v5_drain = v5.drain_iter(6..12);
-  assert_eq!(v5_drain.len(), 6);
-  while let Some(_x) = v5_drain.next() {}
-  drop(v5_drain);
+  assert_eq!(v5.drain_iter(6..12).len(), 6);
   assert_eq!(v5.len(), 10);
   let mut v6 = staticvec![
-    box 1,
-    box 2,
-    box 3,
-    box 4,
-    box 5,
-    box 6,
-    box 7,
-    box 8,
-    box 9,
-    box 10,
-    box 11,
-    box 12,
-    box 13,
-    box 14,
-    box 15,
-    box 16,
+    box 1, box 2, box 3, box 4, box 5, box 6, box 7, box 8, box 9, box 10, box 11, box 12, box 13,
+    box 14, box 15, box 16,
   ];
   assert_eq!(v6.drain_iter(6..12).len(), 6);
-  assert_eq!(v6.len(), 10);  
+  assert_eq!(v6.len(), 10);
   assert_eq!(
     staticvec![1, 2, 3, 4]
       .drain_iter(1..3)
@@ -1150,6 +1133,26 @@ fn iter_nth() {
   let o = it7.nth(5);
   assert_eq!(format!("{:?}", o), "Some([6, 6])");
   assert_eq!(format!("{:?}", it7), "StaticVecIterConst([])");
+  let vlast = staticvec![
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {}
+  ];
+  let mut itlast = vlast.iter();
+  assert_eq!(itlast.nth(13).unwrap(), &ZST {});
 }
 
 #[test]
@@ -1379,6 +1382,26 @@ fn iter_mut_nth() {
   let o = it7.nth(5);
   assert_eq!(format!("{:?}", o), "Some([6, 6])");
   assert_eq!(format!("{:?}", it7), "StaticVecIterMut([])");
+  let mut vlast = staticvec![
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {}
+  ];
+  let mut itlast = vlast.iter_mut();
+  assert_eq!(itlast.nth(13).unwrap(), &mut ZST {});
 }
 
 #[test]
@@ -1654,6 +1677,26 @@ fn into_iter_nth() {
   let o = it7.nth(5);
   assert_eq!(format!("{:?}", o), "Some([6, 6])");
   assert_eq!(format!("{:?}", it7), "StaticVecIntoIter([])");
+  let vlast = staticvec![
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {},
+    ZST {}
+  ];
+  let mut itlast = vlast.into_iter();
+  assert_eq!(itlast.nth(13).unwrap(), ZST {});
 }
 
 #[test]
