@@ -57,7 +57,6 @@
   exact_size_is_empty,
   generic_const_exprs,
   inline_const,
-  maybe_uninit_extra,
   maybe_uninit_uninit_array,
   pattern,
   slice_partition_dedup,
