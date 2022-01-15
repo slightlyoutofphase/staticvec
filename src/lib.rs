@@ -38,6 +38,7 @@
   const_intrinsic_copy,
   const_maybe_uninit_as_mut_ptr,
   const_maybe_uninit_assume_init,
+  const_maybe_uninit_assume_init_read,
   const_mut_refs,
   const_precise_live_drops,
   const_ptr_is_null,
