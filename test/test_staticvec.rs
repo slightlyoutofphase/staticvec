@@ -600,6 +600,9 @@ fn extend_from_slice() {
   let mut vec = StaticVec::<i32, 4>::new_from_slice(&[1]);
   vec.extend_from_slice(&[2, 3, 4]);
   assert_eq!(vec, [1, 2, 3, 4]);
+  let mut vec2 = StaticVec::<i32, 0>::new();
+  vec2.extend_from_slice(&[2, 3, 4]);
+  assert_eq!(vec2, []);  
 }
 
 #[test]
