@@ -341,9 +341,8 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
       unsafe {
         match size_of::<T>() {
           0 => {
-            let res = (self.start as usize + n) as *mut T;
-            self.start = (res as usize + 1) as *mut T;
-            Some(&mut *res)
+            self.end = (self.end as *mut u8).wrapping_offset(-(n as isize)) as *mut T;
+            Some(&mut *self.start)
           }
           _ => {
             let res = self.start.add(n);
