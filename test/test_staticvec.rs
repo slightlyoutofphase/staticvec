@@ -617,7 +617,7 @@ fn filled_with() {
   assert_eq!(v[1], 2);
   assert_eq!(v[2], 3);
   assert_eq!(v[3], 4);
-  let v2 = StaticVec::<i32, 64>::filled_with(|| { 0 });
+  let v2 = StaticVec::<i32, 0>::filled_with(|| { 0 });
   assert_eq!(v2.len(), 0);
   assert_eq!(v2.capacity(), 0);
   assert_eq!(v2.remaining_capacity(), 0);  
