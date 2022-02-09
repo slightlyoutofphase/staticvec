@@ -117,10 +117,10 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
         0 => None,
         _ => {
           let res = Some(&*self.start);
-          self.start = match size_of::<T>() {
-            0 => (self.start as usize + 1) as *const T,
-            _ => self.start.offset(1),
-          };
+          match size_of::<T>() {
+            0 => self.end = (self.end as *const u8).wrapping_offset(-1) as *const T;
+            _ => self.start = self.start.offset(1),
+          }
           res
         }
       }
