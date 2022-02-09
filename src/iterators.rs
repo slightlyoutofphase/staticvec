@@ -118,7 +118,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterConst<'a, T, N> {
         _ => {
           let res = Some(&*self.start);
           match size_of::<T>() {
-            0 => self.end = (self.end as *const u8).wrapping_offset(-1) as *const T;
+            0 => self.end = (self.end as *const u8).wrapping_offset(-1) as *const T,
             _ => self.start = self.start.offset(1),
           }
           res
@@ -313,7 +313,7 @@ impl<'a, T: 'a, const N: usize> Iterator for StaticVecIterMut<'a, T, N> {
         _ => {
           let res = Some(&mut *self.start);
           match size_of::<T>() {
-            0 => self.end = (self.end as *mut u8).wrapping_offset(-1) as *mut T;
+            0 => self.end = (self.end as *mut u8).wrapping_offset(-1) as *mut T,
             _ => self.start = self.start.offset(1),
           }
           res
