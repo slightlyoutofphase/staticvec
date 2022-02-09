@@ -617,6 +617,10 @@ fn filled_with() {
   assert_eq!(v[1], 2);
   assert_eq!(v[2], 3);
   assert_eq!(v[3], 4);
+  let v2 = StaticVec::<i32, 64>::filled_with(|| { 0 });
+  assert_eq!(v2.len(), 0);
+  assert_eq!(v2.capacity(), 0);
+  assert_eq!(v2.remaining_capacity(), 0);  
 }
 
 #[test]
@@ -627,6 +631,10 @@ fn filled_with_by_index() {
   assert_eq!(v[1], 2);
   assert_eq!(v[2], 3);
   assert_eq!(v[3], 4);
+  let v2 = StaticVec::<usize, 0>::filled_with_by_index(|i| i + 1);
+  assert_eq!(v2.len(), 0);
+  assert_eq!(v2.capacity(), 0);
+  assert_eq!(v2.remaining_capacity(), 0);
 }
 
 #[test]
