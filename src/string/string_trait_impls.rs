@@ -80,7 +80,15 @@ impl<const N: usize> const Clone for StaticString<N> {
 
   #[inline(always)]
   fn clone_from(&mut self, other: &Self) {
-    self.vec.clone_from(&other.vec);
+    // Calling `clone_from` directly through `self.vec` is not accepted by the compiler currently
+    // for some reason in the context of this impl being `const`.
+    unsafe {
+      self
+        .vec
+        .as_mut_ptr()
+        .copy_from_nonoverlapping(other.vec.as_ptr(), other.vec.length);
+      self.vec.set_len(other.vec.length);
+    }
   }
 }
 

@@ -32,7 +32,15 @@ impl<T: Copy, const N: usize> const Clone for StaticHeap<T, N> {
 
   #[inline(always)]
   fn clone_from(&mut self, source: &Self) {
-    self.data.clone_from(&source.data);
+    // Calling `clone_from` directly through `self.data` is not accepted by the compiler currently
+    // for some reason in the context of this impl being `const`.
+    unsafe {
+      self
+        .data
+        .as_mut_ptr()
+        .copy_from_nonoverlapping(source.data.as_ptr(), source.data.length);
+      self.data.set_len(source.data.length);
+    }
   }
 }
 

@@ -3,7 +3,6 @@
   adt_const_params,
   box_syntax,
   const_fn_floating_point_arithmetic,
-  const_fn_trait_bound,
   const_trait_impl,
   exact_size_is_empty,
   generic_const_exprs,
@@ -602,7 +601,7 @@ fn extend_from_slice() {
   assert_eq!(vec, [1, 2, 3, 4]);
   let mut vec2 = StaticVec::<i32, 0>::new();
   vec2.extend_from_slice(&[2, 3, 4]);
-  assert_eq!(vec2, []);  
+  assert_eq!(vec2, []);
 }
 
 #[test]
@@ -617,10 +616,10 @@ fn filled_with() {
   assert_eq!(v[1], 2);
   assert_eq!(v[2], 3);
   assert_eq!(v[3], 4);
-  let v2 = StaticVec::<i32, 0>::filled_with(|| { 0 });
+  let v2 = StaticVec::<i32, 0>::filled_with(|| 0);
   assert_eq!(v2.len(), 0);
   assert_eq!(v2.capacity(), 0);
-  assert_eq!(v2.remaining_capacity(), 0);  
+  assert_eq!(v2.remaining_capacity(), 0);
 }
 
 #[test]
