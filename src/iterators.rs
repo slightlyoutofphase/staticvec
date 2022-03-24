@@ -797,12 +797,6 @@ impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecDrain<'a, T, N> {
 impl<'a, T: 'a, const N: usize> Drop for StaticVecDrain<'a, T, N> {
   #[inline]
   fn drop(&mut self) {
-    // Handle ZST edge case
-    if size_of::<T>() == 0 {
-      if self.iter.start.is_null() || self.iter.end.is_null() {
-        return;
-      }
-    }
     // Read out any remaining contents first.
     while let Some(_) = self.next() {}
     // Adjust the StaticVec that this StaticVecDrain was created from, if necessary.
