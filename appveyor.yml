@@ -1,7 +1,7 @@
 image:
   - Visual Studio 2022
   - Ubuntu2004
-  - macos-bigsur
+  - macos-monterey
 environment:
   APPVEYOR_YML_DISABLE_PS_LINUX: true
   matrix:
@@ -17,11 +17,11 @@ matrix:
       TARGET: i686-pc-windows-msvc
     - image: Ubuntu2004
       TARGET: x86_64-apple-darwin
-    - image: macos-bigsur
+    - image: macos-monterey
       TARGET: x86_64-pc-windows-msvc
-    - image: macos-bigsur
+    - image: macos-monterey
       TARGET: i686-pc-windows-msvc
-    - image: macos-bigsur
+    - image: macos-monterey
       TARGET: x86_64-unknown-linux-gnu
     - image: Visual Studio 2022
       TARGET: x86_64-unknown-linux-gnu
@@ -53,7 +53,7 @@ for:
   -
     matrix:
       only:
-        - image: macos-bigsur
+        - image: macos-monterey
     install:
       - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -yv --default-toolchain nightly --default-host x86_64-apple-darwin --profile minimal
     cache:
