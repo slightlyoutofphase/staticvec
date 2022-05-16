@@ -111,7 +111,7 @@ impl<const N: usize> StaticString<N> {
   /// ```
   #[allow(clippy::should_implement_trait)]
   #[inline(always)]
-  pub const fn from_str<S: ~const AsRef<str> + ~const Drop>(string: S) -> Self {
+  pub const fn from_str<S: ~const AsRef<str>>(string: S) -> Self {
     let mut res = Self::new();
     let string_ref = string.as_ref();
     unsafe {
@@ -559,7 +559,7 @@ impl<const N: usize> StaticString<N> {
   /// assert_eq!(s, "foobar");
   /// ```
   #[inline]
-  pub const fn push_str<S: ~const AsRef<str> + ~const Drop>(&mut self, string: S) {
+  pub const fn push_str<S: ~const AsRef<str>>(&mut self, string: S) {
     // Note that when calling this at runtime, the compiler still just sees the signature
     // as `push_str<S: AsRef<str>>(&mut self, string: S)`. Adding new `~const` bounds is only
     // a "breaking change" if you add them to something that was *already* a `const fn`. Adding
@@ -592,7 +592,7 @@ impl<const N: usize> StaticString<N> {
   /// # }
   /// ```
   #[inline(always)]
-  pub const fn push_str_truncating<S: ~const AsRef<str> + ~const Drop>(&mut self, string: S) {
+  pub const fn push_str_truncating<S: ~const AsRef<str>>(&mut self, string: S) {
     unsafe { self.push_str_unchecked(truncate_str(string.as_ref(), self.remaining_capacity())) };
   }
 
