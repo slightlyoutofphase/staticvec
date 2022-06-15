@@ -33,7 +33,6 @@
   const_assume,
   const_eval_select,
   const_fn_floating_point_arithmetic,
-  const_intrinsic_copy,
   const_maybe_uninit_as_mut_ptr,
   const_maybe_uninit_assume_init,
   const_maybe_uninit_assume_init_read,
