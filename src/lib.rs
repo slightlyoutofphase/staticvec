@@ -38,6 +38,7 @@
   const_maybe_uninit_assume_init,
   const_maybe_uninit_assume_init_read,
   const_maybe_uninit_uninit_array,
+  const_maybe_uninit_zeroed,
   const_mut_refs,
   const_precise_live_drops,
   const_ptr_is_null,
@@ -2687,6 +2688,12 @@ impl<const N: usize> StaticVec<u8, N> {
       // so there's no concern that we might go out of bounds here (although that would still just
       // result in compilation not actually succeeding at all due to the `const` index error).
       res[i] = MaybeUninit::new(values[i]);
+      i += 1;
+    }
+    // Fill in any remaining "gaps", or do nothing if `values.len()` is the same as `N`.
+    let mut i = values.len();
+    while i < N {
+      res[i] = MaybeUninit::zeroed();
       i += 1;
     }
     // Convert `res` from an instance of `[MaybeUninit<u8>; N]` to one of `[u8; N]`, and then return
