@@ -63,7 +63,8 @@
   specialization,
   trusted_len,
   trusted_random_access,
-  untagged_unions
+  untagged_unions,
+  const_intrinsic_copy
 )]
 #![cfg_attr(feature = "std", feature(read_buf))]
 
