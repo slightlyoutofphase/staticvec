@@ -8,6 +8,7 @@ use core::ops::{
   RangeTo, RangeToInclusive,
 };
 use core::str::{self, FromStr};
+use core::convert::Infailiable;
 
 use super::StaticString;
 use crate::StaticVec;
@@ -211,7 +212,7 @@ impl<'a, const N: usize> FromIterator<&'a str> for StaticString<N> {
 }
 
 impl<'a, const N: usize> FromStr for StaticString<N> {
-  type Err = ();
+  type Err = Infailiable;
 
   #[inline(always)]
   fn from_str(s: &str) -> Result<Self, Self::Err> {
