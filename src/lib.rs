@@ -48,7 +48,7 @@
   // this should be called `const_interior_mutability` IMO
   const_refs_to_cell,
   const_replace,
-  const_slice_from_raw_parts,
+  const_slice_from_raw_parts_mut,
   const_swap,
   const_trait_impl,
   core_intrinsics,
@@ -62,8 +62,7 @@
   slice_partition_dedup,
   specialization,
   trusted_len,
-  trusted_random_access,
-  untagged_unions
+  trusted_random_access
 )]
 #![cfg_attr(feature = "std", feature(read_buf))]
 
