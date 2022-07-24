@@ -76,34 +76,27 @@ pub(crate) const fn encode_utf8_raw(code: u32, len: usize) -> [u8; 4] {
   res
 }
 
-/// Shifts `string` to the right.
-#[inline(always)]
-pub(crate) unsafe fn shift_right_unchecked<const N: usize>(
-  string: &mut StaticString<N>,
-  from: usize,
-  to: usize,
-) {
-  debug_assert!(from <= to && to + string.len() - from <= string.capacity());
-  debug_assert!(string.as_str().is_char_boundary(from));
-  string
-    .as_ptr()
-    .add(from)
-    .copy_to(string.as_mut_ptr().add(to), string.len() - from);
+macro_rules! shift_right_unchecked {
+  ($self_var:expr, $from_var:expr, $to_var:expr) => {
+    debug_assert!(
+      $from_var as usize <= $to_var as usize
+        && $to_var as usize + $self_var.len() - $from_var as usize <= $self_var.capacity()
+    );
+    debug_assert!($self_var.as_str().is_char_boundary($from_var));
+    let mp = $self_var.vec.as_mut_ptr();
+    mp.add($from_var)
+      .copy_to(mp.add($to_var), $self_var.len() - $from_var);
+  };
 }
 
-/// Shifts `string` to the left.
-#[inline(always)]
-pub(crate) unsafe fn shift_left_unchecked<const N: usize>(
-  string: &mut StaticString<N>,
-  from: usize,
-  to: usize,
-) {
-  debug_assert!(to <= from && from <= string.len());
-  debug_assert!(string.as_str().is_char_boundary(from));
-  string
-    .as_ptr()
-    .add(from)
-    .copy_to(string.as_mut_ptr().add(to), string.len() - from);
+macro_rules! shift_left_unchecked {
+  ($self_var:expr, $from_var:expr, $to_var:expr) => {
+    debug_assert!($to_var as usize <= $from_var as usize && $from_var as usize <= $self_var.len());
+    debug_assert!($self_var.as_str().is_char_boundary($from_var));
+    let mp = $self_var.vec.as_mut_ptr();
+    mp.add($from_var)
+      .copy_to(mp.add($to_var), $self_var.len() - $from_var);
+  };
 }
 
 /// Returns an error if `size` is greater than `limit`.
@@ -205,7 +198,9 @@ mod tests {
   #[test]
   fn shift_right() {
     let mut ls = StaticString::<20>::try_from_str("abcdefg").unwrap();
-    unsafe { shift_right_unchecked(&mut ls, 0usize, 4usize) };
+    unsafe {
+      shift_right_unchecked!(ls, 0usize, 4usize);
+    }
     unsafe { ls.vec.set_len(ls.len() + 4) };
     assert_eq!(ls.as_str(), "abcdabcdefg");
   }
@@ -213,7 +208,9 @@ mod tests {
   #[test]
   fn shift_left() {
     let mut ls = StaticString::<20>::try_from_str("abcdefg").unwrap();
-    unsafe { shift_left_unchecked(&mut ls, 1usize, 0usize) };
+    unsafe {
+      shift_left_unchecked!(ls, 1usize, 0usize);
+    }
     unsafe { ls.vec.set_len(ls.len() - 1) };
     assert_eq!(ls.as_str(), "bcdefg");
   }
@@ -221,9 +218,13 @@ mod tests {
   #[test]
   fn shift_nop() {
     let mut ls = StaticString::<20>::try_from_str("abcdefg").unwrap();
-    unsafe { shift_right_unchecked(&mut ls, 0usize, 0usize) };
+    unsafe {
+      shift_right_unchecked!(ls, 0usize, 0usize);
+    }
     assert_eq!(ls.as_str(), "abcdefg");
-    unsafe { shift_left_unchecked(&mut ls, 0usize, 0usize) };
+    unsafe {
+      shift_left_unchecked!(ls, 0usize, 0usize);
+    }
     assert_eq!(ls.as_str(), "abcdefg");
   }
 

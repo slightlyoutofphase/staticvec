@@ -1,5 +1,6 @@
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::Ordering;
+use core::convert::Infallible;
 use core::fmt::{self, Arguments, Debug, Display, Formatter, Write};
 use core::hash::{Hash, Hasher};
 use core::iter::FromIterator;
@@ -211,7 +212,7 @@ impl<'a, const N: usize> FromIterator<&'a str> for StaticString<N> {
 }
 
 impl<'a, const N: usize> FromStr for StaticString<N> {
-  type Err = ();
+  type Err = Infallible;
 
   #[inline(always)]
   fn from_str(s: &str) -> Result<Self, Self::Err> {

@@ -7,8 +7,8 @@ use core::str::{
 
 pub use self::string_errors::StringError;
 use self::string_utils::{
-  encode_char_utf8_unchecked, is_char_boundary, is_inside_boundary, never, shift_left_unchecked,
-  shift_right_unchecked, str_is_char_boundary, truncate_str,
+  encode_char_utf8_unchecked, is_char_boundary, is_inside_boundary, never, str_is_char_boundary,
+  truncate_str,
 };
 use crate::errors::CapacityError;
 use crate::StaticVec;
@@ -783,7 +783,7 @@ impl<const N: usize> StaticString<N> {
       }
     }
     unsafe {
-      shift_left_unchecked(self, start, 0usize);
+      shift_left_unchecked!(self, start, 0usize);
       self.vec.set_len(end - start)
     };
   }
@@ -811,7 +811,7 @@ impl<const N: usize> StaticString<N> {
     let character = character.unwrap_or_else(|| unsafe { never("Missing char") });
     let char_length = character.len_utf8();
     unsafe {
-      shift_left_unchecked(self, index + char_length, index);
+      shift_left_unchecked!(self, index + char_length, index);
       self.vec.set_len(old_length - char_length);
     }
     character
@@ -922,7 +922,7 @@ impl<const N: usize> StaticString<N> {
   #[inline(always)]
   pub unsafe fn insert_unchecked(&mut self, index: usize, character: char) {
     let char_length = character.len_utf8();
-    shift_right_unchecked(self, index, index + char_length);
+    shift_right_unchecked!(self, index, index + char_length);
     encode_char_utf8_unchecked(self, character, index);
   }
 
@@ -1010,7 +1010,7 @@ impl<const N: usize> StaticString<N> {
     let string_length = string_ref.len();
     debug_assert!(string_length <= self.remaining_capacity());
     let string_ptr = string_ref.as_ptr();
-    shift_right_unchecked(self, index, index + string_length);
+    shift_right_unchecked!(self, index, index + string_length);
     string_ptr.copy_to_nonoverlapping(self.vec.mut_ptr_at_unchecked(index), string_length);
     self.vec.set_len(self.len() + string_length);
   }
@@ -1213,17 +1213,20 @@ impl<const N: usize> StaticString<N> {
     );
     if replace_length == 0 {
       unsafe {
-        self
-          .as_ptr()
-          .add(end)
-          .copy_to(self.as_mut_ptr().add(start), old_length.saturating_sub(end));
+        let mp = self.vec.as_mut_ptr();
+        mp.add(end)
+          .copy_to(mp.add(start), old_length.saturating_sub(end));
         self.vec.set_len(old_length.saturating_sub(replaced));
       }
     } else {
       if start + replace_length > end {
-        unsafe { shift_right_unchecked(self, end, start + replace_length) };
+        unsafe {
+          shift_right_unchecked!(self, end, start + replace_length);
+        }
       } else {
-        unsafe { shift_left_unchecked(self, end, start + replace_length) };
+        unsafe {
+          shift_left_unchecked!(self, end, start + replace_length);
+        }
       }
       let ptr = replace_with.as_ptr();
       let dest = unsafe { self.vec.as_mut_ptr().add(start) };

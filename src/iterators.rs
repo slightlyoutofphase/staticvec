@@ -536,15 +536,16 @@ impl<T, const N: usize> Iterator for StaticVecIntoIter<T, N> {
         // Get the index in `self.data` of the item to be returned.
         let res_index = old_start + n;
         // Get a pointer to the item, using the above index.
+        let mp = StaticVec::first_ptr_mut(&mut self.data);
         let res = match size_of::<T>() {
-          0 => zst_ptr_add(StaticVec::first_ptr(&self.data), res_index),
-          _ => StaticVec::first_ptr(&self.data).add(res_index),
+          0 => zst_ptr_add(mp, res_index),
+          _ => mp.add(res_index),
         };
         // Drop whatever range of values may exist in earlier positions
         // to avoid memory leaks.
         let drop_at = match size_of::<T>() {
-          0 => zst_ptr_add_mut(StaticVec::first_ptr_mut(&mut self.data), old_start),
-          _ => StaticVec::first_ptr_mut(&mut self.data).add(old_start),
+          0 => zst_ptr_add_mut(mp, old_start),
+          _ => mp.add(old_start),
         };
         ptr::drop_in_place(from_raw_parts_mut(drop_at, res_index - old_start));
         // Adjust our starting index.
@@ -806,9 +807,8 @@ impl<'a, T: 'a, const N: usize> Drop for StaticVecDrain<'a, T, N> {
         let vec_ref = &mut *self.vec;
         let start = vec_ref.length;
         let tail = self.start;
-        vec_ref
-          .ptr_at_unchecked(tail)
-          .copy_to(vec_ref.mut_ptr_at_unchecked(start), total_length);
+        let mp = vec_ref.as_mut_ptr();
+        mp.add(tail).copy_to(mp.add(start), total_length);
         vec_ref.set_len(start + total_length);
       }
     }

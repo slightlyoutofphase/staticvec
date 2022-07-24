@@ -16,7 +16,10 @@ rustup default "$MIRI_NIGHTLY"
 rustup component add miri
 # The `-Zmiri-disable-isolation` is so Miri can access the system clock
 # while calling `SystemTime::now()` in one of the tests.
-export MIRIFLAGS="-Zmiri-disable-isolation"
+# The `-Zmiri-permissive-provenance` is because this crate has a few
+# integer-to-pointer casts that are needed to avoid UB with ZST-related
+# stuff. 
+export MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-permissive-provenance"
 # We run the suite once under Miri with all functionality enabled, and then once
 # normally without the default features just to make sure `no_std` support has
 # not been broken.

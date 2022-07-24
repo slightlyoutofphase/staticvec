@@ -1947,9 +1947,8 @@ impl<T, const N: usize> StaticVec<T, N> {
           self
             .ptr_at_unchecked(start)
             .copy_to_nonoverlapping(Self::first_ptr_mut(&mut res), res_length);
-          self
-            .ptr_at_unchecked(end)
-            .copy_to(self.mut_ptr_at_unchecked(start), old_length - end);
+          let mp = self.as_mut_ptr();
+          mp.add(end).copy_to(mp.add(start), old_length - end);
           self.set_len(old_length - res_length);
           res
         }
@@ -2048,9 +2047,8 @@ impl<T, const N: usize> StaticVec<T, N> {
             .write(self.ptr_at_unchecked(i).read());
           res_length += 1;
         } else if res_length > 0 {
-          self
-            .ptr_at_unchecked(i)
-            .copy_to_nonoverlapping(self.mut_ptr_at_unchecked(i - res_length), 1);
+          let mp = self.as_mut_ptr();
+          mp.add(i).copy_to_nonoverlapping(mp.add(i - res_length), 1);
         }
       }
     }
@@ -2470,8 +2468,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   /// # use::staticvec::*;
   /// let mut v = staticvec![4, 5, 6, 7];
+  /// let mp = v.as_mut_ptr();
   /// let t = v.triple_mut();
-  /// assert_eq!(t, (v.as_mut_ptr(), 4, 4));
+  /// assert_eq!(t, (mp, 4, 4));
   /// unsafe { *t.0 = 8 };
   /// assert_eq!(v, [8, 5, 6, 7]);
   /// ```

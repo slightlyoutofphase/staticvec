@@ -2554,8 +2554,9 @@ fn triple() {
 #[test]
 fn triple_mut() {
   let mut v = staticvec![4, 5, 6, 7];
+  let mp = v.as_mut_ptr();
   let t = v.triple_mut();
-  assert_eq!(t, (v.as_mut_ptr(), 4, 4));
+  assert_eq!(t, (mp, 4, 4));
   unsafe { *t.0 = 8 };
   assert_eq!(v, [8, 5, 6, 7]);
 }

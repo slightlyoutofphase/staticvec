@@ -811,9 +811,9 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     if read_length < current_length {
       // Safety: we just confirmed that `read_length` is less than our current length.
       unsafe {
-        self
-          .ptr_at_unchecked(read_length)
-          .copy_to(self.as_mut_ptr(), current_length - read_length)
+        let mp = self.as_mut_ptr();
+        mp.add(read_length)
+          .copy_to(mp, current_length - read_length)
       };
     }
     // Safety: 0 <= `read_length` <= `current_length`.
@@ -881,9 +881,8 @@ impl<const N: usize> Read for StaticVec<u8, N> {
     let total_read = old_length - current_length;
     if current_length > 0 {
       unsafe {
-        self
-          .ptr_at_unchecked(total_read)
-          .copy_to(self.as_mut_ptr(), current_length);
+        let mp = self.as_mut_ptr();
+        mp.add(total_read).copy_to(mp, current_length);
       }
     }
     Ok(total_read)
