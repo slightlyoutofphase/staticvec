@@ -2083,7 +2083,7 @@ fn quicksort_unstable() {
 mod read_tests {
   use core::mem::MaybeUninit;
   use staticvec::*;
-  use std::io::{self, BufRead, Read};
+  use std::io::{self, BorrowedBuf, BufRead, Read};
 
   // We provide custom implementations of most `Read` methods; test those impls
   #[test]
@@ -2172,6 +2172,38 @@ mod read_tests {
     assert_eq!(ints2.read_vectored(&mut bufs2).unwrap(), 9);
     assert_eq!("[[1, 2], [3, 4, 5], [6, 7, 8, 9]]", format!("{:?}", bufs2));
     assert_eq!(ints2, [10, 11, 12]);
+  }
+
+  #[test]
+  fn read_buf() {
+    let inner: &[u8] = &[5, 6, 7, 0, 1, 2, 3, 4];
+    let mut reader = StaticVec::<u8, 8>::from(inner);
+    let buf: &mut [_] = &mut [MaybeUninit::uninit(); 3];
+    let mut buf: BorrowedBuf<'_> = buf.into();
+    reader.read_buf(buf.unfilled()).unwrap();
+    assert_eq!(buf.filled(), [5, 6, 7]);
+    assert_eq!(reader, [0, 1, 2, 3, 4]);
+    let buf: &mut [_] = &mut [MaybeUninit::uninit(); 2];
+    let mut buf: BorrowedBuf<'_> = buf.into();
+    reader.read_buf(buf.unfilled()).unwrap();
+    assert_eq!(buf.filled(), [0, 1]);
+    assert_eq!(reader, [2, 3, 4]);
+    let buf: &mut [_] = &mut [MaybeUninit::uninit(); 1];
+    let mut buf: BorrowedBuf<'_> = buf.into();
+    reader.read_buf(buf.unfilled()).unwrap();
+    assert_eq!(buf.filled(), [2]);
+    assert_eq!(reader, [3, 4]);
+    let buf: &mut [_] = &mut [MaybeUninit::uninit(); 3];
+    let mut buf: BorrowedBuf<'_> = buf.into();
+    reader.read_buf(buf.unfilled()).unwrap();
+    assert_eq!(buf.filled(), [3, 4]);
+    assert_eq!(reader, []);
+    reader.read_buf(buf.unfilled()).unwrap();
+    assert_eq!(buf.filled(), [3, 4]);
+    assert_eq!(reader, []);
+    buf.clear();
+    reader.read_buf(buf.unfilled()).unwrap();
+    assert!(buf.filled().is_empty());
   }
 
   #[test]
