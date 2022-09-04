@@ -42,6 +42,7 @@
   const_mut_refs,
   const_precise_live_drops,
   const_ptr_is_null,
+  const_ptr_offset_from,
   const_ptr_read,
   const_ptr_write,
   // this should be called `const_interior_mutability` IMO
