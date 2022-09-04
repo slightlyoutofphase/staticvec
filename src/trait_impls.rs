@@ -20,16 +20,13 @@ use crate::StaticVec;
 use core::str;
 
 #[cfg(feature = "std")]
-use crate::utils::const_min;
-
-#[cfg(feature = "std")]
 use alloc::string::String;
 
 #[cfg(feature = "std")]
 use alloc::vec::Vec;
 
 #[cfg(feature = "std")]
-use std::io::{self, BufRead, IoSlice, IoSliceMut, Read, ReadBuf};
+use std::io::{self, BufRead, IoSlice, IoSliceMut, Read};
 
 #[cfg(feature = "serde")]
 use core::marker::PhantomData;
@@ -886,16 +883,6 @@ impl<const N: usize> Read for StaticVec<u8, N> {
       }
     }
     Ok(total_read)
-  }
-
-  #[inline]
-  fn read_buf(&mut self, buf: &mut ReadBuf<'_>) -> io::Result<()> {
-    // Here we directly adapt the implementation from &[u8].
-    let amount = const_min(buf.remaining(), self.len());
-    let b = self.split_off(amount);
-    buf.append(&self);
-    *self = b;
-    Ok(())
   }
 }
 
