@@ -185,6 +185,7 @@ impl<T: Eq, const N: usize> Eq for StaticVec<T, N> {}
 
 /// A helper trait for specialization-based implementations of [`Extend`](core::iter::Extend) and
 /// ['FromIterator`](core::iter::FromIterator).
+#[const_trait]
 pub(crate) trait ExtendEx<T, I> {
   fn extend_ex(&mut self, iter: I);
   fn from_iter_ex(iter: I) -> Self;

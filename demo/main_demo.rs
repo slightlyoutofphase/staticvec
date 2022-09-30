@@ -71,7 +71,7 @@ static LEFT: StaticVec<MyStruct, 4> = staticvec![
   MyStruct::new("d")
 ];
 static RIGHT: StaticVec<MyStruct, 2> = staticvec![MyStruct::new("e"), MyStruct::new("f")];
-static CONCATENATED: StaticVec<MyStruct, 6> = LEFT.concat(&RIGHT);
+//static CONCATENATED: StaticVec<MyStruct, 6> = LEFT.concat(&RIGHT);
 static SPLIT: (StaticVec<usize, 2>, StaticVec<usize, 4>) =
   staticvec![1usize, 2usize, 3usize, 4usize, 5usize, 6usize].split_at::<2>();
 
@@ -160,7 +160,7 @@ fn main() {
   println!("{:?}", LOL);
   println!("{}", unsafe { MUTABLE.len() });
   println!("{}", unsafe { MUTABLE.capacity() });
-  println!("{:?}", CONCATENATED);
+  //println!("{:?}", CONCATENATED);
   println!("{:?}", SPLIT);
   println!("{:?}", BUILT);
   println!("{:?}", ALSO_BUILT);

@@ -213,7 +213,7 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterConst<'a, T
   }
 }
 
-impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecIterConst<'a, T, N> {
+impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
@@ -225,12 +225,12 @@ impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecIterConst<'
   }
 }
 
-impl<'a, T: 'a, const N: usize> const FusedIterator for StaticVecIterConst<'a, T, N> {}
-unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterConst<'a, T, N> {}
+impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecIterConst<'a, T, N> {}
+unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecIterConst<'a, T, N> {}
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: 'a, const N: usize> const TrustedRandomAccessNoCoerce
+unsafe impl<'a, T: 'a, const N: usize> TrustedRandomAccessNoCoerce
   for StaticVecIterConst<'a, T, N>
 {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
@@ -238,9 +238,9 @@ unsafe impl<'a, T: 'a, const N: usize> const TrustedRandomAccessNoCoerce
     distance_between(self.end, self.start)
   }
 }
-unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterConst<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecIterConst<'a, T, N> {}
 // `StaticVecIterConst` works in terms of `&T`, which is sendable if / when `T` is `Sync`.
-unsafe impl<'a, T: 'a + Sync, const N: usize> const Send for StaticVecIterConst<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Send for StaticVecIterConst<'a, T, N> {}
 
 impl<'a, T: 'a, const N: usize> Clone for StaticVecIterConst<'a, T, N> {
   #[inline(always)]
@@ -408,7 +408,7 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecIterMut<'a, T, 
   }
 }
 
-impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecIterMut<'a, T, N> {
+impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     distance_between(self.end, self.start)
@@ -420,21 +420,19 @@ impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecIterMut<'a,
   }
 }
 
-impl<'a, T: 'a, const N: usize> const FusedIterator for StaticVecIterMut<'a, T, N> {}
-unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecIterMut<'a, T, N> {}
+impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecIterMut<'a, T, N> {}
+unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecIterMut<'a, T, N> {}
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: 'a, const N: usize> const TrustedRandomAccessNoCoerce
-  for StaticVecIterMut<'a, T, N>
-{
+unsafe impl<'a, T: 'a, const N: usize> TrustedRandomAccessNoCoerce for StaticVecIterMut<'a, T, N> {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
   fn size(&self) -> usize {
     distance_between(self.end, self.start)
   }
 }
-unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecIterMut<'a, T, N> {}
-unsafe impl<'a, T: 'a + Send, const N: usize> const Send for StaticVecIterMut<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecIterMut<'a, T, N> {}
+unsafe impl<'a, T: 'a + Send, const N: usize> Send for StaticVecIterMut<'a, T, N> {}
 
 impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecIterMut<'a, T, N> {
   #[inline(always)]
@@ -614,7 +612,7 @@ impl<T, const N: usize> DoubleEndedIterator for StaticVecIntoIter<T, N> {
   }
 }
 
-impl<T, const N: usize> const ExactSizeIterator for StaticVecIntoIter<T, N> {
+impl<T, const N: usize> ExactSizeIterator for StaticVecIntoIter<T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     self.end - self.start
@@ -626,20 +624,20 @@ impl<T, const N: usize> const ExactSizeIterator for StaticVecIntoIter<T, N> {
   }
 }
 
-impl<T, const N: usize> const FusedIterator for StaticVecIntoIter<T, N> {}
-unsafe impl<T, const N: usize> const TrustedLen for StaticVecIntoIter<T, N> {}
+impl<T, const N: usize> FusedIterator for StaticVecIntoIter<T, N> {}
+unsafe impl<T, const N: usize> TrustedLen for StaticVecIntoIter<T, N> {}
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<T: Copy, const N: usize> const TrustedRandomAccessNoCoerce for StaticVecIntoIter<T, N> {
+unsafe impl<T: Copy, const N: usize> TrustedRandomAccessNoCoerce for StaticVecIntoIter<T, N> {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
 
   fn size(&self) -> usize {
     self.end - self.start
   }
 }
-unsafe impl<T: Sync, const N: usize> const Sync for StaticVecIntoIter<T, N> {}
-unsafe impl<T: Send, const N: usize> const Send for StaticVecIntoIter<T, N> {}
+unsafe impl<T: Sync, const N: usize> Sync for StaticVecIntoIter<T, N> {}
+unsafe impl<T: Send, const N: usize> Send for StaticVecIntoIter<T, N> {}
 
 impl<T: Clone, const N: usize> Clone for StaticVecIntoIter<T, N> {
   #[inline(always)]
@@ -758,7 +756,7 @@ impl<'a, T: 'a, const N: usize> DoubleEndedIterator for StaticVecDrain<'a, T, N>
   }
 }
 
-impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecDrain<'a, T, N> {
+impl<'a, T: 'a, const N: usize> ExactSizeIterator for StaticVecDrain<'a, T, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     self.iter.len()
@@ -770,12 +768,12 @@ impl<'a, T: 'a, const N: usize> const ExactSizeIterator for StaticVecDrain<'a, T
   }
 }
 
-impl<'a, T: 'a, const N: usize> const FusedIterator for StaticVecDrain<'a, T, N> {}
-unsafe impl<'a, T: 'a, const N: usize> const TrustedLen for StaticVecDrain<'a, T, N> {}
+impl<'a, T: 'a, const N: usize> FusedIterator for StaticVecDrain<'a, T, N> {}
+unsafe impl<'a, T: 'a, const N: usize> TrustedLen for StaticVecDrain<'a, T, N> {}
 // We hide this one just in case it gets removed from `std` later, so no one relies on us relying on
 // it.
 #[doc(hidden)]
-unsafe impl<'a, T: Copy + 'a, const N: usize> const TrustedRandomAccessNoCoerce
+unsafe impl<'a, T: Copy + 'a, const N: usize> TrustedRandomAccessNoCoerce
   for StaticVecDrain<'a, T, N>
 {
   const MAY_HAVE_SIDE_EFFECT: bool = false;
@@ -783,8 +781,8 @@ unsafe impl<'a, T: Copy + 'a, const N: usize> const TrustedRandomAccessNoCoerce
     distance_between(self.iter.end, self.iter.start)
   }
 }
-unsafe impl<'a, T: 'a + Sync, const N: usize> const Sync for StaticVecDrain<'a, T, N> {}
-unsafe impl<'a, T: 'a + Send, const N: usize> const Send for StaticVecDrain<'a, T, N> {}
+unsafe impl<'a, T: 'a + Sync, const N: usize> Sync for StaticVecDrain<'a, T, N> {}
+unsafe impl<'a, T: 'a + Send, const N: usize> Send for StaticVecDrain<'a, T, N> {}
 
 impl<'a, T: 'a + Debug, const N: usize> Debug for StaticVecDrain<'a, T, N> {
   #[inline(always)]
@@ -879,9 +877,7 @@ impl<T, I: Iterator<Item = T> + DoubleEndedIterator, const N: usize> DoubleEnded
   }
 }
 
-impl<T, I: Iterator<Item = T>, const N: usize> const ExactSizeIterator
-  for StaticVecSplice<T, I, N>
-{
+impl<T, I: Iterator<Item = T>, const N: usize> ExactSizeIterator for StaticVecSplice<T, I, N> {
   #[inline(always)]
   fn len(&self) -> usize {
     self.end - self.start
@@ -893,19 +889,10 @@ impl<T, I: Iterator<Item = T>, const N: usize> const ExactSizeIterator
   }
 }
 
-impl<T, I: Iterator<Item = T>, const N: usize> const FusedIterator for StaticVecSplice<T, I, N> {}
-unsafe impl<T, I: Iterator<Item = T>, const N: usize> const TrustedLen
-  for StaticVecSplice<T, I, N>
-{
-}
-unsafe impl<T: Sync, I: Iterator<Item = T>, const N: usize> const Sync
-  for StaticVecSplice<T, I, N>
-{
-}
-unsafe impl<T: Send, I: Iterator<Item = T>, const N: usize> const Send
-  for StaticVecSplice<T, I, N>
-{
-}
+impl<T, I: Iterator<Item = T>, const N: usize> FusedIterator for StaticVecSplice<T, I, N> {}
+unsafe impl<T, I: Iterator<Item = T>, const N: usize> TrustedLen for StaticVecSplice<T, I, N> {}
+unsafe impl<T: Sync, I: Iterator<Item = T>, const N: usize> Sync for StaticVecSplice<T, I, N> {}
+unsafe impl<T: Send, I: Iterator<Item = T>, const N: usize> Send for StaticVecSplice<T, I, N> {}
 
 impl<T: Debug, I: Iterator<Item = T>, const N: usize> Debug for StaticVecSplice<T, I, N> {
   #[inline(always)]
