@@ -8,6 +8,7 @@
 // way to basically do everything that can conceivably be done with a StaticVec within the context
 // of a single program.
 #![feature(
+  const_convert,
   const_fn_floating_point_arithmetic,
   const_mut_refs,
   const_precise_live_drops,
@@ -71,7 +72,7 @@ static LEFT: StaticVec<MyStruct, 4> = staticvec![
   MyStruct::new("d")
 ];
 static RIGHT: StaticVec<MyStruct, 2> = staticvec![MyStruct::new("e"), MyStruct::new("f")];
-//static CONCATENATED: StaticVec<MyStruct, 6> = LEFT.concat(&RIGHT);
+static CONCATENATED: StaticVec<MyStruct, 6> = LEFT.concat(&RIGHT).into();
 static SPLIT: (StaticVec<usize, 2>, StaticVec<usize, 4>) =
   staticvec![1usize, 2usize, 3usize, 4usize, 5usize, 6usize].split_at::<2>();
 
@@ -160,7 +161,7 @@ fn main() {
   println!("{:?}", LOL);
   println!("{}", unsafe { MUTABLE.len() });
   println!("{}", unsafe { MUTABLE.capacity() });
-  //println!("{:?}", CONCATENATED);
+  println!("{:?}", CONCATENATED);
   println!("{:?}", SPLIT);
   println!("{:?}", BUILT);
   println!("{:?}", ALSO_BUILT);
