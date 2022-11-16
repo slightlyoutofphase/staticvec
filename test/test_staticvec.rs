@@ -2283,6 +2283,14 @@ fn remove_panic() {
 }
 
 #[test]
+#[should_panic]
+fn remove_panic2() {
+  let mut v = StaticVec::<i32, 1>::default();
+  v.push(1);
+  v.remove(1);
+}
+
+#[test]
 fn remove_item() {
   let mut vec = staticvec![1, 2, 3, 1];
   vec.remove_item(&1);
