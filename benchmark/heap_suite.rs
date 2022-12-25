@@ -19,7 +19,7 @@ fn staticheap_push_random_u64_512(b: &mut Bencher) {
       .unwrap()
       .as_nanos(),
   );
-  let vec = StaticVec::<u64, 512>::filled_with(|| rng.rand_range(1..769));
+  let vec = StaticVec::<u64, 512>::filled_with(|| rng.rand_range(1..641));
   let mut heap = StaticHeap::<u64, 512>::new();
   b.iter(|| {
     for item in &vec {
@@ -37,7 +37,7 @@ fn staticheap_push_random_u64_1024(b: &mut Bencher) {
       .unwrap()
       .as_nanos(),
   );
-  let vec = StaticVec::<u64, 1024>::filled_with(|| rng.rand_range(1..1537));
+  let vec = StaticVec::<u64, 1024>::filled_with(|| rng.rand_range(1..1281));
   let mut heap = StaticHeap::<u64, 1024>::new();
   b.iter(|| {
     for item in &vec {
@@ -55,7 +55,7 @@ fn staticheap_push_random_u64_2048(b: &mut Bencher) {
       .unwrap()
       .as_nanos(),
   );
-  let vec = StaticVec::<u64, 2048>::filled_with(|| rng.rand_range(1..3073));
+  let vec = StaticVec::<u64, 2048>::filled_with(|| rng.rand_range(1..2561));
   let mut heap = StaticHeap::<u64, 2048>::new();
   b.iter(|| {
     for item in &vec {
@@ -73,7 +73,7 @@ fn staticheap_push_random_u64_4096(b: &mut Bencher) {
       .unwrap()
       .as_nanos(),
   );
-  let vec = StaticVec::<u64, 4096>::filled_with(|| rng.rand_range(1..6145));
+  let vec = StaticVec::<u64, 4096>::filled_with(|| rng.rand_range(1..5121));
   let mut heap = StaticHeap::<u64, 4096>::new();
   b.iter(|| {
     for item in &vec {
@@ -91,7 +91,7 @@ fn staticheap_push_random_u64_8192(b: &mut Bencher) {
       .unwrap()
       .as_nanos(),
   );
-  let vec = StaticVec::<u64, 8192>::filled_with(|| rng.rand_range(1..12289));
+  let vec = StaticVec::<u64, 8192>::filled_with(|| rng.rand_range(1..10241));
   let mut heap = StaticHeap::<u64, 8192>::new();
   b.iter(|| {
     for item in &vec {

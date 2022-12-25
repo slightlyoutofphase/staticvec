@@ -112,28 +112,28 @@ const BUILT_AS_WELL: StaticVec<MyStruct, 3> =
 // You can even do quite a bit with a StaticVec inside of a top-level const block.
 static BLOCKY: StaticVec<MyOtherStruct, 6> = const {
   let mut a = staticvec![
+    MyOtherStruct { s: "a" },
+    MyOtherStruct { s: "b" },
+    MyOtherStruct { s: "c" },
+  ];
+  let b = staticvec![
     MyOtherStruct { s: "d" },
     MyOtherStruct { s: "e" },
     MyOtherStruct { s: "f" }
   ];
-  let mut b = StaticVec::<MyOtherStruct, 6>::new();
-  let iter_slice = staticvec![
-    MyOtherStruct { s: "a" },
-    MyOtherStruct { s: "b" },
-    MyOtherStruct { s: "c" },
-  ]
-  .iter()
-  .as_slice();
-  b.insert(0, iter_slice[0].clone());
-  b.insert(1, iter_slice[1].clone());
-  b.insert(2, iter_slice[2].clone());
-  b.append(&mut a);
-  // `a` is now empty, but we have to "forget" it anyways to make this work in a const context in
-  // conjunction with the `const_precise_live_drops` feature currently. Note that the reason the
-  // `build` const fn did not require any use of `mem::forget` is that we only created a single
-  // StaticVec instance within it which was directly used as the return value.
+  let mut c = StaticVec::<MyOtherStruct, 6>::new();
+  let iter_slice = b.iter().as_slice();
+  c.insert(0, iter_slice[0].clone());
+  c.insert(1, iter_slice[1].clone());
+  c.insert(2, iter_slice[2].clone());
+  c.append(&mut a);
+  // `a` is now empty, but we have to "forget" it and `b` anyways to make this work in a const
+  // context in conjunction with the `const_precise_live_drops` feature currently. Note that the
+  // reason the `build` const fn did not require any use of `mem::forget` is that we only created
+  // a single StaticVec instance within it which was directly used as the return value.
   forget(a);
-  b
+  forget(b);
+  c
 };
 
 static BLOCKIER: StaticVec<i32, 12> = const {
