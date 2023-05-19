@@ -31,8 +31,19 @@
 #![feature(
   adt_const_params,
   const_assume,
+  const_black_box,
+  const_borrow,
+  const_clone,
+  const_cmp,
+  const_convert,
+  const_default_impls,
+  const_deref,
   const_eval_select,
   const_fn_floating_point_arithmetic,
+  const_hash,
+  const_heap,
+  const_index_range_slice_index,
+  const_intoiterator_identity,
   const_maybe_uninit_array_assume_init,
   const_maybe_uninit_as_mut_ptr,
   const_maybe_uninit_assume_init,
@@ -43,9 +54,11 @@
   const_precise_live_drops,
   const_ptr_is_null,
   const_ptr_write,
+  const_range_bounds,
   // this should be called `const_interior_mutability` IMO
   const_refs_to_cell,
   const_replace,
+  const_slice_index,
   const_slice_from_raw_parts_mut,
   const_swap,
   const_trait_impl,
@@ -1414,7 +1427,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline]
   pub const fn quicksorted_unstable(&self) -> Self
-  where T: Copy + /*~const */PartialOrd {
+  where T: Copy + ~const PartialOrd {
     let length = self.length;
     if length < 2 {
       // StaticVec uses specialization to have an optimized verson of `Clone` for copy types.
