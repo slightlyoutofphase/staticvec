@@ -72,21 +72,21 @@ impl Display for StringError {
 #[doc(cfg(feature = "std"))]
 impl std::error::Error for StringError {}
 
-impl /*const*/ From<DecodeUtf16Error> for StringError {
+impl const From<DecodeUtf16Error> for StringError {
   #[inline(always)]
   fn from(err: DecodeUtf16Error) -> Self {
     Self::Utf16(err)
   }
 }
 
-impl /*const*/ From<Utf8Error> for StringError {
+impl const From<Utf8Error> for StringError {
   #[inline(always)]
   fn from(err: Utf8Error) -> Self {
     Self::Utf8(err)
   }
 }
 
-impl<const N: usize> /*const*/ From<CapacityError<N>> for StringError {
+impl<const N: usize> const From<CapacityError<N>> for StringError {
   #[inline(always)]
   fn from(_err: CapacityError<N>) -> Self {
     Self::OutOfBounds
