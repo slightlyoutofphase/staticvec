@@ -58,14 +58,14 @@ impl<T, const N: usize> /*const*/ AsRef<[T]> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> /*const*/ Borrow<[T]> for StaticVec<T, N> {
+impl<T, const N: usize> const Borrow<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow(&self) -> &[T] {
     &self[..]
   }
 }
 
-impl<T, const N: usize> /*const*/ BorrowMut<[T]> for StaticVec<T, N> {
+impl<T, const N: usize> const BorrowMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow_mut(&mut self) -> &mut [T] {
     &mut self[..]
@@ -109,7 +109,7 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, N> {
   }
 }
 
-impl<T: Copy, const N: usize> /*const*/ Clone for StaticVec<T, N> {
+impl<T: Copy, const N: usize> const Clone for StaticVec<T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     let length = self.length;
@@ -150,7 +150,7 @@ impl<T: Debug, const N: usize> Debug for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> /*const*/ Default for StaticVec<T, N> {
+impl<T, const N: usize> const Default for StaticVec<T, N> {
   /// Calls `new`.
   #[inline(always)]
   fn default() -> Self {
@@ -158,7 +158,7 @@ impl<T, const N: usize> /*const*/ Default for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> /*const*/ Deref for StaticVec<T, N> {
+impl<T, const N: usize> const Deref for StaticVec<T, N> {
   type Target = [T];
   #[inline(always)]
   fn deref(&self) -> &[T] {
@@ -166,7 +166,7 @@ impl<T, const N: usize> /*const*/ Deref for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> /*const*/ DerefMut for StaticVec<T, N> {
+impl<T, const N: usize> const DerefMut for StaticVec<T, N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut [T] {
     self.as_mut_slice()
@@ -359,7 +359,7 @@ impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, N> {
   }
 }
 
-impl<T: Copy, const N: usize> /*const*/ From<&[T]> for StaticVec<T, N> {
+impl<T: Copy, const N: usize> const From<&[T]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -368,7 +368,7 @@ impl<T: Copy, const N: usize> /*const*/ From<&[T]> for StaticVec<T, N> {
   }
 }
 
-impl<T: Copy, const N: usize> /*const*/ From<&mut [T]> for StaticVec<T, N> {
+impl<T: Copy, const N: usize> const From<&mut [T]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -386,14 +386,14 @@ impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, N2> {
   }
 }
 
-impl<T, const N: usize> /*const*/ From<[T; N]> for StaticVec<T, N> {
+impl<T, const N: usize> const From<[T; N]> for StaticVec<T, N> {
   #[inline(always)]
   fn from(values: [T; N]) -> Self {
     Self::new_from_const_array(values)
   }
 }
 
-impl<T: Copy, const N1: usize, const N2: usize> /*const*/ From<&[T; N1]> for StaticVec<T, N2> {
+impl<T: Copy, const N1: usize, const N2: usize> const From<&[T; N1]> for StaticVec<T, N2> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -402,7 +402,7 @@ impl<T: Copy, const N1: usize, const N2: usize> /*const*/ From<&[T; N1]> for Sta
   }
 }
 
-impl<T: Copy, const N: usize> /*const*/ From<&[T; N]> for StaticVec<T, N> {
+impl<T: Copy, const N: usize> const From<&[T; N]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -411,7 +411,7 @@ impl<T: Copy, const N: usize> /*const*/ From<&[T; N]> for StaticVec<T, N> {
   }
 }
 
-impl<T: Copy, const N1: usize, const N2: usize> /*const*/ From<&mut [T; N1]> for StaticVec<T, N2> {
+impl<T: Copy, const N1: usize, const N2: usize> const From<&mut [T; N1]> for StaticVec<T, N2> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -420,7 +420,7 @@ impl<T: Copy, const N1: usize, const N2: usize> /*const*/ From<&mut [T; N1]> for
   }
 }
 
-impl<T: Copy, const N: usize> /*const*/ From<&mut [T; N]> for StaticVec<T, N> {
+impl<T: Copy, const N: usize> const From<&mut [T; N]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -705,7 +705,7 @@ impl<T, const N: usize> Into<Vec<T>> for StaticVec<T, N> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> /*const*/ IntoIterator for &'a StaticVec<T, N> {
+impl<'a, T: 'a, const N: usize> const IntoIterator for &'a StaticVec<T, N> {
   type IntoIter = StaticVecIterConst<'a, T, N>;
   type Item = &'a T;
   /// Returns a [`StaticVecIterConst`](crate::iterators::StaticVecIterConst) over the StaticVec's
@@ -716,7 +716,7 @@ impl<'a, T: 'a, const N: usize> /*const*/ IntoIterator for &'a StaticVec<T, N> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> /*const*/ IntoIterator for &'a mut StaticVec<T, N> {
+impl<'a, T: 'a, const N: usize> const IntoIterator for &'a mut StaticVec<T, N> {
   type IntoIter = StaticVecIterMut<'a, T, N>;
   type Item = &'a mut T;
   /// Returns a [`StaticVecIterMut`](crate::iterators::StaticVecIterMut) over the StaticVec's
@@ -727,7 +727,7 @@ impl<'a, T: 'a, const N: usize> /*const*/ IntoIterator for &'a mut StaticVec<T, 
   }
 }
 
-impl<T, const N: usize> /*const*/ IntoIterator for StaticVec<T, N> {
+impl<T, const N: usize> const IntoIterator for StaticVec<T, N> {
   type IntoIter = StaticVecIntoIter<T, N>;
   type Item = T;
   /// Returns a by-value [`StaticVecIntoIter`](crate::iterators::StaticVecIntoIter) over the
