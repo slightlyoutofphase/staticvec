@@ -57,21 +57,21 @@ impl<const N: usize> /*const*/ AsRef<[u8]> for StaticString<N> {
   }
 }
 
-impl<const N: usize> /*const*/ Borrow<str> for StaticString<N> {
+impl<const N: usize> const Borrow<str> for StaticString<N> {
   #[inline(always)]
   fn borrow(&self) -> &str {
     self.as_str()
   }
 }
 
-impl<const N: usize> /*const*/ BorrowMut<str> for StaticString<N> {
+impl<const N: usize> const BorrowMut<str> for StaticString<N> {
   #[inline(always)]
   fn borrow_mut(&mut self) -> &mut str {
     self.as_mut_str()
   }
 }
 
-impl<const N: usize> /*const*/ Clone for StaticString<N> {
+impl<const N: usize> const Clone for StaticString<N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     Self {
@@ -103,14 +103,14 @@ impl<const N: usize> Debug for StaticString<N> {
   }
 }
 
-impl<const N: usize> /*const*/ Default for StaticString<N> {
+impl<const N: usize> const Default for StaticString<N> {
   #[inline(always)]
   fn default() -> Self {
     Self::new()
   }
 }
 
-impl<const N: usize> /*const*/ Deref for StaticString<N> {
+impl<const N: usize> const Deref for StaticString<N> {
   type Target = str;
 
   #[inline(always)]
@@ -119,7 +119,7 @@ impl<const N: usize> /*const*/ Deref for StaticString<N> {
   }
 }
 
-impl<const N: usize> /*const*/ DerefMut for StaticString<N> {
+impl<const N: usize> const DerefMut for StaticString<N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut Self::Target {
     self.as_mut_str()
