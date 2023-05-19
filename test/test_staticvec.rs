@@ -1,7 +1,6 @@
 #![allow(clippy::all, dead_code, incomplete_features, unused_imports)]
 #![feature(
   adt_const_params,
-  box_syntax,
   const_fn_floating_point_arithmetic,
   const_trait_impl,
   exact_size_is_empty,
@@ -121,15 +120,15 @@ struct CloneableZST;
 #[test]
 fn append() {
   let mut a = staticvec![
-    box Struct { s: "A" },
-    box Struct { s: "B" },
-    box Struct { s: "C" }
+    Box::new(Struct { s: "A" }),
+    Box::new(Struct { s: "B" }),
+    Box::new(Struct { s: "C" })
   ];
   let mut b = staticvec![
-    box Struct { s: "D" },
-    box Struct { s: "E" },
-    box Struct { s: "F" },
-    box Struct { s: "G" }
+    Box::new(Struct { s: "D" }),
+    Box::new(Struct { s: "E" }),
+    Box::new(Struct { s: "F" }),
+    Box::new(Struct { s: "G" })
   ];
   let mut c = StaticVec::<Box<Struct>, 6>::new();
   c.append(&mut a);
@@ -139,30 +138,30 @@ fn append() {
   assert_eq!(
     c,
     staticvec![
-      box Struct { s: "A" },
-      box Struct { s: "B" },
-      box Struct { s: "C" },
-      box Struct { s: "D" },
-      box Struct { s: "E" },
-      box Struct { s: "F" }
+      Box::new(Struct { s: "A" }),
+      Box::new(Struct { s: "B" }),
+      Box::new(Struct { s: "C" }),
+      Box::new(Struct { s: "D" }),
+      Box::new(Struct { s: "E" }),
+      Box::new(Struct { s: "F" })
     ]
   );
-  let mut d = staticvec![box 12, box 24];
-  let mut e = staticvec![box 1, box 2, box 3];
+  let mut d = staticvec![Box::new(12), Box::new(2)4];
+  let mut e = staticvec![Box::new(1), Box::new(2), Box::new(3)];
   d.pop().unwrap();
   d.append(&mut e);
-  assert_eq!(e, [box 2, box 3]);
-  assert_eq!(d, [box 12, box 1]);
+  assert_eq!(e, [Box::new(2), Box::new(3)]);
+  assert_eq!(d, [Box::new(12), Box::new(1)]);
   let mut f = StaticVec::<Box<Struct>, 0>::new();
-  let mut g = staticvec![box Struct { s: "A" }, box Struct { s: "B" }];
+  let mut g = staticvec![Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })];
   f.append(&mut g);
   assert_eq!(f, []);
-  assert_eq!(g, [box Struct { s: "A" }, box Struct { s: "B" }]);
+  assert_eq!(g, [Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]);
   let mut h = StaticVec::<Box<Struct>, 1>::new();
-  let mut i = staticvec![box Struct { s: "A" }, box Struct { s: "B" }];
+  let mut i = staticvec![Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })];
   h.append(&mut i);
-  assert_eq!(h, [box Struct { s: "A" }]);
-  assert_eq!(i, [box Struct { s: "B" }]);
+  assert_eq!(h, [Box::new(Struct { s: "A" })]);
+  assert_eq!(i, [Box::new(Struct { s: "B" })]);
 }
 
 #[test]
@@ -348,13 +347,13 @@ fn concat() {
 #[test]
 fn concat_clone() {
   assert!(
-    staticvec![box "A, B"].concat_clone(&staticvec![box "C", box "D", box "E", box "F"])
-      == [box "A, B", box "C", box "D", box "E", box "F"]
+    staticvec![Box::new("A, B")].concat_clone(&staticvec![Box::new("C"), Box::new("D"), Box::new("E"), Box::new("F")])
+      == [Box::new("A, B"), Box::new("C"), Box::new("D"), Box::new("E"), Box::new("F")]
   );
   let v = StaticVec::<Box<i32>, 0>::from([]).concat_clone(&StaticVec::<Box<i32>, 0>::from([]));
   assert_eq!(v, []);
-  let v2 = staticvec![box 4, box 5, box 6].concat_clone(&staticvec![box 1, box 2, box 3]);
-  assert_eq!(v2, [box 4, box 5, box 6, box 1, box 2, box 3]);
+  let v2 = staticvec![Box::new(4), Box::new(5), Box::new(6)].concat_clone(&staticvec![Box::new(1), Box::new(2), Box::new(3)]);
+  assert_eq!(v2, [Box::new(4), Box::new(5), Box::new(6), Box::new(1), Box::new(2), Box::new(3)]);
 }
 
 #[test]
@@ -425,13 +424,13 @@ fn drain() {
   assert_eq!(&v2[..], &[0, 7]);
   v2.drain(..);
   assert_eq!(&v2[..], &[]);
-  let mut v3 = staticvec![box 12, box 12, box 12, box 12, box 12, box 12, box 12, box 12];
+  let mut v3 = staticvec![Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12)];
   v3.pop();
   v3.drain(0..7);
   assert_eq!(&v3[..], &[]);
-  let mut v4 = staticvec![box 12, box 12, box 12, box 12, box 12, box 12, box 12, box 12];
+  let mut v4 = staticvec![Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12)];
   v4.drain(0..4);
-  assert_eq!(&v4[..], &[box 12, box 12, box 12, box 12]);
+  assert_eq!(&v4[..], &[Box::new(12), Box::new(12), Box::new(12), Box::new(12)]);
 }
 
 #[test]
@@ -472,13 +471,13 @@ fn drain_iter() {
   assert_eq!(&v2[..], &[0, 7]);
   v2.drain_iter(..);
   assert_eq!(&v2[..], &[]);
-  let mut v3 = staticvec![box 12, box 12, box 12, box 12, box 12, box 12, box 12, box 12];
+  let mut v3 = staticvec![Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12)];
   v3.pop();
   v3.drain_iter(0..7);
   assert_eq!(&v3[..], &[]);
-  let mut v4 = staticvec![box 12, box 12, box 12, box 12, box 12, box 12, box 12, box 12];
+  let mut v4 = staticvec![Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12), Box::new(12)];
   v4.drain_iter(0..4);
-  assert_eq!(&v4[..], &[box 12, box 12, box 12, box 12]);
+  assert_eq!(&v4[..], &[Box::new(12), Box::new(12), Box::new(12), Box::new(12)]);
   let mut v5 = staticvec![
     ZST {},
     ZST {},
@@ -500,8 +499,8 @@ fn drain_iter() {
   assert_eq!(v5.drain_iter(6..12).len(), 6);
   assert_eq!(v5.len(), 10);
   let mut v6 = staticvec![
-    box 1, box 2, box 3, box 4, box 5, box 6, box 7, box 8, box 9, box 10, box 11, box 12, box 13,
-    box 14, box 15, box 16,
+    Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6), Box::new(7), Box::new(8), Box::new(9), Box::new(10), Box::new(11), Box::new(12), Box::new(13),
+    Box::new(14), Box::new(15), Box::new(16),
   ];
   assert_eq!(v6.drain_iter(6..12).len(), 6);
   assert_eq!(v6.len(), 10);
@@ -536,14 +535,14 @@ fn drain_filter() {
   let mut empty: StaticVec<i32, 12> = StaticVec::from([]);
   assert_eq!(empty.drain_filter(|x| *x == 0), []);
   let mut structs: StaticVec<Box<Struct>, 4> = staticvec![
-    box Struct { s: "A" },
-    box Struct { s: "B" },
-    box Struct { s: "C" },
-    box Struct { s: "D" }
+    Box::new(Struct { s: "A" }),
+    Box::new(Struct { s: "B" }),
+    Box::new(Struct { s: "C" }),
+    Box::new(Struct { s: "D" })
   ];
   assert_eq!(
     structs.drain_filter(|s| s.s > "B"),
-    [box Struct { s: "C" }, box Struct { s: "D" }]
+    [Box::new(Struct { s: "C" }), Box::new(Struct { s: "D" })]
   );
 }
 
@@ -668,13 +667,13 @@ fn from() {
   );
   assert_eq!(
     "[]",
-    format!("{:?}", StaticVec::<Box<i32>, 0>::from([box 9i32]))
+    format!("{:?}", StaticVec::<Box<i32>, 0>::from([Box::new(9)i32]))
   );
   assert_eq!(
     "[9, 18, 27]",
     format!(
       "{:?}",
-      StaticVec::<Box<i32>, 19>::from([box 9i32, box 18i32, box 27i32])
+      StaticVec::<Box<i32>, 19>::from([Box::new(9)i32, Box::new(1)8i32, Box::new(2)7i32])
     )
   );
   const C: StaticVec<i32, 4> = StaticVec::from([1, 2, 3, 4]);
@@ -684,8 +683,8 @@ fn from() {
   assert_eq!(StaticVec::<i32, 6>::from(v.as_slice()).len(), 0);
   assert_eq!(StaticVec::from(["A"]), ["A"]);
   assert_eq!(
-    StaticVec::from([box Struct { s: "A" }, box Struct { s: "B" }]),
-    [box Struct { s: "A" }, box Struct { s: "B" }]
+    StaticVec::from([Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]),
+    [Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]
   );
 }
 
@@ -710,31 +709,31 @@ fn from_iter() {
   assert_eq!(StaticVec::<u8, 0>::from_iter(&[1, 2, 3, 4, 5, 6]), []);
   assert_eq!(
     StaticVec::<Box<Struct>, 2>::from_iter(
-      staticvec![box Struct { s: "A" }, box Struct { s: "B" }].into_iter()
+      staticvec![Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })].into_iter()
     ),
-    [box Struct { s: "A" }, box Struct { s: "B" }]
+    [Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]
   );
   assert_eq!(
     StaticVec::<Box<Struct>, 2>::from_iter(staticvec![
-      box Struct { s: "A" },
-      box Struct { s: "B" },
-      box Struct { s: "C" },
-      box Struct { s: "C" }
+      Box::new(Struct { s: "A" }),
+      Box::new(Struct { s: "B" }),
+      Box::new(Struct { s: "C" }),
+      Box::new(Struct { s: "C" })
     ]),
-    [box Struct { s: "A" }, box Struct { s: "B" }]
+    [Box::new(Struct { s: "A" }), Box::new(Struct { s: "B" })]
   );
   assert_eq!(
     StaticVec::<Box<Struct>, 4>::from_iter(staticvec![
-      box Struct { s: "A" },
-      box Struct { s: "B" },
-      box Struct { s: "C" },
-      box Struct { s: "C" }
+      Box::new(Struct { s: "A" }),
+      Box::new(Struct { s: "B" }),
+      Box::new(Struct { s: "C" }),
+      Box::new(Struct { s: "C" })
     ]),
     [
-      box Struct { s: "A" },
-      box Struct { s: "B" },
-      box Struct { s: "C" },
-      box Struct { s: "C" }
+      Box::new(Struct { s: "A" }),
+      Box::new(Struct { s: "B" }),
+      Box::new(Struct { s: "C" }),
+      Box::new(Struct { s: "C" })
     ]
   );
 }
@@ -743,14 +742,14 @@ fn from_iter() {
 #[test]
 fn from_vec() {
   let v = vec![
-    box Struct { s: "AAA" },
-    box Struct { s: "BBB" },
-    box Struct { s: "CCC" },
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" }),
   ];
   let vv = StaticVec::<Box<Struct>, 2>::from_vec(v);
   assert_eq!(vv.capacity(), 2);
   assert_eq!(vv.len(), 2);
-  assert_eq!(vv, [box Struct { s: "AAA" }, box Struct { s: "BBB" }]);
+  assert_eq!(vv, [Box::new(Struct { s: "AAA" }), Box::new(Struct { s: "BBB" })]);
   let x = Vec::<Box<Struct>>::new();
   let y = StaticVec::<Box<Struct>, 1>::from_vec(x);
   assert_eq!(y, []);
@@ -929,9 +928,9 @@ fn insert_many() {
 fn insert_many_panic1() {
   let mut v: StaticVec<Box<u8>, 8> = StaticVec::new();
   for i in 0..7 {
-    v.push(box (i + 1));
+    v.push(Box::new((i + 1)));
   }
-  v.insert_many(0, [box 1, box 2, box 3, box 4].iter().cloned());
+  v.insert_many(0, [Box::new(1), Box::new(2), Box::new(3), Box::new(4)].iter().cloned());
 }
 
 #[test]
@@ -940,7 +939,7 @@ fn insert_many_panic1() {
 )]
 fn insert_many_panic2() {
   let mut v2: StaticVec<Box<u8>, 0> = StaticVec::new();
-  v2.insert_many(27, [box 1, box 2, box 3, box 4].iter().cloned());
+  v2.insert_many(27, [Box::new(1), Box::new(2), Box::new(3), Box::new(4)].iter().cloned());
 }
 
 #[test]
@@ -969,15 +968,15 @@ fn intersperse() {
 #[test]
 fn intersperse_clone() {
   assert_eq!(
-    staticvec![box "A", box "B", box "C", box "D"].intersperse_clone(box "Z"),
-    [box "A", box "Z", box "B", box "Z", box "C", box "Z", box "D"]
+    staticvec![Box::new("A"), Box::new("B"), Box::new("C"), Box::new("D")].intersperse_clone(Box::new("Z")),
+    [Box::new("A"), Box::new("Z"), Box::new("B"), Box::new("Z"), Box::new("C"), Box::new("Z"), Box::new("D")]
   );
-  assert_eq!(staticvec![box ""].intersperse_clone(box "B"), [box ""]);
-  assert_eq!(staticvec![box "A"].intersperse_clone(box "B"), [box "A"]);
-  let mut x = staticvec![box "A"];
+  assert_eq!(staticvec![Box::new("")].intersperse_clone(Box::new("B")), [Box::new("")]);
+  assert_eq!(staticvec![Box::new("A")].intersperse_clone(Box::new("B")), [Box::new("A")]);
+  let mut x = staticvec![Box::new("A")];
   x.clear();
   assert_eq!(
-    x.intersperse_clone(box "B"),
+    x.intersperse_clone(Box::new("B")),
     StaticVec::<Box<&str>, 0>::new()
   );
 }
@@ -1013,15 +1012,15 @@ fn is_not_full() {
 
 #[test]
 fn iter() {
-  let v = staticvec![box 1, box 2, box 3, box 4, box 5];
+  let v = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5)];
   let mut i = v.iter();
-  assert_eq!(*i.next().unwrap(), box 1);
-  assert_eq!(*i.next_back().unwrap(), box 5);
+  assert_eq!(*i.next().unwrap(), Box::new(1));
+  assert_eq!(*i.next_back().unwrap(), Box::new(5));
   assert_eq!("StaticVecIterConst([2, 3, 4])", format!("{:?}", i));
-  assert_eq!(*i.next().unwrap(), box 2);
-  assert_eq!(*i.next_back().unwrap(), box 4);
+  assert_eq!(*i.next().unwrap(), Box::new(2));
+  assert_eq!(*i.next_back().unwrap(), Box::new(4));
   assert_eq!("StaticVecIterConst([3])", format!("{:?}", i));
-  assert_eq!(*i.next().unwrap(), box 3);
+  assert_eq!(*i.next().unwrap(), Box::new(3));
   assert_eq!("StaticVecIterConst([])", format!("{:?}", i));
   let v2 = staticvec![ZST {}, ZST {}, ZST {}, ZST {}];
   let mut it2 = v2.iter();
@@ -1040,12 +1039,12 @@ fn iter() {
   it2.next_back();
   assert_eq!(it2.len(), 0);
   assert_eq!(it2.is_empty(), true);
-  let a1 = staticvec![box 1, box 2, box 3];
-  let a2 = staticvec![box 4, box 5, box 6];
+  let a1 = staticvec![Box::new(1), Box::new(2), Box::new(3)];
+  let a2 = staticvec![Box::new(4), Box::new(5), Box::new(6)];
   let mut iter = a1.iter().zip(a2.iter());
-  assert_eq!(iter.next(), Some((&box 1, &box 4)));
-  assert_eq!(iter.next(), Some((&box 2, &box 5)));
-  assert_eq!(iter.next(), Some((&box 3, &box 6)));
+  assert_eq!(iter.next(), Some((&Box::new(1), &Box::new(4))));
+  assert_eq!(iter.next(), Some((&Box::new(2), &Box::new(5))));
+  assert_eq!(iter.next(), Some((&Box::new(3), &Box::new(6))));
   assert_eq!(iter.next(), None);
   let a3 = staticvec![ZST {}, ZST {}, ZST {}];
   let a4 = staticvec![ZST {}, ZST {}, ZST {}];
@@ -1294,8 +1293,8 @@ fn iter_mut() {
   it2.next_back();
   assert_eq!(it2.len(), 0);
   assert_eq!(it2.is_empty(), true);
-  let mut a1 = staticvec![box 1, box 2, box 3];
-  let mut a2 = staticvec![box 4, box 5, box 6];
+  let mut a1 = staticvec![Box::new(1), Box::new(2), Box::new(3)];
+  let mut a2 = staticvec![Box::new(4), Box::new(5), Box::new(6)];
   let iter = a1.iter_mut().zip(a2.iter_mut());
   for tup in iter {
     **tup.0 += 1;
@@ -1303,7 +1302,7 @@ fn iter_mut() {
   }
   assert_eq!(
     a1.concat_clone(&a2),
-    staticvec![box 2, box 3, box 4, box 5, box 6, box 7]
+    staticvec![Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6), Box::new(7)]
   );
   let mut a3 = staticvec![
     ZST {},
@@ -1482,13 +1481,13 @@ fn into_inner() {
   // have never once used `Box::new()` in any of these tests (something I now feel like I'm
   // ultimately gonna want to go back and change to just `box` at some point for each of them.)
   let v: StaticVec<Box<i32>, 12> = staticvec![
-    box 1, box 2, box 3, box 4, box 5, box 6, box 7, box 8, box 9, box 10, box 11, box 12
+    Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6), Box::new(7), Box::new(8), Box::new(9), Box::new(10), Box::new(11), Box::new(12)
   ];
   let z = v.into_inner();
   assert!(z.is_ok());
   assert_eq!(
     z.unwrap(),
-    [box 1, box 2, box 3, box 4, box 5, box 6, box 7, box 8, box 9, box 10, box 11, box 12]
+    [Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6), Box::new(7), Box::new(8), Box::new(9), Box::new(10), Box::new(11), Box::new(12)]
   );
   let vv: StaticVec<Vec<Vec<u32>>, 4> =
     staticvec![vec![vec![1]], vec![vec![2]], vec![vec![3]], vec![vec![4]]];
@@ -1498,7 +1497,7 @@ fn into_inner() {
     zz.unwrap(),
     [vec![vec![1]], vec![vec![2]], vec![vec![3]], vec![vec![4]]]
   );
-  let mut vvv = staticvec![box 9, box 1, box 1];
+  let mut vvv = staticvec![Box::new(9), Box::new(1), Box::new(1)];
   vvv.pop();
   let zzz = vvv.into_inner();
   assert!(zzz.is_err());
@@ -1517,19 +1516,19 @@ fn into_iter() {
   assert_eq!(i.next().unwrap(), 3);
   assert_eq!("StaticVecIntoIter([])", format!("{:?}", i));
   let v2 = staticvec![
-    box Struct { s: "AAA" },
-    box Struct { s: "BBB" },
-    box Struct { s: "CCC" },
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" }),
   ];
   let mut i2 = v2.into_iter();
-  assert_eq!(i2.next().unwrap(), box Struct { s: "AAA" });
-  assert_eq!(i2.next().unwrap(), box Struct { s: "BBB" });
-  assert_eq!(i2.next().unwrap(), box Struct { s: "CCC" });
+  assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "AAA" }));
+  assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "BBB" }));
+  assert_eq!(i2.next().unwrap(), Box::new(Struct { s: "CCC" }));
   assert_eq!("StaticVecIntoIter([])", format!("{:?}", i2));
   let v3 = staticvec![
-    box Struct { s: "AAA" },
-    box Struct { s: "BBB" },
-    box Struct { s: "CCC" },
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" }),
   ];
   let mut i3 = v3.into_iter();
   // We do this so Miri can make sure it drops the remaining values properly.
@@ -1542,8 +1541,8 @@ fn into_iter() {
   let mut it5 = v5.into_iter();
   assert_eq!(it5.as_slice(), &[ZST {}, ZST {}, ZST {}, ZST {}]);
   assert_eq!(it5.as_mut_slice(), &mut [ZST {}, ZST {}, ZST {}, ZST {}]);
-  let a1 = staticvec![box 1, box 2, box 3];
-  let a2 = staticvec![box 4, box 5, box 6];
+  let a1 = staticvec![Box::new(1), Box::new(2), Box::new(3)];
+  let a2 = staticvec![Box::new(4), Box::new(5), Box::new(6)];
   let iter = a1.into_iter().zip(a2.into_iter());
   let mut a3 = iter.collect::<StaticVec<(Box<i32>, Box<i32>), 6>>();
   for tup in a3.iter_mut() {
@@ -1552,10 +1551,10 @@ fn into_iter() {
   }
   assert_eq!(
     a3,
-    staticvec![(box 2, box 5), (box 3, box 6), (box 4, box 7)]
+    staticvec![(Box::new(2), Box::new(5)), (Box::new(3), Box::new(6)), (Box::new(4), Box::new(7))]
   );
   // Make sure cloning doesn't cause any issues.
-  let a4 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  let a4 = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)];
   let mut iter2 = a4.into_iter();
   iter2.next();
   iter2.next_back();
@@ -1780,9 +1779,9 @@ fn into_iter_nth_back() {
 #[test]
 fn into_vec() {
   let v = staticvec![
-    box Struct { s: "AAA" },
-    box Struct { s: "BBB" },
-    box Struct { s: "CCC" }
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" })
   ];
   let vv = v.into_vec();
   assert_eq!(vv.capacity(), 3);
@@ -1873,14 +1872,14 @@ fn new_from_array() {
   let v2 = StaticVec::<i32, 3>::new_from_array([1, 2, 3, 4, 5, 6]);
   assert_eq!(v2, [1, 2, 3]);
   let v5 = StaticVec::<Box<Struct>, 2>::new_from_array([
-    box Struct { s: "AAA" },
-    box Struct { s: "BBB" },
-    box Struct { s: "CCC" },
-    box Struct { s: "DDD" },
-    box Struct { s: "EEE" },
+    Box::new(Struct { s: "AAA" }),
+    Box::new(Struct { s: "BBB" }),
+    Box::new(Struct { s: "CCC" }),
+    Box::new(Struct { s: "DDD" }),
+    Box::new(Struct { s: "EEE" }),
   ]);
-  assert_eq!(v5, [box Struct { s: "AAA" }, box Struct { s: "BBB" }]);
-  let v6 = StaticVec::<Box<i32>, 0>::new_from_array([box 1, box 2, box 3]);
+  assert_eq!(v5, [Box::new(Struct { s: "AAA" }), Box::new(Struct { s: "BBB" })]);
+  let v6 = StaticVec::<Box<i32>, 0>::new_from_array([Box::new(1), Box::new(2), Box::new(3)]);
   assert_eq!(v6, []);
 }
 
@@ -2010,12 +2009,12 @@ fn partial_ord() {
 
 #[test]
 fn pop() {
-  let mut vec = staticvec![box 1, box 2, box 3];
-  assert_eq!(vec.pop(), Some(box 3));
-  assert_eq!(vec, [box 1, box 2]);
-  assert_eq!(vec.pop(), Some(box 2));
-  assert_eq!(vec, [box 1]);
-  assert_eq!(vec.pop(), Some(box 1));
+  let mut vec = staticvec![Box::new(1), Box::new(2), Box::new(3)];
+  assert_eq!(vec.pop(), Some(Box::new(3)));
+  assert_eq!(vec, [Box::new(1), Box::new(2)]);
+  assert_eq!(vec.pop(), Some(Box::new(2)));
+  assert_eq!(vec, [Box::new(1)]);
+  assert_eq!(vec.pop(), Some(Box::new(1)));
   assert_eq!(vec, []);
   assert_eq!(vec.pop(), None);
 }
@@ -2046,8 +2045,8 @@ fn push() {
 #[test]
 #[should_panic]
 fn push_panic() {
-  let mut v = staticvec![box 1, box 2, box 3];
-  v.push(box 12);
+  let mut v = staticvec![Box::new(1), Box::new(2), Box::new(3)];
+  v.push(Box::new(12));
 }
 
 #[test]
@@ -2383,18 +2382,18 @@ fn splice() {
 
 #[test]
 fn splice_boxed() {
-  let mut v = StaticVec::<Box<i32>, 6>::from([box 1, box 2, box 3, box 4, box 5]);
-  let a = staticvec![box 10, box 11, box 12];
+  let mut v = StaticVec::<Box<i32>, 6>::from([Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5)]);
+  let a = staticvec![Box::new(10), Box::new(11), Box::new(12)];
   v.splice(2..4, a.into_iter());
-  assert_eq!(v, &[box 1, box 2, box 10, box 11, box 12, box 5]);
-  v.splice(1..3, Some(box 20));
-  assert_eq!(v, &[box 1, box 20, box 11, box 12, box 5]);
+  assert_eq!(v, &[Box::new(1), Box::new(2), Box::new(10), Box::new(11), Box::new(12), Box::new(5)]);
+  v.splice(1..3, Some(Box::new(2)0));
+  assert_eq!(v, &[Box::new(1), Box::new(2)0, Box::new(11), Box::new(12), Box::new(5)]);
 }
 
 #[test]
 fn splice_debug_impl() {
-  let mut v = StaticVec::<Box<i32>, 8>::from([box 1, box 2, box 3, box 4]);
-  let v2 = staticvec![box 6, box 7, box 8, box 9, box 10];
+  let mut v = StaticVec::<Box<i32>, 8>::from([Box::new(1), Box::new(2), Box::new(3), Box::new(4)]);
+  let v2 = staticvec![Box::new(6), Box::new(7), Box::new(8), Box::new(9), Box::new(10)];
   let mut s = v.splice(1..3, v2.iter().cloned());
   assert_eq!(format!("{:?}", s), "StaticVecSplice([2, 3])");
   s.next();
@@ -2409,15 +2408,15 @@ fn splice_debug_impl() {
 #[should_panic]
 fn splice_empty() {
   let mut v = StaticVec::<Box<i32>, 0>::new();
-  v.splice(12..24, staticvec![box 1, box 2, box 3].into_iter());
+  v.splice(12..24, staticvec![Box::new(1), Box::new(2), Box::new(3)].into_iter());
   assert_eq!(v, []);
 }
 
 #[test]
 fn splice_empty_iterator() {
-  let mut v = StaticVec::<Box<i32>, 12>::from([box 1, box 2, box 3, box 4, box 5, box 6]);
+  let mut v = StaticVec::<Box<i32>, 12>::from([Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)]);
   v.splice(1..4, StaticVec::<Box<i32>, 0>::new().into_iter());
-  assert_eq!(v, [box 1, box 5, box 6]);
+  assert_eq!(v, [Box::new(1), Box::new(5), Box::new(6)]);
 }
 
 #[test]
@@ -2459,9 +2458,9 @@ fn splice_out_of_bounds() {
 
 #[test]
 fn splice_single_item_iterator() {
-  let mut v = StaticVec::<Box<i32>, 12>::from([box 1, box 2, box 3, box 4, box 5, box 6]);
-  v.splice(1..4, StaticVec::<Box<i32>, 1>::from([box 1]).into_iter());
-  assert_eq!(v, [box 1, box 1, box 5, box 6]);
+  let mut v = StaticVec::<Box<i32>, 12>::from([Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)]);
+  v.splice(1..4, StaticVec::<Box<i32>, 1>::from([Box::new(1)]).into_iter());
+  assert_eq!(v, [Box::new(1), Box::new(1), Box::new(5), Box::new(6)]);
 }
 
 #[test]
@@ -2474,17 +2473,17 @@ fn splice_unbounded() {
 
 #[test]
 fn split_at() {
-  let v1 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  let v1 = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)];
   let t1 = v1.split_at::<0>();
   assert_eq!(t1.0, []);
-  assert_eq!(t1.1, [box 1, box 2, box 3, box 4, box 5, box 6]);
-  let v2 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  assert_eq!(t1.1, [Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)]);
+  let v2 = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)];
   let t2 = v2.split_at::<2>();
-  assert_eq!(t2.0, [box 1, box 2]);
-  assert_eq!(t2.1, [box 3, box 4, box 5, box 6]);
-  let v3 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  assert_eq!(t2.0, [Box::new(1), Box::new(2)]);
+  assert_eq!(t2.1, [Box::new(3), Box::new(4), Box::new(5), Box::new(6)]);
+  let v3 = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)];
   let t3 = v3.split_at::<6>();
-  assert_eq!(t3.0, [box 1, box 2, box 3, box 4, box 5, box 6]);
+  assert_eq!(t3.0, [Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)]);
   assert_eq!(t3.1, []);
 }
 
@@ -2504,10 +2503,10 @@ fn split_off() {
   let vec2 = vec.split_off(1);
   assert_eq!(vec, [1]);
   assert_eq!(vec2, [2, 3]);
-  let mut vec3 = staticvec![box 1, box 2, box 3, box 4];
+  let mut vec3 = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4)];
   let vec4 = vec3.split_off(2);
-  assert_eq!(vec3, [box 1, box 2]);
-  assert_eq!(vec4, [box 3, box 4]);
+  assert_eq!(vec3, [Box::new(1), Box::new(2)]);
+  assert_eq!(vec4, [Box::new(3), Box::new(4)]);
 }
 
 #[test]
@@ -2528,9 +2527,9 @@ fn symmetric_difference() {
     [501, 505]
   );
   assert_eq!(
-    staticvec![box 1, box 1, box 1, box 1]
-      .symmetric_difference(&staticvec![box 2, box 2, box 2, box 2]),
-    [box 1, box 1, box 1, box 1, box 2, box 2, box 2, box 2]
+    staticvec![Box::new(1), Box::new(1), Box::new(1), Box::new(1)]
+      .symmetric_difference(&staticvec![Box::new(2), Box::new(2), Box::new(2), Box::new(2)]),
+    [Box::new(1), Box::new(1), Box::new(1), Box::new(1), Box::new(2), Box::new(2), Box::new(2), Box::new(2)]
   );
 }
 
@@ -2583,9 +2582,9 @@ fn truncate() {
   let mut vec4 = staticvec![1, 2, 3, 4];
   vec4.truncate(97);
   assert_eq!(vec4.len(), 4);
-  let mut vec5 = staticvec![box 1, box 2, box 3, box 4, box 5];
+  let mut vec5 = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5)];
   vec5.truncate(2);
-  assert_eq!(vec5, [box 1, box 2]);
+  assert_eq!(vec5, [Box::new(1), Box::new(2)]);
 }
 
 #[test]
@@ -2633,8 +2632,8 @@ fn union() {
     [1, 2, 3, 4],
   );
   assert_eq!(
-    staticvec![box 5, box 5].union(&staticvec![box 7, box 7]),
-    [box 5, box 7]
+    staticvec![Box::new(5), Box::new(5)].union(&staticvec![Box::new(7), Box::new(7)]),
+    [Box::new(5), Box::new(7)]
   );
 }
 
@@ -2673,7 +2672,7 @@ mod fmt_write_tests {
     // Smaller than it needs to be, again for the sake of the test.
     let mut buf2 = StaticVec::<u8, 1>::new();
     // Make sure `Err` is returned when appropriate.
-    assert!(writer(&mut buf2, '👻').is_err());
+    assert!(writer(&mut buf2, 'ðŸ‘»').is_err());
   }
 
   #[test]
