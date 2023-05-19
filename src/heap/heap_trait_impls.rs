@@ -22,7 +22,7 @@ impl<T: Clone, const N: usize> Clone for StaticHeap<T, N> {
 
 // This allows `StaticHeap` to benefit from the optimized
 // "Clone for Copy types" impl that `StaticVec` has.
-impl<T: Copy, const N: usize> /*const*/ Clone for StaticHeap<T, N> {
+impl<T: Copy, const N: usize> const Clone for StaticHeap<T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     StaticHeap {
@@ -44,7 +44,7 @@ impl<T: Copy, const N: usize> /*const*/ Clone for StaticHeap<T, N> {
   }
 }
 
-impl<T: Ord, const N: usize> /*const*/ Default for StaticHeap<T, N> {
+impl<T: Ord, const N: usize> const Default for StaticHeap<T, N> {
   /// Creates an empty `StaticHeap<T, N>`.
   #[inline(always)]
   fn default() -> StaticHeap<T, N> {
@@ -196,7 +196,7 @@ impl<'a, T: 'a + Copy + Ord, const N: usize> FromIterator<&'a T> for StaticHeap<
   }
 }
 
-impl<T, const N: usize> /*const*/ IntoIterator for StaticHeap<T, N> {
+impl<T, const N: usize> const IntoIterator for StaticHeap<T, N> {
   type Item = T;
   type IntoIter = StaticVecIntoIter<T, N>;
 
@@ -222,7 +222,7 @@ impl<T, const N: usize> /*const*/ IntoIterator for StaticHeap<T, N> {
   }
 }
 
-impl<'a, T, const N: usize> /*const*/ IntoIterator for &'a StaticHeap<T, N> {
+impl<'a, T, const N: usize> const IntoIterator for &'a StaticHeap<T, N> {
   type Item = &'a T;
   type IntoIter = StaticVecIterConst<'a, T, N>;
 
@@ -232,7 +232,7 @@ impl<'a, T, const N: usize> /*const*/ IntoIterator for &'a StaticHeap<T, N> {
   }
 }
 
-impl<'a, T, const N: usize> /*const*/ IntoIterator for &'a mut StaticHeap<T, N> {
+impl<'a, T, const N: usize> const IntoIterator for &'a mut StaticHeap<T, N> {
   type Item = &'a mut T;
   type IntoIter = StaticVecIterMut<'a, T, N>;
 
