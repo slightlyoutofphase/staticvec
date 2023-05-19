@@ -42,7 +42,6 @@
   const_mut_refs,
   const_precise_live_drops,
   const_ptr_is_null,
-  const_ptr_read,
   const_ptr_write,
   // this should be called `const_interior_mutability` IMO
   const_refs_to_cell,
@@ -204,7 +203,6 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// fixed-size arrays (as well as several other types), which may prove more ergonomic in some
   /// cases as it allows for a greater degree of type inference:
   /// ```
-  /// # #![feature(box_syntax)]
   /// # use staticvec::StaticVec;
   /// // The StaticVec on the next line is inferred to be of type `StaticVec<&'static str, 4>`.
   /// let v = StaticVec::from(["A", "B", "C", "D"]);
@@ -218,10 +216,9 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// be correctly dropped just as they would be when calling
   /// [`new_from_array`](crate::StaticVec::new_from_array).
   /// ```
-  /// # #![feature(box_syntax)]
   /// # use staticvec::StaticVec;
-  /// let v2 = StaticVec::<Box<i32>, 2>::from([box 1, box 2, box 3, box 4]);
-  /// assert_eq!(v2, [box 1, box 2]);
+  /// let v2 = StaticVec::<Box<i32>, 2>::from([Box::new(1), Box::new(2), Box::new(3), Box::new(4)]);
+  /// assert_eq!(v2, [Box::new(1), Box::new(2)]);
   /// ```
   #[inline]
   pub fn new_from_array<const N2: usize>(values: [T; N2]) -> Self {
@@ -1417,7 +1414,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline]
   pub const fn quicksorted_unstable(&self) -> Self
-  where T: Copy + ~const PartialOrd {
+  where T: Copy + /*~const */PartialOrd {
     let length = self.length;
     if length < 2 {
       // StaticVec uses specialization to have an optimized verson of `Clone` for copy types.
@@ -1452,7 +1449,7 @@ impl<T, const N: usize> StaticVec<T, N> {
   /// ```
   #[inline]
   pub const fn quicksort_unstable(&mut self)
-  where T: Copy + ~const PartialOrd {
+  where T: Copy + /*~const */PartialOrd {
     let length = self.length;
     if length < 2 {
       return;
@@ -2186,19 +2183,18 @@ impl<T, const N: usize> StaticVec<T, N> {
   ///
   /// # Example usage:
   /// ```
-  /// # #![feature(box_syntax)]
   /// # use staticvec::*;
-  /// let v1 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  /// let v1 = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)];
   /// let t1 = v1.split_at::<0>();
   /// assert_eq!(t1.0, []);
-  /// assert_eq!(t1.1, [box 1, box 2, box 3, box 4, box 5, box 6]);
-  /// let v2 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  /// assert_eq!(t1.1, [Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)]);
+  /// let v2 = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)];
   /// let t2 = v2.split_at::<2>();
-  /// assert_eq!(t2.0, [box 1, box 2]);
-  /// assert_eq!(t2.1, [box 3, box 4, box 5, box 6]);
-  /// let v3 = staticvec![box 1, box 2, box 3, box 4, box 5, box 6];
+  /// assert_eq!(t2.0, [Box::new(1), Box::new(2)]);
+  /// assert_eq!(t2.1, [Box::new(3), Box::new(4), Box::new(5), Box::new(6)]);
+  /// let v3 = staticvec![Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)];
   /// let t3 = v3.split_at::<6>();
-  /// assert_eq!(t3.0, [box 1, box 2, box 3, box 4, box 5, box 6]);
+  /// assert_eq!(t3.0, [Box::new(1), Box::new(2), Box::new(3), Box::new(4), Box::new(5), Box::new(6)]);
   /// assert_eq!(t3.1, []);
   #[inline]
   pub const fn split_at<const M: usize>(self) -> (StaticVec<T, M>, StaticVec<T, { N - M }>) {
