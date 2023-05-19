@@ -44,28 +44,28 @@ use serde::{
 // is currently, and is done mostly just out of the desire to be able to quickly "stay on top" of
 // future developments as far as `const_trait_impl` is concerned.
 
-impl<T, const N: usize> const AsMut<[T]> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ AsMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_mut(&mut self) -> &mut [T] {
     self.as_mut_slice()
   }
 }
 
-impl<T, const N: usize> const AsRef<[T]> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ AsRef<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn as_ref(&self) -> &[T] {
     self.as_slice()
   }
 }
 
-impl<T, const N: usize> const Borrow<[T]> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Borrow<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow(&self) -> &[T] {
     &self[..]
   }
 }
 
-impl<T, const N: usize> const BorrowMut<[T]> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ BorrowMut<[T]> for StaticVec<T, N> {
   #[inline(always)]
   fn borrow_mut(&mut self) -> &mut [T] {
     &mut self[..]
@@ -109,7 +109,7 @@ impl<T: Clone, const N: usize> Clone for StaticVec<T, N> {
   }
 }
 
-impl<T: Copy, const N: usize> const Clone for StaticVec<T, N> {
+impl<T: Copy, const N: usize> /*const*/ Clone for StaticVec<T, N> {
   #[inline(always)]
   fn clone(&self) -> Self {
     let length = self.length;
@@ -150,7 +150,7 @@ impl<T: Debug, const N: usize> Debug for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const Default for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Default for StaticVec<T, N> {
   /// Calls `new`.
   #[inline(always)]
   fn default() -> Self {
@@ -158,7 +158,7 @@ impl<T, const N: usize> const Default for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const Deref for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Deref for StaticVec<T, N> {
   type Target = [T];
   #[inline(always)]
   fn deref(&self) -> &[T] {
@@ -166,7 +166,7 @@ impl<T, const N: usize> const Deref for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const DerefMut for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ DerefMut for StaticVec<T, N> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut [T] {
     self.as_mut_slice()
@@ -359,7 +359,7 @@ impl<'a, T: 'a + Copy, const N: usize> Extend<&'a T> for StaticVec<T, N> {
   }
 }
 
-impl<T: Copy, const N: usize> const From<&[T]> for StaticVec<T, N> {
+impl<T: Copy, const N: usize> /*const*/ From<&[T]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -368,7 +368,7 @@ impl<T: Copy, const N: usize> const From<&[T]> for StaticVec<T, N> {
   }
 }
 
-impl<T: Copy, const N: usize> const From<&mut [T]> for StaticVec<T, N> {
+impl<T: Copy, const N: usize> /*const*/ From<&mut [T]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -386,14 +386,14 @@ impl<T, const N1: usize, const N2: usize> From<[T; N1]> for StaticVec<T, N2> {
   }
 }
 
-impl<T, const N: usize> const From<[T; N]> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ From<[T; N]> for StaticVec<T, N> {
   #[inline(always)]
   fn from(values: [T; N]) -> Self {
     Self::new_from_const_array(values)
   }
 }
 
-impl<T: Copy, const N1: usize, const N2: usize> const From<&[T; N1]> for StaticVec<T, N2> {
+impl<T: Copy, const N1: usize, const N2: usize> /*const*/ From<&[T; N1]> for StaticVec<T, N2> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -402,7 +402,7 @@ impl<T: Copy, const N1: usize, const N2: usize> const From<&[T; N1]> for StaticV
   }
 }
 
-impl<T: Copy, const N: usize> const From<&[T; N]> for StaticVec<T, N> {
+impl<T: Copy, const N: usize> /*const*/ From<&[T; N]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -411,7 +411,7 @@ impl<T: Copy, const N: usize> const From<&[T; N]> for StaticVec<T, N> {
   }
 }
 
-impl<T: Copy, const N1: usize, const N2: usize> const From<&mut [T; N1]> for StaticVec<T, N2> {
+impl<T: Copy, const N1: usize, const N2: usize> /*const*/ From<&mut [T; N1]> for StaticVec<T, N2> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -420,7 +420,7 @@ impl<T: Copy, const N1: usize, const N2: usize> const From<&mut [T; N1]> for Sta
   }
 }
 
-impl<T: Copy, const N: usize> const From<&mut [T; N]> for StaticVec<T, N> {
+impl<T: Copy, const N: usize> /*const*/ From<&mut [T; N]> for StaticVec<T, N> {
   /// Creates a new StaticVec instance from the contents of `values`, using
   /// [`new_from_slice`](crate::StaticVec::new_from_slice) internally.
   #[inline(always)]
@@ -492,7 +492,7 @@ impl<T: Hash, const N: usize> Hash for StaticVec<T, N> {
 // deferring to `SliceIndex` for it for a while it proved to to be somewhat
 // less performant due to the added indirection.
 
-impl<T, const N: usize> const Index<usize> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Index<usize> for StaticVec<T, N> {
   type Output = T;
   /// Asserts that `index` is less than the current length of the StaticVec,
   /// and if so returns the value at that position as a constant reference.
@@ -515,7 +515,7 @@ impl<T, const N: usize> const Index<usize> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const IndexMut<usize> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ IndexMut<usize> for StaticVec<T, N> {
   /// Asserts that `index` is less than the current length of the StaticVec,
   /// and if so returns the value at that position as a mutable reference.
   #[inline(always)]
@@ -537,7 +537,7 @@ impl<T, const N: usize> const IndexMut<usize> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const Index<Range<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Index<Range<usize>> for StaticVec<T, N> {
   type Output = [T];
   /// Asserts that the lower bound of `index` is less than or equal to its upper bound,
   /// and that its upper bound is less than or equal to the current length of the StaticVec,
@@ -551,7 +551,7 @@ impl<T, const N: usize> const Index<Range<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const IndexMut<Range<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ IndexMut<Range<usize>> for StaticVec<T, N> {
   /// Asserts that the lower bound of `index` is less than or equal to its upper bound,
   /// and that its upper bound is less than or equal to the current length of the StaticVec,
   /// and if so returns a mutable reference to a slice of elements `index.start..index.end`.
@@ -569,7 +569,7 @@ impl<T, const N: usize> const IndexMut<Range<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const Index<RangeFrom<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Index<RangeFrom<usize>> for StaticVec<T, N> {
   type Output = [T];
   /// Asserts that the lower bound of `index` is less than or equal to the
   /// current length of the StaticVec, and if so returns a constant reference
@@ -586,7 +586,7 @@ impl<T, const N: usize> const Index<RangeFrom<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const IndexMut<RangeFrom<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ IndexMut<RangeFrom<usize>> for StaticVec<T, N> {
   /// Asserts that the lower bound of `index` is less than or equal to the
   /// current length of the StaticVec, and if so returns a mutable reference
   /// to a slice of elements `index.start()..self.length`.
@@ -602,7 +602,7 @@ impl<T, const N: usize> const IndexMut<RangeFrom<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const Index<RangeFull> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Index<RangeFull> for StaticVec<T, N> {
   type Output = [T];
   /// Returns a constant reference to a slice consisting of `0..self.length`
   /// elements of the StaticVec, using [as_slice](crate::StaticVec::as_slice) internally.
@@ -612,7 +612,7 @@ impl<T, const N: usize> const Index<RangeFull> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const IndexMut<RangeFull> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ IndexMut<RangeFull> for StaticVec<T, N> {
   /// Returns a mutable reference to a slice consisting of `0..self.length`
   /// elements of the StaticVec, using [as_mut_slice](crate::StaticVec::as_mut_slice) internally.
   #[inline(always)]
@@ -621,7 +621,7 @@ impl<T, const N: usize> const IndexMut<RangeFull> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const Index<RangeInclusive<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Index<RangeInclusive<usize>> for StaticVec<T, N> {
   type Output = [T];
   /// Asserts that the lower bound of `index` is less than or equal to its upper bound,
   /// and that its upper bound is less than the current length of the StaticVec,
@@ -635,7 +635,7 @@ impl<T, const N: usize> const Index<RangeInclusive<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const IndexMut<RangeInclusive<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ IndexMut<RangeInclusive<usize>> for StaticVec<T, N> {
   /// Asserts that the lower bound of `index` is less than or equal to its upper bound,
   /// and that its upper bound is less than the current length of the StaticVec,
   /// and if so returns a mutable reference to a slice of elements `index.start()..=index.end()`.
@@ -648,7 +648,7 @@ impl<T, const N: usize> const IndexMut<RangeInclusive<usize>> for StaticVec<T, N
   }
 }
 
-impl<T, const N: usize> const Index<RangeTo<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Index<RangeTo<usize>> for StaticVec<T, N> {
   type Output = [T];
   /// Asserts that the upper bound of `index` is less than or equal to the
   /// current length of the StaticVec, and if so returns a constant reference
@@ -660,7 +660,7 @@ impl<T, const N: usize> const Index<RangeTo<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const IndexMut<RangeTo<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ IndexMut<RangeTo<usize>> for StaticVec<T, N> {
   /// Asserts that the upper bound of `index` is less than or equal to the
   /// current length of the StaticVec, and if so returns a constant reference
   /// to a slice of elements `0..index.end`.
@@ -671,7 +671,7 @@ impl<T, const N: usize> const IndexMut<RangeTo<usize>> for StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const Index<RangeToInclusive<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ Index<RangeToInclusive<usize>> for StaticVec<T, N> {
   type Output = [T];
   /// Asserts that the upper bound of `index` is less than the
   /// current length of the StaticVec, and if so returns a constant reference
@@ -683,7 +683,7 @@ impl<T, const N: usize> const Index<RangeToInclusive<usize>> for StaticVec<T, N>
   }
 }
 
-impl<T, const N: usize> const IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ IndexMut<RangeToInclusive<usize>> for StaticVec<T, N> {
   /// Asserts that the upper bound of `index` is less than the
   /// current length of the StaticVec, and if so returns a constant reference
   /// to a slice of elements `0..=index.end`.
@@ -705,7 +705,7 @@ impl<T, const N: usize> Into<Vec<T>> for StaticVec<T, N> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> const IntoIterator for &'a StaticVec<T, N> {
+impl<'a, T: 'a, const N: usize> /*const*/ IntoIterator for &'a StaticVec<T, N> {
   type IntoIter = StaticVecIterConst<'a, T, N>;
   type Item = &'a T;
   /// Returns a [`StaticVecIterConst`](crate::iterators::StaticVecIterConst) over the StaticVec's
@@ -716,7 +716,7 @@ impl<'a, T: 'a, const N: usize> const IntoIterator for &'a StaticVec<T, N> {
   }
 }
 
-impl<'a, T: 'a, const N: usize> const IntoIterator for &'a mut StaticVec<T, N> {
+impl<'a, T: 'a, const N: usize> /*const*/ IntoIterator for &'a mut StaticVec<T, N> {
   type IntoIter = StaticVecIterMut<'a, T, N>;
   type Item = &'a mut T;
   /// Returns a [`StaticVecIterMut`](crate::iterators::StaticVecIterMut) over the StaticVec's
@@ -727,7 +727,7 @@ impl<'a, T: 'a, const N: usize> const IntoIterator for &'a mut StaticVec<T, N> {
   }
 }
 
-impl<T, const N: usize> const IntoIterator for StaticVec<T, N> {
+impl<T, const N: usize> /*const*/ IntoIterator for StaticVec<T, N> {
   type IntoIter = StaticVecIntoIter<T, N>;
   type Item = T;
   /// Returns a by-value [`StaticVecIntoIter`](crate::iterators::StaticVecIntoIter) over the
