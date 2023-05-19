@@ -1,7 +1,6 @@
 #![allow(incomplete_features)]
 #![feature(
   adt_const_params,
-  box_syntax,
   exact_size_is_empty,
   generic_const_exprs,
   trusted_len
@@ -454,22 +453,22 @@ fn push() {
 
 #[test]
 fn push_unique() {
-  let mut heap = StaticHeap::<Box<_>, 12>::from(staticvec![box 2, box 4, box 9]);
+  let mut heap = StaticHeap::<Box<_>, 12>::from(staticvec![Box::new(2), Box::new(4), Box::new(Box::new(9)]);
   assert_eq!(heap.len(), 3);
   assert!(**heap.peek().unwrap() == 9);
-  heap.push(box 11);
+  heap.push(Box::new(11));
   assert_eq!(heap.len(), 4);
   assert!(**heap.peek().unwrap() == 11);
-  heap.push(box 5);
+  heap.push(Box::new(5));
   assert_eq!(heap.len(), 5);
   assert!(**heap.peek().unwrap() == 11);
-  heap.push(box 27);
+  heap.push(Box::new(2)7);
   assert_eq!(heap.len(), 6);
   assert!(**heap.peek().unwrap() == 27);
-  heap.push(box 3);
+  heap.push(Box::new(3));
   assert_eq!(heap.len(), 7);
   assert!(**heap.peek().unwrap() == 27);
-  heap.push(box 103);
+  heap.push(Box::new(10)3);
   assert_eq!(heap.len(), 8);
   assert!(**heap.peek().unwrap() == 103);
 }
