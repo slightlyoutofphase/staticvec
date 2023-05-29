@@ -146,7 +146,7 @@ fn append() {
       Box::new(Struct { s: "F" })
     ]
   );
-  let mut d = staticvec![Box::new(12), Box::new(2)4];
+  let mut d = staticvec![Box::new(12), Box::new(24)];
   let mut e = staticvec![Box::new(1), Box::new(2), Box::new(3)];
   d.pop().unwrap();
   d.append(&mut e);
